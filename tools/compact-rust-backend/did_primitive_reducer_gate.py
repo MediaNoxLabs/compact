@@ -22,8 +22,11 @@ from pathlib import Path
 import re
 import shutil
 import sys
+import forge_circuits
 import local_parity_gate as common
 import resolve_ledger_test_static as ledger_static
+import reviewed_rust_capture as reviewed
+import reducer_capture_source as capture_inputs
 
 ROOT = common.ROOT
 REGISTRY = ROOT / 'tools/compact-rust-backend/did_primitive_reducers.json'
@@ -80,7 +83,10 @@ def validate_summary(value, row):
 
 
 def source_inventory(rows):
-    files = [REGISTRY, Path(__file__), Path(common.__file__), Path(ledger_static.__file__),
+    files = [REGISTRY, Path(__file__), Path(common.__file__), Path(forge_circuits.__file__), Path(ledger_static.__file__),
+             Path(reviewed.__file__), Path(__file__).with_name('test_reviewed_rust_capture.py'),
+             Path(capture_inputs.__file__), Path(__file__).with_name('test_reducer_capture_source.py'),
+             ROOT/reviewed.SUPPORT,
              ROOT/'Cargo.toml', ROOT/'Cargo.lock', ROOT/'tools/compact-rust-proof-smoke/Cargo.toml',
              ROOT/'tools/compact-rust-backend/did_primitive_reducer_capture.mjs',
              ROOT/'tools/compact-rust-backend/did_primitive_reducer_cases.mjs',
@@ -88,6 +94,7 @@ def source_inventory(rows):
              ROOT/'tools/compact-rust-backend/check_fixture_outputs.py']
     for row in rows:
         files.append(ROOT/row['source'])
+        files.append(ROOT/row['fixture']/'oracle/reviewed-rust-binding.json')
         files.extend((ROOT/row['fixture']).rglob('*'))
     for folder in ('runtime-rs', 'runtime-rs-macros', 'testkit-rs', 'tools/compact-rust-proof-smoke/src'):
         files.extend(p for p in (ROOT/folder).rglob('*') if p.suffix in ('.rs','.toml','.json'))
@@ -110,7 +117,7 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
         for key in ('MIDNIGHT_PP','MIDNIGHT_LEDGER_TEST_STATIC_DIR'):
             require(bool(env.get(key)) and Path(env[key]).is_absolute() and Path(env[key]).is_dir(),
                     f'{key} must select an absolute existing directory')
-        zkir = shutil.which('zkir', path=env.get('PATH'))
+        zkir = forge_circuits.zkir_executable(env)
         require(zkir is not None, 'zkir missing')
         dust_files=[]
         for name,digest in ledger_static.FIXTURE_HASHES.items():
@@ -129,8 +136,11 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
         env.update({'COMPACTC_SCHEME':components['compactc-scheme']['snapshot'],
                     'COMPACT_RUST_RUNTIME_DIR':str(ROOT),'CARGO_TARGET_DIR':str(target.resolve()),
                     'CARGO_INCREMENTAL':'0','RUSTUP_TOOLCHAIN':'1.99.0','PYTHONDONTWRITEBYTECODE':'1'})
+        env = forge_circuits.configure_environment(env, directory / "forge",
+                                                   real_zkir=components["zkir"]["snapshot"])
+        receipt["key_generation"] = forge_circuits.provenance(env)
         def execute(argv,label,stdout_path=None):
-            common.run([str(a) for a in argv],label,directory,receipt,env=env,stdout_path=stdout_path)
+            common.run(forge_circuits.command([str(a) for a in argv], env),label,directory,receipt,env=env,stdout_path=stdout_path)
         packages=[arg for row in rows for arg in ('-p',row['package'])]
         execute(['cargo','+1.99.0','test','--locked','--offline',*packages], 'test-reducer-behavior')
         execute(['cargo','+1.99.0','build','--locked','--offline','-p','compact-rust-proof-smoke'],'build-proof-runner')
@@ -143,10 +153,16 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
                 and Path(prepared['cache_directory']).resolve()==Path(env['MIDNIGHT_PP']).resolve(),
                 'proof material selection changed')
         receipt['proof_material']=prepared
+        receipt['source_inputs']=[capture_inputs.prepare(ROOT,directory,row,
+            receipt['source_hashes'][str(ROOT/row['source'])]) for row in rows]
+        input_by_kind={entry['kind']:entry for entry in receipt['source_inputs']}
         for row in rows:
             kind=row['kind']; output=directory/kind
+            source_input=input_by_kind[kind]
+            capture_inputs.verify(ROOT,directory,source_input)
             execute([components['compactc']['snapshot'],'--target','ts','--target','rust','--skip-zk',
-                     '--rust-runtime-root',ROOT,ROOT/row['source'],output], f'{kind}-compile')
+                     '--rust-runtime-root',ROOT,source_input['invocation_source_path'],output], f'{kind}-compile')
+            capture_inputs.verify(ROOT,directory,source_input)
             execute(['rustfmt','--edition','2024',output/'contract/lib.rs'],f'{kind}-format')
             require((output/'contract/lib.rs').read_bytes()==(ROOT/row['fixture']/'lib.rs').read_bytes(),
                     f'{kind}: generated fixture stale')
@@ -160,7 +176,8 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
             capture=directory/f'{kind}-capture.json'
             execute(['node',ROOT/'tools/compact-rust-backend/did_primitive_reducer_capture.mjs',kind,
                      output/'contract/index.js'],f'{kind}-capture',capture)
-            require(read_json(capture)==read_json(ROOT/row['fixture']/'oracle/cases.json'),f'{kind}: oracle changed')
+            capture_inputs.verify(ROOT,directory,source_input)
+            reviewed.compare_reviewed_capture(read_json(capture),ROOT,row['fixture'])
             (output/'keys').mkdir(exist_ok=True)
             artifacts=[]
             for selection in row['operations']:
@@ -180,12 +197,15 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
                 require(state.is_file() and state.stat().st_size==call['state_bytes'],f'{kind}: missing state')
                 results.append(state)
             require(hashes(artifacts)==before,f'{kind}: proof material changed')
+            capture_inputs.verify(ROOT,directory,source_input)
             receipt['reducers'].append({'kind':kind,'summary':summary,'capabilities':report,
                                         'artifact_hashes':before,'result_hashes':hashes(results+[capture])})
         require([r['kind'] for r in receipt['reducers']]==receipt['expected_reducers'],'incomplete reducer results')
         for result in receipt['reducers']:
             for field in ('artifact_hashes','result_hashes'):
                 require(hashes([Path(name) for name in result[field]])==result[field], 'retained evidence changed')
+        for source_input in receipt['source_inputs']:
+            capture_inputs.verify(ROOT,directory,source_input)
         require(source_inventory(rows)==receipt['source_hashes'] and common.git_head()==receipt['git_head'],
                 'source or HEAD changed during gate')
         require(all(common.sha256(Path(r['snapshot']))==r['sha256'] for r in components.values()),'tool changed')

@@ -13,14 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove asset removal from a state seeded with one valid record.
+//! Source-bound removal from supplied constructor and native Insert state.
 
 use super::*;
+use asset_record_write::manual::TimestampWitness;
 use compact_rust_asset_registry_oracle_fixture::ledger_contract as asset;
+use compact_rust_asset_registry_oracle_fixture::ledger_slots as slots;
 use compact_rust_asset_registry_oracle_fixture::types::{AssetClass, AssetRecord, RecordMutation};
 use midnight_compact_runtime as runtime;
 
+mod manual;
+
+const RETAINED_IR: &str =
+    include_str!("../../compact-rust-backend/tests/asset-registry-schema20-ir.json");
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     const CIRCUIT: &str = "removeRecord";
     let witnesses = super::asset_writable::AssetWitness;
     let initial = asset::initial_state(ConstructorContext::new(7_u64), &witnesses)?;
@@ -32,8 +43,8 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         kind: AssetClass::Instrument,
         ..Default::default()
     };
-    // setRecord is currently native-only. Seed the deployment state with that
-    // exact native transition, then prove removal through the observed call.
+    // Constructor and native Insert are supplied setup. Neither deployment nor
+    // the seed transition is proved by this selected removal scenario.
     let seeded = asset::setRecord(
         initial.into_circuit_context(runtime::ledger::ContractAddress::default()),
         &witnesses,
@@ -60,45 +71,116 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             block_height: 0,
         },
     );
-    let manual = check_generated_trace(
-        root,
-        CIRCUIT,
-        asset::recorded::removeRecord(observed.circuit_context(11_u64), &witnesses, key.clone())?,
+    let native_witness = TimestampWitness::default();
+    let recorded_witness = TimestampWitness::default();
+    let observed_witness = TimestampWitness::default();
+    let manual_witness = TimestampWitness::default();
+    let native = asset::removeRecord(
+        observed.circuit_context(11_u64),
+        &native_witness,
         key.clone(),
     )?;
+    let recorded = asset::recorded::removeRecord(
+        observed.circuit_context(11_u64),
+        &recorded_witness,
+        key.clone(),
+    )?;
+    let call = asset::Contract::from(observed_witness.clone())
+        .recording()
+        .removeRecord_call(&observed, 11_u64, key.clone())?;
+    let manual = manual::remove(
+        observed.circuit_context(11_u64),
+        key.clone(),
+        &manual_witness,
+    )?;
+    // This existing comparison checks private11→12, one timestamp callback per
+    // lane, its exact FAB, public operations/state/effects/execution gas and
+    // verifier replay against separately measured manual replay gas.
+    asset_record_write::manual::compare(
+        &native,
+        &recorded,
+        call.recorded(),
+        &manual,
+        11,
+        &[
+            &native_witness,
+            &recorded_witness,
+            &observed_witness,
+            &manual_witness,
+        ],
+    )?;
+    let expected_state = native.context.query.state.get_ref().clone();
+    if slots::records.inspect(&expected_state)?.member(key.clone()) {
+        return Err("asset removal left record in Map".into());
+    }
+    if !slots::retiredKeys
+        .inspect(&expected_state)?
+        .member(key.clone())
+    {
+        return Err("asset removal omitted retired key".into());
+    }
+    // The Compact source counts inserted records and does not decrement this
+    // Counter on removal. Both write metadata Counters advance exactly once.
+    if slots::recordCount.inspect(&expected_state)? != 1
+        || slots::revision.inspect(&expected_state)? != 2
+        || slots::writeCount.inspect(&expected_state)? != 2
+    {
+        return Err("asset removal stored wrong Counter metadata".into());
+    }
+    let input = AlignedValue::from(key);
+    let direct = check_generated_trace(root, CIRCUIT, recorded, input.clone())?;
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
         root.join("keys/removeRecord.verifier"),
     )?))?;
-    let call = asset::Contract::from(witnesses)
-        .recording()
-        .removeRecord_call(&observed, 11_u64, key.clone())?
-        .prepare(verifier, Fr::from(0_u64))?;
-    if format!("{manual:?}") != format!("{call:?}") {
-        return Err("removeRecord observed call differs from manual prototype".into());
+    let prepared = call.prepare(verifier.clone(), Fr::from(0_u64))?;
+    if prepared.input != input || prepared.output != AlignedValue::from(()) {
+        return Err("asset removal declared input/Unit output differs".into());
     }
-    check_transaction(root, CIRCUIT, deploy, call, &mut rng, |state| {
-        let data = state.data.get_ref();
-        if map_view_at_path::<runtime::OpaqueString, AssetRecord, _>(data, &[1, 10])?
-            .member(key.clone())
-        {
-            return Err("asset removal proof left record in Map".into());
-        }
-        if !set_view_at_path::<runtime::OpaqueString, _>(data, &[1, 12])?.member(key.clone()) {
-            return Err("asset removal proof omitted retired key".into());
-        }
-        let StateValue::Array(root_fields) = data else {
-            return Err("asset registry state is not an array".into());
-        };
-        let Some(StateValue::Array(metadata)) = root_fields.get(1) else {
-            return Err("asset registry metadata is not an array".into());
-        };
-        for (index, name) in [(8, "revision"), (9, "writeCount")] {
-            if read_counter(metadata.get(index).ok_or("missing asset counter")?)? != 2 {
-                return Err(format!("asset removal proof stored wrong {name}").into());
-            }
-        }
-        Ok(())
-    })?;
-    println!("asset removal proved, verified, validated and applied through ledger-8");
+    if format!("{direct:?}") != format!("{prepared:?}") {
+        return Err("asset removal observed/direct preparation differs".into());
+    }
+    kernel_shielded_effects::prove_and_verify_call(root, CIRCUIT, &prepared, &verifier)?;
+    opaque_public::apply_funded(root, CIRCUIT, prepared, deploy, &expected_state, rng, 601)?;
+    println!(
+        "asset removal: source-bound native/recorded/observed/manual/replay, verified proof and changed-binding refusal, default-strict funded ledger-8 application; constructor and native Insert supplied, deployment and seed not proved"
+    );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn altered_whole_asset_source_refuses_before_keys() {
+        counter_scenario::validate_ir(RETAINED_IR.as_bytes(), RETAINED_IR).unwrap();
+        let mut changed: serde_json::Value = serde_json::from_str(RETAINED_IR).unwrap();
+        changed["independent_removal_source_control"] = true.into();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&changed).unwrap(), RETAINED_IR)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn absent_asset_source_refuses_before_keys_or_state() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-removal-proof-absent-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        assert_eq!(
+            run(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert!(!root.exists());
+    }
 }

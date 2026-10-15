@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "issue": 560,
+  "classification": "whole-membership-admission-retirement",
+  "reviewed_checkpoint": "e8bb00351f7bb2367c7b7ea5cc19ffa6dbbeb28b",
+  "retired_route": "selector.membership-optional",
+  "replacement_route": "algebra.membership",
+  "claim": "Thirteenth production admission retirement. Declared membership interface union composes at the first typed selector priority. Complete original membership functions remain test-only and the shared renderer remains production. Source inventory is not semantic coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "prior_zswap_canonical_sha256": "d0bd62c6624e4c21c2e0926ec010ceb6c343e56291b087605d98e95da1d5a573",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": "fa39f4c136d5a967f7bef644458b80a8c6a61ed18c69512306e285ac81f86a41",
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "f4a956c7b2e9dcc07e34be37a923068b15cacc45ce8358ffcd8aaee76e88af43",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "3b8683fbf667dc5a04cf9080dfc5437aae0cb116ffc84ed2ec081baee69821a8"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": "cd955224fe2028ab88489c849c7fe013123751ddcb7326ad8a048f9caf737a7c",
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "848b9bb95452de7444ee32b93982e08da21760011275604be1facdc019414ced",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "09ca695b0ae6253d162a51cf3d24162a52ea6fecfb83caad7b52385031aafa03"
+  },
+  "predecessor_reconstruction": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": [
+      {
+        "current": "}\n\n#[test]\nfn intent_only_expansion_uses_first_eligible_algebra_owner() {\n    let c = source();\n    let maps = Context::new(&c);\n    for (name, owner) in [\n        (\"produce\", \"algebra.membership\"),\n        (\"consume\", \"algebra.zswap\"),\n    ] {\n        let r = root(&c, name);\n        assert!(\n            crate::recorded::zswap_plan::lower(r, &maps.ledger, &maps.circuits, &maps.witnesses)\n",
+        "previous": "}\n\n#[test]\nfn intent_only_expansion_has_actual_public_zswap_owner() {\n    let c = source();\n    let maps = Context::new(&c);\n    for name in [\"produce\", \"consume\"] {\n        let r = root(&c, name);\n        assert!(\n            crate::recorded::zswap_plan::lower(r, &maps.ledger, &maps.circuits, &maps.witnesses)\n"
+      },
+      {
+        "current": "        );\n        assert!(maps.domain(r).unwrap().is_some());\n        let (_, selector_row) = maps.selected(r);\n        assert_eq!(selector_row[\"body_owner\"], owner);\n        assert_eq!(attempts(&selector_row).last(), Some(&owner));\n    }\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n    let output = output.unwrap();\n    for (name, owner) in [\n        (\"produce\", \"algebra.membership\"),\n        (\"consume\", \"algebra.zswap\"),\n    ] {\n        let capability = output\n            .capabilities\n            .circuits\n",
+        "previous": "        );\n        assert!(maps.domain(r).unwrap().is_some());\n        let (_, selector_row) = maps.selected(r);\n        assert_eq!(selector_row[\"body_owner\"], \"algebra.zswap\");\n        assert_eq!(attempts(&selector_row).last(), Some(&\"algebra.zswap\"));\n    }\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n    let output = output.unwrap();\n    for name in [\"produce\", \"consume\"] {\n        let capability = output\n            .capabilities\n            .circuits\n"
+      },
+      {
+        "current": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(rows.len(), 1);\n        assert_eq!(rows[0][\"body_owner\"], owner);\n        // Full emission also evaluates capability guards after the selector.\n        // Actual body ownership and once-only selection remain authoritative;\n        // the isolated selector trace above checks the first eligible domain at its maintained priority.\n        assert_eq!(attempts(rows[0]).iter().filter(|&&r| r == owner).count(), 1);\n        assert!(!attempts(rows[0]).contains(&\"selector.zswap\"));\n    }\n    // Admission/emission alone does not qualify a nonempty proof transcript.\n",
+        "previous": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(rows.len(), 1);\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.zswap\");\n        // Full emission also evaluates capability guards after the selector.\n        // Actual body ownership and once-only selection remain authoritative;\n        // the isolated selector trace above checks its last-priority position.\n        assert_eq!(\n            attempts(rows[0])\n                .iter()\n                .filter(|&&r| r == \"algebra.zswap\")\n                .count(),\n            1\n        );\n        assert!(!attempts(rows[0]).contains(&\"selector.zswap\"));\n    }\n    // Admission/emission alone does not qualify a nonempty proof transcript.\n"
+      },
+      {
+        "current": "        (\n            include_str!(\"../../../tests/native-zswap-intents-schema20-ir.json\"),\n            \"witness_order\",\n            \"algebra.membership\",\n        ),\n    ] {\n        let c: Contract = serde_json::from_str(text).unwrap();\n",
+        "previous": "        (\n            include_str!(\"../../../tests/native-zswap-intents-schema20-ir.json\"),\n            \"witness_order\",\n            \"algebra.kernel\",\n        ),\n    ] {\n        let c: Contract = serde_json::from_str(text).unwrap();\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": [
+      {
+        "current": "#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\n",
+        "previous": "#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\n"
+      },
+      {
+        "current": "    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    let uint64 = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n    let parameters = circuit.parameters.as_slice();\n    let counter_parameters = parameters\n        .iter()\n        .all(|p| p.ty == Type::Boolean || p.ty == uint64);\n    let eligible = match &circuit.result {\n        Type::Unit => {\n            counter_parameters\n                || matches!(parameters, [p] if matches!(p.ty, Type::Enum { .. } | Type::OpaqueString))\n                || matches!(parameters, [a, b] if matches!(a.ty, Type::Struct { .. }) && matches!(b.ty, Type::Struct { .. }))\n        }\n        Type::Boolean => counter_parameters,\n        Type::OpaqueString => parameters.is_empty(),\n        Type::Field => matches!(parameters, [p] if p.ty == Type::Field),\n        result if result == &uint64 => parameters.iter().all(|p| p.ty == Type::Boolean),\n        _ => false,\n    };\n    let supported_return = matches!(circuit.return_value, StateReturn::Expression { .. })\n        || (circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit);\n    if !eligible || !supported_return {\n        return Ok(None);\n    }\n    resolve_checked_plan(effect_plan::lower_with_calls(\n        circuit, ledger, witnesses, pure, circuits,\n    ))\n}\n\n/// Roll out the declared point result domain at its existing selector priority.\n",
+        "previous": "    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Roll out the declared point result domain at its existing selector priority.\n"
+      },
+      {
+        "current": "    };\n    let typed_prefix = if organizer_steps.is_none() {\n        match record_option!(\n            \"algebra.membership\",\n            checked_membership_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n        ) {\n            Some(plan) => Some(plan),\n            None => record_option!(\n",
+        "previous": "    };\n    let typed_prefix = if organizer_steps.is_none() {\n        match record_option!(\n            \"selector.membership-optional\",\n            typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)\n        ) {\n            Some(plan) => Some(plan),\n            None => record_option!(\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": [
+      {
+        "current": "//! Actual value types and branch-local frames preserve scope and effect order.\n\nuse super::*;\nuse crate::coin_shapes::shielded_coin_type;\n#[cfg(test)]\nuse crate::coin_shapes::{qualified_coin_type, shielded_recipient_type};\nuse crate::ir::{KernelClaimKind, ReturnPlan, contract_address_type};\nmod actions;\nmod admission;\n",
+        "previous": "//! Actual value types and branch-local frames preserve scope and effect order.\n\nuse super::*;\n#[cfg(test)]\nuse crate::coin_shapes::qualified_coin_type;\nuse crate::coin_shapes::{shielded_coin_type, shielded_recipient_type};\nuse crate::ir::{KernelClaimKind, ReturnPlan, contract_address_type};\nmod actions;\nmod admission;\n"
+      },
+      {
+        "current": "// intents without composite-value helper routing; phase_reset is independent.\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\nenum CompositeDomain {\n    #[cfg_attr(not(test), allow(dead_code))]\n    None,\n    // Constructed only by the frozen composite oracle; shared policy matches stay intact.\n    #[cfg_attr(not(test), allow(dead_code))]\n",
+        "previous": "// intents without composite-value helper routing; phase_reset is independent.\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\nenum CompositeDomain {\n    None,\n    // Constructed only by the frozen composite oracle; shared policy matches stay intact.\n    #[cfg_attr(not(test), allow(dead_code))]\n"
+      },
+      {
+        "current": "\n// Read-only assertion bodies have their own admission boundary. General calls,\n// writes, cryptographic effects and non-Boolean witness results remain outside it.\n#[cfg(test)]\nfn assertion_value(\n    value: &Expr,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n",
+        "previous": "\n// Read-only assertion bodies have their own admission boundary. General calls,\n// writes, cryptographic effects and non-Boolean witness results remain outside it.\nfn assertion_value(\n    value: &Expr,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n"
+      },
+      {
+        "current": "        _ => false,\n    }\n}\n#[cfg(test)]\nfn assertion_type(ty: &Type) -> bool {\n    matches!(ty, Type::Unit | Type::Boolean)\n        || matches!(ty, Type::Unsigned { max } if max == \"255\" || max == \"18446744073709551615\")\n",
+        "previous": "        _ => false,\n    }\n}\nfn assertion_type(ty: &Type) -> bool {\n    matches!(ty, Type::Unit | Type::Boolean)\n        || matches!(ty, Type::Unsigned { max } if max == \"255\" || max == \"18446744073709551615\")\n"
+      },
+      {
+        "current": "    composite_reference::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n#[cfg(test)]\npub(super) fn lower<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n",
+        "previous": "    composite_reference::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n"
+      }
+    ]
+  },
+  "oracle_functions_sha256": {
+    "pub(super) fn lower<'a>(": "5c6952a7ffb915a670e3164b1987b47f648583efeaf5590b3bbf9d4c9dc5767e",
+    "fn assertion_value(": "f3d628597c4a476fde5b64e45022ac8a645bce3a95f88c695aecfc782d194f09",
+    "fn assertion_type(": "90a1ba15b02b1c64198febe669aaecc131e07e3ed5df5580f4b2ce5bf6980b04"
+  },
+  "guarded_declarations": [
+    "pub(super) fn lower<'a>(",
+    "fn assertion_value(",
+    "fn assertion_type("
+  ],
+  "helper": "fn checked_membership_domain(",
+  "helper_sha256": "41f6ca509e45f6c3b465ed5f2030a6069a0e3740eb164507966259f741f70850",
+  "test_registration": "#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n",
+  "test_sources_sha256": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/membership_migration_tests.rs": "309abb8c50130a6de24296ea24c7a50d39ddfc85854ef1461fc492c026705edc"
+  },
+  "retained_shared_production_symbols": [
+    "TypedPlan",
+    "Plan",
+    "CompositeDomain",
+    "scalar_counter_hash",
+    "optional_string",
+    "wrapped_bytes32",
+    "bytes32_key",
+    "cell_type",
+    "lower_start_funding",
+    "lower_funded_mint",
+    "lower_guarded_deposit",
+    "lower_shielded_merge",
+    "lower_shielded_send_checked",
+    "lower_reset_payout",
+    "lower_shielded_payout",
+    "lower_unit_composition_checked"
+  ],
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "5f4a1e2847d4167832c2874e2ed13157ab3adcccbb4c298dcff0a326e6aac411"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "f052d77d6c7a5228c014ef3c9af2766228daf4214cfe55885abcf228ea82ff3c"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.membership",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "algebra.voting-commit",
+    "algebra.zswap",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-send",
+    "selector.unit-composition"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values",
+    "selector.shielded-receive",
+    "selector.voting-commit",
+    "selector.phase-reset",
+    "selector.immediate-send",
+    "selector.zswap",
+    "selector.membership-optional"
+  ],
+  "new_retired_routes": [
+    "selector.membership-optional"
+  ],
+  "shared_sources_sha256": {
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions.rs": "52e64a5f3e98a29736c46c791ef72eb7a631893b4c2c095fd1d139045ff045dd",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs": "37d1b99fa1552487795e6581e28df64e283bfd1a02c2d89e2d8c3c187e06f49f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs": "4d22fa54377d567e7844311b18eb014a968b3991eefe66e08758113d7d1e0aed",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs": "8cd4e5b297a0f0465771ba9e0a14505abc117ec35ae6f759b12c657c37129129",
+    "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+    "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs": "263cd4903db55951e8cd85b7a6d77d132caf075b40d1a61c3b9a8cc7c813bbda",
+    "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs": "e4e1a6f98263a2b5f663c601e28f18c4616e9116503259de23f381af9034be37",
+    "tools/compact-rust-backend/src/recorded/typed_plan/control.rs": "4f9e73e1ee0d070f0a3a2c0e115ec6d0a41d9ca10f39a83412ee815ad0ba4f0d",
+    "tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs": "38a5d00807d56717644b95cf4f6d389381fbab8a1ff321cdf901df9cfbdf0c2e",
+    "tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs": "986288e4b5f6fce6b620421fa2b9a089f3fa8ca36d23707e75b2723be1b902ef",
+    "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs": "72174159a525738409d05610e997c1b5757045638336a69e9c6e6f0e3bbd1429",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs": "645ed86c92a952de7454251469c38e8d46b4b3a18a3f4a3436093a471b30b59c",
+    "tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs": "3b1d8a336bfb66d17927a33bb85ea95bb79e5ad459af3a3632c35537614f4385",
+    "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243",
+    "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs": "5dc883797f1288a9831d68466be184992f8b6fefa3b2fd5fbe00bd203e8e84c7"
+  }
+}

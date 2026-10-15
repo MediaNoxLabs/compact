@@ -1,0 +1,31 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct TextResult { value: Opaque<"string">; }
+export struct BytesResult { value: Opaque<"Uint8Array">; }
+export struct Message { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; }
+export struct Envelope { message: Message; }
+export struct Result { chosen: Envelope; original: Envelope; }
+witness replacement(): Opaque<"Uint8Array">;
+
+circuit remember(input: Envelope): Envelope {
+  calls.increment(1);
+  return input;
+}
+export circuit run(input: Envelope, useWitness: Boolean): Result {
+  const kept = remember(input);
+  const chosen = disclose(useWitness)
+    ? Envelope { message: Message { text: kept.message.text, bytes: disclose(replacement()) } }
+    : kept;
+  return Result { chosen: chosen, original: kept };
+}
+export circuit text_roundtrip(value: Opaque<"string">): TextResult {
+  calls.increment(1);
+  return TextResult { value: value };
+}
+export circuit bytes_roundtrip(value: Opaque<"Uint8Array">): BytesResult {
+  calls.increment(1);
+  return BytesResult { value: value };
+}

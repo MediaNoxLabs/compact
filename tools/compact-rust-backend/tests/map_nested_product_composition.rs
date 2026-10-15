@@ -108,7 +108,7 @@ fn nested_product_mutation_requires_exact_declared_value_and_key_slot() {
 }
 
 #[test]
-fn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type() {
+fn nested_product_helper_audit_checks_hidden_slots_cycles_and_enum_types() {
     for mutation in ["hidden_branch", "helper_cycle", "wrong_arity", "wrong_enum"] {
         let mut value = fixture("nested");
         match mutation {
@@ -142,6 +142,29 @@ fn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type(
             }
             _ => unreachable!(),
         }
+        if mutation == "hidden_branch" {
+            let output = render_with_capabilities(
+                &serde_json::from_value::<Contract>(value.clone()).unwrap(),
+            )
+            .unwrap();
+            assert!(
+                output
+                    .capabilities
+                    .circuits
+                    .iter()
+                    .any(|c| c.name == "upsert" && c.recorded && c.observed_call)
+            );
+            assert!(
+                output
+                    .source
+                    .split("pub mod recorded")
+                    .nth(1)
+                    .unwrap()
+                    .contains("record_reset(")
+            );
+            first_kind_mut(&mut circuit(&mut value, "upsert")["actions"], "map_reset").unwrap()["index"] =
+                json!(99);
+        }
         let name = if mutation == "wrong_enum" {
             "put"
         } else {
@@ -152,12 +175,42 @@ fn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type(
 }
 
 #[test]
-fn nested_product_domain_does_not_admit_unreviewed_unsigned_or_empty_values() {
-    for source in [
-        include_str!("map-composition/mixed_map.json"),
-        include_str!("map-composition/empty_map.json"),
-    ] {
-        let value: Value = serde_json::from_str(source).unwrap();
-        assert!(!recorded(value, "put"));
-    }
+fn nested_product_domain_includes_empty_fixed_products() {
+    let mixed: Contract =
+        serde_json::from_str(include_str!("map-composition/mixed_map.json")).unwrap();
+    let output = render_with_capabilities(&mixed).unwrap();
+    assert!(
+        output
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
+    );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert(")
+    );
+    let empty: Value =
+        serde_json::from_str(include_str!("map-composition/empty_map.json")).unwrap();
+    let output =
+        render_with_capabilities(&serde_json::from_value::<Contract>(empty).unwrap()).unwrap();
+    assert!(
+        output
+            .capabilities
+            .circuits
+            .iter()
+            .any(|c| c.name == "put" && c.recorded && c.observed_call)
+    );
+    assert!(
+        output
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_insert(")
+    );
 }

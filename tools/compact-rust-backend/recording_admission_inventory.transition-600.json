@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "issue": 600,
+  "baseline_commit": "51a931a3b720ac86bc343aab6f6301287ffd2cb4",
+  "claim": "Retire guarded Struct pure route after checked Unit execution prerequisite. Preserve whole old oracle and shared Counter utility. Compatibility remains bounded by existing checked resource policy.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "299f68373bfe355fbb4636d3f9b3d6e5addb19cf5c96954b77c1118d08ebabd9",
+      "current_sha256": "e41308a6b82db7248a39bae32f7ea79a4578755cb0e6978d21034cb00ce2f3cd",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod legacy;\nuse legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\n\nmod facade;\n#[cfg(test)]\nmod guarded_map_migration_tests;\n#[cfg(test)]\nmod guarded_mutations;\n#[cfg(test)]\nmod guarded_pure_migration_tests;\nmod helpers;\nmod item;\n#[cfg(test)]\n",
+          "previous": "mod legacy;\nuse legacy::actions::append_steps;\nuse legacy::expressions::{boolean_expression, field_expression};\nuse legacy::guarded_pure::closed_guarded_struct_pure_steps;\n\nmod facade;\n#[cfg(test)]\nmod guarded_map_migration_tests;\n#[cfg(test)]\nmod guarded_mutations;\nmod helpers;\nmod item;\n#[cfg(test)]\n"
+        },
+        {
+          "current": "        \"guard.closed-opaque-map-operation\",\n        opaque_map_operation.is_some(),\n    );\n    let mut steps = organizer_steps.unwrap_or_default();\n    let mut next_temp = 0;\n    let mut visiting = HashSet::from([circuit.name.clone()]);\n    // A root Let encloses both its ordered actions and its final return.\n    // Capture this exact Field Cell read once, before the nested actions,\n    // so the returned value cannot accidentally observe the post-write state.\n    let root_field_return = if !organizer_gate {\n        match (circuit.actions.as_slice(), &circuit.return_value) {\n            (\n                [StateAction::Let { bindings, action }],\n",
+          "previous": "        \"guard.closed-opaque-map-operation\",\n        opaque_map_operation.is_some(),\n    );\n    let guarded_pure_steps = record_option!(\n        \"guard.guarded-struct-pure\",\n        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?\n    );\n    let guarded_pure_call = guarded_pure_steps.is_some();\n    let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();\n    let mut next_temp = 0;\n    let mut visiting = HashSet::from([circuit.name.clone()]);\n    // A root Let encloses both its ordered actions and its final return.\n    // Capture this exact Field Cell read once, before the nested actions,\n    // so the returned value cannot accidentally observe the post-write state.\n    let root_field_return = if !organizer_gate && !guarded_pure_call {\n        match (circuit.actions.as_slice(), &circuit.return_value) {\n            (\n                [StateAction::Let { bindings, action }],\n"
+        },
+        {
+          "current": "                admission_probe::trace::action(\"legacy.action-dispatch\");\n            }\n            for (index, action) in circuit.actions.iter().enumerate() {\n                let mut legacy_precision = LegacyActionPrecision::Concrete;\n                if let RecordingOutcome::Unsupported(gap) = append_steps(\n                    action,\n",
+          "previous": "                admission_probe::trace::action(\"legacy.action-dispatch\");\n            }\n            for (index, action) in circuit.actions.iter().enumerate() {\n                if guarded_pure_call && index == 0 {\n                    continue;\n                }\n                let mut legacy_precision = LegacyActionPrecision::Concrete;\n                if let RecordingOutcome::Unsupported(gap) = append_steps(\n                    action,\n"
+        },
+        {
+          "current": "    // composition failure instead of collapsing it to UnsupportedReturn for an outer If\n    // or Call. Action diagnostics above still take precedence.\n    if !organizer_gate\n        && circuit.actions.is_empty()\n        && steps.is_empty()\n        && let Some(gap) = shielded_send_rejection.as_ref()\n",
+          "previous": "    // composition failure instead of collapsing it to UnsupportedReturn for an outer If\n    // or Call. Action diagnostics above still take precedence.\n    if !organizer_gate\n        && !guarded_pure_call\n        && circuit.actions.is_empty()\n        && steps.is_empty()\n        && let Some(gap) = shielded_send_rejection.as_ref()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/legacy.rs": {
+      "previous_sha256": "5e4af119a4127f92afb7b0c8b239d064ce0cc7ca333e6f249062a1bac2e2ada5",
+      "current_sha256": "d681f964e5e1fa2265edb22454cff8580ecb2001ea9ee932492bf079568509b3",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n#[cfg(test)]\npub(super) mod guarded_map;\n#[cfg(test)]\npub(super) mod guarded_pure;\n#[cfg(test)]\npub(super) mod opaque_map;\n",
+          "previous": "\n#[cfg(test)]\npub(super) mod guarded_map;\npub(super) mod guarded_pure;\n#[cfg(test)]\npub(super) mod opaque_map;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests.rs": {
+      "previous_sha256": "7d19a022734f1b5a215450ecaa7f1140e9cf17c1a796064c8708d39f7d43b627",
+      "current_sha256": "b0c6dd945ec7a4ded986c0b6d35b74e9911b53a42d373f3209c06a4685e1bc60",
+      "predecessor_reconstruction": [
+        {
+          "current": "                .any(|a| a[\"route\"] == \"guard.guarded-unsigned-product\")\n        );\n        assert!(\n            !attempts\n                .iter()\n                .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\"),\n            \"the final guarded pure sibling is retired\"\n        );\n    }\n}\n",
+          "previous": "                .any(|a| a[\"route\"] == \"guard.guarded-unsigned-product\")\n        );\n        assert!(\n            attempts\n                .iter()\n                .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\"),\n            \"sibling is still evaluated\"\n        );\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests.rs": {
+      "previous_sha256": "b0d2cd40de2a7fa121747e6d9a56b812c7237beb05601f420f0df4e2bd15620f",
+      "current_sha256": "c73d6faed8f68c3d6a4e26b752a0f7d4b677d634e63811bd090d6ee52a03c99f",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"Map-write admission is retired independently of this old oracle\"\n    );\n    assert!(\n        !attempts\n            .iter()\n            .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\")\n    );\n",
+          "previous": "        \"Map-write admission is retired independently of this old oracle\"\n    );\n    assert!(\n        attempts\n            .iter()\n            .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\")\n    );\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_map_migration_tests.rs": {
+      "previous_sha256": "c0da9b3e2e047fae0c9652d28625f1792c8142c06bb612c890da4be0d7136eed",
+      "current_sha256": "2e6f50b7b6e33a4ab0104175cc08049857076e46a39eafaa0dd8de63bd366068",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .any(|a| a[\"route\"] == \"guard.opaque-map-write\")\n    );\n    assert!(\n        !attempts\n            .iter()\n            .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\")\n    );\n",
+          "previous": "            .any(|a| a[\"route\"] == \"guard.opaque-map-write\")\n    );\n    assert!(\n        attempts\n            .iter()\n            .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\")\n    );\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_map_migration_tests.rs": {
+      "previous_sha256": "54b47f09a010df46ec6ba0194e191ea24a25cffe5fe04966e161763ae79e0692",
+      "current_sha256": "2fd8cec616532ec27954262efc42b5a3787e7f53bb4bf010d1b180b553d3998f",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"Map-write admission is retired independently of this old oracle\"\n    );\n    assert!(\n        !attempts\n            .iter()\n            .any(|x| x[\"route\"] == \"guard.guarded-struct-pure\")\n    );\n",
+          "previous": "        \"Map-write admission is retired independently of this old oracle\"\n    );\n    assert!(\n        attempts\n            .iter()\n            .any(|x| x[\"route\"] == \"guard.guarded-struct-pure\")\n    );\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests/empty_execution.rs": {
+      "previous_sha256": "a29bb8d5c013fc1964b3b960343175c4fc782fd592b706f2b3c2fac713dd67d8",
+      "current_sha256": "5a973bedee8cf6f83877c4e55c67cd0a403b035b28f225b59ac60da10d6532df",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\"),\n        \"the old guard remains a test oracle, absent from production routing\"\n    );\n    let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {\n        unreachable!()\n",
+          "previous": "        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    assert!(\n        row[\"attempts\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .any(|a| a[\"route\"] == \"guard.guarded-struct-pure\"),\n        \"guard retirement is a separate slice\"\n    );\n    let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {\n        unreachable!()\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/guarded_pure_migration_tests.rs": "b1d0ee2e2ce8cf2e38c21e12d83172c62a714d71d0b20f4bb8d61049cc2e6a19",
+    "tools/compact-rust-backend/src/recorded/guarded_pure_migration_tests/inclusion.rs": "47d781e4f02076c43155e211ebb2e19eaf591e8a0d88d7ea0eccfea65c4eb9d9",
+    "tools/compact-rust-backend/src/recorded/guarded_pure_migration_tests/boundaries.rs": "b497d91575f727921a4aac2a5c0c1d35e2241e28f9a99fd8564647aa30bcfc3b",
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs": "9feaf91e856802cfd564812c3734f1484c137530367d36407c1d6f6a5b8c480a",
+    "tools/compact-rust-backend/src/recorded/legacy/value_sources.rs": "58392dabd6b787fee3f88024f7c742a676480470cab1b1d694c091cb351464a5",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "f27c0c2fbb931b2efa6e4bfbfd4a663b83a2298dcaf7933fd60dcb30a73a5fef",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "runtime-rs/src/transaction.rs": "9397fe72f44ebaaca429798109ce990696dcaf1869ba190a564aaa6dbdde173a",
+    "tools/compact-rust-backend/tests/guarded-assert-arith-schema20-ir.json": "9208146919120370beef49f2b7f1b58e15dd236024650dd2937e58b5ea569450"
+  },
+  "anchor_adaptations": [
+    {
+      "route": "final.shielded-gap-precedence",
+      "previous": {
+        "source": "tools/compact-rust-backend/src/recorded.rs",
+        "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+        "baseline_occurrences": 3
+      },
+      "current": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate {",
+          "occurrences": 2
+        },
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate\n        && circuit.actions.is_empty()",
+          "occurrences": 1
+        }
+      ],
+      "reason": "Remove only retired guarded Struct flag from existing assembly and diagnostic precedence; exact signed whole-owner reconstruction authenticates all surrounding code."
+    }
+  ]
+}

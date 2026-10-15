@@ -44,7 +44,24 @@ pub(super) fn coin(nonce: u8, value: u128) -> types::ShieldedCoinInfo {
     }
 }
 
+fn validate_source_ir(bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+    let expected: serde_json::Value =
+        serde_json::from_str(compact_rust_shielded_receive_oracle_fixture::RETAINED_IR)?;
+    let actual: serde_json::Value = serde_json::from_slice(bytes)?;
+    if actual != expected {
+        return Err("shielded receive source/proof IR mismatch".into());
+    }
+    Ok(())
+}
+
+/// Bind the complete source, including the renamed export and helper bodies,
+/// before any of the receive scenarios reads deployment or proving artifacts.
+pub(super) fn ensure_source_artifacts(root: &Path) -> Result<(), Box<dyn Error>> {
+    validate_source_ir(&std::fs::read(root.join("contract/compact-rust-ir.json"))?)
+}
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    ensure_source_artifacts(root)?;
     let mut rng = StdRng::seed_from_u64(0x0195_0000);
     let initial = contract::initial_state(ConstructorContext::new(()))?;
     let deploy = make_deploy(
@@ -181,4 +198,83 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         "receiveShielded: zero and wide call proofs verified; zero contract output applied with separate Dust; external wallet input rejected by exact policy"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod source_pairing_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    const SWAPPED_IR: &[u8] =
+        include_bytes!("../../compact-rust-backend/tests/shielded-send-schema20-ir.json");
+    fn altered_renamed_export() -> Vec<u8> {
+        let mut ir: serde_json::Value =
+            serde_json::from_str(compact_rust_shielded_receive_oracle_fixture::RETAINED_IR)
+                .unwrap();
+        let renamed = ir["stateful_circuits"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|circuit| circuit["name"] == "accept_renamed")
+            .unwrap();
+        renamed["name"] = "changed_renamed_export".into();
+        serde_json::to_vec(&ir).unwrap()
+    }
+    #[test]
+    fn full_receive_source_pairing_rejects_swapped_or_mutated_ir() {
+        let source = compact_rust_shielded_receive_oracle_fixture::RETAINED_IR;
+        validate_source_ir(source.as_bytes()).unwrap();
+        let formatted: serde_json::Value = serde_json::from_str(source).unwrap();
+        validate_source_ir(&serde_json::to_vec(&formatted).unwrap()).unwrap();
+        let altered = altered_renamed_export();
+        for invalid in [SWAPPED_IR, altered.as_slice(), b"{}", b"not JSON"] {
+            assert!(validate_source_ir(invalid).is_err());
+        }
+    }
+
+    struct ArtifactRoot(std::path::PathBuf);
+    impl ArtifactRoot {
+        fn new(ir: &[u8]) -> Self {
+            static NEXT: AtomicU64 = AtomicU64::new(0);
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let root = std::env::temp_dir().join(format!(
+                "compact-receive-source-pairing-{}-{nonce}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            std::fs::create_dir(&root).unwrap();
+            std::fs::create_dir(root.join("contract")).unwrap();
+            std::fs::write(root.join("contract/compact-rust-ir.json"), ir).unwrap();
+            Self(root)
+        }
+    }
+    impl Drop for ArtifactRoot {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    #[test]
+    fn every_receive_entry_rejects_source_mismatch_before_deployment_or_keys() {
+        type Entry = fn(&Path) -> Result<(), Box<dyn Error>>;
+        let entries: [Entry; 3] = [
+            run,
+            crate::wallet_funded_receive::run,
+            crate::wallet_funded_receive::run_observational,
+        ];
+        let altered = altered_renamed_export();
+        for invalid in [SWAPPED_IR, altered.as_slice()] {
+            let root = ArtifactRoot::new(invalid);
+            assert!(!root.0.join("keys").exists());
+            for entry in entries {
+                let error = entry(&root.0).unwrap_err();
+                assert_eq!(
+                    error.to_string(),
+                    "shielded receive source/proof IR mismatch"
+                );
+            }
+        }
+    }
 }

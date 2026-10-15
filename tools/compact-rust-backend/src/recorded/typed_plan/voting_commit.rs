@@ -279,7 +279,7 @@ pub(super) fn lower<'a>(
     if !zero_user_target(recipient, pure) || !plan.pure_value(recipient, &mut HashSet::new()) {
         return None;
     }
-    plan.counter_hash_helpers = true;
+    plan.admission.counter_hash_helpers = true;
     let scope = circuit
         .parameters
         .iter()
@@ -299,21 +299,21 @@ pub(super) fn lower<'a>(
     for action in &circuit.actions {
         plan.action(action, &scope, &mut steps)?;
     }
-    (plan.witness_calls == 4
-        && plan.cell_reads == 1
-        && plan.cell_writes == 0
-        && plan.counter_reads == 2
-        && plan.scalar_counter_reads == 2
-        && plan.counter_writes == 0
-        && plan.counter_comparisons == 0
-        && plan.tree_writes == 1
-        && plan.set_writes == 1
-        && plan.qualified_cell_writes == 0
-        && plan.qualified_set_writes == 0
-        && plan.zswap_inputs == 1
-        && plan.zswap_outputs == 3
-        && plan.intent_queries == 6
-        && plan.kernel_self_reads == 3)
+    (plan.evidence.witness_calls == 4
+        && plan.evidence.cell_reads == 1
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.counter_reads == 2
+        && plan.evidence.scalar_counter_reads == 2
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.tree_writes == 1
+        && plan.evidence.set_writes == 1
+        && plan.evidence.qualified_cell_writes == 0
+        && plan.evidence.qualified_set_writes == 0
+        && plan.evidence.zswap_inputs == 1
+        && plan.evidence.zswap_outputs == 3
+        && plan.evidence.intent_queries == 6
+        && plan.evidence.kernel_self_reads == 3)
         .then_some(TypedPlan {
             steps,
             result: syn::parse_quote!(()),

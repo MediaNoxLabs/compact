@@ -1,0 +1,124 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "items",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "list",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "witness_ledger_list.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "first_is_42",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "witness_ledger_list.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "prepend",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "list_push_front",
+          "field": "items",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "witness_ledger_list.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "name": "drop_first",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "list_pop_front",
+          "field": "items",
+          "index": 0
+        }
+      ],
+      "source": {
+        "file": "witness_ledger_list.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "private_first_is_42",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "witness_call",
+          "name": "first_is_42",
+          "arguments": [
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "witness_ledger_list.compact",
+        "line": 30,
+        "column": 1
+      }
+    }
+  ]
+}

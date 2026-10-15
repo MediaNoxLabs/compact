@@ -15,10 +15,12 @@
 //! Checked-price funding followed by a shielded mint. Admission composes the
 //! received-coin provenance audit; evaluation and scopes remain in shared Plan.
 use super::*;
+#[cfg(test)]
 use crate::coin_shapes::shielded_coin_type;
 
 pub(super) const PRODUCT: &str = "340282366920938463426481119284349108225";
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -81,19 +83,19 @@ pub(super) fn lower<'a>(
     // Structural totals include the unselected conditional self-receive claim
     // in the mint helper, while runtime evaluation preserves lazy branching.
     (result.ty == circuit.result
-        && plan.witness_calls == 0
-        && plan.cell_reads == 3
-        && plan.cell_writes == 1
-        && plan.qualified_cell_writes == 2
-        && plan.kernel_self_reads == 6
-        && plan.zswap_inputs == 2
-        && plan.zswap_outputs == 3
-        && plan.intent_queries == 8
-        && plan.counter_reads == 0
-        && plan.counter_writes == 0
-        && plan.counter_comparisons == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0)
+        && plan.evidence.witness_calls == 0
+        && plan.evidence.cell_reads == 3
+        && plan.evidence.cell_writes == 1
+        && plan.evidence.qualified_cell_writes == 2
+        && plan.evidence.kernel_self_reads == 6
+        && plan.evidence.zswap_inputs == 2
+        && plan.evidence.zswap_outputs == 3
+        && plan.evidence.intent_queries == 8
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: result.value,
@@ -115,7 +117,7 @@ impl Plan<'_> {
             expression,
             &[(domain.ty, domain.value), (amount.ty, amount.value)],
         )?;
-        self.intent_queries += usize::from(effect.public_query);
+        self.evidence.intent_queries += usize::from(effect.public_query);
         steps.push(effect.statement);
         self.bind(syn::parse_quote!(()), Type::Unit, steps)
     }

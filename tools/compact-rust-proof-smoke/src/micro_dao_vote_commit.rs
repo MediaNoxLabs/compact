@@ -44,6 +44,12 @@ fn compact_coin(coin: runtime::ledger::CoinInfo) -> types::ShieldedCoinInfo {
     }
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Bind the entire source fixture before any key reads or deployment setup.
+    // This checks input pairing; it does not authenticate key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_test_center_micro_dao_fixture::RETAINED_IR,
+    )?;
     for (ballot, round) in [(true, 0), (false, u64::MAX)] {
         run_case(root, ballot, round)?;
     }
@@ -105,8 +111,8 @@ fn run_case(root: &Path, ballot: bool, round: u64) -> Result<(), Box<dyn Error>>
     let ledger = fees.ledger.clone();
     assert_eq!(ledger.zswap.first_free, 2);
     let wallet = midnight_zswap::local::State::<DefaultDB>::new()
-        .apply(&keys, &padding_offer)
-        .apply(&keys, &wallet_offer);
+        .apply(&keys, &padding_offer)?
+        .apply(&keys, &wallet_offer)?;
     assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
     let (_, wallet_input) = wallet.spend(&mut rng, &keys, &coin.qualify(1), Some(1))?;
     assert_eq!(

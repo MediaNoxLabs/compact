@@ -29,7 +29,7 @@ use sha2::{Digest, Sha256};
 use toml_edit::{DocumentMut, Item};
 
 /// Current minimum Rust version of generated consumers and their runtime pair.
-pub const RUST_VERSION: &str = "1.88";
+pub const RUST_VERSION: &str = "1.89";
 
 /// Version boundaries are independent: a milestone is not a package or ABI version.
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
@@ -46,6 +46,15 @@ pub struct Compatibility {
     pub macros_package: String,
     pub macros_version: String,
     pub ledger_dependencies: BTreeMap<String, String>,
+    pub ledger_git_sources: BTreeMap<String, GitSource>,
+}
+
+/// Exact official source required in addition to the package version.
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct GitSource {
+    pub git: String,
+    pub rev: String,
 }
 
 /// Compiler-owned requirements, included in both packaged and Nix backend builds.
@@ -148,6 +157,7 @@ fn dependency_entry(
     label: &str,
     version: &str,
     path: Option<&str>,
+    source: Option<&GitSource>,
 ) -> Result<(), Box<dyn Error>> {
     let actual = item.and_then(|item| {
         item.as_str()
@@ -167,7 +177,24 @@ fn dependency_entry(
     if selected_path != path {
         return Err(mismatch(&format!("{label}.path"), selected_path, path));
     }
-    for key in ["git", "registry", "registry-index", "package", "workspace"] {
+    for (key, expected) in [
+        ("git", source.map(|s| s.git.as_str())),
+        ("rev", source.map(|s| s.rev.as_str())),
+    ] {
+        let selected = item.and_then(|item| item.get(key));
+        if selected.and_then(Item::as_str) != expected || (selected.is_some() && expected.is_none())
+        {
+            return Err(mismatch(&format!("{label}.{key}"), selected, expected));
+        }
+    }
+    for key in [
+        "branch",
+        "tag",
+        "registry",
+        "registry-index",
+        "package",
+        "workspace",
+    ] {
         if item.and_then(|item| item.get(key)).is_some() {
             return Err(format!(
                 "Rust runtime compatibility: {label}.{key} override is unsupported"
@@ -219,7 +246,13 @@ fn dependency_table(
         } else {
             format!("{entry} (package {resolved})")
         };
-        dependency_entry(Some(item), &diagnostic, &version, path)?;
+        dependency_entry(
+            Some(item),
+            &diagnostic,
+            &version,
+            path,
+            required.ledger_git_sources.get(resolved),
+        )?;
     }
     Ok(())
 }
@@ -365,6 +398,7 @@ pub fn validate_root(root: &Path) -> Result<ValidatedRuntime, Box<dyn Error>> {
         &format!("runtime-rs.dependencies.{}", required.macros_package),
         &format!("={}", required.macros_version),
         Some("../runtime-rs-macros"),
+        None,
     )?;
     for (name, version) in &required.ledger_dependencies {
         dependency_entry(
@@ -372,6 +406,7 @@ pub fn validate_root(root: &Path) -> Result<ValidatedRuntime, Box<dyn Error>> {
             &format!("runtime-rs.dependencies.{name}"),
             version,
             None,
+            required.ledger_git_sources.get(name),
         )?;
     }
     declared_dependencies(&runtime, "runtime-rs", &required)?;

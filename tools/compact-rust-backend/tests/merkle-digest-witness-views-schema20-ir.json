@@ -1,0 +1,90 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "plain",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "unsigned",
+          "max": "255"
+        }
+      },
+      "source": {
+        "file": "merkle_digest_witness_views.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "historic",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "historic_merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "unsigned",
+          "max": "255"
+        }
+      },
+      "source": {
+        "file": "merkle_digest_witness_views.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "flag",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "merkle_digest_witness_views.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "read_flag",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "witness_call",
+          "name": "flag",
+          "arguments": [
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "merkle_digest_witness_views.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ]
+}

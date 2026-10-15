@@ -1,0 +1,926 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_internal_interfaces.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "trace",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_internal_interfaces.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "touch",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "opaque_bytes"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "opaque_bytes"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "field"
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "input"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_2",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_2"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "witness_call",
+            "name": "trace",
+            "arguments": [
+            ]
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_internal_interfaces.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "project",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "opaque_bytes"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Piece",
+        "fields": [
+          {
+            "name": "bytes",
+            "ty": {
+              "kind": "opaque_bytes"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Piece",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "opaque_bytes"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "tuple_index",
+              "value": {
+                "kind": "parameter",
+                "name": "input"
+              },
+              "index": 0
+            },
+            {
+              "kind": "tuple_index",
+              "value": {
+                "kind": "parameter",
+                "name": "input"
+              },
+              "index": 11
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_1",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_1"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "witness_call",
+            "name": "trace",
+            "arguments": [
+            ]
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_internal_interfaces.compact",
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Result",
+        "fields": [
+          {
+            "name": "chosen",
+            "ty": {
+              "kind": "opaque_bytes"
+            }
+          },
+          {
+            "name": "original",
+            "ty": {
+              "kind": "opaque_bytes"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "initial",
+              "ty": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "opaque_bytes"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  }
+                ]
+              },
+              "value": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "parameter",
+                    "name": "input"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "1"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "2"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "3"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "4"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "5"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "6"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "7"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "8"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "9"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "10"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "11"
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "kept",
+                "ty": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "opaque_bytes"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "field"
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "touch",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "initial"
+                      },
+                      "ty": {
+                        "kind": "tuple",
+                        "elements": [
+                          {
+                            "kind": "opaque_bytes"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "chosen",
+                  "ty": {
+                    "kind": "tuple",
+                    "elements": [
+                      {
+                        "kind": "opaque_bytes"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      },
+                      {
+                        "kind": "field"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "selected"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "call",
+                        "name": "touch",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "kept"
+                            },
+                            "ty": {
+                              "kind": "tuple",
+                              "elements": [
+                                {
+                                  "kind": "opaque_bytes"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                },
+                                {
+                                  "kind": "field"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "ty": {
+                        "kind": "tuple",
+                        "elements": [
+                          {
+                            "kind": "opaque_bytes"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          }
+                        ]
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "kept"
+                      },
+                      "ty": {
+                        "kind": "tuple",
+                        "elements": [
+                          {
+                            "kind": "opaque_bytes"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          },
+                          {
+                            "kind": "field"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Piece",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "opaque_bytes"
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "field"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "call",
+                      "name": "project",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "chosen"
+                          },
+                          "ty": {
+                            "kind": "tuple",
+                            "elements": [
+                              {
+                                "kind": "opaque_bytes"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              },
+                              {
+                                "kind": "field"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "body": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Result",
+                    "fields": [
+                      {
+                        "name": "chosen",
+                        "ty": {
+                          "kind": "opaque_bytes"
+                        }
+                      },
+                      {
+                        "name": "original",
+                        "ty": {
+                          "kind": "opaque_bytes"
+                        }
+                      },
+                      {
+                        "name": "value",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "value"
+                      },
+                      "field": "bytes",
+                      "index": 0
+                    },
+                    {
+                      "kind": "tuple_index",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "kept"
+                      },
+                      "index": 0
+                    },
+                    {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "value"
+                      },
+                      "field": "value",
+                      "index": 1
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_internal_interfaces.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ]
+}

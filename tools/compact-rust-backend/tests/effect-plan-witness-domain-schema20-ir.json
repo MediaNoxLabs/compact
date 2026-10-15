@@ -1,0 +1,585 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "marker",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "blob",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "opaque_bytes"
+        }
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "bytes",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "opaque_bytes"
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "vector",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "vector",
+        "length": 2,
+        "element": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "tuple",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field"
+          },
+          {
+            "kind": "boolean"
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "wide",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "1461501637330902918203684832716283019655932542975"
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "packet",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Packet",
+        "fields": [
+          {
+            "name": "first",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "values",
+            "ty": {
+              "kind": "vector",
+              "length": 2,
+              "element": {
+                "kind": "field"
+              }
+            }
+          },
+          {
+            "name": "pair",
+            "ty": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "field"
+                },
+                {
+                  "kind": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "large",
+            "ty": {
+              "kind": "unsigned",
+              "max": "1461501637330902918203684832716283019655932542975"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 12,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "effectful",
+        "body": {
+          "kind": "sequence",
+          "actions": [
+            {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_15",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "field_literal",
+                    "value": "1"
+                  }
+                }
+              ],
+              "action": {
+                "kind": "cell_write",
+                "field": "marker",
+                "index": 0,
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_15"
+                }
+              }
+            }
+          ],
+          "result": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "payload",
+                "ty": {
+                  "kind": "opaque_bytes"
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "bytes",
+                  "arguments": [
+                  ]
+                }
+              }
+            ],
+            "result": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "cell_write",
+                  "field": "blob",
+                  "index": 1,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "payload"
+                  }
+                }
+              ],
+              "result": {
+                "kind": "conditional",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "values",
+                      "ty": {
+                        "kind": "vector",
+                        "length": 2,
+                        "element": {
+                          "kind": "field"
+                        }
+                      },
+                      "value": {
+                        "kind": "witness_call",
+                        "name": "vector",
+                        "arguments": [
+                        ]
+                      }
+                    }
+                  ],
+                  "result": {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "pair",
+                        "ty": {
+                          "kind": "tuple",
+                          "elements": [
+                            {
+                              "kind": "field"
+                            },
+                            {
+                              "kind": "boolean"
+                            }
+                          ]
+                        },
+                        "value": {
+                          "kind": "witness_call",
+                          "name": "tuple",
+                          "arguments": [
+                          ]
+                        }
+                      }
+                    ],
+                    "result": {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "large",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "1461501637330902918203684832716283019655932542975"
+                          },
+                          "value": {
+                            "kind": "witness_call",
+                            "name": "wide",
+                            "arguments": [
+                            ]
+                          }
+                        }
+                      ],
+                      "result": {
+                        "kind": "let",
+                        "bindings": [
+                          {
+                            "name": "object",
+                            "ty": {
+                              "kind": "struct",
+                              "name": "Packet",
+                              "fields": [
+                                {
+                                  "name": "first",
+                                  "ty": {
+                                    "kind": "field"
+                                  }
+                                },
+                                {
+                                  "name": "values",
+                                  "ty": {
+                                    "kind": "vector",
+                                    "length": 2,
+                                    "element": {
+                                      "kind": "field"
+                                    }
+                                  }
+                                },
+                                {
+                                  "name": "pair",
+                                  "ty": {
+                                    "kind": "tuple",
+                                    "elements": [
+                                      {
+                                        "kind": "field"
+                                      },
+                                      {
+                                        "kind": "boolean"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "large",
+                                  "ty": {
+                                    "kind": "unsigned",
+                                    "max": "1461501637330902918203684832716283019655932542975"
+                                  }
+                                }
+                              ]
+                            },
+                            "value": {
+                              "kind": "witness_call",
+                              "name": "packet",
+                              "arguments": [
+                              ]
+                            }
+                          }
+                        ],
+                        "result": {
+                          "kind": "sequence",
+                          "actions": [
+                            {
+                              "kind": "let",
+                              "bindings": [
+                                {
+                                  "name": "tmp_16",
+                                  "ty": {
+                                    "kind": "field"
+                                  },
+                                  "value": {
+                                    "kind": "transient_hash",
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "values"
+                                    }
+                                  }
+                                }
+                              ],
+                              "action": {
+                                "kind": "cell_write",
+                                "field": "marker",
+                                "index": 0,
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "tmp_16"
+                                }
+                              }
+                            }
+                          ],
+                          "result": {
+                            "kind": "conditional",
+                            "condition": {
+                              "kind": "if",
+                              "condition": {
+                                "kind": "if",
+                                "condition": {
+                                  "kind": "if",
+                                  "condition": {
+                                    "kind": "equal",
+                                    "left": {
+                                      "kind": "parameter",
+                                      "name": "payload"
+                                    },
+                                    "right": {
+                                      "kind": "parameter",
+                                      "name": "payload"
+                                    }
+                                  },
+                                  "then": {
+                                    "kind": "equal",
+                                    "left": {
+                                      "kind": "parameter",
+                                      "name": "values"
+                                    },
+                                    "right": {
+                                      "kind": "parameter",
+                                      "name": "values"
+                                    }
+                                  },
+                                  "otherwise": {
+                                    "kind": "boolean",
+                                    "value": false
+                                  }
+                                },
+                                "then": {
+                                  "kind": "equal",
+                                  "left": {
+                                    "kind": "parameter",
+                                    "name": "pair"
+                                  },
+                                  "right": {
+                                    "kind": "struct_field",
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "object"
+                                    },
+                                    "field": "pair",
+                                    "index": 2
+                                  }
+                                },
+                                "otherwise": {
+                                  "kind": "boolean",
+                                  "value": false
+                                }
+                              },
+                              "then": {
+                                "kind": "equal",
+                                "left": {
+                                  "kind": "parameter",
+                                  "name": "large"
+                                },
+                                "right": {
+                                  "kind": "struct_field",
+                                  "value": {
+                                    "kind": "parameter",
+                                    "name": "object"
+                                  },
+                                  "field": "large",
+                                  "index": 3
+                                }
+                              },
+                              "otherwise": {
+                                "kind": "boolean",
+                                "value": false
+                              }
+                            },
+                            "then": {
+                              "kind": "value",
+                              "value": {
+                                "kind": "equal",
+                                "left": {
+                                  "kind": "parameter",
+                                  "name": "object"
+                                },
+                                "right": {
+                                  "kind": "parameter",
+                                  "name": "object"
+                                }
+                              }
+                            },
+                            "otherwise": {
+                              "kind": "value",
+                              "value": {
+                                "kind": "boolean",
+                                "value": false
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "otherwise": {
+                  "kind": "value",
+                  "value": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "payload"
+                    },
+                    "right": {
+                      "kind": "parameter",
+                      "name": "payload"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_witness_domain.compact",
+        "line": 14,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_13",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "marker",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_13"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_14",
+            "ty": {
+              "kind": "opaque_bytes"
+            },
+            "value": {
+              "kind": "default",
+              "ty": {
+                "kind": "opaque_bytes"
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "blob",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_14"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_witness_domain.compact",
+      "line": 13,
+      "column": 1
+    }
+  }
+}

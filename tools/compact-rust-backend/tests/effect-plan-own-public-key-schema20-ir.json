@@ -1,0 +1,479 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_own_public_key.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "mark",
+      "parameters": [
+        {
+          "name": "step",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_own_public_key.compact",
+        "line": 13,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Result",
+        "fields": [
+          {
+            "name": "first",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "second",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "before",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "middle",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "after",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "mark",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "255"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "255"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "first",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "selected"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "native_witness_call",
+                      "builtin": "own_public_key"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ZswapCoinPublicKey",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "default",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "ZswapCoinPublicKey",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ZswapCoinPublicKey",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "middle",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "mark",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "255"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "255"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "body": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "second",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ZswapCoinPublicKey",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "selected"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "native_witness_call",
+                          "builtin": "own_public_key"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "ZswapCoinPublicKey",
+                          "fields": [
+                            {
+                              "name": "bytes",
+                              "ty": {
+                                "kind": "bytes",
+                                "length": 32
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "default",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ZswapCoinPublicKey",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "ZswapCoinPublicKey",
+                          "fields": [
+                            {
+                              "name": "bytes",
+                              "ty": {
+                                "kind": "bytes",
+                                "length": 32
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ],
+                "body": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "after",
+                      "ty": {
+                        "kind": "field"
+                      },
+                      "value": {
+                        "kind": "witness_call",
+                        "name": "mark",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "3",
+                              "max": "255"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "255"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "body": {
+                    "kind": "struct_literal",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Result",
+                      "fields": [
+                        {
+                          "name": "first",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ZswapCoinPublicKey",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "second",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ZswapCoinPublicKey",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "before",
+                          "ty": {
+                            "kind": "field"
+                          }
+                        },
+                        {
+                          "name": "middle",
+                          "ty": {
+                            "kind": "field"
+                          }
+                        },
+                        {
+                          "name": "after",
+                          "ty": {
+                            "kind": "field"
+                          }
+                        }
+                      ]
+                    },
+                    "fields": [
+                      {
+                        "kind": "parameter",
+                        "name": "first"
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "second"
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "middle"
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "after"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_5",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_5"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_own_public_key.compact",
+        "line": 14,
+        "column": 1
+      }
+    }
+  ]
+}

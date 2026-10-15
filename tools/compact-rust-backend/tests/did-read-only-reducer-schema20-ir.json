@@ -1,0 +1,428 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "active",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "contract.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "id": "methods",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Method",
+          "fields": [
+            {
+              "name": "verificationPoint",
+              "ty": {
+                "kind": "jubjub_point"
+              }
+            },
+            {
+              "name": "marker",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "contract.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "admitted",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "contract.compact",
+        "line": 30,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "verifyLocal",
+      "parameters": [
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "actual",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "witness_call",
+            "name": "admitted",
+            "arguments": [
+            ]
+          },
+          "message": "witness denied"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "jubjub_point_x",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              }
+            },
+            "right": {
+              "kind": "jubjub_point_x",
+              "value": {
+                "kind": "parameter",
+                "name": "actual"
+              }
+            }
+          },
+          "message": "wrong point"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "jubjub_point_y",
+              "value": {
+                "kind": "parameter",
+                "name": "expected"
+              }
+            },
+            "right": {
+              "kind": "jubjub_point_y",
+              "value": {
+                "kind": "parameter",
+                "name": "actual"
+              }
+            }
+          },
+          "message": "wrong point"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "contract.compact",
+        "line": 32,
+        "column": 1
+      }
+    },
+    {
+      "name": "verify",
+      "parameters": [
+        {
+          "name": "id",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "expected",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "sequence",
+          "actions": [
+            {
+              "kind": "assert",
+              "condition": {
+                "kind": "cell_read",
+                "field": "active",
+                "index": 0
+              },
+              "message": "inactive"
+            },
+            {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "key",
+                  "ty": {
+                    "kind": "opaque_string"
+                  },
+                  "value": {
+                    "kind": "parameter",
+                    "name": "id"
+                  }
+                }
+              ],
+              "action": {
+                "kind": "sequence",
+                "actions": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "map_member",
+                      "field": "methods",
+                      "index": 1,
+                      "key": {
+                        "kind": "parameter",
+                        "name": "key"
+                      }
+                    },
+                    "message": "missing"
+                  },
+                  {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "method",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Method",
+                          "fields": [
+                            {
+                              "name": "verificationPoint",
+                              "ty": {
+                                "kind": "jubjub_point"
+                              }
+                            },
+                            {
+                              "name": "marker",
+                              "ty": {
+                                "kind": "opaque_string"
+                              }
+                            }
+                          ]
+                        },
+                        "value": {
+                          "kind": "map_lookup",
+                          "field": "methods",
+                          "index": 1,
+                          "key": {
+                            "kind": "parameter",
+                            "name": "key"
+                          }
+                        }
+                      }
+                    ],
+                    "action": {
+                      "kind": "circuit_call",
+                      "name": "verifyLocal",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "expected"
+                          },
+                          "ty": {
+                            "kind": "jubjub_point"
+                          }
+                        },
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "struct_field",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "method"
+                            },
+                            "field": "verificationPoint",
+                            "index": 0
+                          },
+                          "ty": {
+                            "kind": "jubjub_point"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "contract.compact",
+        "line": 38,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "initialId",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      {
+        "name": "initialKey",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "cell_write",
+            "field": "active",
+            "index": 0,
+            "value": {
+              "kind": "boolean",
+              "value": true
+            }
+          },
+          {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "id",
+                "ty": {
+                  "kind": "opaque_string"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "initialId"
+                }
+              }
+            ],
+            "step": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_9",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Method",
+                    "fields": [
+                      {
+                        "name": "verificationPoint",
+                        "ty": {
+                          "kind": "jubjub_point"
+                        }
+                      },
+                      {
+                        "name": "marker",
+                        "ty": {
+                          "kind": "opaque_string"
+                        }
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "struct_literal",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Method",
+                      "fields": [
+                        {
+                          "name": "verificationPoint",
+                          "ty": {
+                            "kind": "jubjub_point"
+                          }
+                        },
+                        {
+                          "name": "marker",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        }
+                      ]
+                    },
+                    "fields": [
+                      {
+                        "kind": "parameter",
+                        "name": "initialKey"
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "id"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "step": {
+                "kind": "map_insert",
+                "field": "methods",
+                "index": 1,
+                "key": {
+                  "kind": "parameter",
+                  "name": "id"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_9"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "source": {
+      "file": "contract.compact",
+      "line": 24,
+      "column": 1
+    }
+  }
+}

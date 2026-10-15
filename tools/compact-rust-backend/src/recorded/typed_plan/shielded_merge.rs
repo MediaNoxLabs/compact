@@ -26,6 +26,10 @@ pub(super) const SUM: &str = "680564733841876926926749214863536422911";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Inputs {
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "retained historical merge admission oracle")
+    )]
     HistoricalPair,
     ReceivedRight,
 }
@@ -127,6 +131,7 @@ pub(super) fn received_helper(
         )
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -199,27 +204,27 @@ pub(super) fn lower<'a>(
         plan.action(action, &scope, &mut steps)?;
     }
     let received = usize::from(inputs == Inputs::ReceivedRight);
-    if plan.kernel_self_reads != received
-        || plan.zswap_outputs != received
-        || plan.zswap_inputs != 0
-        || plan.intent_queries != received
+    if plan.evidence.kernel_self_reads != received
+        || plan.evidence.zswap_outputs != received
+        || plan.evidence.zswap_inputs != 0
+        || plan.evidence.intent_queries != received
     {
         return None;
     }
     let result = plan.expression(value, &scope, &mut steps)?;
     (result.ty == circuit.result
-        && plan.kernel_self_reads == 1 + received
-        && plan.zswap_inputs == 2
-        && plan.zswap_outputs == 1 + received
-        && plan.intent_queries == 4 + received
-        && plan.witness_calls == 0
-        && plan.cell_reads == 0
-        && plan.cell_writes == 0
-        && plan.counter_reads == 0
-        && plan.counter_comparisons == 0
-        && plan.counter_writes == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0)
+        && plan.evidence.kernel_self_reads == 1 + received
+        && plan.evidence.zswap_inputs == 2
+        && plan.evidence.zswap_outputs == 1 + received
+        && plan.evidence.intent_queries == 4 + received
+        && plan.evidence.witness_calls == 0
+        && plan.evidence.cell_reads == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: result.value,

@@ -158,6 +158,35 @@
                      (set! ctr (add1 ctr)))])]
               [(topaque ,opaque-type) (void)]
               [else (internal-errorf 'print-zkir "Unboundable type ~s" ir)]))
+          ;; ZKIR v2 curve gates are unconditional and decode their point
+          ;; operands even when the source call is inactive. Guarded inputs
+          ;; must remain zero for transcript constraints; normalize only these
+          ;; computational operands to the subgroup identity (0, 1).
+          (define (guard-point-operands name test args)
+            (define (select-coordinate actual inactive)
+              ;; literal can allocate an index, so resolve it before capturing
+              ;; the result index of this single-output cond_select gate.
+              (let ([inactive (literal inactive)])
+                (print-gate "cond_select" `[bit ,test] `[a ,actual] `[b ,inactive])
+                (let ([index ctr])
+                  (set! ctr (add1 ctr))
+                  index)))
+            (define (point x y)
+              (let* ([x (select-coordinate x 0)]
+                     [y (select-coordinate y 1)])
+                (list x y)))
+            (if (equal? test (hashtable-ref literal-ht 1 #f))
+                args
+                (case name
+                  [(ecAdd)
+                   (assert (= (length args) 4))
+                   (let* ([a (point (car args) (cadr args))]
+                          [b (point (caddr args) (cadddr args))])
+                     (append a b))]
+                  [(ecMul)
+                   (assert (= (length args) 3))
+                   (append (point (car args) (cadr args)) (cddr args))]
+                  [else args])))
           (define std-circuits
             (let ([ht (make-hashtable symbol-hash eq?)])
               (define (register-handler! name handler)
@@ -374,7 +403,9 @@
                [(builtin-circuit)
                 (cond
                   [(hashtable-ref std-circuits (cadr pair) #f) =>
-                   (lambda (handler) (apply handler src (cddr pair) var-name* triv*))]
+                   (lambda (handler)
+                     (apply handler src (cddr pair) var-name*
+                       (guard-point-operands (cadr pair) test triv*)))]
                   [else (source-errorf src "unrecognized native circuit ~a" (cadr pair))])]
                [(witness)
                 (for-each

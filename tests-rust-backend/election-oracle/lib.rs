@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct LeafPreimage {
         pub domain_sep: ::midnight_compact_runtime::FixedBytes<6>,
@@ -40,6 +41,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Maybe {
         pub is_some: ::core::primitive::bool,
@@ -53,6 +55,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct MaybeCompact1 {
         pub is_some: ::core::primitive::bool,
@@ -66,6 +69,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
         ::midnight_compact_runtime::CompactMerkleTreeDigest,
     )]
     pub struct MerkleTreeDigest {
@@ -79,6 +83,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
         ::midnight_compact_runtime::CompactMerklePath,
     )]
     pub struct MerkleTreePath {
@@ -93,6 +98,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
         ::midnight_compact_runtime::CompactMerklePathEntry,
     )]
     pub struct MerkleTreePathEntry {
@@ -108,6 +114,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum PermissibleVotes {
         yes,
@@ -122,6 +129,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum PrivateState {
         initial,
@@ -137,6 +145,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum PublicState {
         setup,
@@ -148,7 +157,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -289,7 +298,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -486,17 +495,19 @@ pub mod ledger_contract {
         __compact_constructor_param_0: runtime::FixedBytes<32>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let __compact_constructor_value_0 = __compact_constructor_param_0;
+        runtime::ledger::CellValue::validate_cell_value(&__compact_constructor_value_0)?;
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                __compact_constructor_value_0,
-            ),
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
+                runtime::FixedBytes<32>,
+                runtime::ledger::DefaultDB,
+            >(__compact_constructor_value_0)?,
+            runtime::ledger::try_constructor_cell::<
                 crate::types::PublicState,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<crate::types::Maybe, runtime::ledger::DefaultDB>(
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<crate::types::Maybe, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_merkle_tree(10u8),
@@ -1010,126 +1021,118 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0): (_, crate::types::PublicState) =
+            let __compact_effect_0: crate::types::PermissibleVotes = __compact_param_0;
+            let (frame, __compact_effect_1): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            let __compact_plan_1: crate::types::PublicState = crate::types::PublicState::commit;
-            let __compact_plan_2: bool = __compact_plan_0 == __compact_plan_1;
-            let (frame, __compact_plan_7): (_, bool) = if __compact_plan_2 {
-                let (frame, __compact_plan_3): (_, crate::types::PrivateState) = frame
+            let __compact_effect_2: crate::types::PublicState = crate::types::PublicState::commit;
+            let __compact_effect_3: bool = __compact_effect_1 == __compact_effect_2;
+            let (frame, __compact_effect_8): (_, bool) = if __compact_effect_3 {
+                let (frame, __compact_effect_4): (_, crate::types::PrivateState) = frame
                     .try_witness_metered(|context, meter| {
                         witnesses.private_state(context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }))
                     })?;
-                let __compact_plan_4: crate::types::PrivateState =
+                let __compact_effect_5: crate::types::PrivateState =
                     crate::types::PrivateState::initial;
-                let __compact_plan_5: bool = __compact_plan_3 == __compact_plan_4;
-                (frame, __compact_plan_5)
+                let __compact_effect_6: bool = __compact_effect_4 == __compact_effect_5;
+                (frame, __compact_effect_6)
             } else {
-                let __compact_plan_6: bool = false;
-                (frame, __compact_plan_6)
+                let __compact_effect_7: bool = false;
+                (frame, __compact_effect_7)
             };
-            if !__compact_plan_7 {
+            if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "In illegal state for committing".to_owned(),
                 ));
             }
-            let __compact_plan_8: crate::types::PermissibleVotes = __compact_param_0;
-            let (frame, __compact_plan_9): (_, ()) =
+            let __compact_effect_9: () = ();
+            let (frame, __compact_effect_10): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_vote_record(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_8,
+                        __compact_effect_0,
                     )
                 })?;
-            let (frame, __compact_plan_10): (_, runtime::FixedBytes<32>) = frame
+            let (frame, __compact_effect_11): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_plan_11: runtime::FixedBytes<32> = __compact_plan_10;
-            let __compact_plan_12: runtime::FixedBytes<32> = __compact_plan_11;
-            let __compact_plan_13: runtime::FixedBytes<32> =
-                crate::pure_circuits::commitment_nullifier(__compact_plan_12)?;
-            let __compact_plan_14: runtime::FixedBytes<32> = __compact_plan_13;
-            let (frame, __compact_plan_15): (_, bool) =
-                crate::ledger_slots::committed.record_member(frame, __compact_plan_14)?;
-            let (frame, __compact_plan_18): (_, bool) = if __compact_plan_15 {
-                let __compact_plan_16: bool = false;
-                (frame, __compact_plan_16)
+            let __compact_effect_12: runtime::FixedBytes<32> =
+                crate::pure_circuits::commitment_nullifier(__compact_effect_11)?;
+            let (frame, __compact_effect_13): (_, bool) =
+                crate::ledger_slots::committed.record_member(frame, __compact_effect_12)?;
+            let (frame, __compact_effect_16): (_, bool) = if __compact_effect_13 {
+                let __compact_effect_14: bool = false;
+                (frame, __compact_effect_14)
             } else {
-                let __compact_plan_17: bool = true;
-                (frame, __compact_plan_17)
+                let __compact_effect_15: bool = true;
+                (frame, __compact_effect_15)
             };
-            if !__compact_plan_18 {
+            if !__compact_effect_16 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Unexpected attempt to double use of nullifier".to_owned(),
                 ));
             }
-            let __compact_plan_19: runtime::FixedBytes<32> = __compact_plan_11;
-            let __compact_plan_20: runtime::FixedBytes<32> =
-                crate::pure_circuits::public_key(__compact_plan_19)?;
-            let __compact_plan_21: runtime::FixedBytes<32> = __compact_plan_20;
-            let __compact_plan_22: runtime::FixedBytes<32> = __compact_plan_21;
-            let (frame, __compact_plan_23): (_, crate::types::MaybeCompact1) = frame
+            let __compact_effect_17: () = ();
+            let __compact_effect_18: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_11)?;
+            let (frame, __compact_effect_19): (_, crate::types::MaybeCompact1) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.context_eligible_voters_path_of(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_22,
+                        __compact_effect_18,
                     )
                 })?;
-            let __compact_plan_24: crate::types::MaybeCompact1 = __compact_plan_23;
-            let __compact_plan_25: bool = ((__compact_plan_24).clone()).is_some;
-            let (frame, __compact_plan_32): (_, bool) = if __compact_plan_25 {
-                let __compact_plan_26: crate::types::MerkleTreePath =
-                    (((__compact_plan_24).clone()).value).clone();
-                let __compact_plan_27: crate::types::MerkleTreePath = __compact_plan_26;
-                let __compact_plan_28: crate::types::MerkleTreeDigest =
-                    crate::pure_circuits::merkleTreePathRoot(__compact_plan_27)?;
-                let __compact_plan_29: crate::types::MerkleTreeDigest = __compact_plan_28;
-                let (frame, __compact_plan_30): (_, bool) = crate::ledger_slots::eligible_voters
-                    .record_check_root(frame, (__compact_plan_29).clone())?;
-                (frame, __compact_plan_30)
+            let __compact_effect_20: bool = __compact_effect_19.is_some;
+            let (frame, __compact_effect_25): (_, bool) = if __compact_effect_20 {
+                let __compact_effect_21: crate::types::MerkleTreePath =
+                    (__compact_effect_19.value).clone();
+                let __compact_effect_22: crate::types::MerkleTreeDigest =
+                    crate::pure_circuits::merkleTreePathRoot((__compact_effect_21).clone())?;
+                let (frame, __compact_effect_23): (_, bool) = crate::ledger_slots::eligible_voters
+                    .record_check_root(frame, (__compact_effect_22).clone())?;
+                (frame, __compact_effect_23)
             } else {
-                let __compact_plan_31: bool = false;
-                (frame, __compact_plan_31)
+                let __compact_effect_24: bool = false;
+                (frame, __compact_effect_24)
             };
-            let (frame, __compact_plan_37): (_, bool) = if __compact_plan_32 {
-                let __compact_plan_33: crate::types::MerkleTreePath =
-                    (((__compact_plan_24).clone()).value).clone();
-                let __compact_plan_34: runtime::FixedBytes<32> = (__compact_plan_33).leaf;
-                let __compact_plan_35: bool = __compact_plan_21 == __compact_plan_34;
-                (frame, __compact_plan_35)
+            let (frame, __compact_effect_30): (_, bool) = if __compact_effect_25 {
+                let __compact_effect_26: crate::types::MerkleTreePath =
+                    (__compact_effect_19.value).clone();
+                let __compact_effect_27: runtime::FixedBytes<32> = __compact_effect_26.leaf;
+                let __compact_effect_28: bool = __compact_effect_18 == __compact_effect_27;
+                (frame, __compact_effect_28)
             } else {
-                let __compact_plan_36: bool = false;
-                (frame, __compact_plan_36)
+                let __compact_effect_29: bool = false;
+                (frame, __compact_effect_29)
             };
-            if !__compact_plan_37 {
+            if !__compact_effect_30 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to vote without authorization - need to add-voter".to_owned(),
                 ));
             }
-            let __compact_plan_38: crate::types::PermissibleVotes = __compact_param_0;
-            let __compact_plan_39: runtime::FixedBytes<32> =
-                crate::pure_circuits::ballot_repr(__compact_plan_38)?;
-            let __compact_plan_40: runtime::FixedBytes<32> = __compact_plan_39;
-            let __compact_plan_41: runtime::FixedBytes<32> = __compact_plan_11;
-            let __compact_plan_42: runtime::FixedBytes<32> =
-                crate::pure_circuits::commit_with_sk(__compact_plan_40, __compact_plan_41)?;
-            let __compact_plan_43: runtime::FixedBytes<32> = __compact_plan_42;
+            let __compact_effect_31: () = ();
+            let __compact_effect_32: runtime::FixedBytes<32> =
+                crate::pure_circuits::ballot_repr(__compact_effect_0)?;
+            let __compact_effect_33: runtime::FixedBytes<32> =
+                crate::pure_circuits::commit_with_sk(__compact_effect_32, __compact_effect_11)?;
             let frame =
-                crate::ledger_slots::committed_votes.record_insert(frame, __compact_plan_43)?;
-            let frame = crate::ledger_slots::committed.record_insert(frame, __compact_plan_14)?;
-            let (frame, __compact_plan_44): (_, ()) =
+                crate::ledger_slots::committed_votes.record_insert(frame, __compact_effect_33)?;
+            let __compact_effect_34: () = ();
+            let frame = crate::ledger_slots::committed.record_insert(frame, __compact_effect_12)?;
+            let __compact_effect_35: () = ();
+            let (frame, __compact_effect_36): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_state_advance(context.witness_context_with(
                         super::LedgerView {
@@ -1138,7 +1141,8 @@ pub mod ledger_contract {
                         },
                     ))
                 })?;
-            Ok(frame.finish(()))
+            let __compact_effect_37: () = ();
+            Ok(frame.finish(__compact_effect_37))
         }
         pub fn vote_reveal<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1146,141 +1150,129 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0): (_, crate::types::PublicState) =
+            let (frame, __compact_effect_0): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            let __compact_plan_1: crate::types::PublicState = crate::types::PublicState::reveal;
-            let __compact_plan_2: bool = __compact_plan_0 == __compact_plan_1;
-            let (frame, __compact_plan_7): (_, bool) = if __compact_plan_2 {
-                let (frame, __compact_plan_3): (_, crate::types::PrivateState) = frame
+            let __compact_effect_1: crate::types::PublicState = crate::types::PublicState::reveal;
+            let __compact_effect_2: bool = __compact_effect_0 == __compact_effect_1;
+            let (frame, __compact_effect_7): (_, bool) = if __compact_effect_2 {
+                let (frame, __compact_effect_3): (_, crate::types::PrivateState) = frame
                     .try_witness_metered(|context, meter| {
                         witnesses.private_state(context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }))
                     })?;
-                let __compact_plan_4: crate::types::PrivateState =
+                let __compact_effect_4: crate::types::PrivateState =
                     crate::types::PrivateState::committed;
-                let __compact_plan_5: bool = __compact_plan_3 == __compact_plan_4;
-                (frame, __compact_plan_5)
+                let __compact_effect_5: bool = __compact_effect_3 == __compact_effect_4;
+                (frame, __compact_effect_5)
             } else {
-                let __compact_plan_6: bool = false;
-                (frame, __compact_plan_6)
+                let __compact_effect_6: bool = false;
+                (frame, __compact_effect_6)
             };
-            if !__compact_plan_7 {
+            if !__compact_effect_7 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "In illegal state for revealing".to_owned(),
                 ));
             }
-            let (frame, __compact_plan_8): (_, runtime::FixedBytes<32>) = frame
+            let __compact_effect_8: () = ();
+            let (frame, __compact_effect_9): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_plan_9: runtime::FixedBytes<32> = __compact_plan_8;
-            let __compact_plan_10: runtime::FixedBytes<32> = __compact_plan_9;
-            let __compact_plan_11: runtime::FixedBytes<32> =
-                crate::pure_circuits::reveal_nullifier(__compact_plan_10)?;
-            let __compact_plan_12: runtime::FixedBytes<32> = __compact_plan_11;
-            let (frame, __compact_plan_13): (_, bool) =
-                crate::ledger_slots::revealed.record_member(frame, __compact_plan_12)?;
-            let (frame, __compact_plan_16): (_, bool) = if __compact_plan_13 {
-                let __compact_plan_14: bool = false;
-                (frame, __compact_plan_14)
+            let __compact_effect_10: runtime::FixedBytes<32> =
+                crate::pure_circuits::reveal_nullifier(__compact_effect_9)?;
+            let (frame, __compact_effect_11): (_, bool) =
+                crate::ledger_slots::revealed.record_member(frame, __compact_effect_10)?;
+            let (frame, __compact_effect_14): (_, bool) = if __compact_effect_11 {
+                let __compact_effect_12: bool = false;
+                (frame, __compact_effect_12)
             } else {
-                let __compact_plan_15: bool = true;
-                (frame, __compact_plan_15)
+                let __compact_effect_13: bool = true;
+                (frame, __compact_effect_13)
             };
-            if !__compact_plan_16 {
+            if !__compact_effect_14 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to double vote".to_owned(),
                 ));
             }
-            let (frame, __compact_plan_17): (_, crate::types::PermissibleVotes) = frame
+            let __compact_effect_15: () = ();
+            let (frame, __compact_effect_16): (_, crate::types::PermissibleVotes) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_vote(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_plan_18: crate::types::PermissibleVotes = __compact_plan_17;
-            let __compact_plan_19: crate::types::PermissibleVotes = __compact_plan_18;
-            let __compact_plan_20: runtime::FixedBytes<32> =
-                crate::pure_circuits::ballot_repr(__compact_plan_19)?;
-            let __compact_plan_21: runtime::FixedBytes<32> = __compact_plan_20;
-            let __compact_plan_22: runtime::FixedBytes<32> = __compact_plan_9;
-            let __compact_plan_23: runtime::FixedBytes<32> =
-                crate::pure_circuits::commit_with_sk(__compact_plan_21, __compact_plan_22)?;
-            let __compact_plan_24: runtime::FixedBytes<32> = __compact_plan_23;
-            let __compact_plan_25: runtime::FixedBytes<32> = __compact_plan_24;
-            let (frame, __compact_plan_26): (_, crate::types::MaybeCompact1) = frame
+            let __compact_effect_17: runtime::FixedBytes<32> =
+                crate::pure_circuits::ballot_repr(__compact_effect_16)?;
+            let __compact_effect_18: runtime::FixedBytes<32> =
+                crate::pure_circuits::commit_with_sk(__compact_effect_17, __compact_effect_9)?;
+            let (frame, __compact_effect_19): (_, crate::types::MaybeCompact1) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.context_committed_votes_path_of(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_25,
+                        __compact_effect_18,
                     )
                 })?;
-            let __compact_plan_27: crate::types::MaybeCompact1 = __compact_plan_26;
-            let __compact_plan_28: bool = ((__compact_plan_27).clone()).is_some;
-            let (frame, __compact_plan_35): (_, bool) = if __compact_plan_28 {
-                let __compact_plan_29: crate::types::MerkleTreePath =
-                    (((__compact_plan_27).clone()).value).clone();
-                let __compact_plan_30: crate::types::MerkleTreePath = __compact_plan_29;
-                let __compact_plan_31: crate::types::MerkleTreeDigest =
-                    crate::pure_circuits::merkleTreePathRoot(__compact_plan_30)?;
-                let __compact_plan_32: crate::types::MerkleTreeDigest = __compact_plan_31;
-                let (frame, __compact_plan_33): (_, bool) = crate::ledger_slots::committed_votes
-                    .record_check_root(frame, (__compact_plan_32).clone())?;
-                (frame, __compact_plan_33)
+            let __compact_effect_20: bool = __compact_effect_19.is_some;
+            let (frame, __compact_effect_25): (_, bool) = if __compact_effect_20 {
+                let __compact_effect_21: crate::types::MerkleTreePath =
+                    (__compact_effect_19.value).clone();
+                let __compact_effect_22: crate::types::MerkleTreeDigest =
+                    crate::pure_circuits::merkleTreePathRoot((__compact_effect_21).clone())?;
+                let (frame, __compact_effect_23): (_, bool) = crate::ledger_slots::committed_votes
+                    .record_check_root(frame, (__compact_effect_22).clone())?;
+                (frame, __compact_effect_23)
             } else {
-                let __compact_plan_34: bool = false;
-                (frame, __compact_plan_34)
+                let __compact_effect_24: bool = false;
+                (frame, __compact_effect_24)
             };
-            let (frame, __compact_plan_40): (_, bool) = if __compact_plan_35 {
-                let __compact_plan_36: crate::types::MerkleTreePath =
-                    (((__compact_plan_27).clone()).value).clone();
-                let __compact_plan_37: runtime::FixedBytes<32> = (__compact_plan_36).leaf;
-                let __compact_plan_38: bool = __compact_plan_24 == __compact_plan_37;
-                (frame, __compact_plan_38)
+            let (frame, __compact_effect_30): (_, bool) = if __compact_effect_25 {
+                let __compact_effect_26: crate::types::MerkleTreePath =
+                    (__compact_effect_19.value).clone();
+                let __compact_effect_27: runtime::FixedBytes<32> = __compact_effect_26.leaf;
+                let __compact_effect_28: bool = __compact_effect_18 == __compact_effect_27;
+                (frame, __compact_effect_28)
             } else {
-                let __compact_plan_39: bool = false;
-                (frame, __compact_plan_39)
+                let __compact_effect_29: bool = false;
+                (frame, __compact_effect_29)
             };
-            if !__compact_plan_40 {
+            if !__compact_effect_30 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to reveal incorrectly".to_owned(),
                 ));
             }
-            let __compact_plan_41: crate::types::PermissibleVotes =
+            let __compact_effect_31: () = ();
+            let __compact_effect_32: crate::types::PermissibleVotes =
                 crate::types::PermissibleVotes::yes;
-            let __compact_plan_42: bool = __compact_plan_18 == __compact_plan_41;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_42 {
-                let __compact_plan_43: runtime::BoundedUint<65535> =
-                    runtime::BoundedUint::<65535>::new(1u128)
-                        .expect("Compact Uint literal fits its maximum");
-                let __compact_plan_44: runtime::BoundedUint<65535> = __compact_plan_43;
+            let __compact_effect_33: bool = __compact_effect_16 == __compact_effect_32;
+            let (frame, __compact_effect_40): (_, ()) = if __compact_effect_33 {
+                let __compact_effect_34: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::tally_yes
-                    .record_increment(frame, (__compact_plan_44).value() as u16)?;
-                frame
+                    .record_increment(frame, (__compact_effect_34).value() as u16)?;
+                let __compact_effect_35: () = ();
+                let __compact_effect_36: () = ();
+                (frame, __compact_effect_36)
             } else {
-                let __compact_plan_45: runtime::BoundedUint<65535> =
-                    runtime::BoundedUint::<65535>::new(1u128)
-                        .expect("Compact Uint literal fits its maximum");
-                let __compact_plan_46: runtime::BoundedUint<65535> = __compact_plan_45;
+                let __compact_effect_37: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::tally_no
-                    .record_increment(frame, (__compact_plan_46).value() as u16)?;
-                frame
+                    .record_increment(frame, (__compact_effect_37).value() as u16)?;
+                let __compact_effect_38: () = ();
+                let __compact_effect_39: () = ();
+                (frame, __compact_effect_39)
             };
-            let frame = crate::ledger_slots::revealed.record_insert(frame, __compact_plan_12)?;
-            let (frame, __compact_plan_47): (_, ()) =
+            let frame = crate::ledger_slots::revealed.record_insert(frame, __compact_effect_10)?;
+            let __compact_effect_41: () = ();
+            let (frame, __compact_effect_42): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_state_advance(context.witness_context_with(
                         super::LedgerView {
@@ -1289,7 +1281,8 @@ pub mod ledger_contract {
                         },
                     ))
                 })?;
-            Ok(frame.finish(()))
+            let __compact_effect_43: () = ();
+            Ok(frame.finish(__compact_effect_43))
         }
         pub fn advance<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1297,35 +1290,41 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+            let (frame, __compact_effect_0): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_authority_hash =
-                crate::pure_circuits::public_key(__compact_authority_secret)?;
-            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+            let __compact_effect_1: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_0)?;
+            let (frame, __compact_effect_2): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::authority.record_read(frame)?;
-            if __compact_authority_hash != __compact_authority {
+            let __compact_effect_3: bool = __compact_effect_1 == __compact_effect_2;
+            if !__compact_effect_3 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to advance state without authorization".to_owned(),
                 ));
             }
-            let (frame, __compact_optional): (_, crate::types::Maybe) =
+            let __compact_effect_4: () = ();
+            let (frame, __compact_effect_5): (_, crate::types::Maybe) =
                 crate::ledger_slots::topic.record_read(frame)?;
-            if !__compact_optional.is_some {
+            let __compact_effect_6: bool = __compact_effect_5.is_some;
+            if !__compact_effect_6 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to start election without a topic".to_owned(),
                 ));
             }
-            let (frame, __compact_phase): (_, crate::types::PublicState) =
+            let __compact_effect_7: () = ();
+            let (frame, __compact_effect_8): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            let __compact_successor: crate::types::PublicState =
-                crate::pure_circuits::successor(__compact_phase)?;
-            let frame = crate::ledger_slots::state.record_write(frame, __compact_successor)?;
-            Ok(frame.finish(()))
+            let __compact_effect_9: crate::types::PublicState =
+                crate::pure_circuits::successor(__compact_effect_8)?;
+            let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_9)?;
+            let __compact_effect_10: () = ();
+            let __compact_effect_11: () = ();
+            Ok(frame.finish(__compact_effect_11))
         }
         pub fn set_topic<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1334,35 +1333,45 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_authority_hash =
-                crate::pure_circuits::public_key(__compact_authority_secret)?;
-            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+            let __compact_effect_2: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_1)?;
+            let (frame, __compact_effect_3): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::authority.record_read(frame)?;
-            if __compact_authority_hash != __compact_authority {
+            let __compact_effect_4: bool = __compact_effect_2 == __compact_effect_3;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to set topic without authorization".to_owned(),
                 ));
             }
-            let (frame, __compact_phase): (_, crate::types::PublicState) =
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_6): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            if __compact_phase != crate::types::PublicState::setup {
+            let __compact_effect_7: crate::types::PublicState = crate::types::PublicState::setup;
+            let __compact_effect_8: bool = __compact_effect_6 == __compact_effect_7;
+            if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to set topic after setup phase".to_owned(),
                 ));
             }
-            let __compact_optional_value: crate::types::Maybe = crate::types::Maybe {
-                is_some: true,
-                value: __compact_param_0.clone(),
+            let __compact_effect_9: () = ();
+            let __compact_effect_10: bool = true;
+            let __compact_effect_11: crate::types::Maybe = crate::types::Maybe {
+                is_some: __compact_effect_10,
+                value: (__compact_effect_0).clone(),
             };
-            let frame = crate::ledger_slots::topic.record_write(frame, __compact_optional_value)?;
-            Ok(frame.finish(()))
+            let frame =
+                crate::ledger_slots::topic.record_write(frame, (__compact_effect_11).clone())?;
+            let __compact_effect_12: () = ();
+            let __compact_effect_13: () = ();
+            Ok(frame.finish(__compact_effect_13))
         }
         pub fn add_voter<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1371,47 +1380,64 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_admission): (_, crate::types::MaybeCompact1) = frame
+            let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, crate::types::MaybeCompact1) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.context_eligible_voters_path_of(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_param_0,
+                        __compact_effect_0,
                     )
                 })?;
-            if __compact_admission.is_some {
+            let __compact_effect_2: bool = __compact_effect_1.is_some;
+            let (frame, __compact_effect_5): (_, bool) = if __compact_effect_2 {
+                let __compact_effect_3: bool = false;
+                (frame, __compact_effect_3)
+            } else {
+                let __compact_effect_4: bool = true;
+                (frame, __compact_effect_4)
+            };
+            if !__compact_effect_5 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to add a voter twice".to_owned(),
                 ));
             }
-            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+            let __compact_effect_6: () = ();
+            let (frame, __compact_effect_7): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }))
                 })?;
-            let __compact_authority_hash =
-                crate::pure_circuits::public_key(__compact_authority_secret)?;
-            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+            let __compact_effect_8: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key(__compact_effect_7)?;
+            let (frame, __compact_effect_9): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::authority.record_read(frame)?;
-            if __compact_authority_hash != __compact_authority {
+            let __compact_effect_10: bool = __compact_effect_8 == __compact_effect_9;
+            if !__compact_effect_10 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to add a voter without authorization".to_owned(),
                 ));
             }
-            let (frame, __compact_phase): (_, crate::types::PublicState) =
+            let __compact_effect_11: () = ();
+            let (frame, __compact_effect_12): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
-            if __compact_phase != crate::types::PublicState::setup {
+            let __compact_effect_13: crate::types::PublicState = crate::types::PublicState::setup;
+            let __compact_effect_14: bool = __compact_effect_12 == __compact_effect_13;
+            if !__compact_effect_14 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Attempted to add a voter after setup phase".to_owned(),
                 ));
             }
+            let __compact_effect_15: () = ();
             let frame =
-                crate::ledger_slots::eligible_voters.record_insert(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::eligible_voters.record_insert(frame, __compact_effect_0)?;
+            let __compact_effect_16: () = ();
+            let __compact_effect_17: () = ();
+            Ok(frame.finish(__compact_effect_17))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -1533,6 +1559,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
+                runtime::ledger::CellValue::validate_cell_value(&t)?;
                 let input = runtime::fab::AlignedValue::from((t).clone());
                 let recorded = self.set_topic(observed.circuit_context(private_state), t)?;
                 Ok(runtime::transaction::RecordedCall::new(

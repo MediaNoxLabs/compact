@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger stored: Bytes<32>;
+export ledger result: Field;
+export struct Receipt { digest: Bytes<32>; hash: Field; commitment: Field; }
+export struct ProductReceipt { hash: Field; commitment: Field; }
+witness opening(value: Field): Field;
+constructor() { stored = default<Bytes<32>>; result = 0; }
+export circuit run(input: Bytes<32>, seed: Field, selected: Boolean): Receipt {
+  stored = disclose(input);
+  const degraded = degradeToTransient(stored);
+  const hashed = transientHash<[Field, Field]>([degraded, seed]);
+  const committed = selected ? transientCommit<Field>(hashed, opening(seed)) : hashed;
+  result = disclose(committed);
+  return Receipt { digest: upgradeFromTransient(result), hash: hashed, commitment: result };
+}
+export circuit products(seed: Field): ProductReceipt {
+  result = disclose(seed);
+  const values: Vector<2, Field> = [seed, seed + 1];
+  return ProductReceipt {
+    hash: transientHash<Vector<2, Field>>(values),
+    commitment: transientCommit<Vector<2, Field>>(values, seed)
+  };
+}

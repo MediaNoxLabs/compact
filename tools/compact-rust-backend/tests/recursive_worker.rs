@@ -221,11 +221,13 @@ fn check_native_nested(family: &str) {
             .iter()
             .find(|c| c.name == "nested")
             .expect("native entry capability");
-        assert!(
-            !entry.recorded,
-            "this native-only result profile must not gain recording support"
+        // Arithmetic and fixed-FAB transient hashes compose, including nested mixtures.
+        let expected_recording = true;
+        assert_eq!(
+            entry.recorded, expected_recording,
+            "family={family}, depth={depth}"
         );
-        assert!(!entry.observed_call);
+        assert_eq!(entry.observed_call, expected_recording);
     }
 }
 

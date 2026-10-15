@@ -242,36 +242,21 @@ struct Checkpoint {
     node_profile: Value,
 }
 fn validate_node_profile(metadata: &Value) -> Result<()> {
-    if text(metadata, "ledgerVersion")? != "8.0.3" {
+    if text(metadata, "ledgerVersion")? != "8.1.3" {
         return Err("unsupported decoder version".into());
     }
-    // Only test fixtures possess a complete reference 8.0.3 state. This
+    // Only test fixtures possess a complete reference 8.1.3 state. This
     // branch does not exist in the acceptance CLI and cannot admit a node.
     #[cfg(test)]
-    if metadata["compatibilityProfile"] == "offline-ledger-8.0.3-fixture"
+    if metadata["compatibilityProfile"] == "offline-ledger-8.1.3-fixture"
         && metadata["compatibilityStatus"] == "offline-not-live"
-        && metadata["nodeLedgerConstraint"] == "=8.0.3"
+        && metadata["nodeLedgerConstraint"] == "=8.1.3"
     {
         return Ok(());
     }
-    let pins = [
-        (
-            "compatibilityProfile",
-            "node-0.22.3/indexer-4.0.1/ledger-8.0.2/codec-8.0.3",
-        ),
-        ("nodeSoftwareVersion", "0.22.3-6f0ef437"),
-        ("indexerVersion", "4.0.1"),
-        ("nodeLedgerConstraint", "=8.0.2"),
-        ("compatibilityStatus", "candidate-live-validation-pending"),
-    ];
-    if pins
-        .iter()
-        .all(|(name, expected)| metadata[*name].as_str() == Some(*expected))
-    {
-        Ok(())
-    } else {
-        Err("unsupported node/codec profile; explicit compatibility review required".into())
-    }
+    // The retained node-0.22.3/indexer-4.0.1/ledger-8.0.2/codec-8.0.3
+    // pairing is historical, not evidence for the new decoder.
+    Err("unsupported node/codec profile; ledger 8.1.3 live validation required".into())
 }
 
 fn checkpoint(v: &Value, network: &str) -> Result<Checkpoint> {
@@ -627,7 +612,7 @@ fn execute(action: &str, request: &Value, output: &Path, now: u64) -> Result<()>
             artifacts.insert(name.clone(), json!(hash(&fs::read(root.join(name))?)));
         }
     }
-    let receipt = json!({"format":FORMAT,"kind":"action-result","action":action,"networkId":network,"addressHex":hex::encode(address.0.0),"contractAddress":contract_address,"transaction":transaction,"guaranteedOffer":guaranteed,"offerFingerprint":{"guaranteed":guaranteed.as_ref().map(|v|v["sha256"].clone()),"fallible":[]},"coin":result_coin,"checkpointSha256":checkpoint_hash,"policy":if action=="deploy"{"deployment"}else{"trusted-observation"},"artifacts":artifacts,"buildProvenance":provenance,"nodeProfile":node_profile,"ledgerVersion":"8.0.3"});
+    let receipt = json!({"format":FORMAT,"kind":"action-result","action":action,"networkId":network,"addressHex":hex::encode(address.0.0),"contractAddress":contract_address,"transaction":transaction,"guaranteedOffer":guaranteed,"offerFingerprint":{"guaranteed":guaranteed.as_ref().map(|v|v["sha256"].clone()),"fallible":[]},"coin":result_coin,"checkpointSha256":checkpoint_hash,"policy":if action=="deploy"{"deployment"}else{"trusted-observation"},"artifacts":artifacts,"buildProvenance":provenance,"nodeProfile":node_profile,"ledgerVersion":"8.1.3"});
     write_file(
         &output,
         "result.json",

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "issue": 588,
+  "baseline_commit": "d733a098e74a6a5c347ff025ed3dd643ce404720",
+  "claim": "Retire enum-advance organizer into existing checked membership; exact signed source reconstruction and live source checks, not language coverage.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "882395c285a47d78d75f66c673c72d2e20f042776357aa02466b67d014a6d3a6"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "941d41b30b8a7a6a06734bbc087009c700f1ecfae3cb1e21903bf89ae360f8a8"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "6e8c268df7fa1aabb59435cb024001410bc09bb0c2fd54e4243ce701b72ad69e",
+      "current_sha256": "0a3cd656348bf7d973e997d2dcba6b2430b3b7b9cb8bfef2bb3aeab9dea0c34b",
+      "predecessor_reconstruction": [
+        {
+          "current": "use super::RecordingGap;\nuse super::effect_plan;\nuse super::guarded_mutations::{\n    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,\n};\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\n",
+          "previous": "use super::RecordingGap;\nuse super::effect_plan;\nuse super::guarded_mutations::{\n    closed_authorized_enum_advance_steps, closed_organizer_gate_steps,\n    closed_witness_admitted_merkle_insert_steps,\n};\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\n"
+        },
+        {
+          "current": "\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/enum_migration_tests.rs\"]\nmod enum_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/optional_write_migration_tests.rs\"]\n",
+          "previous": "\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/optional_write_migration_tests.rs\"]\n"
+        },
+        {
+          "current": "            )?\n        )\n        .or(record_option!(\n            \"organizer.witness-merkle\",\n            closed_witness_admitted_merkle_insert_steps(\n                circuit,\n",
+          "previous": "            )?\n        )\n        .or(record_option!(\n            \"organizer.enum-advance\",\n            closed_authorized_enum_advance_steps(circuit, ledger_fields, witnesses, pure_circuits,)?\n        ))\n        .or(record_option!(\n            \"organizer.witness-merkle\",\n            closed_witness_admitted_merkle_insert_steps(\n                circuit,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_mutations.rs": {
+      "previous_sha256": "c485b09f021b854baabb721550ea2a507eb6d674d00d04acf755fcf576b7ed53",
+      "current_sha256": "b8692b2df5a44d1ab768150ccdcd18874f4901e404a08e94c7d59b2071dc4c14",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n/// Closed optional-presence gate followed by a pure enum decision tree. Calling\n/// the existing pure emitter keeps enum variant semantics in one implementation.\n#[cfg(test)]\npub(super) fn closed_authorized_enum_advance_steps(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Closed optional-presence gate followed by a pure enum decision tree. Calling\n/// the existing pure emitter keeps enum variant semantics in one implementation.\npub(super) fn closed_authorized_enum_advance_steps(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests.rs": {
+      "previous_sha256": "87e28cb5246b4292692f40ed26fe53ea8b8f07996b70e57719336e88b5223c04",
+      "current_sha256": "4d86ff907d3db89eaccc97a4a565bdf2ef0ae7bce8ebb1800e685a8866adfb3a",
+      "predecessor_reconstruction": [
+        {
+          "current": "    );\n    for (name, owner) in [\n        (\"set_topic\", \"algebra.membership\"),\n        (\"advance\", \"algebra.membership\"),\n        (\"add_voter\", \"organizer.witness-merkle\"),\n    ] {\n        let row = rows\n",
+          "previous": "    );\n    for (name, owner) in [\n        (\"set_topic\", \"algebra.membership\"),\n        (\"advance\", \"organizer.enum-advance\"),\n        (\"add_voter\", \"organizer.witness-merkle\"),\n    ] {\n        let row = rows\n"
+        },
+        {
+          "current": "            .map(|a| a[\"route\"].as_str().unwrap())\n            .collect();\n        assert_eq!(\n            &attempts[..2],\n            &[\"organizer.organizer\", \"organizer.witness-merkle\"]\n        );\n        assert!(!attempts.contains(&\"organizer.optional-write\"));\n        assert!(!attempts.contains(&\"organizer.enum-advance\"));\n        if name == \"set_topic\" {\n            assert_eq!(attempts[2], \"algebra.membership\");\n        }\n    }\n}\n",
+          "previous": "            .map(|a| a[\"route\"].as_str().unwrap())\n            .collect();\n        assert_eq!(\n            &attempts[..3],\n            &[\n                \"organizer.organizer\",\n                \"organizer.enum-advance\",\n                \"organizer.witness-merkle\"\n            ]\n        );\n        assert!(!attempts.contains(&\"organizer.optional-write\"));\n        if name == \"set_topic\" {\n            assert_eq!(attempts[3], \"algebra.membership\");\n        }\n    }\n}\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests.rs": "304c85820d914f04e3c2fbcf601304240d0b439584f3bd70aa07afb1499a5367",
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests/inclusion.rs": "cacce3be380e5dc64263c7bb7ec5ac8800e0662c99064f6e9e326a9678db9a12",
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests/boundaries.rs": "894579e046990ef58ed16a75bcb8a27e6548a68f9c83948b971f30e1fadf3ea6"
+  }
+}

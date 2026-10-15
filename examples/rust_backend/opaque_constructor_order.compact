@@ -1,0 +1,15 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger text: Opaque<"string">;
+export ledger count: Field;
+pure circuit checked(ok: Boolean): Field {
+  assert(ok, "later RHS failed");
+  return 7;
+}
+constructor(value: Opaque<"string">, ok: Boolean) {
+  text = disclose(value);
+  count = disclose(checked(ok));
+}
+export circuit inspect(): Boolean { return text == default<Opaque<"string">>; }

@@ -18,6 +18,16 @@
 set -o errexit
 set -o nounset
 
+case "${COMPACT_ZKIR_MODE:-forge}" in
+  forge|uncached) ;;
+  *) echo "COMPACT_ZKIR_MODE must be forge or uncached" >&2; exit 2 ;;
+esac
+
+# Local circuit tests reuse artifacts; hermetic builders retain uncached qualification.
+if [[ "${COMPACT_ZKIR_MODE:-forge}" == forge && -z "${COMPACT_ZKIR_SHIM:-}" && -z "${NIX_BUILD_TOP:-}" ]]; then
+  exec python3 "$(dirname "$0")/../tools/compact-rust-backend/forge_circuits.py" -- "$BASH" "$0" "$@"
+fi
+
 # on macos chez scheme is usually available as chez on linux as scheme
 if command -v scheme &> /dev/null
 then

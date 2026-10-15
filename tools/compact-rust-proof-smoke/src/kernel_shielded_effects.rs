@@ -37,7 +37,18 @@ impl contract::Witnesses<()> for Witnesses {
     }
 }
 
+fn validate_ir(bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+    let expected: serde_json::Value =
+        serde_json::from_str(compact_rust_kernel_shielded_effects_oracle_fixture::RETAINED_IR)?;
+    let actual: serde_json::Value = serde_json::from_slice(bytes)?;
+    if expected != actual {
+        return Err("original full Kernel source/proof IR mismatch".into());
+    }
+    Ok(())
+}
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    validate_ir(&std::fs::read(root.join("contract/compact-rust-ir.json"))?)?;
     for (name, selected) in [
         ("mint", false),
         ("nullifier", false),
@@ -339,4 +350,23 @@ fn funded_mint(root: &Path) -> Result<(), Box<dyn Error>> {
         "nonzero Kernel mint42 + matching minted output + Night-backed Dust passed default strict validation and ledger application at output index {index}"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn rejects_mismatched_source_before_reading_keys() {
+        let source = compact_rust_kernel_shielded_effects_oracle_fixture::RETAINED_IR;
+        validate_ir(source.as_bytes()).unwrap();
+        let mut altered: serde_json::Value = serde_json::from_str(source).unwrap();
+        altered["stateful_circuits"][0]["name"] = "different".into();
+        assert!(validate_ir(&serde_json::to_vec(&altered).unwrap()).is_err());
+        assert!(
+            validate_ir(include_bytes!(
+                "../../compact-rust-backend/tests/effect-plan-kernel-schema20-ir.json"
+            ))
+            .is_err()
+        );
+    }
 }

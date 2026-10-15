@@ -1,0 +1,11 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+// Retained pending normalization case; intentionally outside the positive gate.
+import CompactStandardLibrary;
+export ledger values: Set<Field>;
+export circuit insert(selected: Boolean, value: Field): Field {
+  if (disclose(selected)) { values.insert(disclose(value)); return 1; }
+  else { return 0; }
+}

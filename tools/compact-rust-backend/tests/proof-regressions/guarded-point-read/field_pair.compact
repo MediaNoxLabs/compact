@@ -1,0 +1,15 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export struct Pair { x: Field; y: Field; }
+export ledger stored: Pair;
+constructor(value: Pair) { stored = disclose(value); }
+export circuit fields(selected: Boolean): Field {
+  if (disclose(selected)) {
+    return stored.x + stored.y;
+  } else {
+    return stored.x * stored.y;
+  }
+}

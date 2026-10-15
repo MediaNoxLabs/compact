@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn invert(value: bool) -> Result<bool, runtime::CompactError> {
         Ok(!(value))
     }
@@ -34,7 +34,7 @@ pub mod pure_circuits {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -178,19 +178,254 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn witnessed_both<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+            __compact_param_1: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let (frame, __compact_effect_2): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_5): (_, bool) = if __compact_effect_2 {
+                let (frame, __compact_effect_3): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.echo(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_1,
+                        )
+                    })?;
+                (frame, __compact_effect_3)
+            } else {
+                let __compact_effect_4: bool = false;
+                (frame, __compact_effect_4)
+            };
+            Ok(frame.finish(__compact_effect_5))
+        }
+        pub fn witnessed_either<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+            __compact_param_1: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let (frame, __compact_effect_2): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_5): (_, bool) = if __compact_effect_2 {
+                let __compact_effect_3: bool = true;
+                (frame, __compact_effect_3)
+            } else {
+                let (frame, __compact_effect_4): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.echo(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_effect_1,
+                        )
+                    })?;
+                (frame, __compact_effect_4)
+            };
+            Ok(frame.finish(__compact_effect_5))
+        }
+        pub fn witnessed_not<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_4): (_, bool) = if __compact_effect_1 {
+                let __compact_effect_2: bool = false;
+                (frame, __compact_effect_2)
+            } else {
+                let __compact_effect_3: bool = true;
+                (frame, __compact_effect_3)
+            };
+            Ok(frame.finish(__compact_effect_4))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn witnessed_both<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                left: bool,
+                right: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                witnessed_both(context, self.witnesses, left, right)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn witnessed_both_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                left: bool,
+                right: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((left, right));
+                let recorded =
+                    self.witnessed_both(observed.circuit_context(private_state), left, right)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "witnessed_both",
+                    input,
+                ))
+            }
+            pub fn witnessed_either<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                left: bool,
+                right: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                witnessed_either(context, self.witnesses, left, right)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn witnessed_either_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                left: bool,
+                right: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((left, right));
+                let recorded =
+                    self.witnessed_either(observed.circuit_context(private_state), left, right)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "witnessed_either",
+                    input,
+                ))
+            }
+            pub fn witnessed_not<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                witnessed_not(context, self.witnesses, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn witnessed_not_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded =
+                    self.witnessed_not(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "witnessed_not",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -225,6 +460,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::witnessed_not(context, &self.witnesses, value)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

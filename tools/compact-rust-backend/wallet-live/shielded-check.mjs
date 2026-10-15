@@ -529,7 +529,7 @@ async function main() {
           indexerVersion: "4.0.1",
           walletSnapshotBytes: Buffer.from(envelope.state, "hex"),
           networkId,
-          ledgerVersion: "8.0.3",
+          ledgerVersion: "8.1.3",
         });
         const out = join(directory, `checkpoint-${++checkpointAttempt}`);
         const { manifestPath } = await writeCheckpoint(out, acquired);

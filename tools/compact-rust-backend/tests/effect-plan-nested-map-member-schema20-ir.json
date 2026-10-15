@@ -1,0 +1,100 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "outer",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "field"
+        },
+        "value": {
+          "kind": "ledger_map",
+          "key": {
+            "kind": "field"
+          },
+          "value": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      },
+      "source": {
+        "file": "effect_plan_nested_map_member.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "member",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Present",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Present",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "map_member",
+              "field": "outer",
+              "index": 0,
+              "key": {
+                "kind": "parameter",
+                "name": "key"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_nested_map_member.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,791 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "plain",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "unsigned",
+          "max": "255"
+        }
+      },
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "historic",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "historic_merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "unsigned",
+          "max": "255"
+        }
+      },
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "append_historic",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_insert",
+          "field": "historic",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "name": "plain_full_value",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "merkle_is_full",
+        "field": "plain",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 16,
+        "column": 1
+      }
+    },
+    {
+      "name": "historic_full_value",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "historic_merkle_is_full",
+        "field": "historic",
+        "index": 1
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "name": "plain_known_value",
+      "parameters": [
+        {
+          "name": "root",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreeDigest",
+            "fields": [
+              {
+                "name": "field",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "merkle_check_root",
+        "field": "plain",
+        "index": 0,
+        "root": {
+          "kind": "parameter",
+          "name": "root"
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "historic_known_value",
+      "parameters": [
+        {
+          "name": "root",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreeDigest",
+            "fields": [
+              {
+                "name": "field",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "historic_merkle_check_root",
+        "field": "historic",
+        "index": 1,
+        "root": {
+          "kind": "parameter",
+          "name": "root"
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "name": "observe",
+      "parameters": [
+        {
+          "name": "root",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreeDigest",
+            "fields": [
+              {
+                "name": "field",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "plain_full",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "historic_full",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "plain_known",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "historic_known",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "plain_full",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "call",
+                "name": "plain_full_value",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "historic_full",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "historic_full_value",
+                  "arguments": [
+                  ]
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "plain_known",
+                  "ty": {
+                    "kind": "boolean"
+                  },
+                  "value": {
+                    "kind": "call",
+                    "name": "plain_known_value",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "root"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "MerkleTreeDigest",
+                          "fields": [
+                            {
+                              "name": "field",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "body": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "historic_known",
+                    "ty": {
+                      "kind": "boolean"
+                    },
+                    "value": {
+                      "kind": "call",
+                      "name": "historic_known_value",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "root"
+                          },
+                          "ty": {
+                            "kind": "struct",
+                            "name": "MerkleTreeDigest",
+                            "fields": [
+                              {
+                                "name": "field",
+                                "ty": {
+                                  "kind": "field"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "body": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Snapshot",
+                    "fields": [
+                      {
+                        "name": "plain_full",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      },
+                      {
+                        "name": "historic_full",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      },
+                      {
+                        "name": "plain_known",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      },
+                      {
+                        "name": "historic_known",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "parameter",
+                      "name": "plain_full"
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "historic_full"
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "plain_known"
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "historic_known"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "root",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreeDigest",
+            "fields": [
+              {
+                "name": "field",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "plain_full",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "historic_full",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "plain_known",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "historic_known",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "call",
+          "name": "observe",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "root"
+              },
+              "ty": {
+                "kind": "struct",
+                "name": "MerkleTreeDigest",
+                "fields": [
+                  {
+                    "name": "field",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "merkle_insert",
+          "field": "plain",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "circuit_call",
+            "name": "append_historic",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "255"
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 27,
+        "column": 1
+      }
+    },
+    {
+      "name": "place",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "index",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "merkle_insert_index",
+          "field": "plain",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          },
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        },
+        {
+          "kind": "historic_merkle_insert_index",
+          "field": "historic",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          },
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 32,
+        "column": 1
+      }
+    },
+    {
+      "name": "hashes",
+      "parameters": [
+        {
+          "name": "hash",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "index",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "merkle_insert_hash",
+          "field": "plain",
+          "index": 0,
+          "hash": {
+            "kind": "parameter",
+            "name": "hash"
+          }
+        },
+        {
+          "kind": "historic_merkle_insert_hash",
+          "field": "historic",
+          "index": 1,
+          "hash": {
+            "kind": "parameter",
+            "name": "hash"
+          }
+        },
+        {
+          "kind": "merkle_insert_hash_index",
+          "field": "plain",
+          "index": 0,
+          "hash": {
+            "kind": "parameter",
+            "name": "hash"
+          },
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        },
+        {
+          "kind": "historic_merkle_insert_hash_index",
+          "field": "historic",
+          "index": 1,
+          "hash": {
+            "kind": "parameter",
+            "name": "hash"
+          },
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 36,
+        "column": 1
+      }
+    },
+    {
+      "name": "defaults",
+      "parameters": [
+        {
+          "name": "index",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "merkle_insert_index_default",
+          "field": "plain",
+          "index": 0,
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        },
+        {
+          "kind": "historic_merkle_insert_index_default",
+          "field": "historic",
+          "index": 1,
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 42,
+        "column": 1
+      }
+    },
+    {
+      "name": "forget",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_reset_history",
+          "field": "historic",
+          "index": 1
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 46,
+        "column": 1
+      }
+    },
+    {
+      "name": "reset",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "merkle_reset_to_default",
+          "field": "plain",
+          "index": 0
+        },
+        {
+          "kind": "historic_merkle_reset_to_default",
+          "field": "historic",
+          "index": 1
+        }
+      ],
+      "source": {
+        "file": "effect_plan_merkle.compact",
+        "line": 47,
+        "column": 1
+      }
+    }
+  ]
+}

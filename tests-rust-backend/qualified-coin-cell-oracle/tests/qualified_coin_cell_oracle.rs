@@ -450,3 +450,215 @@ fn missing_allocation_preflight_is_distinct_from_vm_rejection() {
     assert!(expected["malformed"]["error"].is_string());
     assert_eq!(expected["malformed"]["queryAttempts"], 1);
 }
+
+#[test]
+fn current_generated_qualified_write_and_read_match_manual_frame_at_numeric_boundaries() {
+    for left in [false, true] {
+        for amount in [0, u128::MAX] {
+            for index in [0, u64::MAX] {
+                let mut value = coin();
+                value.value = runtime::BoundedUint::new(amount).unwrap();
+                let mut target = recipient(left);
+                // The unselected carrier is not required to be zero. The selected
+                // recipient alone determines the official commitment allocation.
+                if left {
+                    target.right.bytes = runtime::FixedBytes::new([91; 32]);
+                } else {
+                    target.left.bytes = runtime::FixedBytes::new([92; 32]);
+                    target.right.bytes = runtime::FixedBytes::new([93; 32]);
+                }
+                let mut before = initial();
+                if index != 0 {
+                    let first_coin = coin();
+                    let first_target = recipient(false);
+                    before = ledger_contract::write_coin(
+                        allocated(before, &first_coin, &first_target, 7),
+                        first_coin,
+                        first_target,
+                    )
+                    .unwrap()
+                    .context;
+                }
+                let before_state = before.query.state.get_ref().clone();
+                let make_context = || {
+                    let mut context = initial();
+                    context.query.state = runtime::ledger::ChargedState::new(before_state.clone());
+                    allocated(context, &value, &target, index)
+                };
+                let native =
+                    ledger_contract::write_coin(make_context(), value.clone(), target.clone())
+                        .unwrap();
+                let recorded = ledger_contract::recorded::write_coin(
+                    make_context(),
+                    value.clone(),
+                    target.clone(),
+                )
+                .unwrap();
+                // Assemble independently through the existing typed runtime slot.
+                let (info, destination) = ledger_carriers(&value, &target);
+                let manual =
+                    runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[0])
+                        .record_write_coin(
+                            runtime::recording::RecordingFrame::new(make_context()),
+                            info,
+                            destination,
+                        )
+                        .unwrap()
+                        .finish(());
+                for execution in [&recorded.execution, &manual.execution] {
+                    assert_eq!(
+                        execution.context.query.state.get_ref(),
+                        native.context.query.state.get_ref()
+                    );
+                    assert_eq!(
+                        execution.context.query.effects,
+                        native.context.query.effects
+                    );
+                    assert_eq!(execution.gas_cost, native.gas_cost);
+                    assert_eq!(
+                        execution.private_transcript_outputs,
+                        native.private_transcript_outputs
+                    );
+                    assert!(execution.private_transcript_outputs.is_empty());
+                    assert_eq!(
+                        execution.context.circuit_zswap(),
+                        native.context.circuit_zswap()
+                    );
+                }
+                assert_eq!(
+                    recorded.public.initial_intents(),
+                    recorded.public.final_intents()
+                );
+                assert_eq!(recorded.public.initial().state.get_ref(), &before_state);
+                assert_eq!(
+                    serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+                    serde_json::to_value(manual.public.verify_ops()).unwrap()
+                );
+                let replay = recorded
+                    .public
+                    .initial()
+                    .query(
+                        recorded.public.verify_ops(),
+                        None,
+                        &recorded.execution.context.cost_model,
+                    )
+                    .unwrap();
+                assert_eq!(
+                    replay.context.state.get_ref(),
+                    native.context.query.state.get_ref()
+                );
+                assert_eq!(replay.context.effects, native.context.query.effects);
+                assert_eq!(replay.gas_cost, native.gas_cost);
+
+                let after_state = native.context.query.state.get_ref().clone();
+                let read_context = || {
+                    let mut context = initial();
+                    context.query.state = runtime::ledger::ChargedState::new(after_state.clone());
+                    context
+                };
+                let native_read = ledger_contract::read_coin(read_context()).unwrap();
+                let recorded_read = ledger_contract::recorded::read_coin(read_context()).unwrap();
+                let (frame, manual_value) =
+                    runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[0])
+                        .record_read(runtime::recording::RecordingFrame::new(read_context()))
+                        .unwrap();
+                let manual_read = frame.finish(manual_value);
+                assert_eq!(native_read.result.nonce, value.nonce);
+                assert_eq!(native_read.result.color, value.color);
+                assert_eq!(native_read.result.value.value(), amount);
+                assert_eq!(native_read.result.mt_index.value(), u128::from(index));
+                for execution in [&recorded_read.execution, &manual_read.execution] {
+                    assert_eq!(execution.result, native_read.result);
+                    assert_eq!(
+                        execution.context.query.state.get_ref(),
+                        native_read.context.query.state.get_ref()
+                    );
+                    assert_eq!(
+                        execution.context.query.effects,
+                        native_read.context.query.effects
+                    );
+                    assert_eq!(execution.gas_cost, native_read.gas_cost);
+                    assert_eq!(
+                        execution.private_transcript_outputs,
+                        native_read.private_transcript_outputs
+                    );
+                }
+                assert_eq!(
+                    serde_json::to_value(recorded_read.public.verify_ops()).unwrap(),
+                    serde_json::to_value(manual_read.public.verify_ops()).unwrap()
+                );
+                let replay = recorded_read
+                    .public
+                    .initial()
+                    .query(
+                        recorded_read.public.verify_ops(),
+                        None,
+                        &recorded_read.execution.context.cost_model,
+                    )
+                    .unwrap();
+                assert_eq!(
+                    replay.context.state.get_ref(),
+                    native_read.context.query.state.get_ref()
+                );
+                assert_eq!(replay.context.effects, native_read.context.query.effects);
+                assert_eq!(replay.gas_cost, native_read.gas_cost);
+            }
+        }
+    }
+}
+
+#[test]
+fn current_generated_qualified_write_failures_match_manual_and_preserve_held_state() {
+    for mode in 0..3 {
+        let value = coin();
+        let allocated_target = recipient(false);
+        let mut requested_target = allocated_target.clone();
+        if mode == 1 {
+            requested_target = recipient(true);
+        } else if mode == 2 {
+            requested_target.right.bytes = runtime::FixedBytes::new([19; 32]);
+        }
+        let held = if mode == 0 {
+            initial()
+        } else {
+            allocated(initial(), &value, &allocated_target, 7)
+        }
+        .query;
+        let held_state = held.state.get_ref().clone();
+        let held_effects = held.effects.clone();
+        let context = || {
+            let mut context = initial();
+            context.query = held.clone();
+            context
+        };
+        let native =
+            ledger_contract::write_coin(context(), value.clone(), requested_target.clone())
+                .err()
+                .unwrap();
+        let recorded = ledger_contract::recorded::write_coin(
+            context(),
+            value.clone(),
+            requested_target.clone(),
+        )
+        .err()
+        .unwrap();
+        let (info, destination) = ledger_carriers(&value, &requested_target);
+        let manual = runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[0])
+            .record_write_coin(
+                runtime::recording::RecordingFrame::new(context()),
+                info,
+                destination,
+            )
+            .err()
+            .unwrap();
+        assert!(matches!(
+            native,
+            runtime::CompactError::InvalidLedgerCell(_)
+        ));
+        assert!(native.to_string().contains("Coin commitment not found"));
+        assert_eq!(recorded, native);
+        assert_eq!(manual, native);
+        assert_eq!(held.state.get_ref(), &held_state);
+        assert_eq!(held.effects, held_effects);
+    }
+}

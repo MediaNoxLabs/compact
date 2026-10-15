@@ -27,6 +27,13 @@ import sys
 import tempfile
 import tomllib
 
+import forge_circuits
+
+from target_checks import (
+    application_checks, collection_proofs, intent_checks, native_targets, proof_artifacts,
+    recording_checks, scalar_checks, shared_runtime, shielded,
+)
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
@@ -99,7 +106,8 @@ FIELD_TO_BYTES32_SOURCE = ROOT / "examples/rust_backend/field_to_bytes32_oracle.
 
 
 def run(*arguments: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> None:
-    subprocess.run(arguments, cwd=cwd, env=env, check=True)
+    subprocess.run(forge_circuits.command(arguments, os.environ if env is None else env),
+                   cwd=cwd, env=env, check=True)
 
 
 def check_manifest(output: Path, *, require_zkir: bool = True) -> None:
@@ -537,392 +545,26 @@ def check_chunked_cell_consumer(proof: Path, base: Path) -> None:
 
 
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
-    contracts = []
-    for name, source in (
-        ("counter", SOURCE), ("field_add", PURE_SOURCE),
-        ("cell_boolean", CELL_SOURCE), ("set_oracle", SET_SOURCE),
-        ("map_boolean_field", MAP_BOOLEAN_SOURCE),
-        ("nested_map_oracle", NESTED_MAP_SOURCE),
-        ("list_field", LIST_SOURCE),
-        ("merkle_tree_oracle", MERKLE_SOURCE),
-        ("hmt_insert_oracle", HISTORIC_MERKLE_SOURCE),
-        ("vector_key_adt", VECTOR_KEY_SOURCE),
-    ):
-        output = base / f"shared-{name}"
-        run(
-            compiler, "--target", "rust", "--rust-runtime-root", str(ROOT),
-            "--skip-zk", str(source), str(output),
-        )
-        check_manifest(output, require_zkir=name != "field_add")
-        contract = output / "contract"
-        manifest = tomllib.loads((contract / "Cargo.toml").read_text())
-        assert Path(manifest["dependencies"]["midnight-compact-runtime"]["path"]) == ROOT / "runtime-rs"
-        assert not (contract / "runtime-rs").exists()
-        contracts.append((contract, manifest["package"]["name"]))
-
-    consumer = base / "shared-consumer"
-    consumer.mkdir()
-    (consumer / "tests").mkdir()
-    (consumer / "Cargo.toml").write_text(
-        "[package]\nname = \"compactc-shared-runtime-smoke\"\n"
-        "version = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
-        + "".join(
-            f"{name} = {{ path = {json.dumps(str(contract))} }}\n"
-            for contract, name in contracts
-        )
-        + f'midnight-compact-runtime = {{ path = {json.dumps(str(ROOT / "runtime-rs"))} }}\n'
+    shared_runtime.check(
+        compiler, base, ROOT,
+        (
+            ("counter", SOURCE),
+            ("field_add", PURE_SOURCE),
+            ("cell_boolean", CELL_SOURCE),
+            ("set_oracle", SET_SOURCE),
+            ("map_boolean_field", MAP_BOOLEAN_SOURCE),
+            ("nested_map_oracle", NESTED_MAP_SOURCE),
+            ("list_field", LIST_SOURCE),
+            ("merkle_tree_oracle", MERKLE_SOURCE),
+            ("hmt_insert_oracle", HISTORIC_MERKLE_SOURCE),
+            ("vector_key_adt", VECTOR_KEY_SOURCE),
+        ),
+        assets=ROOT / "tools/compact-rust-backend/consumers/shared_runtime",
+        run=run,
+        execute=subprocess.run,
+        check_manifest=check_manifest,
+        environ=os.environ,
     )
-    (consumer / "tests/both.rs").write_text(
-        "use compact_contract_counter::ledger_contract::{Contract, initial_state};\n"
-        "use compact_contract_cell_boolean::ledger_contract::{Contract as CellContract, initial_state as initial_cell_state};\n"
-        "use compact_contract_field_add::pure_circuits::field_add;\n"
-        "use compact_contract_set_oracle::ledger_contract::{Contract as SetContract, initial_state as initial_set_state};\n"
-        "use compact_contract_map_boolean_field::ledger_contract::{Contract as MapContract, initial_state as initial_map_state};\n"
-        "use compact_contract_nested_map_oracle::ledger_contract::initial_state as initial_nested_map_state;\n"
-        "use compact_contract_list_field::ledger_contract::{Contract as ListContract, initial_state as initial_list_state};\n"
-        "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state as initial_merkle_state;\n"
-        "use compact_contract_hmt_insert_oracle::ledger_contract::initial_state as initial_historic_merkle_state;\n"
-        "use compact_contract_vector_key_adt::ledger_contract::{Contract as VectorContract, initial_state as initial_vector_state};\n"
-        "use midnight_compact_runtime::context::ConstructorContext;\n"
-        "use midnight_compact_runtime::ledger::ContractAddress;\n"
-        "use midnight_compact_runtime::Field;\n"
-        "#[test]\nfn two_generated_contracts_share_one_runtime() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let result = Contract::default().increment(context).unwrap();\n"
-        "    let read = Contract::default().read_round(result.context).unwrap();\n"
-        "    assert_eq!(read.result.value(), 1);\n"
-        "    let cell = initial_cell_state(ConstructorContext::new(())).unwrap();\n"
-        "    let cell_context = cell.into_circuit_context(ContractAddress::default());\n"
-        "    let _: midnight_compact_runtime::slots::CellSlot<bool> = compact_contract_cell_boolean::ledger_slots::flag;\n"
-        "    let cell_call = CellContract::default().recording.set_flag(cell_context).unwrap();\n"
-        "    let cell_replay = cell_call.public.initial().query(\n"
-        "        cell_call.public.verify_ops(), None, &cell_call.execution.context.cost_model,\n"
-        "    ).unwrap();\n"
-        "    assert_eq!(cell_replay.context.effects, cell_call.execution.context.query.effects);\n"
-        "    let set = initial_set_state(ConstructorContext::new(())).unwrap();\n"
-        "    let set_context = set.into_circuit_context(ContractAddress::default());\n"
-        "    let set_step = compact_contract_set_oracle::ledger_slots::s.insert(set_context, Field::from(7_u64)).unwrap();\n"
-        "    let member = compact_contract_set_oracle::ledger_slots::s.member(set_step.context, Field::from(7_u64)).unwrap();\n"
-        "    assert!(member.result);\n"
-        "    let checked = SetContract::default().check(member.context, Field::from(7_u64)).unwrap();\n"
-        "    assert!(compact_contract_set_oracle::runtime::ledger::read_root_cell::<bool, _>(checked.context.query.state.get_ref(), 0).unwrap());\n"
-        "    let map = initial_map_state(ConstructorContext::new(())).unwrap();\n"
-        "    let map_context = map.into_circuit_context(ContractAddress::default());\n"
-        "    let _: midnight_compact_runtime::slots::MapSlot<bool, Field> = compact_contract_map_boolean_field::ledger_slots::table;\n"
-        "    let map_call = MapContract::default().recording.put(map_context, true, Field::from(9_u64)).unwrap();\n"
-        "    let map_replay = map_call.public.initial().query(\n"
-        "        map_call.public.verify_ops(), None, &map_call.execution.context.cost_model,\n"
-        "    ).unwrap();\n"
-        "    assert_eq!(map_replay.context.effects, map_call.execution.context.query.effects);\n"
-        "    let lookup = MapContract::default().recording.get(map_call.execution.context, true).unwrap();\n"
-        "    assert_eq!(lookup.execution.result, Field::from(9_u64));\n"
-        "    let nested = initial_nested_map_state(ConstructorContext::new(())).unwrap();\n"
-        "    let nested_context = nested.into_circuit_context(ContractAddress::default());\n"
-        "    let _: midnight_compact_runtime::slots::MapSlot<Field, midnight_compact_runtime::slots::MapNode<Field, midnight_compact_runtime::BoundedUint<18446744073709551615>>> = compact_contract_nested_map_oracle::ledger_slots::users_by_org;\n"
-        "    let nested_empty = compact_contract_nested_map_oracle::ledger_slots::users_by_org.is_empty(nested_context).unwrap();\n"
-        "    assert!(nested_empty.result);\n"
-        "    let list = initial_list_state(ConstructorContext::new(())).unwrap();\n"
-        "    let list_context = list.into_circuit_context(ContractAddress::default());\n"
-        "    let _: midnight_compact_runtime::slots::ListSlot<Field> = compact_contract_list_field::ledger_slots::items;\n"
-        "    let list_call = ListContract::default().recording.prepend(list_context, Field::from(5_u64)).unwrap();\n"
-        "    let list_replay = list_call.public.initial().query(\n"
-        "        list_call.public.verify_ops(), None, &list_call.execution.context.cost_model,\n"
-        "    ).unwrap();\n"
-        "    assert_eq!(list_replay.context.effects, list_call.execution.context.query.effects);\n"
-        "    let first = ListContract::default().recording.first_item(list_call.execution.context).unwrap();\n"
-        "    assert!(first.execution.result.is_some);\n"
-        "    assert_eq!(first.execution.result.value, Field::from(5_u64));\n"
-        "    let merkle = initial_merkle_state(ConstructorContext::new(())).unwrap();\n"
-        "    let merkle_context = merkle.into_circuit_context(ContractAddress::default());\n"
-        "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, false> = compact_contract_merkle_tree_oracle::ledger_slots::t;\n"
-        "    let merkle_insert = compact_contract_merkle_tree_oracle::ledger_slots::t.insert(merkle_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
-        "    let merkle_full = compact_contract_merkle_tree_oracle::ledger_slots::t.is_full(merkle_insert.context).unwrap();\n"
-        "    assert!(!merkle_full.result);\n"
-        "    let merkle = initial_merkle_state(ConstructorContext::new(())).unwrap();\n"
-        "    let merkle_context = merkle.into_circuit_context(ContractAddress::default());\n"
-        "    let recorded_merkle = compact_contract_merkle_tree_oracle::ledger_contract::recorded::append(merkle_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
-        "    let merkle_replay = recorded_merkle.public.initial().query(recorded_merkle.public.verify_ops(), None, &recorded_merkle.execution.context.cost_model).unwrap();\n"
-        "    assert_eq!(merkle_replay.context.effects, recorded_merkle.execution.context.query.effects);\n"
-        "    let recorded_merkle_full = compact_contract_merkle_tree_oracle::ledger_contract::recorded::full(recorded_merkle.execution.context).unwrap();\n"
-        "    assert!(!recorded_merkle_full.execution.result);\n"
-        "    let merkle_full_replay = recorded_merkle_full.public.initial().query(recorded_merkle_full.public.verify_ops(), None, &recorded_merkle_full.execution.context.cost_model).unwrap();\n"
-        "    assert_eq!(merkle_full_replay.context.effects, recorded_merkle_full.execution.context.query.effects);\n"
-        "    let historic = initial_historic_merkle_state(ConstructorContext::new(())).unwrap();\n"
-        "    let historic_context = historic.into_circuit_context(ContractAddress::default());\n"
-        "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, true> = compact_contract_hmt_insert_oracle::ledger_slots::t;\n"
-        "    let historic_insert = compact_contract_hmt_insert_oracle::ledger_slots::t.insert(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
-        "    let _historic_reset = compact_contract_hmt_insert_oracle::ledger_slots::t.reset_history(historic_insert.context).unwrap();\n"
-        "    let historic = initial_historic_merkle_state(ConstructorContext::new(())).unwrap();\n"
-        "    let historic_context = historic.into_circuit_context(ContractAddress::default());\n"
-        "    let recorded_historic = compact_contract_hmt_insert_oracle::ledger_contract::recorded::append(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
-        "    let historic_replay = recorded_historic.public.initial().query(recorded_historic.public.verify_ops(), None, &recorded_historic.execution.context.cost_model).unwrap();\n"
-        "    assert_eq!(historic_replay.context.effects, recorded_historic.execution.context.query.effects);\n"
-        "    let recorded_historic_full = compact_contract_hmt_insert_oracle::ledger_contract::recorded::full(recorded_historic.execution.context).unwrap();\n"
-        "    assert!(!recorded_historic_full.execution.result);\n"
-        "    let historic_full_replay = recorded_historic_full.public.initial().query(recorded_historic_full.public.verify_ops(), None, &recorded_historic_full.execution.context.cost_model).unwrap();\n"
-        "    assert_eq!(historic_full_replay.context.effects, recorded_historic_full.execution.context.query.effects);\n"
-        "    let vector = initial_vector_state(ConstructorContext::new(())).unwrap();\n"
-        "    let vector_context = vector.into_circuit_context(ContractAddress::default());\n"
-        "    let vector_call = VectorContract::default().recording.setInsert(vector_context).unwrap();\n"
-        "    let vector_replay = vector_call.public.initial().query(vector_call.public.verify_ops(), None, &vector_call.execution.context.cost_model).unwrap();\n"
-        "    assert_eq!(vector_replay.context.effects, vector_call.execution.context.query.effects);\n"
-        "    let vector_member = VectorContract::default().recording.setMember(vector_call.execution.context).unwrap();\n"
-        "    assert!(midnight_compact_runtime::ledger::read_root_cell::<bool, _>(vector_member.execution.context.query.state.get_ref(), 2).unwrap());\n"
-        "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
-        "}\n"
-    )
-    environment = os.environ.copy()
-    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
-    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
-
-    # Check the generated slot type from a separate consumer crate.
-    (consumer / "examples").mkdir()
-    (consumer / "examples/wrong_cell_value.rs").write_text(
-        "use compact_contract_cell_boolean::ledger_contract::initial_state;\n"
-        "use compact_contract_cell_boolean::runtime::context::ConstructorContext;\n"
-        "use compact_contract_cell_boolean::runtime::ledger::ContractAddress;\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_cell_boolean::ledger_slots::flag.write(context, 7_u64);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_cell_value"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong Cell value type unexpectedly compiled"
-    assert "expected `bool`, found `u64`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/wrong_set_element.rs").write_text(
-        "use compact_contract_set_oracle::ledger_contract::initial_state;\n"
-        "use compact_contract_set_oracle::runtime::context::ConstructorContext;\n"
-        "use compact_contract_set_oracle::runtime::ledger::ContractAddress;\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_set_oracle::ledger_slots::s.insert(context, true);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_set_element"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong Set element type unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "found `bool`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/wrong_vector_key.rs").write_text(
-        "use compact_contract_vector_key_adt::ledger_contract::initial_state;\n"
-        "use compact_contract_vector_key_adt::runtime::{context::ConstructorContext, ledger::ContractAddress, recording::RecordingFrame};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let frame = RecordingFrame::new(state.into_circuit_context(ContractAddress::default()));\n"
-        "    let _ = compact_contract_vector_key_adt::ledger_slots::keys.record_insert(frame, [0u8, 1u8]);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_vector_key"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "raw-byte vector key unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "FixedVector" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/nested_map_scalar_lookup.rs").write_text(
-        "use compact_contract_nested_map_oracle::ledger_contract::initial_state;\n"
-        "use compact_contract_nested_map_oracle::runtime::{Field, context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_nested_map_oracle::ledger_slots::users_by_org.lookup(context, Field::from(1_u64));\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "nested_map_scalar_lookup"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "nested Map scalar lookup unexpectedly compiled"
-    assert "lookup" in rejected.stderr and "MapNode" in rejected.stderr, rejected.stderr
-
-
-    (consumer / "examples/wrong_list_element.rs").write_text(
-        "use compact_contract_list_field::ledger_contract::initial_state;\n"
-        "use compact_contract_list_field::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_list_field::ledger_slots::items.push_front(context, true);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_list_element"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong List element type unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "found `bool`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/wrong_map_key.rs").write_text(
-        "use compact_contract_map_boolean_field::ledger_contract::initial_state;\n"
-        "use compact_contract_map_boolean_field::runtime::{Field, context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_map_boolean_field::ledger_slots::table.insert(context, Field::from(1_u64), Field::from(2_u64));\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_map_key"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong Map key type unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "expected `bool`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/wrong_map_value.rs").write_text(
-        "use compact_contract_map_boolean_field::ledger_contract::initial_state;\n"
-        "use compact_contract_map_boolean_field::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_map_boolean_field::ledger_slots::table.insert(context, true, false);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_map_value"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong Map value type unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "found `bool`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/wrong_merkle_leaf.rs").write_text(
-        "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state;\n"
-        "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_merkle_tree_oracle::ledger_slots::t.insert(context, true);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_merkle_leaf"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong Merkle leaf type unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/recorded_merkle_index.rs").write_text(
-        "use compact_contract_merkle_tree_oracle::ledger_contract::recorded;\n"
-        "fn main() { let _ = recorded::place::<()>; }\n"
-    )
-    supported = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "recorded_merkle_index"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert supported.returncode == 0, supported.stderr
-
-    (consumer / "examples/recorded_historic_index.rs").write_text(
-        "use compact_contract_hmt_insert_oracle::ledger_contract::recorded;\n"
-        "fn main() { let _ = recorded::place::<()>; }\n"
-    )
-    supported = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "recorded_historic_index"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert supported.returncode == 0, supported.stderr
-
-    (consumer / "examples/wrong_recorded_historic_leaf.rs").write_text(
-        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"
-        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = recorded::append(context, true);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_recorded_historic_leaf"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong recorded historic leaf unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/recorded_history_reset.rs").write_text(
-        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"
-        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = recorded::forget_history(context).unwrap();\n"
-        "}\n"
-    )
-    run("cargo", "check", "--quiet", "--example", "recorded_history_reset", cwd=consumer,
-        env=environment)
-
-    (consumer / "examples/recorded_historic_tree_reset.rs").write_text(
-        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"
-        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = recorded::reset_tree(context).unwrap();\n"
-        "}\n"
-    )
-    run("cargo", "check", "--quiet", "--example", "recorded_historic_tree_reset", cwd=consumer,
-        env=environment)
-
-    (consumer / "examples/recorded_historic_known.rs").write_text(
-        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded, PublicStateView};\n"
-        "use compact_contract_hmt_insert_oracle::types::MerkleTreeDigest;\n"
-        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let root = PublicStateView::from(state.ledger_state.get_ref()).t().unwrap().root().unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = recorded::known(context, MerkleTreeDigest { field: root.0 }).unwrap();\n"
-        "}\n"
-    )
-    run("cargo", "check", "--quiet", "--example", "recorded_historic_known", cwd=consumer,
-        env=environment)
-
-    (consumer / "examples/wrong_recorded_merkle_leaf.rs").write_text(
-        "use compact_contract_merkle_tree_oracle::ledger_contract::{initial_state, recorded};\n"
-        "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = recorded::append(context, true);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "wrong_recorded_merkle_leaf"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "wrong recorded Merkle leaf unexpectedly compiled"
-    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
-    assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
-
-    (consumer / "examples/plain_merkle_reset_history.rs").write_text(
-        "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state;\n"
-        "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
-        "fn main() {\n"
-        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
-        "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let _ = compact_contract_merkle_tree_oracle::ledger_slots::t.reset_history(context);\n"
-        "}\n"
-    )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "plain_merkle_reset_history"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "plain Merkle history reset unexpectedly compiled"
-    assert "error[E0599]" in rejected.stderr, rejected.stderr
-    assert "MerkleSlot<T, DEPTH, true>" in rejected.stderr, rejected.stderr
 
 
 def check_witness_consumer(compiler: str, base: Path) -> None:
@@ -1256,105 +898,51 @@ def main() -> None:
     # this check runs directly rather than through local_parity_gate.py.
     os.environ.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     compiler = os.environ.get("COMPACTC", "compactc")
-    with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary, \
+            forge_circuits.test_environment(Path(temporary) / "forge"):
         base = Path(temporary)
         if args.witness_composition:
             check_witness_composition(compiler, base)
             return
         if args.stateful_assert:
-            source = ROOT / "examples/rust_backend/stateful_assert_oracle.compact"
-            output = base / "stateful-assert"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"checked", "unit_result"}
-            for row in report["circuits"]:
-                assert row["proof_required"] and row["recorded"] and row["observed_call"]
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-assert"))
-            if args.proof:
-                proof = base / "stateful-assert-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--stateful-assert", str(proof))
-            original = base / "original-dao"
-            run(compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(original))
-            info = json.loads((original / "compiler/contract-info.json").read_text())
-            report = json.loads((original / "contract/rust-capabilities.json").read_text())
-            assert len(info["circuits"]) == 11
-            assert sum(c["proof"] for c in info["circuits"]) == 7
-            assert len(report["circuits"]) == 7
-            assert all(c["proof_required"] for c in report["circuits"])
-            assert {c["name"] for c in report["circuits"] if c["recorded"]} == {"advance", "vote_reveal", "dao_voting_token", "set_topic", "buy_in", "cash_out", "vote_commit"}
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(original / "contract/Cargo.toml"))
-            print("nested stateful assertions admitted; original micro-dao native crate checks, all seven proof-required APIs recorded; advance, vote_reveal, dao_voting_token, set_topic, buy_in, cash_out and vote_commit recorded")
+            recording_checks.check_stateful_assert(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.wide_add:
-            source = ROOT / "examples/rust_backend/wide_add_oracle.compact"
-            output = base / "wide-add"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            generated = (output / "contract/lib.rs").read_text()
-            assert "runtime::add_wide_unsigned" in generated
-            assert "runtime::narrow_wide_uint" in generated
-            assert "RUST_RUNTIME_ABI == 50" in generated
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert len(report["circuits"]) == 1
-            row = report["circuits"][0]
-            assert not row["recorded"] and not row["observed_call"]
-            assert not row["proof_required"] and row["recording_status"] == "not_applicable"
-            original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert original.returncode == 0, original.stderr
-            assert (base / "original-dao/contract/lib.rs").is_file()
-            print("wide addition admitted; original micro-dao emits native Rust")
+            scalar_checks.check_wide_add(
+                compiler, base,
+                root=ROOT,
+                run=run,
+                capture=subprocess.run,
+            )
             return
         if args.transient_receive_send:
-            source = ROOT / "examples/rust_backend/transient_receive_send_oracle.compact"
-            output = base / "transient-receive-send"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
-            info = json.loads((output / "compiler/contract-info.json").read_text())
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {c["name"] for c in info["circuits"] if c["proof"]} == {"receive_then_send"}
-            assert len(report["circuits"]) == 1
-            row = report["circuits"][0]
-            assert row["name"] == "receive_then_send" and row["proof_required"] and row["recorded"] and row["observed_call"]
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/receive_then_send.zkir"), str(output / "keys/receive_then_send.prover"), str(output / "keys/receive_then_send.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--transient-receive-send", str(output))
-            print("unchanged receive/full immediate-send: one proof-required recorded API; optional strict wallet/transient proof")
+            intent_checks.check_transient_receive_send(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.canonical_output_order:
-            source = ROOT / "examples/rust_backend/canonical_output_order_oracle.compact"
-            output = base / "canonical-output-order"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
-            info = json.loads((output / "compiler/contract-info.json").read_text())
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            names = {"distribute", "read_coin"}
-            assert {c["name"] for c in info["circuits"] if c["proof"]} == names
-            assert {c["name"] for c in report["circuits"]} == names
-            assert all(c["proof_required"] and c["recorded"] and c["observed_call"] for c in report["circuits"])
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/distribute.zkir"), str(output / "keys/distribute.prover"), str(output / "keys/distribute.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--canonical-output-order", str(output))
-            print("canonical output source: two proof-required recorded APIs; optional strict proof for both output sort orders")
+            intent_checks.check_canonical_output_order(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.terminal_lexical_return:
-            source = ROOT / "examples/rust_backend/terminal_lexical_return_oracle.compact"
-            output = base / "terminal-lexical-return"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
-            info = json.loads((output / "compiler/contract-info.json").read_text())
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            names = {"two", "three", "echo", "nested", "observed"}
-            assert {c["name"] for c in info["circuits"] if c["proof"]} == names
-            assert {c["name"] for c in report["circuits"]} == names
-            assert all(c["proof_required"] and c["recorded"] and c["observed_call"] for c in report["circuits"])
-            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                for name in ["two", "three", "nested", "observed"]:
-                    run("zkir", "compile", str(output / f"zkir/{name}.zkir"), str(output / f"keys/{name}.prover"), str(output / f"keys/{name}.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--terminal-lexical-return", str(output))
-            print("terminal lexical returns: five proof-required recorded APIs; four new strict Dust proof cases when requested")
+            recording_checks.check_terminal_lexical_return(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.micro_dao_token or args.micro_dao_reveal or args.micro_dao_advance or args.micro_dao_set_topic or args.micro_dao_buy_in or args.micro_dao_cash_out or args.micro_dao_vote_commit:
             source = ROOT / "test-center/test-contracts/micro-dao.compact"
@@ -1377,511 +965,169 @@ def main() -> None:
             print("original microDAO: advance, vote_reveal, dao_voting_token, set_topic, buy_in, cash_out and vote_commit recorded, no proof-required gaps retained")
             return
         if args.composite_zswap:
-            outputs = []
-            for stem, names in [("stateful_struct_oracle", {"snapshot", "reverse", "nested", "planned"}), ("composite_zswap_transfer_oracle", {"transfer"})]:
-                output = base / stem
-                run(compiler, "--target", "rust", "--rust-require-recording", *([] if args.proof else ["--skip-zk"]), str(ROOT / f"examples/rust_backend/{stem}.compact"), str(output))
-                report = json.loads((output / "contract/rust-capabilities.json").read_text())
-                assert {row["name"] for row in report["circuits"]} == names
-                assert all(row["recorded"] and row["observed_call"] and row["proof_required"] for row in report["circuits"])
-                outputs.append(output)
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--composite-zswap", *(str(output) for output in outputs))
-            print("composite Unit intents and same-frame Kernel queries admitted; exact offer policy retained")
+            intent_checks.check_composite_zswap(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.field_observation:
-            source = ROOT / "examples/rust_backend/field_observation_oracle.compact"
-            output = base / "field-observation"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]), str(source), str(output))
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {
-                "direct", "snapshot", "via_field_helper", "via_snapshot_helper",
-                "pair", "selected", "optional"}
-            assert all(row["recorded"] and row["observed_call"] and row["proof_required"]
-                       for row in report["circuits"])
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--field-observation", str(output))
-            print("Field observations compose into typed structs and scoped helpers; empty selected path refuses preparation")
+            recording_checks.check_field_observation(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.stateful_struct:
-            source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
-            output = base / "stateful-struct"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            encoded = json.dumps(ir)
-            assert '"struct_literal"' in encoded and '"witness_call"' in encoded
-            assert '"create_zswap_output"' in encoded and '"kernel_self"' in encoded
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert len(report["circuits"]) == 4
-            for row in report["circuits"]:
-                assert row["recorded"]
-                assert row["observed_call"] == row["recorded"]
-                assert row["proof_required"]
-            strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-struct")], cwd=ROOT, capture_output=True,text=True)
-            assert strict.returncode == 0, strict.stderr
-            if args.proof:
-                proof = base / "stateful-struct-proof"
-                run(compiler,"--target","rust",str(source),str(proof))
-                run("cargo","run","--quiet","-p","compact-rust-proof-smoke","--","--stateful-struct",str(proof))
-            original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert original.returncode == 0, original.stderr
-            assert (base / "original-dao/contract/lib.rs").is_file()
-            print("ordered typed stateful structs admitted; original micro-dao emits native Rust")
+            recording_checks.check_stateful_struct(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
+            )
             return
         if args.kernel_shielded_effects:
-            source = ROOT / "examples/rust_backend/kernel_shielded_effects_oracle.compact"
-            output = base / "kernel-shielded-effects"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            assert [f["id"] for f in ir["ledger_fields"]] == ["marker"]
-            encoded = json.dumps(ir)
-            assert '"kernel_claim"' in encoded and '"kernel_mint_shielded"' in encoded
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert len(report["circuits"]) == 8
-            for row in report["circuits"]:
-                assert row["recorded"] and row["observed_call"]
-                assert row["proof_required"]
-            rejected = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode == 0, rejected.stderr
-            assert (base / "requires-recording/contract/lib.rs").exists()
-            unsupported = base / "unsupported-kernel.compact"
-            unsupported.write_text("import CompactStandardLibrary; export circuit check(): [] { return kernel.checkpoint(); }\n")
-            rejected = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(unsupported), str(base / "unsupported-kernel")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode != 0 and "Kernel operation checkpoint" in rejected.stderr
-            if args.proof:
-                proof = base / "kernel-shielded-effects-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--kernel-shielded-effects", str(proof))
-            print("typed recorded Kernel effects admitted; unsupported operations refused")
+            intent_checks.check_kernel_shielded_effects(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
+            )
             return
         if args.shielded_receive:
-            output = base / "shielded-receive"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]),
-                str(SHIELDED_RECEIVE_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"accept", "accept_renamed"}
-            assert all(row["proof_required"] and row["recorded"] and row["observed_call"]
-                       for row in report["circuits"])
-            rust = (output / "contract/lib.rs").read_text()
-            assert "create_zswap_output" in rust and "CoinReceive" in rust
-            assert "crate::pure_circuits::coinCommitment" in rust
-            if args.proof:
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--shielded-receive", str(output))
-                # Reuse the same source and keys for explicit wallet funding;
-                # keep this default-strict acceptance in the full proof gate.
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--wallet-funded-receive", str(output))
-                # Same keys, additional explicit observation-policy strict proof.
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--observational-receive", str(output))
-            print("unchanged receiveShielded wrappers admitted with ordered output and audited claim")
+            shielded.check_receive(
+                compiler, base, SHIELDED_RECEIVE_SOURCE, proof=args.proof, run=run
+            )
             return
         if args.shielded_merge:
-            output = base / "shielded-merge"
-            source = ROOT / "examples/rust_backend/shielded_merge_oracle.compact"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]), str(source), str(output))
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"merge_qualified", "receive_then_merge"}
-            assert all(row["proof_required"] and row["recorded"] and row["observed_call"] for row in report["circuits"])
-            if args.proof:
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--shielded-merge", str(output))
-            print("unchanged qualified and immediate merge helpers recorded with checked wide arithmetic")
+            shielded.check_merge(
+                compiler, base, ROOT / "examples/rust_backend/shielded_merge_oracle.compact", proof=args.proof, run=run
+            )
             return
         if args.shielded_send:
-            output = base / "shielded-send"
-            run(compiler, "--target", "rust", "--rust-require-recording",
-                *([] if args.proof else ["--skip-zk"]),
-                str(SHIELDED_SEND_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {
-                "send_to_self", "send_to_user", "send_to_contract", "send_forward"}
-            assert all(row["proof_required"] and row["recorded"] and row["observed_call"]
-                       for row in report["circuits"])
-            rust = (output / "contract/lib.rs").read_text()
-            for primitive in ("create_zswap_input", "create_zswap_output", "subtract_unsigned",
-                              "degrade_to_transient", "transient_hash", "upgrade_from_transient"):
-                assert primitive in rust
-            if args.proof:
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--shielded-send", str(output))
-                # Same keys, additional explicit observation-policy strict proof.
-                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
-                    "compact-rust-proof-smoke", "--", "--observational-send", str(output))
-            print("unchanged qualified sendShielded wrappers admitted with ordered intents and typed result")
+            shielded.check_send(
+                compiler, base, SHIELDED_SEND_SOURCE, proof=args.proof, run=run
+            )
             return
         if args.native_zswap_intents:
-            output = base / "native-zswap-intents"
-            source = ROOT / "examples/rust_backend/native_zswap_intents_oracle.compact"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            encoded = json.dumps(ir)
-            assert '"create_zswap_input"' in encoded and '"create_zswap_output"' in encoded
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in report["circuits"]] == [
-                ("produce", False, False, False), ("consume", False, False, False),
-                ("flow", True, True, True), ("witness_order", False, False, False),
-                ("read_coin", True, True, True)]
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "requires-recording"))
-            transfer_source = ROOT / "examples/rust_backend/zswap_transfer_oracle.compact"
-            transfer = base / "zswap-transfer"
-            run(compiler, "--target", "rust", "--rust-require-recording", *([] if args.proof else ["--skip-zk"]), str(transfer_source), str(transfer))
-            transfer_report = json.loads((transfer / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"], row["proof_required"]) for row in transfer_report["circuits"]] == [
-                ("transfer", True, True, True), ("read_coin", True, True, True)]
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--zswap-transfer", str(transfer))
-            print("recorded Zswap intents and exact offer-bound transfer admitted; original duplicate flow remains rejection evidence")
+            intent_checks.check_native_zswap_intents(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.effectful_return:
-            output = base / "effectful-return"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(EFFECTFUL_RETURN_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            circuit, = ir["stateful_circuits"]
-            assert circuit["name"] == "choose" and circuit["actions"] == []
-            returned = circuit["return_value"]
-            assert returned["kind"] == "effectful"
-            outer = returned["body"]
-            assert outer["kind"] == "let"
-            assert [(row["name"], row["value"]["kind"]) for row in outer["bindings"]] == [
-                ("before", "cell_read")]
-            sequence = outer["result"]
-            assert sequence["kind"] == "sequence" and len(sequence["actions"]) == 1
-            branch = sequence["result"]
-            assert branch["kind"] == "conditional"
-            assert branch["condition"]["left"]["kind"] == "cell_read"
-            assert branch["then"]["kind"] == "let"
-            assert branch["then"]["bindings"][0]["name"] == "selected"
-            assert branch["then"]["result"]["actions"][0]["kind"] == "cell_write"
-            assert branch["otherwise"]["kind"] == "let"
-            assert branch["otherwise"]["bindings"][0]["name"] == "offset"
-            assert branch["otherwise"]["result"]["actions"][0]["kind"] == "let"
-            caps = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in caps["circuits"]] == [("choose", True, True)]
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                str(EFFECTFUL_RETURN_SOURCE), str(base / "strict"))
-            for name, source, expected in [
-                ("welcome", TEST_CENTER_WELCOME_SOURCE, 3),
-                ("bboard", TEST_CENTER_BBOARD_SOURCE, 2),
-                ("election", ELECTION_SOURCE, 5),
-            ]:
-                existing = base / name
-                run(compiler, "--target", "rust", "--skip-zk", str(source), str(existing))
-                previous = json.loads((existing / "contract/rust-capabilities.json").read_text())
-                assert len(previous["circuits"]) == expected
-                assert all(row["recorded"] and row["observed_call"] for row in previous["circuits"])
-                existing_ir = json.loads((existing / "contract/compact-rust-ir.json").read_text())
-                assert all(row["return_value"]["kind"] != "effectful"
-                           for row in existing_ir["stateful_circuits"])
-            check_coracle_source(compiler, base)
-            if args.proof:
-                proof = base / "effectful-return-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(EFFECTFUL_RETURN_SOURCE), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--effectful-return", str(proof))
-            print("typed effectful Field returns record selected effects and scoped branch results")
+            recording_checks.check_effectful_return(
+                compiler, base,
+                effectful_return_source=EFFECTFUL_RETURN_SOURCE,
+                test_center_welcome_source=TEST_CENTER_WELCOME_SOURCE,
+                test_center_bboard_source=TEST_CENTER_BBOARD_SOURCE,
+                election_source=ELECTION_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.qualified_coin_cell:
-            output = base / "qualified-coin-cell"
-            source = ROOT / "examples/rust_backend/qualified_coin_cell_oracle.compact"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            action = next(row for row in ir["stateful_circuits"] if row["name"] == "write_coin")["actions"][0]
-            assert action["kind"] == "cell_write_coin"
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            write = next(row for row in report["circuits"] if row["name"] == "write_coin")
-            assert write["recorded"] and write["observed_call"]
-            assert write.get("recording_unavailable") is None
-            run(compiler, "--target", "rust", "--skip-zk", "--rust-require-recording", str(source), str(base / "required"))
-            assert (base / "required/contract/lib.rs").exists()
-            chunked = base / "qualified-coin-cell-chunked"
-            run(compiler, "--target", "rust", "--skip-zk", "--rust-require-recording",
-                str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-cell-chunked.compact"), str(chunked))
-            generated = (chunked / "contract/lib.rs").read_text()
-            assert "&[1u8,14u8]" in "".join(generated.split())
-            assert ".record_write_coin(" in generated
-            chunked_report = json.loads((chunked / "contract/rust-capabilities.json").read_text())
-            chunked_write = next(row for row in chunked_report["circuits"] if row["name"] == "write_coin")
-            assert chunked_write["recorded"] and chunked_write["observed_call"]
-            if args.proof:
-                proof = base / "qualified-coin-cell-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--qualified-coin-cell", str(proof))
-            print("qualified-coin Cell recorded/observed admission passed")
+            intent_checks.check_qualified_coin_cell(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.counter_less_than:
-            output = base / "counter-less-than"
-            command = [compiler, "--target", "rust", "--rust-require-recording"]
-            if not args.proof:
-                command.append("--skip-zk")
-            run(*command, str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            report = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert {row["name"] for row in report["circuits"]} == {"compare", "nested", "short_circuit", "checked"}
-            assert all(row["recorded"] and row["observed_call"] for row in report["circuits"])
-            def kinds(value):
-                if isinstance(value, dict):
-                    yield value.get("kind")
-                    for child in value.values():
-                        yield from kinds(child)
-                elif isinstance(value, list):
-                    for child in value:
-                        yield from kinds(child)
-            assert {"counter_less_than", "counter_read"}.issubset(set(kinds(ir)))
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--counter-less-than", str(output))
-            print("typed Counter less-than target gate passed")
+            scalar_checks.check_counter_less_than(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.literal_bytes_field:
-            run(sys.executable, str(ROOT / "tools/compact-rust-backend/check_literal_bytes_field.py"))
-            if args.proof:
-                output = base / "literal-bytes-field"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(ROOT / "examples/rust_backend/literal_bytes_field_oracle.compact"), str(output))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--literal-bytes-field", str(output))
+            scalar_checks.check_literal_bytes_field(
+                compiler, base,
+                root=ROOT,
+                proof_requested=args.proof,
+                run=run,
+                python_executable=sys.executable,
+            )
             return
         if args.coracle_start:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/start.zkir"), str(output / "keys/start.prover"), str(output / "keys/start.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-start", str(output))
-            print("original Coracle start recorded with exact two-wallet paths; all four proof-required exports have recording APIs")
+            application_checks.check_coracle_start(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_concede:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/concede.zkir"), str(output / "keys/concede.prover"), str(output / "keys/concede.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-concede", str(output))
-            print("original Coracle concede recorded; all four proof-required exports have recording APIs")
+            application_checks.check_coracle_concede(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_withdraw:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/withdraw.zkir"), str(output / "keys/withdraw.prover"), str(output / "keys/withdraw.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-withdraw", str(output))
-            print("original Coracle withdraw recorded; all four proof-required exports have recording APIs")
+            application_checks.check_coracle_withdraw(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_guess:
-            check_coracle_source(compiler, base)
-            output = base / "coracle"
-            if args.proof:
-                (output / "keys").mkdir(exist_ok=True)
-                run("zkir", "compile", str(output / "zkir/guess.zkir"), str(output / "keys/guess.prover"), str(output / "keys/guess.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-guess", str(output))
-            print("original Coracle guess, concede, withdraw and start recorded")
+            application_checks.check_coracle_guess(
+                compiler, base,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.coracle_root_let:
-            oracle = base / "root-let-action-return"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                str(ROOT_LET_ACTION_RETURN_SOURCE), str(oracle))
-            ir = json.loads((oracle / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            circuit, = ir["stateful_circuits"]
-            assert circuit["name"] == "step"
-            assert circuit["return_value"] == {
-                "kind": "expression", "value": {"kind": "parameter", "name": "echo"}}
-            outer, = circuit["actions"]
-            assert outer["kind"] == "let"
-            assert [(row["name"], row["value"]["kind"])
-                    for row in outer["bindings"]] == [("before", "cell_read")]
-            inner, = outer["action"]["actions"]
-            assert inner["kind"] == "let"
-            assert [(row["name"], row["value"]["kind"])
-                    for row in inner["bindings"]] == [("after", "add")]
-            write, = inner["action"]["actions"]
-            assert (write["kind"], write["field"], write["value"]) == (
-                "cell_write", "stored", {"kind": "parameter", "name": "after"})
-            caps = json.loads((oracle / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in caps["circuits"]] == [("step", True, True, True)]
-            assert "pub mod recorded" in (oracle / "contract/lib.rs").read_text()
-            # An assert-only root Let remains in its established expression
-            # form; extracting it as an action would regress the welcome
-            # source's three recorded and observed exports.
-            welcome = base / "welcome"
-            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                str(TEST_CENTER_WELCOME_SOURCE), str(welcome))
-            welcome_caps = json.loads((welcome / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in welcome_caps["circuits"]] == [
-                ("add_participant", True, True),
-                ("add_organizer", True, True),
-                ("check_in", True, True),
-            ]
-            check_coracle_source(compiler, base)
-            if args.proof:
-                proof = base / "root-let-action-return-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(ROOT_LET_ACTION_RETURN_SOURCE), str(proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--root-let-action-return", str(proof))
-            print("root Let actions retained; complete Coracle compiles with guess recorded and 3 explicit recording gaps")
+            application_checks.check_coracle_root_let(
+                compiler, base,
+                root_let_action_return_source=ROOT_LET_ACTION_RETURN_SOURCE,
+                test_center_welcome_source=TEST_CENTER_WELCOME_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                check_coracle_source=check_coracle_source,
+            )
             return
         if args.adt_set_qualified:
-            output = base / "adt-set-qualified"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(ADT_SET_QUALIFIED_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            def has_coin_insert(value):
-                if isinstance(value, dict):
-                    return value.get("kind") == "set_insert_coin" or any(
-                        has_coin_insert(part) for part in value.values())
-                if isinstance(value, list):
-                    return any(has_coin_insert(part) for part in value)
-                return False
-            assert has_coin_insert(ir["stateful_circuits"][1])
-            metadata = json.loads((output / "compiler/contract-info.json").read_text())
-            assert [(row["name"], row["pure"], row["proof"])
-                    for row in metadata["circuits"]] == [
-                ("test_QualifiedShieldedCoinInfo", False, True),
-                ("test_ShieldedCoinInfo", False, True),
-            ]
-            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in capabilities["circuits"]] == [
-                ("test_QualifiedShieldedCoinInfo", True, True, True),
-                ("test_ShieldedCoinInfo", True, True, True),
-            ]
-            assert all(row.get("recording_unavailable") is None for row in capabilities["circuits"])
-            required = subprocess.run(
-                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                 str(ADT_SET_QUALIFIED_SOURCE), str(base / "qualified-requires-recording")],
-                cwd=ROOT, capture_output=True, text=True,
+            intent_checks.check_adt_set_qualified(
+                compiler, base,
+                root=ROOT,
+                adt_set_qualified_source=ADT_SET_QUALIFIED_SOURCE,
+                qualified_coin_oracle_source=QUALIFIED_COIN_ORACLE_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
             )
-            assert required.returncode == 0, required.stderr
-            oracle = base / "qualified-oracle"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle))
-            oracle_capabilities = json.loads((oracle / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in oracle_capabilities["circuits"]] == [
-                ("insert_coin", True, True), ("contains", True, True)]
-            # Keep the frontend-reachable nested native path in the maintained
-            # gate. Runtime qualified_set_paths tests execute its VM helper;
-            # this source still has a deliberate generated recording gap.
-            chunked = base / "qualified-coin-set-chunked"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-set-chunked.compact"),
-                str(chunked))
-            chunked_ir = json.loads((chunked / "contract/compact-rust-ir.json").read_text())
-            assert has_coin_insert(chunked_ir["stateful_circuits"])
-            generated = (chunked / "contract/lib.rs").read_text()
-            assert "&[1u8,14u8]" in "".join(generated.split())
-            assert "ledger_slots::pot.insert_coin(" in "".join(generated.split())
-            chunked_caps = json.loads((chunked / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["recorded"], row["observed_call"])
-                    for row in chunked_caps["circuits"]] == [
-                ("insert_coin", False, False), ("contains", True, True)]
-            gap = chunked_caps["circuits"][0]["recording_unavailable"]
-            assert (gap["code"], gap["ir_node"]) == ("unsupported_action", "StateAction::SetInsertCoin")
-            if args.proof:
-                adt_proof = base / "adt-qualified-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(ADT_SET_QUALIFIED_SOURCE), str(adt_proof))
-                oracle_proof = base / "qualified-oracle-proof"
-                run(compiler, "--target", "rust", "--rust-require-recording",
-                    str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle_proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--adt-set-qualified-coin-info", str(adt_proof))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--qualified-coin-set", str(oracle_proof))
-            print("complete ADT qualified Set source and qualified coin oracle recorded; "
-                  "chunked native path and explicit recording gap checked")
             return
         if args.test_center_bboard:
-            output = base / "test-center-bboard"
-            command = [compiler, "--target", "rust", "--rust-require-recording"]
-            if not args.proof:
-                command.append("--skip-zk")
-            run(*command, str(TEST_CENTER_BBOARD_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
-            assert [row["name"] for row in ir["stateful_circuits"]] == ["post", "take_down"]
-            taken = ir["stateful_circuits"][1]
-            assert [action["kind"] for action in taken["actions"]] == ["assert", "assert", "let"]
-            tail = taken["actions"][-1]
-            assert [(binding["name"], binding["ty"]["kind"], binding["value"]["kind"])
-                    for binding in tail["bindings"]] == [
-                ("former_msg", "opaque_string", "struct_field")]
-            assert taken["return_value"] == {
-                "kind": "expression", "value": {"kind": "parameter", "name": "former_msg"}}
-            metadata = json.loads((output / "compiler/contract-info.json").read_text())
-            assert [(row["name"], row["pure"], row["proof"])
-                    for row in metadata["circuits"]] == [
-                ("post", False, True), ("take_down", False, True),
-                ("public_key", True, False)]
-            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in capabilities["circuits"]] == [
-                ("post", True, True, True), ("take_down", True, True, True)]
-            assert all("recording_unavailable" not in row for row in capabilities["circuits"])
-            if args.proof:
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                    "--bboard", str(output))
-            print("complete test-center bboard recorded/observed calls accepted")
+            application_checks.check_test_center_bboard(
+                compiler, base,
+                test_center_bboard_source=TEST_CENTER_BBOARD_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+            )
             return
         if args.field_to_bytes32:
-            output = base / "field-to-bytes32"
-            command = [compiler, "--target", "rust"]
-            command.append("--rust-require-recording")
-            if not args.proof:
-                command.append("--skip-zk")
-            run(*command, str(FIELD_TO_BYTES32_SOURCE), str(output))
-            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 20
-            assert [(row["name"], row["body"]["kind"])
-                    for row in ir["circuits"]] == [("encode", "field_to_bytes32")]
-            assert [(row["name"], row["return_value"]["value"]["kind"])
-                    for row in ir["stateful_circuits"]] == [("snapshot", "field_to_bytes32")]
-            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
-            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
-                    for row in capabilities["circuits"]] == [
-                ("snapshot", True, True, True)]
-            if args.proof:
-                for extension in ("prover", "verifier"):
-                    assert (output / "keys" / f"snapshot.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (output / "zkir" / f"snapshot.{extension}").is_file()
-            rejected_source = base / "unsupported-byte-width.compact"
-            rejected_source.write_text("export circuit encode(value: Field): Bytes<31> { return value as Bytes<31>; }\n")
-            rejected = subprocess.run(
-                [compiler, "--target", "rust", "--skip-zk", str(rejected_source),
-                 str(base / "unsupported-byte-width")],
-                cwd=ROOT, capture_output=True, text=True,
+            scalar_checks.check_field_to_bytes32(
+                compiler, base,
+                root=ROOT,
+                field_to_bytes32_source=FIELD_TO_BYTES32_SOURCE,
+                proof_requested=args.proof,
+                run=run,
+                capture=subprocess.run,
             )
-            assert rejected.returncode != 0
-            assert "Field-to-Bytes<32> casts only" in rejected.stderr
-            print("field-to-bytes32 target gate passed")
             return
         run(sys.executable, str(Path(__file__).resolve()), "--qualified-coin-cell",
             *(["--proof"] if args.proof else []))
@@ -1931,147 +1177,18 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-assert")
         run(sys.executable, str(Path(__file__).resolve()), "--witness-composition")
-        ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
-        run(compiler, "--skip-zk", str(SOURCE), str(ts))
-        assert (ts / "contract/index.js").is_file()
-        assert not (ts / "contract/lib.rs").exists()
-        run(compiler, "--target", "rust", "--skip-zk", str(SOURCE), str(rust))
-        assert (rust / "contract/lib.rs").is_file()
-        assert (rust / "contract/Cargo.toml").is_file()
-        assert not (rust / "contract/index.js").exists()
-        capabilities = json.loads((rust / "contract/rust-capabilities.json").read_text())
-        assert capabilities["schema_version"] == 3
-        assert [(c["name"], c["recorded"], c["observed_call"]) for c in capabilities["circuits"]] == [
-            ("increment", True, True), ("read_round", True, True)
-        ]
-        assert all(c["proof_required"] is True and c["recording_status"] == "available"
-                   for c in capabilities["circuits"])
-        rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 20
-        native_output = base / "native-own-public-key"
-        run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
-        native_contract = native_output / "contract"
-        native_ir = json.loads((native_contract / "compact-rust-ir.json").read_text())
-        native_circuit = next(c for c in native_ir["stateful_circuits"] if c["name"] == "test1")
-        assert native_ir["witnesses"] == []
-        assert native_circuit["actions"] == [
-            {"kind": "native_witness_call", "builtin": "own_public_key"}
-        ]
-        native_capability = json.loads((native_contract / "rust-capabilities.json").read_text())
-        assert len(native_capability["circuits"]) == 1
-        native_export = native_capability["circuits"][0]
-        assert native_export["name"] == "test1"
-        assert native_export["proof_required"] is False
-        assert native_export["recorded"] is False
-        assert native_export["observed_call"] is False
-        assert native_export["recording_status"] == "not_applicable"
-        assert native_export["recording_unavailable"]["ir_node"] == "StateAction::NativeWitnessCall"
-        native_source = (native_contract / "lib.rs").read_text()
-        assert "context.own_coin_public_key()?" in native_source
-        assert "pub fn test1<Private>(" in native_source
-        assert "pub fn test1<Private, W:" not in native_source
-        native_value_output = base / "native-own-public-key-value"
-        run(compiler, "--target", "rust", "--skip-zk", str(NATIVE_KEY_VALUE_SOURCE),
-            str(native_value_output))
-        native_value_contract = native_value_output / "contract"
-        native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
-        assert native_value_ir["schema_version"] == 20
-        assert native_value_ir["witnesses"] == []
-        assert [(c["name"], c["return_value"]["value"]["kind"])
-                for c in native_value_ir["stateful_circuits"]] == [
-            ("key", "native_witness_call"), ("key_bytes", "struct_field")
-        ]
-        assert native_value_ir["stateful_circuits"][1]["return_value"]["value"]["value"] == {
-            "kind": "native_witness_call", "builtin": "own_public_key"
-        }
-        native_value_capability = json.loads((native_value_contract / "rust-capabilities.json").read_text())
-        assert [(c["name"], c["proof_required"], c["recording_status"])
-                for c in native_value_capability["circuits"]] == [
-            ("key", False, "not_applicable"), ("key_bytes", False, "not_applicable")
-        ]
-        native_value_source = (native_value_contract / "lib.rs").read_text()
-        assert native_value_source.count("context.own_coin_public_key()?") == 2
-        assert "pub fn key<Private, W:" not in native_value_source
-        assert "pub fn key_bytes<Private, W:" not in native_value_source
-        round_field = next(field for field in rust_ir["ledger_fields"] if field["id"] == "round")
-        assert round_field["source"]["file"] == SOURCE.name
-        assert (round_field["source"]["line"], round_field["source"]["column"]) == (18, 1)
-        assert rust_ir["stateful_circuits"]
-        assert (rust_ir["stateful_circuits"][0]["source"]["line"], rust_ir["stateful_circuits"][0]["source"]["column"]) == (20, 1)
-        for circuit in rust_ir["stateful_circuits"]:
-            assert circuit["source"]["file"] == SOURCE.name
-            assert circuit["source"]["line"] > 0
-        for name, source, key, first_line in (
-            ("pure", PURE_SOURCE, "circuits", 18),
-            ("witness", WITNESS_CELL_SOURCE, "witnesses", 20),
-            ("constructor", CONSTRUCTOR_MAP_SOURCE, "constructor", 21),
-            ("alias", ALIAS_SOURCE, "type_aliases", 27),
-        ):
-            output = base / f"source-{name}"
-            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
-            emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 20
-            owners = emitted[key]
-            if isinstance(owners, dict):
-                owners = [owners]
-            assert owners, f"{source.name}: missing {key}"
-            assert (owners[0]["source"]["line"], owners[0]["source"]["column"]) == (first_line, 1)
-            for owner in owners:
-                assert owner["source"]["file"] == source.name
-                assert owner["source"]["line"] > 0
-                assert owner["source"]["column"] > 0
-        check_manifest(rust)
-        protected = base / "protected"
-        protected.mkdir()
-        marker = protected / "keep.txt"
-        marker.write_text("compiler output cleanup must not follow symlinks\n")
-        nested_link = rust / "contract/linked"
-        top_level_link = rust / "keys"
-        nested_link.symlink_to(protected, target_is_directory=True)
-        top_level_link.symlink_to(protected, target_is_directory=True)
-        run(compiler, "--target", "rust", "--skip-zk", str(SOURCE), str(rust))
-        assert marker.is_file(), "compiler output cleanup followed a directory symlink"
-        assert not nested_link.is_symlink()
-        assert not top_level_link.is_symlink()
-        check_manifest(rust)
-        run(
-            compiler, "--target=ts", "--target=rust", "--skip-zk",
-            str(SOURCE), str(both),
+        native_outputs = native_targets.check(
+            compiler, base,
+            root=ROOT, counter_source=SOURCE, pure_source=PURE_SOURCE,
+            witness_cell_source=WITNESS_CELL_SOURCE,
+            constructor_map_source=CONSTRUCTOR_MAP_SOURCE,
+            alias_source=ALIAS_SOURCE, pm_19252_source=PM_19252_SOURCE,
+            native_key_value_source=NATIVE_KEY_VALUE_SOURCE,
+            run=run, capture=subprocess.run, check_manifest=check_manifest,
         )
-        assert (both / "contract/index.js").is_file()
-        assert (both / "contract/lib.rs").is_file()
-        check_manifest(both)
-        legacy_rust = base / "legacy-rust"
-        run(compiler, "--rust", "--skip-ts", "--skip-zk", str(SOURCE), str(legacy_rust))
-        assert (legacy_rust / "contract/lib.rs").read_bytes() == (rust / "contract/lib.rs").read_bytes()
-        assert (legacy_rust / "contract/Cargo.toml").read_bytes() == (rust / "contract/Cargo.toml").read_bytes()
-        assert (legacy_rust / "contract/rust-capabilities.json").read_bytes() == (
-            rust / "contract/rust-capabilities.json"
-        ).read_bytes()
-        assert not (legacy_rust / "contract/index.js").exists()
-        check_manifest(legacy_rust)
-        legacy_both = base / "legacy-both"
-        run(compiler, "--rust", "--skip-zk", str(SOURCE), str(legacy_both))
-        assert (legacy_both / "contract/index.js").read_bytes() == (both / "contract/index.js").read_bytes()
-        assert (legacy_both / "contract/lib.rs").read_bytes() == (both / "contract/lib.rs").read_bytes()
-        assert (legacy_both / "contract/Cargo.toml").read_bytes() == (both / "contract/Cargo.toml").read_bytes()
-        check_manifest(legacy_both)
-        for label, flags, message in (
-            ("mixed-rust", ("--target", "rust", "--rust"), "cannot be combined"),
-            ("mixed-skip-ts", ("--skip-ts", "--target=ts"), "cannot be combined"),
-            ("skip-ts-alone", ("--skip-ts",), "requires --rust"),
-        ):
-            rejected_output = base / label
-            rejected = subprocess.run(
-                [compiler, *flags, "--skip-zk", str(SOURCE), str(rejected_output)],
-                cwd=ROOT, capture_output=True, text=True,
-            )
-            assert rejected.returncode != 0, label
-            assert message in rejected.stderr, (label, rejected.stderr)
-            assert not rejected_output.exists(), f"{label}: invalid target selection created output"
         if args.consumer:
-            run(compiler, "--target", "rust", "--skip-zk", str(PURE_SOURCE), str(pure))
-            check_consumer(legacy_rust / "contract", pure / "contract", base / "consumer")
+            run(compiler, "--target", "rust", "--skip-zk", str(PURE_SOURCE), str(native_outputs.pure))
+            check_consumer(native_outputs.legacy_rust / "contract", native_outputs.pure / "contract", base / "consumer")
             check_shared_runtime_consumer(compiler, base)
             check_witness_consumer(compiler, base)
             check_merkle_witness_consumer(compiler, base)
@@ -2081,10 +1198,7 @@ def main() -> None:
             run(compiler, "--target", "rust", "--rust-require-recording", str(SOURCE), str(proof))
             check_manifest(proof)
             for circuit in ("increment", "read_round"):
-                for extension in ("prover", "verifier"):
-                    assert (proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(proof, circuit)
             check_observed_call_consumer(proof, base)
             test_center_counter_proof = base / "test-center-counter-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
@@ -2095,18 +1209,12 @@ def main() -> None:
             assert [(row["name"], row["proof_required"], row["recording_status"])
                     for row in test_center_capabilities["circuits"]] == [
                 ("increment", True, "available")]
-            for extension in ("prover", "verifier"):
-                assert (test_center_counter_proof / "keys" / f"increment.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (test_center_counter_proof / "zkir" / f"increment.{extension}").is_file()
+            proof_artifacts.require_circuit_files(test_center_counter_proof, 'increment')
             counter_parameter_proof = base / "counter-parameter-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(COUNTER_PARAMETER_SOURCE), str(counter_parameter_proof))
             check_manifest(counter_parameter_proof)
             for circuit in ("increment_by", "reset_round"):
-                for extension in ("prover", "verifier"):
-                    assert (counter_parameter_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (counter_parameter_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(counter_parameter_proof, circuit)
             unsigned_proofs = {}
             for label, source, circuits in (
                 ("bounded-uint", BOUNDED_UINT_SOURCE, ("set_small",)),
@@ -2124,17 +1232,11 @@ def main() -> None:
                 assert {row["name"] for row in capabilities["circuits"]} == set(circuits)
                 assert all(row["recorded"] and row["observed_call"] for row in capabilities["circuits"])
                 for circuit in circuits:
-                    for extension in ("prover", "verifier"):
-                        assert (unsigned_proof / "keys" / f"{circuit}.{extension}").is_file()
-                    for extension in ("zkir", "bzkir"):
-                        assert (unsigned_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                    proof_artifacts.require_circuit_files(unsigned_proof, circuit)
             cell_proof = base / "cell-proof"
             run(compiler, "--target", "rust", str(CELL_SOURCE), str(cell_proof))
             check_manifest(cell_proof)
-            for extension in ("prover", "verifier"):
-                assert (cell_proof / "keys" / f"set_flag.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (cell_proof / "zkir" / f"set_flag.{extension}").is_file()
+            proof_artifacts.require_circuit_files(cell_proof, 'set_flag')
             root_let_proof = base / "root-let-action-return-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(root_let_proof))
@@ -2166,27 +1268,18 @@ def main() -> None:
             cell_read_proof = base / "cell-read-proof"
             run(compiler, "--target", "rust", str(CELL_READ_SOURCE), str(cell_read_proof))
             check_manifest(cell_read_proof)
-            for extension in ("prover", "verifier"):
-                assert (cell_read_proof / "keys" / f"read_flag.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (cell_read_proof / "zkir" / f"read_flag.{extension}").is_file()
+            proof_artifacts.require_circuit_files(cell_read_proof, 'read_flag')
             composite_cell_proof = base / "composite-cell-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(CELL_STRUCT_SOURCE), str(composite_cell_proof))
             check_manifest(composite_cell_proof)
             for circuit in ("set_record", "read_record"):
-                for extension in ("prover", "verifier"):
-                    assert (composite_cell_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (composite_cell_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(composite_cell_proof, circuit)
             witness_proof = base / "witness-proof"
             run(compiler, "--target", "rust", str(WITNESS_CELL_SOURCE), str(witness_proof))
             check_manifest(witness_proof)
             check_observed_witness_call_consumer(witness_proof, base)
             for circuit in ("write_twice", "write_offset", "write_nested_twice"):
-                for extension in ("prover", "verifier"):
-                    assert (witness_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(witness_proof, circuit)
             assert_witness_proof = base / "assert-witness-proof"
             run(compiler, "--target", "rust", str(ASSERT_WITNESS_SOURCE),
                 str(assert_witness_proof))
@@ -2198,80 +1291,28 @@ def main() -> None:
                                  if circuit["name"] == "checked_write")
             assert checked_write["proof_required"] and checked_write["recorded"] \
                 and checked_write["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (assert_witness_proof / "keys" / f"checked_write.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (assert_witness_proof / "zkir" / f"checked_write.{extension}").is_file()
+            proof_artifacts.require_circuit_files(assert_witness_proof, 'checked_write')
             nested_proof = base / "nested-proof"
             run(compiler, "--target", "rust", str(NESTED_COUNTER_SOURCE), str(nested_proof))
             check_manifest(nested_proof)
             for circuit in ("bump_twice", "add_twice"):
-                for extension in ("prover", "verifier"):
-                    assert (nested_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (nested_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(nested_proof, circuit)
             nested_witness_proof = base / "nested-witness-proof"
             run(compiler, "--target", "rust", str(NESTED_WITNESS_SOURCE), str(nested_witness_proof))
             check_manifest(nested_witness_proof)
             for circuit in ("outer", "outerValue", "outerValue2", "outerValueExpr"):
-                for extension in ("prover", "verifier"):
-                    assert (nested_witness_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (nested_witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
-            set_proof = base / "set-proof"
-            run(compiler, "--target", "rust", str(SET_BOOLEAN_SOURCE), str(set_proof))
-            check_manifest(set_proof)
-            for circuit in (
-                "add", "contains", "remove", "seen_size", "seen_is_empty",
-                "add_field", "contains_field", "reset_fields", "choose",
-            ):
-                for extension in ("prover", "verifier"):
-                    assert (set_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (set_proof / "zkir" / f"{circuit}.{extension}").is_file()
-            set_oracle_proof = base / "set-oracle-proof"
-            run(compiler, "--target", "rust", str(SET_SOURCE), str(set_oracle_proof))
-            check_manifest(set_oracle_proof)
-            for extension in ("prover", "verifier"):
-                assert (set_oracle_proof / "keys" / f"check.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (set_oracle_proof / "zkir" / f"check.{extension}").is_file()
-            map_proof = base / "map-proof"
-            run(compiler, "--target", "rust", str(MAP_BOOLEAN_SOURCE), str(map_proof))
-            check_manifest(map_proof)
-            check_observed_map_call_consumer(map_proof, base)
-            for circuit in (
-                "put", "put_pair", "put_default", "has", "get", "remove_key",
-                "table_size", "table_is_empty", "reset_table",
-            ):
-                for extension in ("prover", "verifier"):
-                    assert (map_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (map_proof / "zkir" / f"{circuit}.{extension}").is_file()
-            constructor_map_proof = base / "constructor-map-proof"
-            run(compiler, "--target", "rust", str(CONSTRUCTOR_MAP_SOURCE), str(constructor_map_proof))
-            check_manifest(constructor_map_proof)
-            for circuit in ("table_size", "history_size", "get_true", "get_false_history"):
-                for extension in ("prover", "verifier"):
-                    assert (constructor_map_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (constructor_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
-            list_proof = base / "list-proof"
-            run(compiler, "--target", "rust", str(LIST_SOURCE), str(list_proof))
-            check_manifest(list_proof)
-            for circuit in ("item_count", "items_empty", "first_item", "prepend", "drop_first", "clear_items"):
-                for extension in ("prover", "verifier"):
-                    assert (list_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (list_proof / "zkir" / f"{circuit}.{extension}").is_file()
-            list_shapes_proof = base / "list-shapes-proof"
-            run(compiler, "--target", "rust", str(LIST_SHAPES_SOURCE), str(list_shapes_proof))
-            check_manifest(list_shapes_proof)
-            for circuit in ("push_flag", "push_count", "push_tag", "push_choice", "push_packet", "first_packet", "first_choice"):
-                for extension in ("prover", "verifier"):
-                    assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(nested_witness_proof, circuit)
+            collections = collection_proofs.prepare(
+                compiler, base,
+                set_source=SET_BOOLEAN_SOURCE,
+                set_oracle_source=SET_SOURCE,
+                map_source=MAP_BOOLEAN_SOURCE,
+                constructor_map_source=CONSTRUCTOR_MAP_SOURCE,
+                list_source=LIST_SOURCE,
+                list_shapes_source=LIST_SHAPES_SOURCE,
+                run=run, check_manifest=check_manifest,
+                check_observed_map_call_consumer=check_observed_map_call_consumer,
+            )
             zerocash_mint_proof = base / "zerocash-mint-proof"
             run(compiler, "--target", "rust", str(ZEROCASH_SOURCE), str(zerocash_mint_proof))
             check_manifest(zerocash_mint_proof)
@@ -2279,10 +1320,7 @@ def main() -> None:
             for name in ("zerocash_mint", "spend"):
                 circuit = next(row for row in capabilities["circuits"] if row["name"] == name)
                 assert circuit["proof_required"] and circuit["recorded"] and circuit["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (zerocash_mint_proof / "keys" / f"{name}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (zerocash_mint_proof / "zkir" / f"{name}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(zerocash_mint_proof, name)
             bboard_proof = base / "bboard-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(TEST_CENTER_BBOARD_SOURCE), str(bboard_proof))
@@ -2296,10 +1334,7 @@ def main() -> None:
             for circuit in ("set_topic", "advance", "add_voter", "vote$commit", "vote$reveal"):
                 row = next(row for row in election_capabilities["circuits"] if row["name"] == circuit)
                 assert row["proof_required"] and row["recorded"] and row["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (election_topic_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (election_topic_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(election_topic_proof, circuit)
             inline_type_scope_proof = base / "inline-type-scope-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(INLINE_TYPE_SCOPE_SOURCE), str(inline_type_scope_proof))
@@ -2315,12 +1350,7 @@ def main() -> None:
                 assert circuit["proof_required"] and circuit["recorded"] \
                     and circuit["observed_call"]
                 if circuit["name"] != "setHash":
-                    for extension in ("prover", "verifier"):
-                        assert (inline_type_scope_proof / "keys" /
-                                f"{circuit['name']}.{extension}").is_file()
-                    for extension in ("zkir", "bzkir"):
-                        assert (inline_type_scope_proof / "zkir" /
-                                f"{circuit['name']}.{extension}").is_file()
+                    proof_artifacts.require_circuit_files(inline_type_scope_proof, circuit['name'])
             merkle_proof = base / "merkle-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(MERKLE_SOURCE), str(merkle_proof))
             check_manifest(merkle_proof)
@@ -2328,10 +1358,7 @@ def main() -> None:
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
             for circuit in ("append", "place", "place_default", "full", "append_hash", "place_hash", "known", "reset_tree"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(merkle_proof, circuit)
             merkle_verify_proof = base / "merkle-verify-proof"
             run(compiler, "--target", "rust", str(MERKLE_VERIFY_SOURCE), str(merkle_verify_proof))
             check_manifest(merkle_verify_proof)
@@ -2339,10 +1366,7 @@ def main() -> None:
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
             for circuit in ("verify", "replace"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (merkle_verify_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (merkle_verify_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(merkle_verify_proof, circuit)
             persistent_commit_proof = base / "persistent-commit-proof"
             run(compiler, "--target", "rust", str(PERSISTENT_COMMIT_SOURCE),
                 str(persistent_commit_proof))
@@ -2362,36 +1386,13 @@ def main() -> None:
                                   if circuit["name"] == name)
                 assert capability["proof_required"] and capability["recorded"] \
                     and capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" / f"commitSmall.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" / f"commitSmall.{extension}").is_file()
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" /
-                        f"bridgeTupleIntoVec.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" /
-                        f"bridgeTupleIntoVec.{extension}").is_file()
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" /
-                        f"witnessBare.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" /
-                        f"witnessBare.{extension}").is_file()
-            for extension in ("prover", "verifier"):
-                assert (persistent_commit_proof / "keys" /
-                        f"impureConst.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (persistent_commit_proof / "zkir" /
-                        f"impureConst.{extension}").is_file()
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'commitSmall')
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'bridgeTupleIntoVec')
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'witnessBare')
+            proof_artifacts.require_circuit_files(persistent_commit_proof, 'impureConst')
             for name in ("impureBare", "impureInIfArm", "inlinedAssert",
                          "hashPersistentVec", "hashTransientVec"):
-                for extension in ("prover", "verifier"):
-                    assert (persistent_commit_proof / "keys" /
-                            f"{name}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (persistent_commit_proof / "zkir" /
-                            f"{name}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(persistent_commit_proof, name)
             witness_vector_action_proof = base / "witness-vector-action-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(WITNESS_VECTOR_ACTION_SOURCE), str(witness_vector_action_proof))
@@ -2403,12 +1404,7 @@ def main() -> None:
                            if circuit["name"] == "discardResult")
             assert discard["proof_required"] and discard["recorded"] \
                 and discard["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (witness_vector_action_proof / "keys" /
-                        f"discardResult.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (witness_vector_action_proof / "zkir" /
-                        f"discardResult.{extension}").is_file()
+            proof_artifacts.require_circuit_files(witness_vector_action_proof, 'discardResult')
             internal_pure_call_proof = base / "internal-pure-call-proof"
             run(compiler, "--target", "rust", str(INTERNAL_PURE_CALL_SOURCE),
                 str(internal_pure_call_proof))
@@ -2419,10 +1415,7 @@ def main() -> None:
             save = next(circuit for circuit in capabilities["circuits"]
                         if circuit["name"] == "save")
             assert save["proof_required"] and save["recorded"] and save["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (internal_pure_call_proof / "keys" / f"save.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (internal_pure_call_proof / "zkir" / f"save.{extension}").is_file()
+            proof_artifacts.require_circuit_files(internal_pure_call_proof, 'save')
             stateful_pure_call_proof = base / "stateful-pure-call-proof"
             run(compiler, "--target", "rust", str(STATEFUL_PURE_CALL_SOURCE),
                 str(stateful_pure_call_proof))
@@ -2433,10 +1426,7 @@ def main() -> None:
             save = next(circuit for circuit in capabilities["circuits"]
                         if circuit["name"] == "save")
             assert save["proof_required"] and save["recorded"] and save["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (stateful_pure_call_proof / "keys" / f"save.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (stateful_pure_call_proof / "zkir" / f"save.{extension}").is_file()
+            proof_artifacts.require_circuit_files(stateful_pure_call_proof, 'save')
             unsigned_recording_proofs = {}
             for label, source, circuit in (
                 ("field-cast-uint128", FIELD_CAST_UINT128_SOURCE, "save"),
@@ -2449,10 +1439,7 @@ def main() -> None:
                 capabilities = json.loads((proof_output / "contract/rust-capabilities.json").read_text())
                 capability = next(row for row in capabilities["circuits"] if row["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] and capability["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (proof_output / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (proof_output / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(proof_output, circuit)
                 unsigned_recording_proofs[label] = proof_output
             ternary_cond_proof = base / "ternary-cond-proof"
             run(compiler, "--target", "rust", str(TERNARY_COND_SOURCE), str(ternary_cond_proof))
@@ -2471,10 +1458,7 @@ def main() -> None:
             for name in ("walkerConstAnnotated", "walkerWrite", "streamCallPure", "streamCallWitness", "streamAssertEq",
                          "walkerNestedIf", "streamNestedIf",
                          "walkerNativeArg", "streamNativeArg", "streamVectorElement"):
-                for extension in ("prover", "verifier"):
-                    assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (ternary_cond_proof / "zkir" / f"{name}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(ternary_cond_proof, name)
             nested_stateful_ternary_proof = base / "nested-stateful-ternary-proof"
             run(compiler, "--target", "rust", str(NESTED_STATEFUL_TERNARY_SOURCE),
                 str(nested_stateful_ternary_proof))
@@ -2486,20 +1470,14 @@ def main() -> None:
                                   if row["name"] == "run")
             assert run_capability["proof_required"] and run_capability["recorded"] \
                 and run_capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (nested_stateful_ternary_proof / "keys" / f"run.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (nested_stateful_ternary_proof / "zkir" / f"run.{extension}").is_file()
+            proof_artifacts.require_circuit_files(nested_stateful_ternary_proof, 'run')
             vector_map_proofs = []
             for stem in ("map_fn_oracle", "map_lambda_oracle"):
                 output = base / f"{stem}-proof"
                 run(compiler, "--target", "rust", "--rust-require-recording",
                     str(ROOT / "examples/rust_backend" / f"{stem}.compact"), str(output))
                 check_manifest(output)
-                for extension in ("prover", "verifier"):
-                    assert (output / "keys" / f"ping.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (output / "zkir" / f"ping.{extension}").is_file()
+                proof_artifacts.require_circuit_files(output, 'ping')
                 vector_map_proofs.append(output)
             unused_field_read_proofs = []
             for name in ("seven", "eight_a", "eight_b"):
@@ -2520,10 +1498,7 @@ def main() -> None:
                                       if row["name"] == "replace")
             assert replace_capability["proof_required"] and replace_capability["recorded"] \
                 and replace_capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (let_return_proof / "keys" / f"replace.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (let_return_proof / "zkir" / f"replace.{extension}").is_file()
+            proof_artifacts.require_circuit_files(let_return_proof, 'replace')
             asset_writable_proof = base / "asset-writable-proof"
             run(compiler, "--target", "rust", str(ASSET_REGISTRY_SOURCE),
                 str(asset_writable_proof))
@@ -2537,10 +1512,7 @@ def main() -> None:
                                   if item["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] \
                     and capability["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (asset_writable_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (asset_writable_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(asset_writable_proof, circuit)
             schnorr_proof = base / "schnorr-attestation-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(SCHNORR_ATTEST_SOURCE), str(schnorr_proof))
@@ -2550,10 +1522,7 @@ def main() -> None:
                 capability = next(row for row in capabilities["circuits"] if row["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] \
                     and capability["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (schnorr_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (schnorr_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(schnorr_proof, circuit)
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -2561,27 +1530,18 @@ def main() -> None:
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
             for circuit in ("append", "place", "append_hash", "place_hash", "forget_history", "reset_tree", "full", "known"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
-                for extension in ("prover", "verifier"):
-                    assert (historic_merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (historic_merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(historic_merkle_proof, circuit)
             historic_merkle_default_proof = base / "historic-merkle-default-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_DEFAULT_SOURCE), str(historic_merkle_default_proof))
             check_manifest(historic_merkle_default_proof)
             capabilities = json.loads((historic_merkle_default_proof / "contract/rust-capabilities.json").read_text())
             assert capabilities["circuits"][0]["name"] == "add_default"
             assert capabilities["circuits"][0]["recorded"] and capabilities["circuits"][0]["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (historic_merkle_default_proof / "keys" / f"add_default.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (historic_merkle_default_proof / "zkir" / f"add_default.{extension}").is_file()
+            proof_artifacts.require_circuit_files(historic_merkle_default_proof, 'add_default')
             vector_key_proof = base / "vector-key-proof"
             run(compiler, "--target", "rust", str(VECTOR_KEY_SOURCE), str(vector_key_proof))
             check_manifest(vector_key_proof)
-            for extension in ("prover", "verifier"):
-                assert (vector_key_proof / "keys" / f"setInsert.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (vector_key_proof / "zkir" / f"setInsert.{extension}").is_file()
+            proof_artifacts.require_circuit_files(vector_key_proof, 'setInsert')
             composite_key_proof = base / "composite-key-proof"
             run(compiler, "--target", "rust", str(COMPOSITE_KEY_SOURCE), str(composite_key_proof))
             check_manifest(composite_key_proof)
@@ -2589,19 +1549,13 @@ def main() -> None:
                 "insert_vector", "insert_tuple", "insert_struct",
                 "roundtrip_tuple", "roundtrip_struct", "record_twelve",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (composite_key_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (composite_key_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(composite_key_proof, circuit)
             check_observed_composite_key_consumer(composite_key_proof, base)
             chunked_set_proof = base / "chunked-set-proof"
             run(compiler, "--target", "rust", str(CHUNKED_SET_SOURCE), str(chunked_set_proof))
             check_manifest(chunked_set_proof)
             for circuit in ("insert_key", "roundtrip_key", "key_count", "empty"):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_set_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_set_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_set_proof, circuit)
             check_chunked_set_consumer(chunked_set_proof, base)
             chunked_list_proof = base / "chunked-list-proof"
             run(compiler, "--target", "rust", str(CHUNKED_LIST_SOURCE), str(chunked_list_proof))
@@ -2609,10 +1563,7 @@ def main() -> None:
             for circuit in (
                 "item_count", "items_empty", "first_item", "prepend", "drop_first", "clear_items",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_list_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_list_proof, circuit)
             check_chunked_list_consumer(chunked_list_proof, base)
             chunked_map_proof = base / "chunked-map-proof"
             run(compiler, "--target", "rust", str(CHUNKED_MAP_SOURCE), str(chunked_map_proof))
@@ -2621,10 +1572,7 @@ def main() -> None:
                 "put", "put_pair", "put_default", "has", "get", "remove_key",
                 "table_size", "table_is_empty", "reset_table",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_map_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_map_proof, circuit)
             check_chunked_map_consumer(chunked_map_proof, base)
             chunked_cell_proof = base / "chunked-cell-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(CHUNKED_CELL_SOURCE), str(chunked_cell_proof))
@@ -2636,50 +1584,35 @@ def main() -> None:
                 "set_amount", "get_amount", "add_amount", "active_equals", "plus_amount",
                 "subtract_amount", "multiply_amount",
             ):
-                for extension in ("prover", "verifier"):
-                    assert (chunked_cell_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (chunked_cell_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(chunked_cell_proof, circuit)
             check_chunked_cell_consumer(chunked_cell_proof, base)
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
             for circuit in ("item_count", "history_count", "first_item", "drop_first", "clear_items"):
-                for extension in ("prover", "verifier"):
-                    assert (constructor_list_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (constructor_list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(constructor_list_proof, circuit)
             enum_cell_proof = base / "enum-cell-proof"
             run(compiler, "--target", "rust", str(RECORDED_ENUM_SOURCE), str(enum_cell_proof))
             check_manifest(enum_cell_proof)
-            for extension in ("prover", "verifier"):
-                assert (enum_cell_proof / "keys" / f"choose.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (enum_cell_proof / "zkir" / f"choose.{extension}").is_file()
+            proof_artifacts.require_circuit_files(enum_cell_proof, 'choose')
             tiny_proof = base / "tiny-proof"
             run(compiler, "--target", "rust", str(TINY_SOURCE), str(tiny_proof))
             check_manifest(tiny_proof)
             for circuit in ("clear", "set", "get"):
-                for extension in ("prover", "verifier"):
-                    assert (tiny_proof / "keys" / f"{circuit}.{extension}").is_file()
-                for extension in ("zkir", "bzkir"):
-                    assert (tiny_proof / "zkir" / f"{circuit}.{extension}").is_file()
+                proof_artifacts.require_circuit_files(tiny_proof, circuit)
             nested_map_shape_proof = base / "nested-map-shape-proof"
             run(compiler, "--target", "rust", str(NESTED_MAP_SHAPE_SOURCE), str(nested_map_shape_proof))
             check_manifest(nested_map_shape_proof)
-            for extension in ("prover", "verifier"):
-                assert (nested_map_shape_proof / "keys" / f"check_nested_empty.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (nested_map_shape_proof / "zkir" / f"check_nested_empty.{extension}").is_file()
+            proof_artifacts.require_circuit_files(nested_map_shape_proof, 'check_nested_empty')
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
-                str(nested_witness_proof), str(set_proof), str(set_oracle_proof),
-                str(map_proof), str(constructor_map_proof), str(list_proof), str(constructor_list_proof),
+                str(nested_witness_proof), str(collections.set), str(collections.set_oracle),
+                str(collections.map), str(collections.constructor_map), str(collections.list), str(constructor_list_proof),
                 str(enum_cell_proof),
                 str(tiny_proof),
                 str(nested_map_shape_proof),
-                str(list_shapes_proof),
+                str(collections.list_shapes),
                 str(merkle_proof),
                 str(historic_merkle_proof),
                 str(vector_key_proof),
@@ -2858,7 +1791,7 @@ def main() -> None:
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                "--conditional-set", str(set_proof),
+                "--conditional-set", str(collections.set),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

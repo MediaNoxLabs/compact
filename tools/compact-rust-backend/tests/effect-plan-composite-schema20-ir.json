@@ -1,0 +1,748 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+  ],
+  "witnesses": [
+    {
+      "name": "choose_coin",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "ShieldedCoinInfo",
+        "fields": [
+          {
+            "name": "nonce",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "color",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_composite.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "name": "choose_recipient",
+      "parameters": [
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Either",
+        "fields": [
+          {
+            "name": "is_left",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "left",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "right",
+            "ty": {
+              "kind": "struct",
+              "name": "ContractAddress",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_composite.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "emit",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "create_zswap_output",
+          "coin": {
+            "kind": "parameter",
+            "name": "coin"
+          },
+          "recipient": {
+            "kind": "parameter",
+            "name": "recipient"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_composite.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "compose",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "QualifiedShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "mt_index",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Receipt",
+        "fields": [
+          {
+            "name": "consumed",
+            "ty": {
+              "kind": "unit"
+            }
+          },
+          {
+            "name": "emitted",
+            "ty": {
+              "kind": "unit"
+            }
+          },
+          {
+            "name": "kept",
+            "ty": {
+              "kind": "struct",
+              "name": "ShieldedCoinInfo",
+              "fields": [
+                {
+                  "name": "nonce",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "color",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "340282366920938463463374607431768211455"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Receipt",
+            "fields": [
+              {
+                "name": "consumed",
+                "ty": {
+                  "kind": "unit"
+                }
+              },
+              {
+                "name": "emitted",
+                "ty": {
+                  "kind": "unit"
+                }
+              },
+              {
+                "name": "kept",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "create_zswap_input",
+              "coin": {
+                "kind": "parameter",
+                "name": "input"
+              }
+            },
+            {
+              "kind": "create_zswap_output",
+              "coin": {
+                "kind": "witness_call",
+                "name": "choose_coin",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "coin"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ShieldedCoinInfo",
+                      "fields": [
+                        {
+                          "name": "nonce",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "color",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "340282366920938463463374607431768211455"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "recipient": {
+                "kind": "witness_call",
+                "name": "choose_recipient",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "recipient"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Either",
+                      "fields": [
+                        {
+                          "name": "is_left",
+                          "ty": {
+                            "kind": "boolean"
+                          }
+                        },
+                        {
+                          "name": "left",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ZswapCoinPublicKey",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "right",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ContractAddress",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "parameter",
+              "name": "coin"
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "create_zswap_input",
+            "coin": {
+              "kind": "parameter",
+              "name": "input"
+            }
+          }
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "circuit_call",
+            "name": "emit",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "coin"
+                },
+                "ty": {
+                  "kind": "struct",
+                  "name": "ShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "recipient"
+                },
+                "ty": {
+                  "kind": "struct",
+                  "name": "Either",
+                  "fields": [
+                    {
+                      "name": "is_left",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "left",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "ZswapCoinPublicKey",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "right",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "ContractAddress",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_composite.compact",
+        "line": 11,
+        "column": 1
+      }
+    }
+  ]
+}

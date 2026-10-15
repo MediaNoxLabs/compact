@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "issue": 592,
+  "baseline_commit": "15817e598ea171b30a9559c945f985131bc75e9c",
+  "claim": "Retire guarded opaque-set admission; authenticate unchanged whole-old oracle and measured checked ownership. Source inventory is not language coverage.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "2421a01be2c094d6dfd0b8ac7360c34889cb6458503b8cb68623d36463a13d9b",
+      "current_sha256": "76f32da6fbbe7fbc9d436b8a843e45033274f506e22d0e008e290d5a0ffd43df",
+      "predecessor_reconstruction": [
+        {
+          "current": "use legacy::guarded_map::closed_guarded_struct_map_read_steps;\nuse legacy::guarded_pure::closed_guarded_struct_pure_steps;\nuse legacy::opaque_map::closed_typed_opaque_map_write_steps;\n\nmod facade;\n#[cfg(test)]\nmod guarded_mutations;\nmod helpers;\nmod item;\n#[cfg(test)]\nmod opaque_set_migration_tests;\nmod profile_attempt;\nmod profile_selection;\nmod pure_calls;\n",
+          "previous": "use legacy::guarded_map::closed_guarded_struct_map_read_steps;\nuse legacy::guarded_pure::closed_guarded_struct_pure_steps;\nuse legacy::opaque_map::closed_typed_opaque_map_write_steps;\nuse legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;\n\nmod facade;\n#[cfg(test)]\nmod guarded_mutations;\nmod helpers;\nmod item;\nmod profile_attempt;\nmod profile_selection;\nmod pure_calls;\n"
+        },
+        {
+          "current": "        )?\n    );\n    let typed_map_write_gate = typed_map_write_steps.is_some();\n    let guarded_pure_steps = record_option!(\n        \"guard.guarded-struct-pure\",\n        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?\n",
+          "previous": "        )?\n    );\n    let typed_map_write_gate = typed_map_write_steps.is_some();\n    let guarded_set_mutation_steps = record_option!(\n        \"guard.opaque-set-mutation\",\n        closed_guarded_opaque_set_mutation_steps(\n            circuit,\n            &parameters,\n            ledger_fields,\n            circuits,\n            shared_callees,\n        )?\n    );\n    let guarded_set_mutation_gate = guarded_set_mutation_steps.is_some();\n    let guarded_pure_steps = record_option!(\n        \"guard.guarded-struct-pure\",\n        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?\n"
+        },
+        {
+          "current": "    let mut steps = organizer_steps\n        .or(guarded_map_read_steps)\n        .or(typed_map_write_steps)\n        .or(guarded_pure_steps)\n        .unwrap_or_default();\n    let mut next_temp = 0;\n",
+          "previous": "    let mut steps = organizer_steps\n        .or(guarded_map_read_steps)\n        .or(typed_map_write_steps)\n        .or(guarded_set_mutation_steps)\n        .or(guarded_pure_steps)\n        .unwrap_or_default();\n    let mut next_temp = 0;\n"
+        },
+        {
+          "current": "    // A root Let encloses both its ordered actions and its final return.\n    // Capture this exact Field Cell read once, before the nested actions,\n    // so the returned value cannot accidentally observe the post-write state.\n    let root_field_return =\n        if !organizer_gate && !guarded_map_read_gate && !typed_map_write_gate && !guarded_pure_call\n        {\n            match (circuit.actions.as_slice(), &circuit.return_value) {\n                (\n                    [StateAction::Let { bindings, action }],\n                    StateReturn::Expression {\n                        value: Expr::Parameter { name },\n                    },\n                ) if circuit.result == Type::Field => match bindings.as_slice() {\n                    [binding]\n                        if binding.name == *name\n                            && binding.ty == Type::Field\n                            && matches!(&binding.value, Expr::CellRead { .. }) =>\n                    {\n                        if let Expr::CellRead { field, index } = &binding.value {\n                            let declaration = ledger_fields\n                                .get(field.as_str())\n                                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;\n                            if declaration.declaration\n                                != (LedgerFieldKind::Cell { ty: Type::Field })\n                                || declaration.index != *index\n                            {\n                                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(\n                                    &circuit.return_value,\n                                )));\n                            }\n                            Some((binding.name.as_str(), field.as_str(), action.as_ref()))\n                        } else {\n                            None\n                        }\n                    }\n                    _ => None,\n                },\n                _ => None,\n            }\n        } else {\n            None\n        };\n    let mut recorded_root_return: Option<(&str, syn::Expr)> = None;\n    if !organizer_gate && !guarded_map_read_gate && !typed_map_write_gate {\n        if let Some((name, field, action)) = root_field_return {\n            #[cfg(test)]\n            admission_probe::trace::action(\"guard.root-let-snapshot\");\n",
+          "previous": "    // A root Let encloses both its ordered actions and its final return.\n    // Capture this exact Field Cell read once, before the nested actions,\n    // so the returned value cannot accidentally observe the post-write state.\n    let root_field_return = if !organizer_gate\n        && !guarded_map_read_gate\n        && !typed_map_write_gate\n        && !guarded_set_mutation_gate\n        && !guarded_pure_call\n    {\n        match (circuit.actions.as_slice(), &circuit.return_value) {\n            (\n                [StateAction::Let { bindings, action }],\n                StateReturn::Expression {\n                    value: Expr::Parameter { name },\n                },\n            ) if circuit.result == Type::Field => match bindings.as_slice() {\n                [binding]\n                    if binding.name == *name\n                        && binding.ty == Type::Field\n                        && matches!(&binding.value, Expr::CellRead { .. }) =>\n                {\n                    if let Expr::CellRead { field, index } = &binding.value {\n                        let declaration = ledger_fields\n                            .get(field.as_str())\n                            .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;\n                        if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })\n                            || declaration.index != *index\n                        {\n                            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(\n                                &circuit.return_value,\n                            )));\n                        }\n                        Some((binding.name.as_str(), field.as_str(), action.as_ref()))\n                    } else {\n                        None\n                    }\n                }\n                _ => None,\n            },\n            _ => None,\n        }\n    } else {\n        None\n    };\n    let mut recorded_root_return: Option<(&str, syn::Expr)> = None;\n    if !organizer_gate\n        && !guarded_map_read_gate\n        && !typed_map_write_gate\n        && !guarded_set_mutation_gate\n    {\n        if let Some((name, field, action)) = root_field_return {\n            #[cfg(test)]\n            admission_probe::trace::action(\"guard.root-let-snapshot\");\n"
+        },
+        {
+          "current": "    if !organizer_gate\n        && !guarded_map_read_gate\n        && !typed_map_write_gate\n        && !guarded_pure_call\n        && circuit.actions.is_empty()\n        && steps.is_empty()\n",
+          "previous": "    if !organizer_gate\n        && !guarded_map_read_gate\n        && !typed_map_write_gate\n        && !guarded_set_mutation_gate\n        && !guarded_pure_call\n        && circuit.actions.is_empty()\n        && steps.is_empty()\n"
+        },
+        {
+          "current": "        && !opaque_asset_removal\n        && !guarded_map_read_gate\n        && !typed_map_write_gate\n        && !organizer_gate\n    {\n        return Ok(RecordingOutcome::Unsupported(\n",
+          "previous": "        && !opaque_asset_removal\n        && !guarded_map_read_gate\n        && !typed_map_write_gate\n        && !guarded_set_mutation_gate\n        && !organizer_gate\n    {\n        return Ok(RecordingOutcome::Unsupported(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/legacy.rs": {
+      "previous_sha256": "eb67c6d6effb49bdcfeb953de71aeaed36df79b2ca15ece1d4f9e648a339e572",
+      "current_sha256": "5eee8bb6bc7994e3b0fe0e5d676cf0847703bb248fd0e4c53e58912765a4fe4f",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(super) mod guarded_map;\npub(super) mod guarded_pure;\npub(super) mod opaque_map;\n#[cfg(test)]\npub(super) mod opaque_set;\npub(super) mod value_sources;\n\n",
+          "previous": "pub(super) mod guarded_map;\npub(super) mod guarded_pure;\npub(super) mod opaque_map;\npub(super) mod opaque_set;\npub(super) mod value_sources;\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs": {
+      "previous_sha256": "5aa90c2adece625033b46a4341c7fd74b40e67514d828b9d84379404cc115ba0",
+      "current_sha256": "5aa90c2adece625033b46a4341c7fd74b40e67514d828b9d84379404cc115ba0",
+      "predecessor_reconstruction": []
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests.rs": "b9b0ee58540482faf5561d22ca3cf5d9b675f985623784f8b39d109782c4b998",
+    "tools/compact-rust-backend/tests/asset-registry-schema20-ir.json": "2e2352059270aebef05a3d9d78371b3cf839770793eae5cc70ad3091a12868be",
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests/boundaries.rs": "4e28a229328784e2eb34da2d10bf4de86582c7ab8132aaf515299a5336d5ef0a",
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests/inclusion.rs": "603bcb0c289be7092645a3788155ca47ca94c0041f36dd9ed7816e9fb030c7ac",
+    "tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs": "5aa90c2adece625033b46a4341c7fd74b40e67514d828b9d84379404cc115ba0",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "f27c0c2fbb931b2efa6e4bfbfd4a663b83a2298dcaf7933fd60dcb30a73a5fef"
+  },
+  "anchor_adaptations": [
+    {
+      "route": "guard.root-let-snapshot",
+      "previous": {
+        "source": "tools/compact-rust-backend/src/recorded.rs",
+        "text": "let root_field_return = if !organizer_gate",
+        "baseline_occurrences": 1
+      },
+      "current": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "let root_field_return =\n        if !organizer_gate",
+          "occurrences": 1
+        }
+      ],
+      "reason": "Removal of retired opaque Set guard condition and resulting rustfmt layout; surviving control-flow predicates remain checked by exact full-owner reconstruction and explicit current occurrences."
+    },
+    {
+      "route": "final.shielded-gap-precedence",
+      "previous": {
+        "source": "tools/compact-rust-backend/src/recorded.rs",
+        "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+        "baseline_occurrences": 3
+      },
+      "current": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+          "occurrences": 1
+        },
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate && !guarded_map_read_gate",
+          "occurrences": 2
+        }
+      ],
+      "reason": "Removal of retired opaque Set guard condition and resulting rustfmt layout; surviving control-flow predicates remain checked by exact full-owner reconstruction and explicit current occurrences."
+    }
+  ]
+}

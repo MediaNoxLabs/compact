@@ -15,7 +15,9 @@
 //! Qualified-coin payout composition. Distinct read-only and actionful domains
 //! audit every branch and binding; the shared Plan owns values, calls and scope.
 use super::*;
-use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
+use crate::coin_shapes::qualified_coin_type;
+#[cfg(test)]
+use crate::coin_shapes::shielded_coin_type;
 
 pub(super) fn cell_type(ty: &Type) -> bool {
     matches!(ty, Type::Bytes { length: 32 } | Type::Enum { .. }) || *ty == qualified_coin_type()
@@ -29,6 +31,7 @@ pub(super) fn actionful_cell_type(ty: &Type) -> bool {
                 if present.name == "is_some" && present.ty == Type::Boolean
                     && value.name == "value" && value.ty == Type::Field))
 }
+#[cfg(test)]
 fn coin_result(ty: &Type) -> bool {
     if *ty == shielded_coin_type() {
         return true;
@@ -129,10 +132,12 @@ pub(super) fn action_shape(
 // Alternative branches contribute their minimum and maximum, whereas
 // sequential operands and bindings add. This rejects a second helper on any
 // executable path without confusing the two mutually exclusive player arms.
+#[cfg(test)]
 fn add_paths(left: (usize, usize), right: (usize, usize)) -> Option<(usize, usize)> {
     Some((left.0.checked_add(right.0)?, left.1.checked_add(right.1)?))
 }
 
+#[cfg(test)]
 pub(super) fn actionful_call_paths(
     value: &Expr,
     pure: &HashMap<&str, &PureCircuit>,
@@ -233,6 +238,7 @@ pub(super) fn actionful_call_paths(
         _ => None,
     }
 }
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -293,17 +299,17 @@ pub(super) fn lower<'a>(
     let mut steps = Vec::new();
     let result = plan.expression(value, &scope, &mut steps)?;
     (result.ty == circuit.result
-        && plan.cell_reads > 0
-        && plan.zswap_inputs > 0
-        && plan.zswap_outputs > 0
-        && plan.intent_queries > 0
-        && (domain == CompositeDomain::ActionfulShieldedPayout || plan.cell_writes == 0)
-        && (domain == CompositeDomain::ShieldedPayout || plan.cell_writes > 0)
-        && plan.counter_reads == 0
-        && plan.counter_comparisons == 0
-        && plan.counter_writes == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0)
+        && plan.evidence.cell_reads > 0
+        && plan.evidence.zswap_inputs > 0
+        && plan.evidence.zswap_outputs > 0
+        && plan.evidence.intent_queries > 0
+        && (domain == CompositeDomain::ActionfulShieldedPayout || plan.evidence.cell_writes == 0)
+        && (domain == CompositeDomain::ShieldedPayout || plan.evidence.cell_writes > 0)
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: result.value,

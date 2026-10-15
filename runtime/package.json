@@ -33,7 +33,7 @@
     "@midnight-ntwrk/onchain-runtime-v3"
   ],
   "dependencies": {
-    "@midnight-ntwrk/onchain-runtime-v3": "^3.0.0",
+    "@midnight-ntwrk/onchain-runtime-v3": "3.1.2",
     "@noble/hashes": "^2.0.1",
     "@types/object-inspect": "^1.8.1",
     "object-inspect": "^1.12.3"

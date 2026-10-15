@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "issue": 553,
+  "classification": "whole-zswap-admission-retirement",
+  "reviewed_checkpoint": "a04385a1e994a26715432119ce501dbad2903252",
+  "retired_route": "selector.zswap",
+  "replacement_route": "algebra.zswap",
+  "claim": "Twelfth production admission retirement. External Unit coin-carrier interfaces use checked composition at the same final priority; the complete old planner remains unchanged for tests. Source inventory is not semantic coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "prior_immediate_canonical_sha256": "c9f6bb0c919dd1957b5e42ecb55ef4482b449380140add063a5cc3067dee28ca",
+  "prior_phase_canonical_sha256": "d1eea74f0ddcb84f6bc3349997a40f66f6e24c9d0267d2493d03a192d660c16e",
+  "prior_voting_canonical_sha256": "c8161e8f208d788420b2a0b5269d8693fe177c1e8dc1cad357a0ac4a70f54657",
+  "prior_unit_domain_canonical_sha256": "4c0fbb77d697e658b6e25fec96edd0409988b37349de24b4fc70a988f3294d40",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "73f79bf0d1c48e3b3a4eaa418c3685afbd75283275a6e96a6dadf01fe3c2af13",
+    "tools/compact-rust-backend/src/recorded.rs": "fc0a4b58a3e2551520166dd493976795547a52f8040a6a55c50d24022fe74096"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded.rs": "d5efbed5f6e77bb982c96700e505a60bafd4ca564ff1d1d8663651d17d438e6b",
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "f4a956c7b2e9dcc07e34be37a923068b15cacc45ce8358ffcd8aaee76e88af43"
+  },
+  "oracle_source": "tools/compact-rust-backend/src/recorded/zswap_plan.rs",
+  "oracle_source_sha256": "8a45fbd7203c3f4f533e8e2ae0516eecbeb6722624e39413446447f9840af37d",
+  "module_guard": {
+    "from": "mod zswap_plan;",
+    "to": "#[cfg(test)]\nmod zswap_plan;"
+  },
+  "import_adaptation": {
+    "from": "use super::{effect_plan, zswap_plan};",
+    "to": "use super::effect_plan;",
+    "original_preceding_import": "use super::typed_plan::{self, CompositionRejection, TypedPlan};"
+  },
+  "helper": "fn checked_zswap_domain(",
+  "helper_sha256": "bf21154fcf80ffc3982b75d94007612dacc7b91847d328558c22c772aa8b8018",
+  "retained_shared_production_symbols": [],
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "d76643c34ca602c2bf41e48635f6608a0eadb44e7b8f2f0146e6abd9ecd791d3"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "5f4a1e2847d4167832c2874e2ed13157ab3adcccbb4c298dcff0a326e6aac411"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "algebra.voting-commit",
+    "algebra.zswap",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.membership-optional",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-send",
+    "selector.unit-composition"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values",
+    "selector.shielded-receive",
+    "selector.voting-commit",
+    "selector.phase-reset",
+    "selector.immediate-send",
+    "selector.zswap"
+  ],
+  "new_retired_routes": [
+    "selector.zswap"
+  ],
+  "predecessor_reconstruction": {
+    "added_helper": "/// External Unit carrier interfaces enter at the former Zswap priority.\n/// Typed effects decide body support; intent/query counts do not grant admission.\nfn checked_zswap_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};\n    use crate::ir::{StateReturn, Type};\n    if circuit.internal\n        || circuit.result != Type::Unit\n        || !matches!(\n            circuit.return_value,\n            StateReturn::Unit | StateReturn::Expression { .. }\n        )\n        || !circuit.parameters.iter().all(|parameter| {\n            parameter.ty == shielded_coin_type()\n                || parameter.ty == qualified_coin_type()\n                || parameter.ty == shielded_recipient_type()\n                || matches!(parameter.ty, Type::Boolean | Type::Bytes { length: 32 })\n                || parameter.ty\n                    == (Type::Unsigned {\n                        max: u64::MAX.to_string(),\n                    })\n        })\n    {\n        return Ok(None);\n    }\n    resolve_checked_plan(effect_plan::lower_with_calls(\n        circuit, ledger, witnesses, pure, circuits,\n    ))\n}\n\n",
+    "prior_selector_suffix": "pub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n    effectful_plan: Option<TypedPlan>,\n) -> Result<ProfileSelection, RenderError> {\n    let mut typed_result = None;\n    // A closed profile may find a precise nested rejection while a later\n    // profile can still admit the same circuit. Retain it only for a coarse\n    // generic return gap after every existing profile has declined.\n    let mut shielded_send_rejection = None;\n    let mut composition_rejection = None;\n    let mut organizer_steps = if let Some(plan) = effectful_plan {\n        typed_result = Some(plan.result);\n        Some(plan.steps)\n    } else {\n        record_option!(\n            \"organizer.organizer\",\n            closed_organizer_gate_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n                circuits\n            )?\n        )\n        .or(record_option!(\n            \"organizer.optional-write\",\n            closed_authorized_optional_write_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n            )?\n        ))\n        .or(record_option!(\n            \"organizer.enum-advance\",\n            closed_authorized_enum_advance_steps(circuit, ledger_fields, witnesses, pure_circuits,)?\n        ))\n        .or(record_option!(\n            \"organizer.witness-merkle\",\n            closed_witness_admitted_merkle_insert_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n            )?\n        ))\n    };\n    let typed_prefix = if organizer_steps.is_none() {\n        match record_option!(\n            \"selector.membership-optional\",\n            typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits, circuits)\n        ) {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.jubjub-values\",\n                checked_jubjub_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        }\n    } else {\n        None\n    };\n    if organizer_steps.is_none() {\n        let before_context = match typed_prefix {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.kernel\",\n                checked_kernel_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_context = match before_context {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.context-query\",\n                checked_context_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_composite = match through_context {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.composite-values\",\n                checked_composite_domain(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits\n                )?\n            ),\n        };\n        let through_receive = match through_composite {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.shielded-receive\",\n                checked_receive_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_voting = match through_receive {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.voting-commit\",\n                checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let before_terminal = through_voting\n            .or_else(|| {\n                record_option!(\n                    \"selector.funded-mint\",\n                    typed_plan::lower_funded_mint(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.guarded-deposit\",\n                    typed_plan::lower_guarded_deposit(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-merge\",\n                    typed_plan::lower_shielded_merge(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                match typed_plan::lower_shielded_send_checked(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                ) {\n                    ProfileAttempt::Admitted(plan) => {\n                        record_option!(\"selector.shielded-send\", Some(plan))\n                    }\n                    ProfileAttempt::Rejected(gap) => {\n                        shielded_send_rejection = Some(gap);\n                        record_option!(\"selector.shielded-send\", None)\n                    }\n                    ProfileAttempt::NotApplicable => record_option!(\"selector.shielded-send\", None),\n                }\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.reset-payout\",\n                    typed_plan::lower_reset_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-payout\",\n                    typed_plan::lower_shielded_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            });\n        // Preserve the lazy selector boundary. Invariant errors abort here,\n        // before any independent later family can hide a checked-plan defect.\n        let through_terminal = match before_terminal {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.terminal-returns\",\n                checked_terminal_domain(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits\n                )?\n            ),\n        };\n        // An invalid checked plan is fatal before later legacy alternatives.\n        let through_unit = match through_terminal {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.unit-actions\",\n                checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        if let Some(plan) = through_unit\n            .or_else(|| {\n                match typed_plan::lower_unit_composition_checked(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                ) {\n                    ProfileAttempt::Admitted(plan) => {\n                        record_option!(\"selector.unit-composition\", Some(plan))\n                    }\n                    ProfileAttempt::Rejected(rejection) => {\n                        composition_rejection = Some(rejection);\n                        record_option!(\"selector.unit-composition\", None)\n                    }\n                    ProfileAttempt::NotApplicable => {\n                        record_option!(\"selector.unit-composition\", None)\n                    }\n                }\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.zswap\",\n                    zswap_plan::lower(circuit, ledger_fields, circuits, witnesses)\n                )\n            })\n        {\n            organizer_steps = Some(plan.steps);\n            typed_result = Some(plan.result);\n        }\n    }\n    Ok(ProfileSelection {\n        organizer_steps,\n        typed_result,\n        shielded_send_rejection,\n        composition_rejection,\n    })\n}\n",
+    "added_test_registration": "#[cfg(test)]\n#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n"
+  },
+  "test_module": {
+    "source": "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs",
+    "sha256": "fa39f4c136d5a967f7bef644458b80a8c6a61ed18c69512306e285ac81f86a41",
+    "registration": "#[cfg(test)]\n#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n"
+  }
+}

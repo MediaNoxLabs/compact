@@ -17,7 +17,7 @@
 name = "midnight-compact-runtime-macros"
 version = "0.2.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.89"
 license = "Apache-2.0"
 description = "Derived ledger FAB codecs for generated Compact Rust types"
 repository = "https://github.com/MediaNoxLabs/compact"

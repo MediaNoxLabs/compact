@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../publication-genuine-69/",
+  "sources": ["counter.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAAA;;;;;;;;;;MAGA,AAAA,IAAiD;;;;;;;;;;;;;;;;;;;;;;OAAA;MACjD,AAAA,IAAwD;;;;;;;;;;;;;;;;;;;;;;OAAA;;;;;;;;;;GACvD;EALD;;;;;;;;;;;;;;;;;;;;;;;;;;;IAEA;;;;;;;;;yEAA6B;;;;;;;GAG5B;EAFD,AAAA,OAAiD;UAArB,KAAK;IAAL;;;;;;;;;;6FAAA,KAAK;;;;wEAAA;;GAAgB;EACjD,AAAA,OAAwD;mCAAf;;;;;;;;;;;wGAAK;GAAU;;;;;;;;;;;;;;;;IAFxD;qCAAA;;;;;;;;;;;0GAA6B;KAAA;;;;;;;;;;"
+}

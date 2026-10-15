@@ -114,7 +114,7 @@ fn final_obligations_distinguish_no_effect_from_missing_helper() {
 }
 
 #[test]
-fn unselected_effect_retains_audit_path_without_replacing_recursive_legacy_failure() {
+fn unselected_checked_effect_is_supported_but_unsupported_effect_keeps_legacy_precision() {
     for retain_earlier_guard in [false, true] {
         let mut v = fixture("flat");
         if !retain_earlier_guard {
@@ -135,24 +135,140 @@ fn unselected_effect_retains_audit_path_without_replacing_recursive_legacy_failu
             r.gap.path,
             format!("actions[0].callee[\"guard\"].actions[{index}].otherwise")
         );
-        let c: Contract = serde_json::from_value(v).unwrap();
+        // The old composition audit remains an independent refusal oracle.
+        // Checked statement calls now retain KernelSelf even in an unselected arm.
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
         let result = render_with_capabilities(&c).unwrap();
-        let gap = result
+        let capability = result
             .capabilities
             .circuits
             .iter()
             .find(|x| x.name == "close")
-            .unwrap()
-            .recording_unavailable
-            .as_ref()
             .unwrap();
-        if retain_earlier_guard {
-            // Legacy lowering already refused its Counter-reading assertion.
-            // The newer domain's later, prettier path must not replace it.
-            assert_eq!(gap.path, "callee[guard].actions[0]");
-        } else {
-            assert_eq!(gap.path, "callee[guard].actions[0].otherwise");
-        }
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+        let recording = result.source.split("pub mod recorded").nth(1).unwrap();
+        assert!(recording.contains("kernel_self()"));
+
+        // The old shape audit still refuses a native-key observation, but
+        // checked composition now supports it as an ordered private effect.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"native_witness_call", "builtin":"own_public_key"
+        });
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(
+            result
+                .source
+                .split("pub mod recorded")
+                .nth(1)
+                .unwrap()
+                .contains("own_coin_public_key()?")
+        );
+
+        // Keep the former refusal as an explicit checked-composition gain:
+        // the old auditor still rejects private-key operands inside inequality.
+        let observed_key = json!({"kind":"native_witness_call", "builtin":"own_public_key"});
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"not_equal", "left":observed_key.clone(), "right":observed_key
+            }
+        });
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+
+        // A literal-only hash would make the helper locally auditable. Retain
+        // the private key observation so the whole legacy composition root
+        // refuses this arm, independently of the newly supported checked Keccak.
+        circuit(&mut v, "guard")["actions"][index]["otherwise"] = json!({
+            "kind":"expression", "value": {
+                "kind":"equal", "left": {
+                    "kind":"keccak256", "value":{
+                        "kind":"struct_field", "value":observed_key.clone(),
+                        "field":"bytes", "index":0
+                    }
+                }, "right":{"kind":"bytes_literal","bytes":vec![0u8; 32]}
+            }
+        });
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+
+        // Negation and point defaults are now supported; the private observation
+        // preserves the exact old whole-root refusal independently.
+        let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
+        expression["left"]["kind"] = json!("hash_to_curve");
+        expression["left"] = json!({"kind":"ec_neg", "value":expression["left"].clone()});
+        expression["right"] = json!({"kind":"default", "ty":{"kind":"jubjub_point"}});
+        let unsupported = rejected(v.clone(), "close");
+        assert_eq!(unsupported.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v.clone()).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        // Fixed commitments are supported. This explicit opaque-input native-IR
+        // control is frontend-excluded and retains concrete policy provenance.
+        let expression = &mut circuit(&mut v, "guard")["actions"][index]["otherwise"]["value"];
+        expression["left"] = json!({"kind":"hash_to_curve","value":{
+            "kind":"persistent_commit","value":{"kind":"default","ty":{"kind":"opaque_string"}},
+            "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}
+        }});
+        let still_rejected = rejected(v.clone(), "close");
+        assert_eq!(still_rejected.gap.path, r.gap.path);
+        let c: Contract = serde_json::from_value(v).unwrap();
+        let result = render_with_capabilities(&c).unwrap();
+        let capability = result
+            .capabilities
+            .circuits
+            .iter()
+            .find(|x| x.name == "close")
+            .unwrap();
+        assert!(!capability.recorded && !capability.observed_call);
+        let gap = capability.recording_unavailable.as_ref().unwrap();
+        // The historical shape refusal above is retained; publication names
+        // the actual unsupported commitment inside the checked callee.
+        assert_eq!(
+            gap.code,
+            crate::recorded::RecordingGapCode::UnsupportedExpression
+        );
+        assert_eq!(gap.ir_node, "Expr::PersistentCommit");
+        assert_eq!(
+            gap.path,
+            format!("actions[0].callee[guard].actions[{index}].otherwise.value.left.value")
+        );
     }
 }
 
@@ -340,7 +456,7 @@ fn refinement_uses_typed_ordinal_phase_and_precision_not_diagnostic_strings() {
 }
 
 #[test]
-fn direct_root_call_argument_refusal_exposes_the_nested_audit_reason() {
+fn direct_root_call_argument_keeps_effects_and_unsupported_nested_audit_reason() {
     let mut v = fixture("flat");
     circuit(&mut v, "close")["actions"][0]["arguments"][0] = json!({
         "kind":"let", "bindings":[{"name":"unused", "ty":{"kind":"struct","name":"ContractAddress","fields":[{"name":"bytes","ty":{"kind":"bytes","length":32}}]}, "value":unsupported()["value"]}],
@@ -348,17 +464,87 @@ fn direct_root_call_argument_refusal_exposes_the_nested_audit_reason() {
     });
     let r = rejected(v.clone(), "close");
     assert_eq!(r.gap.path, "actions[0].arguments[0].bindings[0].value");
-    let c: Contract = serde_json::from_value(v).unwrap();
+    let c: Contract = serde_json::from_value(v.clone()).unwrap();
     let rendered = render_with_capabilities(&c).unwrap();
-    let gap = rendered
+    let capability = rendered
         .capabilities
         .circuits
         .iter()
         .find(|x| x.name == "close")
-        .unwrap()
-        .recording_unavailable
-        .as_ref()
         .unwrap();
-    assert_eq!(gap.path, r.gap.path);
-    assert_eq!(gap.ir_node, "Expr::KernelSelf");
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
+    let recording = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    assert!(recording.contains("kernel_self()"));
+
+    let binding = &mut circuit(&mut v, "close")["actions"][0]["arguments"][0]["bindings"][0];
+    binding["ty"] = json!({"kind":"field"});
+    binding["value"] =
+        json!({"kind":"transient_hash", "value":{"kind":"default","ty":{"kind":"opaque_string"}}});
+    let still_rejected = rejected(v.clone(), "close");
+    assert_eq!(still_rejected.gap.path, r.gap.path);
+    let c: Contract = serde_json::from_value(v.clone()).unwrap();
+    let rendered = render_with_capabilities(&c).unwrap();
+    let capability = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|x| x.name == "close")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    let binding = &mut circuit(&mut v, "close")["actions"][0]["arguments"][0]["bindings"][0];
+    binding["value"] = json!({"kind":"transient_hash", "value":{
+        "kind":"persistent_commit","value":{"kind":"default","ty":{"kind":"opaque_string"}},
+        "opening":{"kind":"bytes_literal","bytes":vec![0u8;32]}
+    }});
+    let still_rejected = rejected(v.clone(), "close");
+    assert_eq!(still_rejected.gap.path, r.gap.path);
+    let c: Contract = serde_json::from_value(v).unwrap();
+    let rendered = render_with_capabilities(&c).unwrap();
+    let capability = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|x| x.name == "close")
+        .unwrap();
+    assert!(!capability.recorded && !capability.observed_call);
+    let gap = capability.recording_unavailable.as_ref().unwrap();
+    // This opaque-input control is frontend-excluded native IR. The frozen
+    // Audit stops at its enclosing hash shape. Checked lowering
+    // identifies the actual unsupported commitment inside that operand.
+    assert_eq!(gap.path, format!("{}.value", still_rejected.gap.path));
+    assert_eq!(gap.ir_node, "Expr::PersistentCommit");
+}
+
+#[test]
+fn flat_and_chunked_direct_hash_lazy_arms_keep_old_refusals_and_gain_checked_support() {
+    for name in ["flat", "chunked"] {
+        let mut v = fixture(name);
+        let actions = circuit(&mut v, "guard")["actions"].as_array_mut().unwrap();
+        let index = actions.len();
+        actions.push(json!({
+            "kind":"if", "condition":{"kind":"boolean","value":true},
+            "then":{"kind":"sequence","actions":[]},
+            "otherwise":{"kind":"expression", "value":{
+                "kind":"equal",
+                "left":{"kind":"keccak256", "value":{"kind":"bytes_literal", "bytes":vec![7u8;32]}},
+                "right":{"kind":"bytes_literal", "bytes":vec![0u8;32]}
+            }}
+        }));
+        let refusal = rejected(v.clone(), "close");
+        assert_eq!(
+            refusal.gap.path,
+            format!("actions[0].callee[\"guard\"].actions[{index}].otherwise")
+        );
+        let c: Contract = serde_json::from_value(v).unwrap();
+        let output = render_with_capabilities(&c).unwrap();
+        let capability = output
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "close")
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+    }
 }

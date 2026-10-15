@@ -1,0 +1,162 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "active",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "unit_local_keccak.compact",
+        "line": 2,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "expectedHash",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "unit_local_keccak.compact",
+        "line": 3,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "verifyLocal",
+      "parameters": [
+        {
+          "name": "payload",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "keccak256",
+              "value": {
+                "kind": "parameter",
+                "name": "payload"
+              }
+            },
+            "right": {
+              "kind": "witness_call",
+              "name": "expectedHash",
+              "arguments": [
+              ]
+            }
+          },
+          "message": "hash mismatch"
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "unit_local_keccak.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "name": "close",
+      "parameters": [
+        {
+          "name": "payload",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "verifyLocal",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "payload"
+              },
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        {
+          "kind": "cell_write",
+          "field": "active",
+          "index": 0,
+          "value": {
+            "kind": "boolean",
+            "value": false
+          }
+        }
+      ],
+      "source": {
+        "file": "unit_local_keccak.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "active",
+        "index": 0,
+        "value": {
+          "kind": "boolean",
+          "value": true
+        }
+      }
+    ],
+    "source": {
+      "file": "unit_local_keccak.compact",
+      "line": 4,
+      "column": 1
+    }
+  }
+}

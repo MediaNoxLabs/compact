@@ -1,0 +1,34 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+//! Native output views over children checked once by the pure semantic owner.
+//! This checkpoint still constructs syntax in body certification. It does not
+//! select the production syntax-free body CheckSink; the shared fold is complete.
+
+pub(crate) mod control;
+pub(crate) mod fragment;
+pub(crate) mod leaf;
+
+#[cfg(test)]
+mod tests;
+#[cfg(test)]
+pub(crate) mod visitation;
+
+#[cfg(test)]
+pub(crate) mod children;
+pub(crate) mod conversion;
+
+pub(crate) mod arithmetic;
+
+pub(crate) mod crypto;
+
+pub(crate) mod aggregate;
+
+pub(crate) mod item;
+
+pub(crate) mod local;
+
+pub(crate) mod sink;
+
+pub(crate) mod value;

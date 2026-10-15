@@ -318,3 +318,7 @@ fn vector_tuple_and_nested_struct_recorded_set_inserts_replay() {
     }
     check_recorded("twelve", twelve_native, twelve_recorded);
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "observed/preparation.rs"]
+mod preparation;

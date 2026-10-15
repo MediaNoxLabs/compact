@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "issue": 632,
+  "epoch": {
+    "path": "tools/compact-rust-backend/historical_law_suite.json",
+    "sha256": "fa967bf793bb3ec19cc5d37bd45c9393a2fb82269dc44c960d59770b996aff03",
+    "canonical_sha256": "f40a77cc304f3d4569f21e7a5882b7af428110e37520582f09d9bf4d8a7db47d"
+  },
+  "current_sources": {
+    "tools/compact-rust-backend/test_reducer_capture_source.py": "e46a46b9f777e441897bb4b494eab3d4636f9af6ebf5bb51c863fb8224e2885d",
+    "tools/compact-rust-backend/test_dispatcher_portability.py": "9bf477ddc10738ffbceda36385f2068cfc2f669193ef4c46bd17a5dbfda0f611",
+    "tools/compact-rust-backend/did_primitive_reducer_gate.py": "bd2a720e56223ef8aa23f37582d2c6ba8e82cdcd03e707eefc8c63482f75af0b",
+    "tools/compact-rust-backend/test_local_parity_gate.py": "e48e67b6e1b906a0d158cd5950d7c3d719bfeea66e18c51efa1fb8f7f5902d23",
+    "tools/compact-rust-backend/reviewed_rust_capture.py": "a5b774e1dd0d16ee0beef61e758481ba8aae643bdf419982c169eefb59b5ac91",
+    "tools/compact-rust-backend/test_historical_law_dispatcher.py": "4cc55796a425c2f92a813b19a4d8fbc35a2d6dd85cbcd31689d2f291fa33040c",
+    "tools/compact-rust-backend/test_reviewed_rust_capture.py": "42716db0ed9fd9f5d268241bcd321c94172a2dcfc6ebf9e3e0a3fa807285a6ad",
+    "tools/compact-rust-backend/test_historical_law_source_transition.py": "679bcd66ec99baa28e643f887ef48ebd7699c395aab6df8bbf067d68e309b1f8",
+    "tools/compact-rust-backend/test_historical_law_gate.py": "1c3ca9faf3a0f1576c7432307037510f07ab7e47cfaba6f69987b074dc1c3bf9",
+    "tools/compact-rust-backend/local_parity_gate.py": "2e22dde1cbcb3f75034cc8668b78a5b70287a6f353e9d00d4bb6b2a1d8df8d7f",
+    "tools/compact-rust-backend/historical_law_source_transition.py": "cedf2c3d74fbe2e4def8141c04399af91ebb4f3e594194266e67d03e321e8769",
+    "tools/compact-rust-backend/reducer_capture_source.py": "5ca9718662cc0401951e40792ebd54a45cdae05e46d77c9941166d5edb36e5ac",
+    "tools/compact-rust-backend/test_archived_conformance_epoch.py": "fa82d6b6bd7bcd5e65db264900e49dd66be9a2488de51954b97ffcc6651db7b7",
+    "tools/compact-rust-backend/archived_conformance_test_support.py": "690bc0605582c92e682a412f868bad9d0aab309c18f187fbe56d878ee3bfcd1f"
+  },
+  "owner_inverses": {
+    "tools/compact-rust-backend/did_primitive_reducer_gate.py": {
+      "path": "tools/compact-rust-backend/historical-law-inputs/632-held/did_primitive_reducer_gate.py.txt",
+      "sha256": "c28af01acae4d3000f5dadcb8a695d6b58b879561b7c3c4d16858d61c5ca71ec"
+    },
+    "tools/compact-rust-backend/test_local_parity_gate.py": {
+      "path": "tools/compact-rust-backend/historical-law-inputs/632-held/test_local_parity_gate.py.txt",
+      "sha256": "56914b14ce9b287b4876d2b3af5372db58933dc25062e30eaeee5ddb2d16f8c1"
+    },
+    "tools/compact-rust-backend/test_historical_law_dispatcher.py": {
+      "path": "tools/compact-rust-backend/historical-law-inputs/632-held/test_historical_law_dispatcher.py.txt",
+      "sha256": "9215849284a322a9bcc46bb06cd8d8dce417d50a74749f3b32b6e63fd161752a"
+    },
+    "tools/compact-rust-backend/local_parity_gate.py": {
+      "path": "tools/compact-rust-backend/historical-law-inputs/632-held/local_parity_gate.py.txt",
+      "sha256": "97ac444c403f4957b987b2b443e23bb8703bc39b964efffd6c5ed79f206eaa91"
+    },
+    "tools/compact-rust-backend/test_archived_conformance_epoch.py": {
+      "path": "tools/compact-rust-backend/historical-law-inputs/632-held/test_archived_conformance_epoch.py.txt",
+      "sha256": "a4f4cc36605bd6d75e731011e2b8e37d4bc34f7686ea8ea3809cb1e3b3c979ab"
+    },
+    "tools/compact-rust-backend/archived_conformance_test_support.py": {
+      "path": "tools/compact-rust-backend/historical-law-inputs/632-held/archived_conformance_test_support.py.txt",
+      "sha256": "8a62243ba3874d7032c327aa0d28237348911b97956057ce586e43a0756bb4f5"
+    }
+  }
+}

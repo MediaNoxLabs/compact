@@ -1,0 +1,38 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger round: Counter;
+export ledger stored: Bytes<32>;
+export struct Receipt { digest: Bytes<32>; pair: Bytes<32>; encoded: Bytes<32>; }
+struct Empty {}
+struct Product { head: Bytes<3>; tail: Vector<2, Bytes<3>>; }
+export struct ProductReceipt { bytes: Bytes<32>; vector: Bytes<32>; nested: Bytes<32>; empty: Bytes<32>; emptyVector: Bytes<32>; emptyStruct: Bytes<32>; }
+witness opening(seed: Field): Field;
+constructor() { round.increment(257); stored = default<Bytes<32>>; }
+circuit counterDigest(left: Bytes<32>, right: Bytes<32>): Bytes<32> {
+  return persistentHash<[Bytes<32>, Bytes<32>, Bytes<32>]>([round as Field as Bytes<32>, left, right]);
+}
+export circuit run(seed: Field, amount: Uint<16>, selected: Boolean): Receipt {
+  round.increment(disclose(amount));
+  const encoded = seed as Bytes<32>;
+  const value = selected ? opening(seed) : seed;
+  const digest = counterDigest(encoded, value as Bytes<32>);
+  stored = disclose(digest);
+  return Receipt {
+    digest: stored,
+    pair: persistentHash<[Bytes<32>, Bytes<32>]>([encoded, encoded]),
+    encoded: encoded
+  };
+}
+export circuit products(value: Bytes<3>, empty: Bytes<0>): ProductReceipt {
+  stored = disclose(persistentHash<Bytes<3>>(value));
+  return ProductReceipt {
+    bytes: stored,
+    vector: persistentHash<Vector<2, Bytes<3>>>([value, value]),
+    nested: persistentHash<Product>(Product { head: value, tail: [value, value] }),
+    empty: persistentHash<Bytes<0>>(empty),
+    emptyVector: persistentHash<Vector<0, Bytes<3>>>([]),
+    emptyStruct: persistentHash<Empty>(Empty {})
+  };
+}

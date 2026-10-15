@@ -17,7 +17,18 @@ use super::*;
 use compact_rust_test_center_micro_dao_fixture::{ledger_contract as c, types};
 use midnight_base_crypto::hash::HashOutput;
 use midnight_compact_runtime::{BoundedUint, FixedBytes};
+fn validate_ir(bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+    let expected: serde_json::Value =
+        serde_json::from_str(compact_rust_test_center_micro_dao_fixture::RETAINED_IR)?;
+    let actual: serde_json::Value = serde_json::from_slice(bytes)?;
+    if expected != actual {
+        return Err("original full microDAO source/proof IR mismatch".into());
+    }
+    Ok(())
+}
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    validate_ir(&std::fs::read(root.join("contract/compact-rust-ir.json"))?)?;
     let name = "dao_voting_token";
     let mut rng = StdRng::seed_from_u64(0x0190_0000);
     let initial = c::initial_state(
@@ -78,4 +89,23 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         "original microDAO.dao_voting_token proved, verified and ledger-applied at deployed address under shared unbalanced smoke policy; no funding claim"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn rejects_mismatched_source_before_reading_keys() {
+        let source = compact_rust_test_center_micro_dao_fixture::RETAINED_IR;
+        validate_ir(source.as_bytes()).unwrap();
+        let mut altered: serde_json::Value = serde_json::from_str(source).unwrap();
+        altered["stateful_circuits"][0]["name"] = "different".into();
+        assert!(validate_ir(&serde_json::to_vec(&altered).unwrap()).is_err());
+        assert!(
+            validate_ir(include_bytes!(
+                "../../compact-rust-backend/tests/token-query-schema20-ir.json"
+            ))
+            .is_err()
+        );
+    }
 }

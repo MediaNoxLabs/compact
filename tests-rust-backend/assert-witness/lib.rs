@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -75,10 +75,10 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
-        >(Default::default())]);
+        >(Default::default())?]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -195,6 +195,54 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn checked_value<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+            __compact_param_1: bool,
+            __compact_param_2: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let __compact_effect_2: runtime::Field = __compact_param_2;
+            let (frame, __compact_effect_3): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            if !__compact_effect_3 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "first witness failed".to_owned(),
+                ));
+            }
+            let __compact_effect_4: () = ();
+            let (frame, __compact_effect_5): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_1,
+                    )
+                })?;
+            if !__compact_effect_5 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "second witness failed".to_owned(),
+                ));
+            }
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_2))
+        }
         pub fn checked_write<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -203,24 +251,28 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_arg_0: bool = __compact_param_0;
-            let (frame, __compact_recorded_bool_1): (_, bool) =
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
+            let (frame, __compact_effect_2): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.echo(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_recorded_arg_0,
+                        __compact_effect_0,
                     )
                 })?;
-            if !(__compact_recorded_bool_1) {
+            if !__compact_effect_2 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "write denied".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::cell.record_write(frame, __compact_param_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_3: () = ();
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_effect_1)?;
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn read_cell<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -229,9 +281,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
+            let (frame, __compact_effect_0): (_, runtime::Field) =
                 crate::ledger_slots::cell.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -269,6 +321,54 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn checked_value<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                first: bool,
+                second: bool,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                checked_value(context, self.witnesses, first, second, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn checked_value_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                first: bool,
+                second: bool,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from(first),
+                    runtime::fab::AlignedValue::from(second),
+                    runtime::fab::AlignedValue::from(value),
+                ]);
+                let recorded = self.checked_value(
+                    observed.circuit_context(private_state),
+                    first,
+                    second,
+                    value,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "checked_value",
+                    input,
+                ))
+            }
             pub fn checked_write<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "issue": 598,
+  "baseline_commit": "446464ed48eb3342655c9c0c36e835ddd90da053",
+  "claim": "Checked Unit execution includes empty public programs; preparation still rejects EmptyTranscript. No guard retirement or resource limit change.",
+  "selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": {
+      "previous_sha256": "aa9bd5e3e9d324334f4e9994d5d87e4c8216eb885daa36be351f561cbde478b5",
+      "current_sha256": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+      "predecessor_reconstruction": [
+        {
+          "current": "        Ok(plan) => plan,\n        Err(error) => return failure(error),\n    };\n    // Recording captures checked execution, including private-only effects.\n    // Transaction preparation separately requires a nonempty public transcript.\n    match effect_plan::render(&checked) {\n        Ok(plan) => Ok(ProfileAttempt::Admitted(plan)),\n        Err(gap) => failure(effect_plan::DiagnosticPlanError::Invalid(gap)),\n",
+          "previous": "        Ok(plan) => plan,\n        Err(error) => return failure(error),\n    };\n    if !effect_plan::has_public_program(&checked) {\n        let mut gap = RecordingGap::no_effect();\n        gap.detail = \"Unit composition has no replayable public ledger operation\".into();\n        return Ok(ProfileAttempt::Rejected(gap.into()));\n    }\n    match effect_plan::render(&checked) {\n        Ok(plan) => Ok(ProfileAttempt::Admitted(plan)),\n        Err(gap) => failure(effect_plan::DiagnosticPlanError::Invalid(gap)),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": {
+      "previous_sha256": "642bd807ff656b6e49a86d17640bb99da17d9ffb07cf5bf9a9d6b56925137ce9",
+      "current_sha256": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod model;\n#[cfg(all(test, feature = \"experimental-recording-plan\"))]\nmod property_tests;\n#[cfg(test)]\nmod public_effects;\nmod pure_certification;\nmod rejection;\n",
+          "previous": "mod model;\n#[cfg(all(test, feature = \"experimental-recording-plan\"))]\nmod property_tests;\nmod public_effects;\nmod pure_certification;\nmod rejection;\n"
+        },
+        {
+          "current": "use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};\npub(super) use model::CheckedPlan;\n#[cfg(test)]\npub(super) use public_effects::has_public_program;\npub(super) use rejection::{DiagnosticPlanError, LoweringRejection};\nuse std::collections::HashMap;\n",
+          "previous": "use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};\npub(super) use model::CheckedPlan;\npub(super) use public_effects::has_public_program;\npub(super) use rejection::{DiagnosticPlanError, LoweringRejection};\nuse std::collections::HashMap;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests.rs": {
+      "previous_sha256": "fee61ad10af3f531334666d148c956515a30640c62c362f95fbb2eb5b0842a9e",
+      "current_sha256": "13f5654ad1105a1d6516872bd78042b47986c628a3ab8293130a8e05d1d92a4f",
+      "predecessor_reconstruction": [
+        {
+          "current": "            !effect_plan::has_public_program(&checked(&c)),\n            \"valid private plan has no VM operations\"\n        );\n        assert_supported(&c);\n        let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {\n            unreachable!(\"qualified execution remains recordable\")\n        };\n        let steps = &plan.steps;\n        let text = quote::quote!(#(#steps)*).to_string();\n        let required = match &c.stateful_circuits[0].actions[0] {\n            StateAction::PureCall { .. } => \"pure_circuits\",\n            StateAction::Assert { .. } => \"AssertionFailed\",\n            StateAction::Expression {\n                value: Expr::Default { .. },\n            } => \"Default\",\n            StateAction::Expression {\n                value: Expr::WitnessCall { .. },\n            } => \"try_witness_metered\",\n            StateAction::Expression {\n                value: Expr::NativeWitnessCall { .. },\n            } => \"own_coin_public_key\",\n            _ => unreachable!(),\n        };\n        assert!(text.contains(required), \"recording preserves {required}\");\n    }\n    c.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::CreateZswapInput {\n",
+          "previous": "            !effect_plan::has_public_program(&checked(&c)),\n            \"valid private plan has no VM operations\"\n        );\n        let refusal = rejected(&c);\n        let outer = RecordingGap {\n            resource: None,\n            code: RecordingGapCode::UnsupportedAction,\n            ir_node: \"sentinel\".into(),\n            path: \"actions[0]\".into(),\n            detail: \"outer\".into(),\n        };\n        assert_eq!(\n            refusal.refine_action(0, LegacyActionPrecision::Coarse, outer.clone()),\n            outer,\n            \"obligation cannot refine an action\"\n        );\n    }\n    c.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::CreateZswapInput {\n"
+        },
+        {
+          "current": "        },\n    }];\n    assert!(!effect_plan::has_public_program(&checked(&c)));\n    let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {\n        panic!(\"checked private intent remains recordable\")\n    };\n    let steps = &plan.steps;\n    let text = quote::quote!(#(#steps)*).to_string();\n    assert!(text.contains(\"create_zswap_input\"));\n    c.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::CreateZswapOutput {\n            coin: Box::new(Expr::Default {\n",
+          "previous": "        },\n    }];\n    assert!(!effect_plan::has_public_program(&checked(&c)));\n    rejected(&c);\n    c.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::CreateZswapOutput {\n            coin: Box::new(Expr::Default {\n"
+        },
+        {
+          "current": "        },\n    }];\n    assert!(!effect_plan::has_public_program(&checked(&c)));\n    let ProfileAttempt::Admitted(plan) = attempt_contract(&c).unwrap() else {\n        panic!(\"checked private intent remains recordable\")\n    };\n    let steps = &plan.steps;\n    let text = quote::quote!(#(#steps)*).to_string();\n    assert!(text.contains(\"create_zswap_output\"));\n}\n\n#[test]\n",
+          "previous": "        },\n    }];\n    assert!(!effect_plan::has_public_program(&checked(&c)));\n    rejected(&c);\n}\n\n#[test]\n"
+        },
+        {
+          "current": "\n#[path = \"tests/interfaces.rs\"]\nmod interfaces;\n\n#[path = \"tests/empty_execution.rs\"]\nmod empty_execution;\n",
+          "previous": "\n#[path = \"tests/interfaces.rs\"]\nmod interfaces;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests/interfaces.rs": {
+      "previous_sha256": "caf092f861c38b07959f86c81ec3fa732d2970bc3210a6b291478e1917e0e992",
+      "current_sha256": "fe0490ced7883d68071ba12c874b32e62f476407d890df5a0051c048a4bbd21d",
+      "predecessor_reconstruction": [
+        {
+          "current": "            message: \"private-only\".into(),\n        }];\n        assert!(!effect_plan::has_public_program(&checked(&c)));\n        assert_supported(&c); // Execution availability is independent of public evidence.\n        c.stateful_circuits[0].actions = vec![public_action()];\n        c.stateful_circuits[0].return_value = StateReturn::Expression { value: Expr::Unit };\n        assert!(matches!(\n",
+          "previous": "            message: \"private-only\".into(),\n        }];\n        assert!(!effect_plan::has_public_program(&checked(&c)));\n        assert!(matches!(\n            attempt_contract(&c).unwrap(),\n            ProfileAttempt::Rejected(_)\n        ));\n        c.stateful_circuits[0].actions = vec![public_action()];\n        c.stateful_circuits[0].return_value = StateReturn::Expression { value: Expr::Unit };\n        assert!(matches!(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/capabilities.rs": {
+      "previous_sha256": "407190557724e551cda93f297be4070da7db614340ea9d30a3ef99416a65014c",
+      "current_sha256": "bbdaddb6dd1d2152d541712344f8868a5c1024df6e5235dabbbb46dad8eed44b",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub struct RustCircuitCapability {\n    pub name: String,\n    pub source: Option<ir::SourceLocation>,\n    /// Whether a recorded execution function was emitted. An execution may have\n    /// an empty public program, which transaction preparation rejects.\n    pub recorded: bool,\n    /// Whether the typed observed-call API was emitted, not a promise that every\n    /// execution can be prepared or proved. `proof_required` comes from the frontend.\n    pub observed_call: bool,\n    #[serde(skip_serializing_if = \"Option::is_none\")]\n    pub proof_required: Option<bool>,\n",
+          "previous": "pub struct RustCircuitCapability {\n    pub name: String,\n    pub source: Option<ir::SourceLocation>,\n    pub recorded: bool,\n    pub observed_call: bool,\n    #[serde(skip_serializing_if = \"Option::is_none\")]\n    pub proof_required: Option<bool>,\n"
+        },
+        {
+          "current": "            report.circuits[0].recording_status,\n            Some(RecordingStatus::NotApplicable)\n        );\n    }\n\n    #[test]\n    fn nonproof_execution_apis_do_not_imply_transaction_preparation() {\n        let mut report = report();\n        report.circuits[0].recorded = true;\n        report.circuits[0].observed_call = true;\n        report\n            .apply_contract_info(&json!({\"circuits\": [{\"name\": \"exported\", \"proof\": false}]}))\n            .unwrap();\n        let serialized = serde_json::to_value(&report).unwrap();\n        assert_eq!(serialized[\"schema_version\"], 3);\n        let row = &serialized[\"circuits\"][0];\n        assert_eq!(row[\"recorded\"], true);\n        assert_eq!(row[\"observed_call\"], true);\n        assert_eq!(row[\"proof_required\"], false);\n        assert_eq!(row[\"recording_status\"], \"not_applicable\");\n        assert!(row.get(\"recording_unavailable\").is_none());\n        assert!(row.get(\"observed_call_unavailable\").is_none());\n    }\n\n    #[test]\n",
+          "previous": "            report.circuits[0].recording_status,\n            Some(RecordingStatus::NotApplicable)\n        );\n    }\n\n    #[test]\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests/empty_execution.rs": "a29bb8d5c013fc1964b3b960343175c4fc782fd592b706f2b3c2fac713dd67d8",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "f27c0c2fbb931b2efa6e4bfbfd4a663b83a2298dcaf7933fd60dcb30a73a5fef",
+    "tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs": "9feaf91e856802cfd564812c3734f1484c137530367d36407c1d6f6a5b8c480a",
+    "tools/compact-rust-backend/src/recorded/legacy/value_sources.rs": "58392dabd6b787fee3f88024f7c742a676480470cab1b1d694c091cb351464a5",
+    "tools/compact-rust-backend/src/recorded/effect_plan/public_effects.rs": "af25cd3bb4c95900cedd6e8aaff94bf092fa4f4fcc061b12e3dd33502380fdb2",
+    "runtime-rs/src/transaction.rs": "9397fe72f44ebaaca429798109ce990696dcaf1869ba190a564aaa6dbdde173a",
+    "tests-rust-backend/empty-recording-ir/contract-ir.json": "6d0e78dee3ec3564d6ed8c7dbcaedeee3f0367eb07a732c203f7c35971709018"
+  }
+}

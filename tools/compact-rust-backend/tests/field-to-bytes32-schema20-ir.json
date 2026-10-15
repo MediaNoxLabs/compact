@@ -1,0 +1,122 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "instance",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "field_to_bytes32_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "encode",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "body": {
+        "kind": "field_to_bytes32",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "source": {
+        "file": "field_to_bytes32_oracle.compact",
+        "line": 24,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "snapshot",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "field_to_bytes32",
+          "value": {
+            "kind": "field_cast",
+            "value": {
+              "kind": "counter_read",
+              "field": "instance",
+              "index": 0
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_to_bytes32_oracle.compact",
+        "line": 28,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_1",
+            "ty": {
+              "kind": "unsigned",
+              "max": "65535"
+            },
+            "value": {
+              "kind": "unsigned_literal",
+              "value": "257",
+              "max": "65535"
+            }
+          }
+        ],
+        "step": {
+          "kind": "counter_increment",
+          "field": "instance",
+          "index": 0,
+          "amount": {
+            "kind": "literal",
+            "value": 257
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "field_to_bytes32_oracle.compact",
+      "line": 20,
+      "column": 1
+    }
+  }
+}

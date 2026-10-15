@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Finite native conformance cases. These do not qualify recording or proofs.
+//! Finite Boolean behavior controls plus recorded/observed membership qualification.
+//! Witness-only recordings do not establish a nonempty public proof transcript.
 
 use compact_rust_boolean_logic_fixture::{ledger_contract as contract, pure_circuits};
 use midnight_compact_runtime::{
@@ -71,10 +72,11 @@ const CASES: [TruthCase; 4] = [
     },
 ];
 
+#[derive(Clone)]
 struct TracedEcho {
     refuse_call: Option<usize>,
     invert_answer: bool,
-    calls: RefCell<Vec<(u64, bool)>>,
+    calls: std::rc::Rc<RefCell<Vec<(u64, bool)>>>,
 }
 
 impl TracedEcho {
@@ -82,7 +84,7 @@ impl TracedEcho {
         Self {
             refuse_call,
             invert_answer: false,
-            calls: RefCell::new(Vec::new()),
+            calls: std::rc::Rc::new(RefCell::new(Vec::new())),
         }
     }
 }
@@ -305,5 +307,130 @@ fn branching_and_negation_use_witness_answers_not_arguments() {
             &[input],
             &[output],
         );
+    }
+}
+
+#[cfg(feature = "ledger-transaction")]
+mod recorded_membership {
+    use super::*;
+    use midnight_compact_runtime as r;
+    use r::transaction::{Observation, ObservedContractState};
+    fn observed() -> ObservedContractState {
+        ObservedContractState::new(
+            Default::default(),
+            r::ledger::ContractState::new(
+                context().query.state.get_ref().clone(),
+                Default::default(),
+                Default::default(),
+            ),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        )
+    }
+    #[test]
+    fn boolean_recordings_and_observed_calls_preserve_truth_table_and_selected_refusals() {
+        for case in &CASES {
+            for mode in 0..3 {
+                if mode == 2 && case.right {
+                    continue;
+                }
+                let expected = match mode {
+                    0 => case.and_result,
+                    1 => case.or_result,
+                    _ => !case.left,
+                };
+                let calls = match mode {
+                    0 => case.and_calls,
+                    1 => case.or_calls,
+                    _ => std::slice::from_ref(&case.left),
+                };
+                for refusal in [None, Some(1), Some(2)] {
+                    let state = observed();
+                    let a = TracedEcho::new(refusal);
+                    let b = TracedEcho::new(refusal);
+                    let w = TracedEcho::new(refusal);
+                    let native = match mode {
+                        0 => contract::witnessed_both(
+                            state.circuit_context(7),
+                            &a,
+                            case.left,
+                            case.right,
+                        ),
+                        1 => contract::witnessed_either(
+                            state.circuit_context(7),
+                            &a,
+                            case.left,
+                            case.right,
+                        ),
+                        _ => contract::witnessed_not(state.circuit_context(7), &a, case.left),
+                    };
+                    let recorded = match mode {
+                        0 => contract::recorded::witnessed_both(
+                            state.circuit_context(7),
+                            &b,
+                            case.left,
+                            case.right,
+                        ),
+                        1 => contract::recorded::witnessed_either(
+                            state.circuit_context(7),
+                            &b,
+                            case.left,
+                            case.right,
+                        ),
+                        _ => contract::recorded::witnessed_not(
+                            state.circuit_context(7),
+                            &b,
+                            case.left,
+                        ),
+                    };
+                    let handle = contract::Contract::from(w.clone());
+                    let handle = handle.recording();
+                    let call = match mode {
+                        0 => handle.witnessed_both_call(&state, 7, case.left, case.right),
+                        1 => handle.witnessed_either_call(&state, 7, case.left, case.right),
+                        _ => handle.witnessed_not_call(&state, 7, case.left),
+                    };
+                    if let Some(prefix) = refusal.filter(|&n| n <= calls.len()) {
+                        for error in [
+                            native.err().unwrap(),
+                            recorded.err().unwrap(),
+                            call.err().unwrap(),
+                        ] {
+                            assert_eq!(error, CompactError::AssertionFailed(REFUSAL.into()));
+                        }
+                        for witness in [&a, &b, &w] {
+                            assert_calls(witness, &calls[..prefix]);
+                        }
+                    } else {
+                        let native = native.unwrap();
+                        let recorded = recorded.unwrap();
+                        let call = call.unwrap();
+                        for actual in [&recorded.execution, &call.recorded().execution] {
+                            assert_eq!(actual.result, expected);
+                            assert_eq!(actual.result, native.result);
+                            assert_eq!(actual.context.query.state, native.context.query.state);
+                            assert_eq!(actual.context.query.effects, native.context.query.effects);
+                            assert_eq!(actual.context.private_state, native.context.private_state);
+                            assert_eq!(actual.gas_cost, native.gas_cost);
+                            assert_eq!(
+                                actual.private_transcript_outputs,
+                                native.private_transcript_outputs
+                            );
+                        }
+                        assert!(
+                            recorded.public.verify_ops().is_empty(),
+                            "witness-only recording has no public transcript and is not a proof claim"
+                        );
+                        for witness in [&a, &b, &w] {
+                            assert_calls(witness, calls);
+                        }
+                        assert_success(native, &a, expected, calls, calls);
+                    }
+                }
+            }
+        }
     }
 }

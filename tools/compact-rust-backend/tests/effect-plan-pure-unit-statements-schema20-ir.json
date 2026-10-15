@@ -1,0 +1,528 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "last",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "left",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "name": "right",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "marker",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "both",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "parameter",
+              "name": "a"
+            },
+            "message": "left guard"
+          },
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "parameter",
+              "name": "b"
+            },
+            "message": "right guard"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "nested",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "call",
+            "name": "both",
+            "arguments": [
+              {
+                "kind": "parameter",
+                "name": "a"
+              },
+              {
+                "kind": "parameter",
+                "name": "b"
+              }
+            ]
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "name": "first_value",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "parameter",
+              "name": "a"
+            },
+            "message": "first pure argument"
+          }
+        ],
+        "value": {
+          "kind": "parameter",
+          "name": "a"
+        }
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 16,
+        "column": 1
+      }
+    },
+    {
+      "name": "second_value",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "b",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "parameter",
+              "name": "b"
+            },
+            "message": "second pure argument"
+          }
+        ],
+        "value": {
+          "kind": "parameter",
+          "name": "b"
+        }
+      },
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_8",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_8"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "bump",
+          "arguments": [
+          ]
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "a",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "left",
+                  "arguments": [
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "b",
+                  "ty": {
+                    "kind": "boolean"
+                  },
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "right",
+                    "arguments": [
+                    ]
+                  }
+                }
+              ],
+              "action": {
+                "kind": "pure_call",
+                "name": "nested",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "a"
+                    },
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "b"
+                    },
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_7",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "marker",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "last",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_7"
+            }
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "bump",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "argument_order",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "bump",
+          "arguments": [
+          ]
+        },
+        {
+          "kind": "pure_call",
+          "name": "both",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "call",
+                "name": "first_value",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "a"
+                    },
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  }
+                ]
+              },
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "call",
+                "name": "second_value",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "b"
+                    },
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  }
+                ]
+              },
+              "ty": {
+                "kind": "boolean"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "circuit_call",
+          "name": "bump",
+          "arguments": [
+          ]
+        }
+      ],
+      "source": {
+        "file": "effect_plan_pure_unit_statements.compact",
+        "line": 34,
+        "column": 1
+      }
+    }
+  ]
+}

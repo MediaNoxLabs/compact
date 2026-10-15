@@ -1,0 +1,267 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "first",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "nested.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "second",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "jubjub_point"
+        }
+      },
+      "source": {
+        "file": "nested.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "nested",
+      "parameters": [
+        {
+          "name": "outer",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "inner",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "point",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "second",
+        "index": 1
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "first",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "point"
+          }
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "outer"
+          },
+          "then": {
+            "kind": "if",
+            "condition": {
+              "kind": "parameter",
+              "name": "inner"
+            },
+            "then": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_4",
+                  "ty": {
+                    "kind": "jubjub_point"
+                  },
+                  "value": {
+                    "kind": "ec_add",
+                    "left": {
+                      "kind": "cell_read",
+                      "field": "first",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "ec_mul_generator",
+                      "scalar": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                }
+              ],
+              "action": {
+                "kind": "cell_write",
+                "field": "second",
+                "index": 1,
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_4"
+                }
+              }
+            },
+            "otherwise": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_5",
+                  "ty": {
+                    "kind": "jubjub_point"
+                  },
+                  "value": {
+                    "kind": "ec_mul",
+                    "point": {
+                      "kind": "cell_read",
+                      "field": "first",
+                      "index": 0
+                    },
+                    "scalar": {
+                      "kind": "field_literal",
+                      "value": "2"
+                    }
+                  }
+                }
+              ],
+              "action": {
+                "kind": "cell_write",
+                "field": "second",
+                "index": 1,
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_5"
+                }
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_6",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "cell_read",
+                  "field": "first",
+                  "index": 0
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "second",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_6"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "nested.compact",
+        "line": 12,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_2",
+            "ty": {
+              "kind": "jubjub_point"
+            },
+            "value": {
+              "kind": "ec_mul_generator",
+              "scalar": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "first",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_2"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_3",
+            "ty": {
+              "kind": "jubjub_point"
+            },
+            "value": {
+              "kind": "ec_mul_generator",
+              "scalar": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "second",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_3"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "nested.compact",
+      "line": 8,
+      "column": 1
+    }
+  }
+}

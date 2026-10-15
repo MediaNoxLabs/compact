@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "issue": 566,
+  "classification": "whole-guarded-deposit-admission-retirement",
+  "reviewed_checkpoint": "572fd3a38c9e41898cd849f897f6c5af0942b676",
+  "retired_route": "selector.guarded-deposit",
+  "replacement_route": "algebra.guarded-deposit",
+  "claim": "Sixteenth source admission retirement. Same-priority type-only checked composition replaces guarded deposit; shared prefix and storage helpers remain live. Source inventory is not behavioral coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "prior_merge_canonical_sha256": "7160cff044c686cd5474df9209f5a6e4f1391940119c6a8ea731cb43c7d260cd",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "ed6ca69ba8247356eed809790bdbe084174018c393abf8c5a514e817305078f9",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "13cc6c145b02901ed6032ff3e4b2308542ead1aae0c637131058773eb96fd1b7",
+    "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs": "d7c41e82b00576d5afd2f0857c92cd453e205a29571383ac80fe34a1f0f78c07",
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": "51efa96c7008c25fba5abc295d96dd1def43bddd3541e2cb7f1881203c0965f2"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "4e4f5684aa67f63b5e5d3dd4a3da812bf636c618feb50b51c74724832bb44d14",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "698fcf518d8818d44014f1cc46fcd21c2cce96e4f4d30dc069de296eb884b4a1",
+    "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs": "4b1aad8edbfef0cf727469ce6e13d29067fffdbce3920c00bb9638c29a1f2894",
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": "a557bbb011848ca5ed1637162206f51c40c552ebe64691f9d2ff45fadf847f28"
+  },
+  "predecessor_reconstruction": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": [
+      {
+        "current": "#[path = \"profile_selection/unit_migration_tests.rs\"]\nmod unit_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/voting_migration_tests.rs\"]\nmod voting_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/send_migration_tests.rs\"]\nmod send_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/merge_migration_tests.rs\"]\nmod merge_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/guarded_deposit_migration_tests.rs\"]\nmod guarded_deposit_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\npub(super) struct ProfileSelection {\n    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n",
+        "previous": "#[path = \"profile_selection/unit_migration_tests.rs\"]\nmod unit_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/voting_migration_tests.rs\"]\nmod voting_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/send_migration_tests.rs\"]\nmod send_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/merge_migration_tests.rs\"]\nmod merge_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\npub(super) struct ProfileSelection {\n    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n"
+      },
+      {
+        "current": "    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    if circuit.result != Type::Unit\n        || circuit.return_value != StateReturn::Unit\n        || !matches!(circuit.parameters.as_slice(), [ballot, coin]\n            if ballot.ty == Type::Boolean\n                && coin.ty == crate::coin_shapes::shielded_coin_type())\n    {\n        return Ok(None);\n    }\n    resolve_checked_plan(effect_plan::lower_with_calls(\n        circuit, ledger, witnesses, pure, circuits,\n    ))\n}\n\n/// Guarded deposit interfaces enter at their existing selector priority.\n/// The beneficiary is any declared one-field Bytes<32> product. Typed effects,\n/// rather than a receive/merge prefix or static evidence counts, admit the body.\nfn checked_guarded_deposit_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    if circuit.result != Type::Unit\n        || circuit.return_value != StateReturn::Unit\n        || !matches!(circuit.parameters.as_slice(), [topic, beneficiary, seed]\n            if topic.ty == Type::OpaqueString\n                && matches!(&beneficiary.ty, Type::Struct { fields, .. }\n                    if matches!(fields.as_slice(), [member]\n                        if member.ty == (Type::Bytes { length: 32 })))\n                && seed.ty == crate::coin_shapes::shielded_coin_type())\n    {\n        return Ok(None);\n    }\n    resolve_checked_plan(effect_plan::lower_with_calls(\n        circuit, ledger, witnesses, pure, circuits,\n    ))\n}\n\nfn resolve_checked_plan(\n    result: Result<TypedPlan, effect_plan::PlanError>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    match result {\n        Ok(plan) => Ok(Some(plan)),\n        Err(effect_plan::PlanError::Unsupported(_)) => Ok(None),\n        Err(effect_plan::PlanError::Invalid(gap)) => Err(RenderError::RecordingPlanInvariant {\n            path: gap.path,\n            detail: gap.detail,\n        }),\n    }\n}\n\n/// External Unit carrier interfaces enter at the former Zswap priority.\n/// Typed effects decide body support; intent/query counts do not grant admission.\nfn checked_zswap_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n",
+        "previous": "    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    if circuit.result != Type::Unit\n        || circuit.return_value != StateReturn::Unit\n        || !matches!(circuit.parameters.as_slice(), [ballot, coin]\n            if ballot.ty == Type::Boolean\n                && coin.ty == crate::coin_shapes::shielded_coin_type())\n    {\n        return Ok(None);\n    }\n    resolve_checked_plan(effect_plan::lower_with_calls(\n        circuit, ledger, witnesses, pure, circuits,\n    ))\n}\n\nfn resolve_checked_plan(\n    result: Result<TypedPlan, effect_plan::PlanError>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    match result {\n        Ok(plan) => Ok(Some(plan)),\n        Err(effect_plan::PlanError::Unsupported(_)) => Ok(None),\n        Err(effect_plan::PlanError::Invalid(gap)) => Err(RenderError::RecordingPlanInvariant {\n            path: gap.path,\n            detail: gap.detail,\n        }),\n    }\n}\n\n/// External Unit carrier interfaces enter at the former Zswap priority.\n/// Typed effects decide body support; intent/query counts do not grant admission.\nfn checked_zswap_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n"
+      },
+      {
+        "current": "                    }\n                    ProfileAttempt::NotApplicable => None,\n                };\n                record_option!(\"algebra.composite-values\", plan)\n            }\n        };\n        let through_receive = match through_composite {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.shielded-receive\",\n                checked_receive_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_voting = match through_receive {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.voting-commit\",\n                checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_funded = through_voting.or_else(|| {\n            record_option!(\n                \"selector.funded-mint\",\n                typed_plan::lower_funded_mint(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                )\n            )\n        });\n        let through_deposit = match through_funded {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.guarded-deposit\",\n                checked_guarded_deposit_domain(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits,\n                )?\n            ),\n        };\n        let before_terminal = through_deposit\n            .or_else(|| {\n                record_option!(\n                    \"selector.reset-payout\",\n                    typed_plan::lower_reset_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-payout\",\n                    typed_plan::lower_shielded_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n",
+        "previous": "                    }\n                    ProfileAttempt::NotApplicable => None,\n                };\n                record_option!(\"algebra.composite-values\", plan)\n            }\n        };\n        let through_receive = match through_composite {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.shielded-receive\",\n                checked_receive_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_voting = match through_receive {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.voting-commit\",\n                checked_voting_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let before_terminal = through_voting\n            .or_else(|| {\n                record_option!(\n                    \"selector.funded-mint\",\n                    typed_plan::lower_funded_mint(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.guarded-deposit\",\n                    typed_plan::lower_guarded_deposit(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.reset-payout\",\n                    typed_plan::lower_reset_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-payout\",\n                    typed_plan::lower_shielded_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": [
+      {
+        "current": "mod tests;\n\n#[cfg(test)]\nmod shielded_receive_tests;\n\n#[cfg(test)]\nmod shielded_send_tests;\n\n#[cfg(test)]\npub(super) fn lower_immediate_shielded_send<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    immediate_send::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n/// Guarded receive, optional historical merge and typed Cell update policy.\n#[cfg(test)]\npub(super) fn lower_guarded_deposit<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    guarded_deposit::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower_funded_mint<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    funded_mint::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n",
+        "previous": "mod tests;\n\n#[cfg(test)]\nmod shielded_receive_tests;\n\n#[cfg(test)]\nmod shielded_send_tests;\n\n#[cfg(test)]\npub(super) fn lower_immediate_shielded_send<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    immediate_send::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n/// Guarded receive, optional historical merge and typed Cell update policy.\npub(super) fn lower_guarded_deposit<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    guarded_deposit::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower_funded_mint<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    funded_mint::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs": [
+      {
+        "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//  \thttp://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n//! Guarded receive followed by an optional historical merge and typed Cell\n//! updates. This module audits admission and provenance; Plan owns evaluation,\n//! lexical scope, exact types, query order and branch-local frame ownership.\nuse super::immediate_send::{parameter, uncoerced};\nuse super::*;\nuse crate::coin_shapes::qualified_coin_type;\n#[cfg(test)]\nuse crate::coin_shapes::shielded_coin_type;\n\npub(super) fn read_type(ty: &Type) -> bool {\n    matches!(\n        ty,\n        Type::Boolean | Type::Bytes { length: 32 } | Type::Enum { .. }\n    ) || *ty == qualified_coin_type()\n        || matches!(ty, Type::Struct { fields, .. }\n            if fields.len() == 2 && fields.iter().all(|field|\n                field.ty == Type::Unsigned { max: u64::MAX.to_string() }))\n}\npub(super) fn write_type(ty: &Type) -> bool {\n    matches!(ty, Type::Boolean | Type::Enum { .. })\n        || optional_string(ty)\n        || matches!(ty, Type::Struct { fields, .. }\n            if matches!(fields.as_slice(), [present, value]\n                if present.name == \"is_some\" && present.ty == Type::Boolean\n                    && value.name == \"value\" && wrapped_bytes32(&value.ty)))\n}\n\n// The application supplies a received coin, not merely a same-spelled helper\n",
+        "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//  \thttp://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n//! Guarded receive followed by an optional historical merge and typed Cell\n//! updates. This module audits admission and provenance; Plan owns evaluation,\n//! lexical scope, exact types, query order and branch-local frame ownership.\nuse super::immediate_send::{parameter, uncoerced};\nuse super::*;\nuse crate::coin_shapes::{qualified_coin_type, shielded_coin_type};\n\npub(super) fn read_type(ty: &Type) -> bool {\n    matches!(\n        ty,\n        Type::Boolean | Type::Bytes { length: 32 } | Type::Enum { .. }\n    ) || *ty == qualified_coin_type()\n        || matches!(ty, Type::Struct { fields, .. }\n            if fields.len() == 2 && fields.iter().all(|field|\n                field.ty == Type::Unsigned { max: u64::MAX.to_string() }))\n}\npub(super) fn write_type(ty: &Type) -> bool {\n    matches!(ty, Type::Boolean | Type::Enum { .. })\n        || optional_string(ty)\n        || matches!(ty, Type::Struct { fields, .. }\n            if matches!(fields.as_slice(), [present, value]\n                if present.name == \"is_some\" && present.ty == Type::Boolean\n                    && value.name == \"value\" && wrapped_bytes32(&value.ty)))\n}\n\n// The application supplies a received coin, not merely a same-spelled helper\n"
+      },
+      {
+        "current": "        price_amount,\n        pure,\n        circuits,\n        active: HashSet::from([circuit.name.clone()]),\n        receives: 0,\n        merges: 0,\n        writes: 0,\n        coin_slot: None,\n    };\n    let mut flow = Flow::default();\n    circuit\n        .actions\n        .iter()\n        .all(|action| audit.action(action, &mut flow))\n        && flow.received\n        && flow.stores == 1\n        && flow.merges <= 1\n        && (audit.receives, audit.merges, audit.writes) == (1, 1, 2)\n}\n\n#[cfg(test)]\npub(super) fn lower<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    let [topic, beneficiary, seed] = circuit.parameters.as_slice() else {\n        return None;\n    };\n    if circuit.result != Type::Unit\n        || !matches!(circuit.return_value, StateReturn::Unit)\n        || topic.ty != Type::OpaqueString\n        || !wrapped_bytes32(&beneficiary.ty)\n        || seed.ty != shielded_coin_type()\n        || circuit\n            .parameters\n            .iter()\n            .map(|p| &p.name)\n            .collect::<HashSet<_>>()\n",
+        "previous": "        price_amount,\n        pure,\n        circuits,\n        active: HashSet::from([circuit.name.clone()]),\n        receives: 0,\n        merges: 0,\n        writes: 0,\n        coin_slot: None,\n    };\n    let mut flow = Flow::default();\n    circuit\n        .actions\n        .iter()\n        .all(|action| audit.action(action, &mut flow))\n        && flow.received\n        && flow.stores == 1\n        && flow.merges <= 1\n        && (audit.receives, audit.merges, audit.writes) == (1, 1, 2)\n}\n\npub(super) fn lower<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    let [topic, beneficiary, seed] = circuit.parameters.as_slice() else {\n        return None;\n    };\n    if circuit.result != Type::Unit\n        || !matches!(circuit.return_value, StateReturn::Unit)\n        || topic.ty != Type::OpaqueString\n        || !wrapped_bytes32(&beneficiary.ty)\n        || seed.ty != shielded_coin_type()\n        || circuit\n            .parameters\n            .iter()\n            .map(|p| &p.name)\n            .collect::<HashSet<_>>()\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": [
+      {
+        "current": "    let mut c = source();\n    let r = root_mut(&mut c);\n    let coin = r.parameters[1].name.clone();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::PersistentHash {\n            value: Box::new(Expr::Parameter { name: coin }),\n        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let voting = a\n        .iter()\n        .position(|&s| s == \"algebra.voting-commit\")\n        .unwrap();\n    assert_eq!(\n        &a[voting..voting + 4],\n        [\n            \"algebra.voting-commit\",\n            \"selector.funded-mint\",\n            \"algebra.guarded-deposit\",\n            \"selector.reset-payout\"\n        ]\n    );\n    assert!(!a.contains(&\"selector.voting-commit\"));\n}\n\n#[test]\nfn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {\n    let gap = RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.voting.operand\".into(),\n        detail: \"wrong output operand\".into(),\n    };\n    assert!(\n        resolve_checked_plan(Err(effect_plan::PlanError::Unsupported(gap.clone())))\n            .unwrap()\n            .is_none()\n    );\n    assert!(\n",
+        "previous": "    let mut c = source();\n    let r = root_mut(&mut c);\n    let coin = r.parameters[1].name.clone();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::PersistentHash {\n            value: Box::new(Expr::Parameter { name: coin }),\n        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let voting = a\n        .iter()\n        .position(|&s| s == \"algebra.voting-commit\")\n        .unwrap();\n    assert_eq!(\n        &a[voting..voting + 4],\n        [\n            \"algebra.voting-commit\",\n            \"selector.funded-mint\",\n            \"selector.guarded-deposit\",\n            \"selector.reset-payout\"\n        ]\n    );\n    assert!(!a.contains(&\"selector.voting-commit\"));\n}\n\n#[test]\nfn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {\n    let gap = RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.voting.operand\".into(),\n        detail: \"wrong output operand\".into(),\n    };\n    assert!(\n        resolve_checked_plan(Err(effect_plan::PlanError::Unsupported(gap.clone())))\n            .unwrap()\n            .is_none()\n    );\n    assert!(\n"
+      }
+    ]
+  },
+  "oracle_functions_sha256": {
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "ae5b7c834a606b9e6407da6ec163aef65706886fa0a1ff6038a3cc7e8d5311a0",
+    "tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs": "39df65a1a52f045e597603634a1ee4a522bb4161655bdacbf37d5e4e997a3ef3"
+  },
+  "test_sources_sha256": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests.rs": "d5957b71ce3ff6aa180fa9ca463b124435c291d06072dff9fa508f9ce7f6912d",
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests/domain.rs": "6b1eb76094af718b36ab65f0fee130ddc9fd481380631d7736e9508e809ec776",
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests/routing.rs": "05bc7912426ce2240152027970513a8ddf58571fa45d25537a0bf9361f9c39a2",
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": "a557bbb011848ca5ed1637162206f51c40c552ebe64691f9d2ff45fadf847f28"
+  },
+  "shared_sources_sha256": {
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions.rs": "52e64a5f3e98a29736c46c791ef72eb7a631893b4c2c095fd1d139045ff045dd",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs": "37d1b99fa1552487795e6581e28df64e283bfd1a02c2d89e2d8c3c187e06f49f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs": "4d22fa54377d567e7844311b18eb014a968b3991eefe66e08758113d7d1e0aed",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs": "8cd4e5b297a0f0465771ba9e0a14505abc117ec35ae6f759b12c657c37129129",
+    "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+    "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs": "263cd4903db55951e8cd85b7a6d77d132caf075b40d1a61c3b9a8cc7c813bbda",
+    "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs": "e4e1a6f98263a2b5f663c601e28f18c4616e9116503259de23f381af9034be37",
+    "tools/compact-rust-backend/src/recorded/typed_plan/control.rs": "4f9e73e1ee0d070f0a3a2c0e115ec6d0a41d9ca10f39a83412ee815ad0ba4f0d",
+    "tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs": "38a5d00807d56717644b95cf4f6d389381fbab8a1ff321cdf901df9cfbdf0c2e",
+    "tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs": "986288e4b5f6fce6b620421fa2b9a089f3fa8ca36d23707e75b2723be1b902ef",
+    "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs": "72174159a525738409d05610e997c1b5757045638336a69e9c6e6f0e3bbd1429",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs": "645ed86c92a952de7454251469c38e8d46b4b3a18a3f4a3436093a471b30b59c",
+    "tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs": "3b1d8a336bfb66d17927a33bb85ea95bb79e5ad459af3a3632c35537614f4385",
+    "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243",
+    "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs": "5dc883797f1288a9831d68466be184992f8b6fefa3b2fd5fbe00bd203e8e84c7",
+    "tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs": "02c5b5935b8cd9e141fea22abfd1ef72478107662f64e3481a0d61448ee8e7ae",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs": "6f0bf14cb1d3647c0ced6d10e4a7c8bc4f7cbcbc11054cb8a826f68c5599657d"
+  },
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "f325ea52d0f70b50f6d8fddfeafa2e48d78ef7912e1d56165d742576b9b12b90"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "00ab9c619dcd98580d56d1335b711e401f0b8c0e7fe2e8a7138ee24ca69d61e4"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.guarded-deposit",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.membership",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "algebra.voting-commit",
+    "algebra.zswap",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.reset-payout",
+    "selector.shielded-payout",
+    "selector.unit-composition"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values",
+    "selector.shielded-receive",
+    "selector.voting-commit",
+    "selector.phase-reset",
+    "selector.immediate-send",
+    "selector.zswap",
+    "selector.membership-optional",
+    "selector.shielded-send",
+    "selector.shielded-merge",
+    "selector.guarded-deposit"
+  ],
+  "new_retired_routes": [
+    "selector.guarded-deposit"
+  ],
+  "checked_domain_sha256": "20612ea2d90c76ba703ef7a6292f07793296252d7bbfbeea81f085abe3d9dee2"
+}

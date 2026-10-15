@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn constant() -> Result<runtime::Field, runtime::CompactError> {
         Ok(runtime::Field::from_le_bytes(&[
             151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8, 18u8,
@@ -40,7 +40,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -79,10 +79,11 @@ pub mod ledger_contract {
             166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
         ])
         .expect("validated Compact Field literal");
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        runtime::ledger::CellValue::validate_cell_value(&__compact_constructor_value_0)?;
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
-        >(__compact_constructor_value_0)]);
+        >(__compact_constructor_value_0)?]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -115,9 +116,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
+            let (frame, __compact_effect_0): (_, runtime::Field) =
                 crate::ledger_slots::large.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

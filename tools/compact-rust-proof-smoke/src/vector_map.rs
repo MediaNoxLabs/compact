@@ -74,3 +74,5 @@ pub(super) fn run(identity: &Path, arithmetic_constructor: &Path) -> Result<(), 
     println!("both original identity-map calls proved and applied through ledger-8");
     Ok(())
 }
+
+pub(crate) mod strict;

@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct PointBox {
         pub point: ::midnight_compact_runtime::JubjubPoint,
@@ -36,7 +37,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -50,7 +51,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -88,12 +89,14 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<crate::types::PointBox, runtime::ledger::DefaultDB>(
-                Default::default(),
-            ),
+            runtime::ledger::try_constructor_cell::<
+                runtime::JubjubPoint,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
+                crate::types::PointBox,
+                runtime::ledger::DefaultDB,
+            >(Default::default())?,
         ]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
@@ -179,8 +182,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::point.record_write(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
+            let frame = crate::ledger_slots::point.record_write(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn read_point<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -189,9 +195,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::JubjubPoint) =
+            let (frame, __compact_effect_0): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::point.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn set_box<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -199,9 +205,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: crate::types::PointBox = __compact_param_0;
             let frame =
-                crate::ledger_slots::boxed.record_write(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::boxed.record_write(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn read_box<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -210,9 +219,9 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, crate::types::PointBox) =
+            let (frame, __compact_effect_0): (_, crate::types::PointBox) =
                 crate::ledger_slots::boxed.record_read(frame)?;
-            Ok(frame.finish(observed))
+            Ok(frame.finish((__compact_effect_0).clone()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

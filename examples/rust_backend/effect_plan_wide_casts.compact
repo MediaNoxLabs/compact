@@ -1,0 +1,38 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Small { value: Uint<8>; }
+export struct Wide { value: Uint<129>; }
+export struct Largest { value: Uint<248>; }
+export struct Checked { value: Uint<8>; marker: Field; }
+witness nextWide(): Uint<248>;
+witness marker(): Field;
+export circuit widen8(input: Uint<8>): Wide {
+  calls.increment(1);
+  return Wide { value: input as Uint<129> };
+}
+export circuit widen129(input: Uint<129>): Largest {
+  calls.increment(1);
+  return Largest { value: input as Uint<248> };
+}
+export circuit narrow8(input: Uint<129>): Small {
+  calls.increment(1);
+  return Small { value: input as Uint<8> };
+}
+export circuit narrow129(input: Uint<248>): Wide {
+  calls.increment(1);
+  return Wide { value: input as Uint<129> };
+}
+export circuit max248(): Largest {
+  calls.increment(1);
+  return Largest { value: 452312848583266388373324160190187140051835877600158453279131187530910662655 as Uint<248> };
+}
+export circuit witnessed(selected: Boolean): Checked {
+  calls.increment(1);
+  const input = disclose(selected) ? disclose(nextWide()) : 7 as Uint<248>;
+  const small = input as Uint<8>;
+  const after = disclose(marker());
+  return Checked { value: small, marker: after };
+}

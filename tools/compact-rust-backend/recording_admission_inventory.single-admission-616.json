@@ -1,0 +1,1269 @@
+{
+  "schema_version": 1,
+  "issue": 616,
+  "retired_route_ids": [],
+  "consolidated_checked_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.guarded-deposit",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.membership",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "algebra.voting-commit",
+    "algebra.zswap",
+    "algebra.unit-composition"
+  ],
+  "baseline_commit": "63bd58d4cced25ffce6917ab9a1ce21bb2774f61",
+  "claim": "Consolidate twelve checked interface labels into the existing general ordinary admission; preserve Unsupported compatibility, fatal Invalid, diagnostic provenance and original retirement accounting.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "4366b00d6d11571bbab2ef9cf8dbbd14efd95f1a1af027ddc6d466558fa93ab7"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "05745d80ddfaa21d7bb202adda3075a0d39993e1cca18769ca3d92f3b9b3390a",
+      "current_sha256": "3677ff81e93a26343aae39baa5fb187d8b5b444ad8a65dc044c3382e69e09ebb",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Pass-through observations compile out of production. The expression is\n// evaluated once in its original scope, preserving `?`, eager/lazy selection,\n// and validation order. Hooks never choose a plan.\n#[cfg(test)]\nmacro_rules! record_option {\n    ($route:literal, $value:expr) => {{\n        let value = $value;\n",
+          "previous": "// Pass-through observations compile out of production. The expression is\n// evaluated once in its original scope, preserving `?`, eager/lazy selection,\n// and validation order. Hooks never choose a plan.\nmacro_rules! record_option {\n    ($route:literal, $value:expr) => {{\n        let value = $value;\n"
+        },
+        {
+          "current": "mod opaque_map_migration_tests;\n#[cfg(test)]\nmod opaque_set_migration_tests;\n#[cfg(test)]\nmod profile_attempt;\nmod profile_selection;\n#[cfg(test)]\n",
+          "previous": "mod opaque_map_migration_tests;\n#[cfg(test)]\nmod opaque_set_migration_tests;\nmod profile_attempt;\nmod profile_selection;\n#[cfg(test)]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/admission_probe/trace_tests.rs": {
+      "previous_sha256": "2d37a8cff7759aae116041ed51dca0a308fbcc9a0c8fe10576f6b261715582d9",
+      "current_sha256": "bfb315935dc2434dc97c05852183cda5674d11f0abf6d9ba6260ef554dd57a07",
+      "predecessor_reconstruction": [
+        {
+          "current": "                row.phase == Phase::PublicEmission && !row.helper && row.circuit == \"verify\"\n            })\n            .unwrap();\n        assert_eq!(row.body_owner, Some(\"algebra.ordinary\"));\n        assert!(matches!(row.outcome, Outcome::Supported));\n        assert!(row.action_dispatch.is_none() && row.return_dispatch.is_none());\n        assert!(rendered.capabilities.circuits[0].recorded);\n",
+          "previous": "                row.phase == Phase::PublicEmission && !row.helper && row.circuit == \"verify\"\n            })\n            .unwrap();\n        assert_eq!(row.body_owner, Some(\"algebra.unit-actions\"));\n        assert!(matches!(row.outcome, Outcome::Supported));\n        assert!(row.action_dispatch.is_none() && row.return_dispatch.is_none());\n        assert!(rendered.capabilities.circuits[0].recorded);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests.rs": {
+      "previous_sha256": "58bef1a280eceb74a0268984b5c761ebebab098d6dc9a2b73a04430ed092db58",
+      "current_sha256": "1160e59c5b4f8f94e010b8229d53e4fdcb083f69581e316b41d78e5a7a5d3358",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == ROOT && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == ROOT && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/audited_local_migration_tests.rs": {
+      "previous_sha256": "055a22aeb441088c86e7493633f71ea0cf0e9840086e834cebc1806b5389373f",
+      "current_sha256": "545244efe741b89024ddcece97ab4494d2fa9b452a8ccd18500907a4ba1891a8",
+      "predecessor_reconstruction": [
+        {
+          "current": "    checked(c, name).unwrap()\n}\nfn included(c: &Contract, name: &str) -> typed_plan::TypedPlan {\n    included_as(c, name, \"algebra.ordinary\")\n}\nfn included_as(c: &Contract, name: &str, expected_owner: &str) -> typed_plan::TypedPlan {\n    assert!(\n",
+          "previous": "    checked(c, name).unwrap()\n}\nfn included(c: &Contract, name: &str) -> typed_plan::TypedPlan {\n    included_as(c, name, \"algebra.unit-composition\")\n}\nfn included_as(c: &Contract, name: &str, expected_owner: &str) -> typed_plan::TypedPlan {\n    assert!(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/audited_local_migration_tests/boundaries.rs": {
+      "previous_sha256": "3732f072c0ab6e36cf33e55a1ca659a2bc25f426b4ff5e7af5975e43f09422c5",
+      "current_sha256": "df40120dc852e29d8b2d517afe4e86747dbd26b22b01a6d42cc42758f43b7109",
+      "predecessor_reconstruction": [
+        {
+          "current": "        (\n            \"opaque_bytes\",\n            json!({\"kind\":\"opaque_bytes\"}),\n            \"algebra.ordinary\",\n        ),\n        (\"unit\", json!({\"kind\":\"unit\"}), \"algebra.ordinary\"),\n        (\n            \"tuple11\",\n            json!({\"kind\":\"tuple\",\"elements\":vec![json!({\"kind\":\"field\"});11]}),\n            \"algebra.ordinary\",\n        ),\n        (\n            \"wide129\",\n            json!({\"kind\":\"unsigned\",\"max\":\"680564733841876926926749214863536422911\"}),\n            \"algebra.ordinary\",\n        ),\n        (\n            \"named_product\",\n            json!({\"kind\":\"struct\",\"name\":\"LocalProduct\",\"fields\":[{\"name\":\"items\",\"ty\":{\"kind\":\"vector\",\"length\":2,\"element\":{\"kind\":\"field\"}}},{\"name\":\"label\",\"ty\":{\"kind\":\"opaque_string\"}}]}),\n            \"algebra.ordinary\",\n        ),\n    ] {\n        let mut c = fixture();\n",
+          "previous": "        (\n            \"opaque_bytes\",\n            json!({\"kind\":\"opaque_bytes\"}),\n            \"algebra.unit-composition\",\n        ),\n        (\"unit\", json!({\"kind\":\"unit\"}), \"algebra.unit-composition\"),\n        (\n            \"tuple11\",\n            json!({\"kind\":\"tuple\",\"elements\":vec![json!({\"kind\":\"field\"});11]}),\n            \"algebra.unit-composition\",\n        ),\n        (\n            \"wide129\",\n            json!({\"kind\":\"unsigned\",\"max\":\"680564733841876926926749214863536422911\"}),\n            \"algebra.unit-composition\",\n        ),\n        (\n            \"named_product\",\n            json!({\"kind\":\"struct\",\"name\":\"LocalProduct\",\"fields\":[{\"name\":\"items\",\"ty\":{\"kind\":\"vector\",\"length\":2,\"element\":{\"kind\":\"field\"}}},{\"name\":\"label\",\"ty\":{\"kind\":\"opaque_string\"}}]}),\n            \"algebra.membership\",\n        ),\n    ] {\n        let mut c = fixture();\n"
+        },
+        {
+          "current": "        Some(RecordingOutcome::Unsupported(_))\n    ));\n    // A checked expansion, never counted as a complete old-positive inclusion.\n    let methods = calls(&current(&mapped, VERIFY, \"algebra.ordinary\"));\n    assert_eq!(\n        methods\n            .iter()\n",
+          "previous": "        Some(RecordingOutcome::Unsupported(_))\n    ));\n    // A checked expansion, never counted as a complete old-positive inclusion.\n    let methods = calls(&current(&mapped, VERIFY, \"algebra.unit-composition\"));\n    assert_eq!(\n        methods\n            .iter()\n"
+        },
+        {
+          "current": "    current(\n        &sibling,\n        \"verifySchnorrJubjubDigestSignature\",\n        \"algebra.ordinary\",\n    );\n    let mut internal = fixture();\n    target_mut(&mut internal, VERIFY).internal = true;\n",
+          "previous": "    current(\n        &sibling,\n        \"verifySchnorrJubjubDigestSignature\",\n        \"algebra.unit-composition\",\n    );\n    let mut internal = fixture();\n    target_mut(&mut internal, VERIFY).internal = true;\n"
+        },
+        {
+          "current": "    }\n    assert!(old(&different_tail, ACCEPT).unwrap().is_none());\n    assert!(\n        calls(&current(&different_tail, ACCEPT, \"algebra.ordinary\"))\n            .iter()\n            .any(|n| n == \"record_increment\")\n    );\n    // Reuse the separately executed ordinary/recursive worker gates: this slice\n    // changes no depth/work/layout limit and needs no new resource multiplier.\n",
+          "previous": "    }\n    assert!(old(&different_tail, ACCEPT).unwrap().is_none());\n    assert!(\n        calls(&current(\n            &different_tail,\n            ACCEPT,\n            \"algebra.unit-composition\"\n        ))\n        .iter()\n        .any(|n| n == \"record_increment\")\n    );\n    // Reuse the separately executed ordinary/recursive worker gates: this slice\n    // changes no depth/work/layout limit and needs no new resource multiplier.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": {
+      "previous_sha256": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+      "current_sha256": "25afc644216887ad5900cb8d49143e12cad30a93fe87e85877337d059a558d5b",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\nimpl LoweringRejection {\n    /// Consume the public gap for a refusal-only diagnostic projection.\n    pub(in crate::recorded) fn into_gap(self) -> RecordingGap {\n        self.gap\n    }\n\n    /// Existing callers intentionally discard provenance without running lowering again.\n    pub(super) fn into_parts(\n        self,\n",
+          "previous": "}\n\nimpl LoweringRejection {\n    /// Existing callers intentionally discard provenance without running lowering again.\n    pub(super) fn into_parts(\n        self,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/field_multiply.rs": {
+      "previous_sha256": "4500103905d8481fa913bd5f259c9d1150dc12067a4b9e188cb39dfab9d2837b",
+      "current_sha256": "4daaa6a32e294ede46d8a7425c4ddb0723a13909610f26005c91c71b3609571e",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .collect();\n        assert_eq!(rows.len(), 1);\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n        let label = format!(\"source-{entry}\");\n        let metadata = json!({\n            \"label\":label,\"root\":entry,\"internal\":root.internal,\n",
+          "previous": "            .collect();\n        assert_eq!(rows.len(), 1);\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n        let label = format!(\"source-{entry}\");\n        let metadata = json!({\n            \"label\":label,\"root\":entry,\"internal\":root.internal,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/funded_mint_inclusion.rs": {
+      "previous_sha256": "8781ea31850506fd34f8ef3e25f1045f5b5f69194f3c65a5a5fedc197cc2a40c",
+      "current_sha256": "b45a8a0a137fa11fcc5dc11c4403872060ea5cbd15c3064be0404e0c38c86cbc",
+      "predecessor_reconstruction": [
+        {
+          "current": "                assert_eq!(rows.as_array().unwrap().len(), 1);\n                assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n                assert_eq!(rows[0][\"helper\"], true);\n                assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n            }\n            let output = current(&c, name, label);\n            let direct_source = direct_helper\n",
+          "previous": "                assert_eq!(rows.as_array().unwrap().len(), 1);\n                assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n                assert_eq!(rows[0][\"helper\"], true);\n                assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n            }\n            let output = current(&c, name, label);\n            let direct_source = direct_helper\n"
+        },
+        {
+          "current": "        })\n        .collect();\n    assert_eq!(actual.len(), 1, \"{label}\");\n    assert_eq!(actual[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n    output.source\n}\nfn capture(c: &Contract, name: &str, label: &str, internal: Option<&str>, rust: &str) {\n",
+          "previous": "        })\n        .collect();\n    assert_eq!(actual.len(), 1, \"{label}\");\n    assert_eq!(\n        actual[0][\"body_owner\"], \"algebra.composite-values\",\n        \"{label}\"\n    );\n    output.source\n}\nfn capture(c: &Contract, name: &str, label: &str, internal: Option<&str>, rust: &str) {\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"label\":label,\"root\":name,\"internal_root\":internal,\"old_whole_funded_mint_accepted\":true,\n            \"checked_plan_succeeded\":true,\"native_render_succeeded\":true,\n            \"body_owner\":\"algebra.ordinary\",\n            \"qualification\":\"IR/render only; raw consumer compilation and proofs are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"label\":label,\"root\":name,\"internal_root\":internal,\"old_whole_funded_mint_accepted\":true,\n            \"checked_plan_succeeded\":true,\"native_render_succeeded\":true,\n            \"body_owner\":\"algebra.composite-values\",\n            \"qualification\":\"IR/render only; raw consumer compilation and proofs are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/funded_mint_probe.rs": {
+      "previous_sha256": "d9e3039ed4e0275ce78b6adb4de4aea5b2bfd0bdeaa978ee83edd29b9ff247d4",
+      "current_sha256": "db46037aff9e5047f91873f3e550016e6d110ed3b450065dff14dfefbfd7390c",
+      "predecessor_reconstruction": [
+        {
+          "current": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(emitted.len(), 1);\n        assert_eq!(emitted[0][\"body_owner\"], \"algebra.ordinary\");\n        assert_eq!(emitted[0][\"outcome\"][\"status\"], \"supported\");\n    }\n}\n",
+          "previous": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(emitted.len(), 1);\n        assert_eq!(emitted[0][\"body_owner\"], \"algebra.composite-values\");\n        assert_eq!(emitted[0][\"outcome\"][\"status\"], \"supported\");\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/guarded_deposit_inclusion.rs": {
+      "previous_sha256": "32cd2aeb99e4b26d1bb818ad145a23d8a5e2cf023ca572d29fec5cb77f797c59",
+      "current_sha256": "78ccf144be98632701aa6ee5f1710ecd4cb727908b158f71124d238f82e828f6",
+      "predecessor_reconstruction": [
+        {
+          "current": "        )\n    };\n    assert_eq!(actual.as_array().unwrap().len(), 1, \"{label}\");\n    assert_eq!(actual[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n    capture(c, name, label, &output.source, &actual[0]);\n    actual[0][\"body_owner\"].clone()\n}\n",
+          "previous": "        )\n    };\n    assert_eq!(actual.as_array().unwrap().len(), 1, \"{label}\");\n    assert_eq!(\n        actual[0][\"body_owner\"], \"algebra.guarded-deposit\",\n        \"{label}\"\n    );\n    capture(c, name, label, &output.source, &actual[0]);\n    actual[0][\"body_owner\"].clone()\n}\n"
+        },
+        {
+          "current": "\n#[test]\nfn both_retained_sources_use_checked_guarded_deposit_owner() {\n    for (full, owner) in [(true, \"algebra.ordinary\"), (false, \"algebra.ordinary\")] {\n        assert_eq!(\n            included(&source(full), \"set_topic\", &format!(\"baseline-full-{full}\")),\n            owner\n",
+          "previous": "\n#[test]\nfn both_retained_sources_use_checked_guarded_deposit_owner() {\n    for (full, owner) in [\n        (true, \"algebra.guarded-deposit\"),\n        (false, \"algebra.guarded-deposit\"),\n    ] {\n        assert_eq!(\n            included(&source(full), \"set_topic\", &format!(\"baseline-full-{full}\")),\n            owner\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/immediate_send_inclusion.rs": {
+      "previous_sha256": "6e1c8abfadb842ef260abbb7af00391d917606517abdc3ff9e80c208ebf7e51a",
+      "current_sha256": "ad8ee13559ff15e01b354cb51907363cd3acf887266a0b442b7cd508606f0cd9",
+      "predecessor_reconstruction": [
+        {
+          "current": "        });\n        assert!(item.unwrap().is_supported(), \"{label}\");\n        assert_eq!(helper_rows.as_array().unwrap().len(), 1);\n        assert_eq!(helper_rows[0][\"body_owner\"], \"algebra.ordinary\");\n        assert_eq!(helper_rows[0][\"phase\"], \"helper_planning\");\n        assert_eq!(helper_rows[0][\"helper\"], true);\n    } else {\n",
+          "previous": "        });\n        assert!(item.unwrap().is_supported(), \"{label}\");\n        assert_eq!(helper_rows.as_array().unwrap().len(), 1);\n        assert_eq!(helper_rows[0][\"body_owner\"], \"algebra.composite-values\");\n        assert_eq!(helper_rows[0][\"phase\"], \"helper_planning\");\n        assert_eq!(helper_rows[0][\"helper\"], true);\n    } else {\n"
+        },
+        {
+          "current": "            })\n            .collect();\n        assert_eq!(rows.len(), 1, \"{label}\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n        let attempts: Vec<_> = rows[0][\"attempts\"]\n            .as_array()\n            .unwrap()\n",
+          "previous": "            })\n            .collect();\n        assert_eq!(rows.len(), 1, \"{label}\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\", \"{label}\");\n        let attempts: Vec<_> = rows[0][\"attempts\"]\n            .as_array()\n            .unwrap()\n"
+        },
+        {
+          "current": "        assert_eq!(\n            attempts\n                .iter()\n                .filter(|&&r| r == \"algebra.ordinary\")\n                .count(),\n            1\n        );\n",
+          "previous": "        assert_eq!(\n            attempts\n                .iter()\n                .filter(|&&r| r == \"algebra.composite-values\")\n                .count(),\n            1\n        );\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_immediate_send_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": \"algebra.ordinary\",\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_immediate_send_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": \"algebra.composite-values\",\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/inequality/source.rs": {
+      "previous_sha256": "38dd5359dfe49dd90712f3bac64066c2c3b2fbd7a61e30bc854a5cae66fb510f",
+      "current_sha256": "e3378a25c4b8e60c804295acdd03580dddfefc90775bf509520e3b8356e73211",
+      "predecessor_reconstruction": [
+        {
+          "current": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(actual.len(), 1);\n        assert_eq!(actual[0][\"body_owner\"], \"algebra.ordinary\");\n        assert_eq!(actual[0][\"outcome\"][\"status\"], \"supported\");\n    }\n}\n",
+          "previous": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(actual.len(), 1);\n        assert_eq!(actual[0][\"body_owner\"], \"algebra.composite-values\");\n        assert_eq!(actual[0][\"outcome\"][\"status\"], \"supported\");\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/jubjub_projections.rs": {
+      "previous_sha256": "a4303e9fe582326c4006d57b83d7c11208ed12e44eacfcc44823cf5e69e82b1e",
+      "current_sha256": "75eb0ccae75f3f328f2f403b19c3d23e0589683c10403dda1920454983cc6b15",
+      "predecessor_reconstruction": [
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}: actual public emission\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    let metadata = json!({\n        \"label\":label,\"root\":entry,\"internal\":root.internal,\n        \"source_variant\":if y_first {\"typed X-to-Y projection substitution in complete genuine IR\"} else {\"unchanged retained full source IR\"},\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}: actual public emission\");\n    if require_old {\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.unit-composition\");\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    } else {\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    }\n    let metadata = json!({\n        \"label\":label,\"root\":entry,\"internal\":root.internal,\n        \"source_variant\":if y_first {\"typed X-to-Y projection substitution in complete genuine IR\"} else {\"unchanged retained full source IR\"},\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/keccak/source.rs": {
+      "previous_sha256": "7fb7f064ae71b0ccfe261c1aa0433d3f711f7475470008ea00088c84a5ac836f",
+      "current_sha256": "4957c511545e54dcb5c08528d49254bfb99e35967db79e684b489017c9b0236f",
+      "predecessor_reconstruction": [
+        {
+          "current": "        })\n        .collect();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    if let Some(output) = std::env::var_os(\"COMPACT_KECCAK_SOURCE_OUTPUT\") {\n        let output = std::path::PathBuf::from(output);\n",
+          "previous": "        })\n        .collect();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.kernel\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    if let Some(output) = std::env::var_os(\"COMPACT_KECCAK_SOURCE_OUTPUT\") {\n        let output = std::path::PathBuf::from(output);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/source.rs": {
+      "previous_sha256": "19a525483c438176e1c4d733c9c51dbcfe448bca50ce95f0c614b351440ca139",
+      "current_sha256": "2f1aafdaa5dff4d5b87851fcd9386af2af94176354285a3e30a22df9d7a639d3",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    })\n                    .collect();\n                assert_eq!(rows.len(), 1);\n                let (owner, status) = (\"algebra.ordinary\", \"supported\");\n                assert_eq!(rows[0][\"body_owner\"], owner, \"{name}: actual owner\");\n                assert_eq!(\n                    rows[0][\"outcome\"][\"status\"], status,\n",
+          "previous": "                    })\n                    .collect();\n                assert_eq!(rows.len(), 1);\n                let (owner, status) = if old_required {\n                    (\n                        match *name {\n                            \"remove_service\" | \"drop\" | \"remove\" => \"algebra.membership\",\n                            _ => \"algebra.unit-composition\",\n                        },\n                        \"supported\",\n                    )\n                } else if *name == \"direct_member\" {\n                    // The one-string Boolean interface owns direct membership.\n                    (\"algebra.membership\", \"supported\")\n                } else if *name == \"direct_lookup\" {\n                    (\"algebra.terminal-returns\", \"supported\")\n                } else {\n                    (\"algebra.composite-values\", \"supported\")\n                };\n                assert_eq!(rows[0][\"body_owner\"], owner, \"{name}: actual owner\");\n                assert_eq!(\n                    rows[0][\"outcome\"][\"status\"], status,\n"
+        },
+        {
+          "current": "        })\n        .collect();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n}\n",
+          "previous": "        })\n        .collect();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.terminal-returns\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/value_codecs.rs": {
+      "previous_sha256": "8c4cbd58a7018e799d5d4af9be9b99aba213d90090dec04449b5f5c401b9f18b",
+      "current_sha256": "5e888a4ea462ff273eac1e417508fd7ed362046dc0eebdac58811ef0af9dfc8d",
+      "predecessor_reconstruction": [
+        {
+          "current": "            r[\"circuit\"] == root.name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n",
+          "previous": "            r[\"circuit\"] == root.name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/opaque_public_probe.rs": {
+      "previous_sha256": "455358fedf716fc5be73464e78a03e6712ca3b03fc9505a637e9fdb2467dd5ea",
+      "current_sha256": "aaf8d773beb1e9c7b5459489469ddb57e43659ad5425528f3ea1a6cf19cc21c9",
+      "predecessor_reconstruction": [
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n    let capability = output\n        .capabilities\n        .circuits\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.membership\", \"{label}\");\n    let capability = output\n        .capabilities\n        .circuits\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/ordered_comparisons/probe.rs": {
+      "previous_sha256": "4bc3261b5950576089fc2e40a630bd18eaa8ba5788387b8175722a592bcc3824",
+      "current_sha256": "722ef13aa848130916936fabda9c292bbb97ba48026f106914999c064b83dd85",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .collect();\n    assert_eq!(rows.len(), 1, \"{label}: actual public emission\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    let metadata = json!({\n        \"label\":label,\"root\":root.name,\"internal\":root.internal,\n        \"source_variant\":\"unchanged retained full source IR\",\n",
+          "previous": "        .collect();\n    assert_eq!(rows.len(), 1, \"{label}: actual public emission\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        rows[0][\"body_owner\"],\n        if require_old {\n            \"algebra.unit-composition\"\n        } else {\n            \"algebra.composite-values\"\n        }\n    );\n    let metadata = json!({\n        \"label\":label,\"root\":root.name,\"internal\":root.internal,\n        \"source_variant\":\"unchanged retained full source IR\",\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/own_public_key/inclusion.rs": {
+      "previous_sha256": "643f56eb89b97380cf0095020b4da0211f269002c44331d8244f8156016d7d2c",
+      "current_sha256": "62f87a30acee3b17aaf3481464834bc1d1e0ab8d71ee72045638ea6ca71ff3fa",
+      "predecessor_reconstruction": [
+        {
+          "current": "            })\n            .collect();\n        assert_eq!(actual.len(), 1);\n        assert_eq!(actual[0][\"body_owner\"], \"algebra.ordinary\", \"{name}\");\n    }\n    output.source\n}\n",
+          "previous": "            })\n            .collect();\n        assert_eq!(actual.len(), 1);\n        assert_eq!(\n            actual[0][\"body_owner\"], \"algebra.composite-values\",\n            \"{name}\"\n        );\n    }\n    output.source\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/phase_reset_inclusion.rs": {
+      "previous_sha256": "3a63620c8e9aadb0fcaf734cef17d4800b46c31f60755541ae0a0f7809024bf8",
+      "current_sha256": "03d913bbf45a1d20ed2c9715e9ecd795ea7a2f9fc8a213bc254068594e49a3a0",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n    let attempts: Vec<_> = rows[0][\"attempts\"]\n        .as_array()\n        .unwrap()\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.membership\", \"{label}\");\n    let attempts: Vec<_> = rows[0][\"attempts\"]\n        .as_array()\n        .unwrap()\n"
+        },
+        {
+          "current": "    assert_eq!(\n        attempts\n            .iter()\n            .filter(|&&r| r == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "    assert_eq!(\n        attempts\n            .iter()\n            .filter(|&&r| r == \"algebra.membership\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_phase_reset_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": \"algebra.ordinary\",\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_phase_reset_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": \"algebra.membership\",\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/public_interfaces.rs": {
+      "previous_sha256": "51de0e9a464454a0dde8c6084c104f55d5f1727b2e504c4349cceba930eb6cdc",
+      "current_sha256": "0d0fbaa8c25b30d9b8b0a1f585d484331ef6e27c55841da7789c45d852cffb9d",
+      "predecessor_reconstruction": [
+        {
+          "current": "        stateful_circuits: vec![effectful],\n    };\n    for (contract, name, owner) in [\n        (point, \"apply\", \"algebra.ordinary\"),\n        (effectful, \"echo\", \"effectful.checked-migration\"),\n    ] {\n        let (output, rows) = crate::recorded::admission_probe::trace::capture_json(|| {\n",
+          "previous": "        stateful_circuits: vec![effectful],\n    };\n    for (contract, name, owner) in [\n        (point, \"apply\", \"algebra.jubjub-values\"),\n        (effectful, \"echo\", \"effectful.checked-migration\"),\n    ] {\n        let (output, rows) = crate::recorded::admission_probe::trace::capture_json(|| {\n"
+        },
+        {
+          "current": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(rows.len(), 1, \"{name}\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\", \"{name}\");\n    }\n}\n",
+          "previous": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(rows.len(), 1, \"{name}\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\", \"{name}\");\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/public_products/inclusion.rs": {
+      "previous_sha256": "e0416806a7543cf27f06903c943ab7f461b403be334d972dbff164e4a9a3f9d4",
+      "current_sha256": "3ce2e8276efc29fee29aa35b6bff0e36d7bd3e9796704af823c33b56263f0206",
+      "predecessor_reconstruction": [
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    if let Some(destination) = std::env::var_os(\"COMPACT_PUBLIC_PRODUCT_PROBE_OUTPUT\") {\n        let base = std::path::PathBuf::from(destination);\n        std::fs::create_dir_all(&base).unwrap();\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.membership\");\n    if let Some(destination) = std::env::var_os(\"COMPACT_PUBLIC_PRODUCT_PROBE_OUTPUT\") {\n        let base = std::path::PathBuf::from(destination);\n        std::fs::create_dir_all(&base).unwrap();\n"
+        },
+        {
+          "current": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(owners.len(), 1, \"{name}\");\n        assert_eq!(owners[0][\"body_owner\"], \"algebra.ordinary\", \"{name}\");\n    }\n}\n",
+          "previous": "            })\n            .collect::<Vec<_>>();\n        assert_eq!(owners.len(), 1, \"{name}\");\n        assert_eq!(\n            owners[0][\"body_owner\"], \"algebra.composite-values\",\n            \"{name}\"\n        );\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/pure_unit_statements.rs": {
+      "previous_sha256": "c81ba27a692a2d612c879cf07160a919dd443347cbbe45b1779f14b5257d4973",
+      "current_sha256": "ea3b6562c98eb090cb5df2dd0c5352c6f88c19ee5552a131bb76eaa1e7fbcde1",
+      "predecessor_reconstruction": [
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}: one actual public emission\");\n    // Every admitted ordinary interface uses the common checked attempt.\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    let metadata = json!({\n        \"label\":label,\"root\":entry,\"internal\":root.internal,\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}: one actual public emission\");\n    // Existing membership priority covers one Enum formal and Boolean-only\n    // roots. A String+Enum signature and the two now-composing Map roots keep\n    // their existing unit-composition owner; candidate success is independent.\n    let expected_owner = if label.starts_with(\"retained-guard-\") || !require_old {\n        \"algebra.membership\"\n    } else {\n        \"algebra.unit-composition\"\n    };\n    assert_eq!(rows[0][\"body_owner\"], expected_owner);\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    let metadata = json!({\n        \"label\":label,\"root\":entry,\"internal\":root.internal,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/qualified_coin_set/inclusion.rs": {
+      "previous_sha256": "bd391802b31ffab7994848c2dda520c9a6e1c51f001c38ab9336be09c2163a0d",
+      "current_sha256": "d15b9bd418f1ff7e95cdda39edc12251626d48fad34ea01377fe20ee86e74388",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(\n        rows[0][\"body_owner\"], \"algebra.ordinary\",\n        \"{label}: whole old control now routes through independently checked composition\"\n    );\n    let capability = output\n",
+          "previous": "        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(\n        rows[0][\"body_owner\"], \"algebra.membership\",\n        \"{label}: whole old control now routes through independently checked composition\"\n    );\n    let capability = output\n"
+        },
+        {
+          "current": "        std::fs::write(directory.join(\"lib.rs\"), output.source).unwrap();\n        std::fs::write(directory.join(\"case.json\"), serde_json::to_vec_pretty(&serde_json::json!({\n            \"label\": label, \"root\": name, \"whole_old_accepted\": true, \"checked_candidate\": true,\n            \"actual_owner\": \"algebra.ordinary\", \"claim\": \"finite qualified Set subdomain only; no retirement or proof claim\"\n        })).unwrap()).unwrap();\n    }\n}\n",
+          "previous": "        std::fs::write(directory.join(\"lib.rs\"), output.source).unwrap();\n        std::fs::write(directory.join(\"case.json\"), serde_json::to_vec_pretty(&serde_json::json!({\n            \"label\": label, \"root\": name, \"whole_old_accepted\": true, \"checked_candidate\": true,\n            \"actual_owner\": \"algebra.membership\", \"claim\": \"finite qualified Set subdomain only; no retirement or proof claim\"\n        })).unwrap()).unwrap();\n    }\n}\n"
+        },
+        {
+          "current": "                })\n                .collect::<Vec<_>>();\n            assert_eq!(rows.len(), 1);\n            assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\", \"{name}\");\n        }\n    }\n}\n",
+          "previous": "                })\n                .collect::<Vec<_>>();\n            assert_eq!(rows.len(), 1);\n            // The qualified coin contains Uint128; its public Unit interface\n            // now reaches the earlier checked Unit adapter.\n            let expected = if *name == \"insert_selected\" {\n                \"algebra.unit-composition\"\n            } else {\n                \"algebra.membership\"\n            };\n            assert_eq!(rows[0][\"body_owner\"], expected, \"{name}\");\n        }\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/qualified_coin_write.rs": {
+      "previous_sha256": "b96b97b4b5380c63835a529b69bb5642ef464ac3ca5ec8d61e8b09b79f3e058e",
+      "current_sha256": "677f4b486f2c10db6802a562175280704373e1b94262d23fe49ac7863503e6b0",
+      "predecessor_reconstruction": [
+        {
+          "current": "    // The zero-parameter Unit interface reaches membership composition first;\n    // that route composes checked effects without requiring a membership-shaped body.\n    for (name, owner) in [\n        (\"write_once\", \"algebra.ordinary\"),\n        (\"write_read\", \"algebra.ordinary\"),\n    ] {\n        let capability = output\n            .capabilities\n",
+          "previous": "    // The zero-parameter Unit interface reaches membership composition first;\n    // that route composes checked effects without requiring a membership-shaped body.\n    for (name, owner) in [\n        (\"write_once\", \"algebra.membership\"),\n        (\"write_read\", \"algebra.composite-values\"),\n    ] {\n        let capability = output\n            .capabilities\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/reset_payout_inclusion.rs": {
+      "previous_sha256": "dc5e99d8dfb5d663861422363b9aa2d743b22d877ecb723340157b6314a2d14c",
+      "current_sha256": "85f174950687d9523940973d61b65248cbd44aa427a49e58b158bdaf2dccfb5d",
+      "predecessor_reconstruction": [
+        {
+          "current": "        })\n        .collect();\n    assert_eq!(actual.len(), 1, \"{label}\");\n    assert_eq!(actual[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n    output.source\n}\nfn capture(c: &Contract, name: &str, label: &str, rust: &str) {\n",
+          "previous": "        })\n        .collect();\n    assert_eq!(actual.len(), 1, \"{label}\");\n    assert_eq!(\n        actual[0][\"body_owner\"], \"algebra.composite-values\",\n        \"{label}\"\n    );\n    output.source\n}\nfn capture(c: &Contract, name: &str, label: &str, rust: &str) {\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"label\":label,\"root\":name,\"old_whole_reset_accepted\":true,\n            \"checked_plan_succeeded\":true,\"native_render_succeeded\":true,\n            \"body_owner\":\"algebra.ordinary\",\n            \"qualification\":\"IR/render only; raw consumer compilation and proofs are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"label\":label,\"root\":name,\"old_whole_reset_accepted\":true,\n            \"checked_plan_succeeded\":true,\"native_render_succeeded\":true,\n            \"body_owner\":\"algebra.composite-values\",\n            \"qualification\":\"IR/render only; raw consumer compilation and proofs are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/shielded_payout_inclusion.rs": {
+      "previous_sha256": "7ca605fe94a399c989123e13284c040798d392bade7e04be229eae93df92e729",
+      "current_sha256": "67650debae57689b36e617cee006ecc66e0fe72d25659c93285e35ad48681f41",
+      "predecessor_reconstruction": [
+        {
+          "current": "                assert_eq!(rows.as_array().unwrap().len(), 1);\n                assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n                assert_eq!(rows[0][\"helper\"], true);\n                assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n            }\n            let output = current(&c, name, label);\n            capture(&c, name, label, internal, &output);\n",
+          "previous": "                assert_eq!(rows.as_array().unwrap().len(), 1);\n                assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n                assert_eq!(rows[0][\"helper\"], true);\n                assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n            }\n            let output = current(&c, name, label);\n            capture(&c, name, label, internal, &output);\n"
+        },
+        {
+          "current": "        })\n        .collect();\n    assert_eq!(actual.len(), 1, \"{label}\");\n    assert_eq!(actual[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n    output.source\n}\nfn capture(c: &Contract, name: &str, label: &str, internal: Option<&str>, rust: &str) {\n",
+          "previous": "        })\n        .collect();\n    assert_eq!(actual.len(), 1, \"{label}\");\n    assert_eq!(\n        actual[0][\"body_owner\"], \"algebra.composite-values\",\n        \"{label}\"\n    );\n    output.source\n}\nfn capture(c: &Contract, name: &str, label: &str, internal: Option<&str>, rust: &str) {\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"label\":label,\"root\":name,\"internal_root\":internal,\"old_whole_payout_accepted\":true,\n            \"checked_plan_succeeded\":true,\"native_render_succeeded\":true,\n            \"body_owner\":\"algebra.ordinary\",\n            \"qualification\":\"IR/render only; raw consumer compilation and proofs are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"label\":label,\"root\":name,\"internal_root\":internal,\"old_whole_payout_accepted\":true,\n            \"checked_plan_succeeded\":true,\"native_render_succeeded\":true,\n            \"body_owner\":\"algebra.composite-values\",\n            \"qualification\":\"IR/render only; raw consumer compilation and proofs are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/whole_merge_inclusion.rs": {
+      "previous_sha256": "e131543f8212af930ab960f43a8ca9d1274171cf5ea17ad35eb7212f94979b83",
+      "current_sha256": "a14426883cf210fc9037611e1068ac62e7d96380e38b179f442f52266ad823c6",
+      "predecessor_reconstruction": [
+        {
+          "current": "        });\n        assert!(item.unwrap().is_supported(), \"{label}\");\n        assert_eq!(helper_rows.as_array().unwrap().len(), 1);\n        assert_eq!(helper_rows[0][\"body_owner\"], \"algebra.ordinary\");\n        assert_eq!(helper_rows[0][\"phase\"], \"helper_planning\");\n        assert_eq!(helper_rows[0][\"helper\"], true);\n    } else {\n",
+          "previous": "        });\n        assert!(item.unwrap().is_supported(), \"{label}\");\n        assert_eq!(helper_rows.as_array().unwrap().len(), 1);\n        assert_eq!(helper_rows[0][\"body_owner\"], \"algebra.composite-values\");\n        assert_eq!(helper_rows[0][\"phase\"], \"helper_planning\");\n        assert_eq!(helper_rows[0][\"helper\"], true);\n    } else {\n"
+        },
+        {
+          "current": "            })\n            .collect();\n        assert_eq!(rows.len(), 1, \"{label}\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\", \"{label}\");\n        let attempts: Vec<_> = rows[0][\"attempts\"]\n            .as_array()\n            .unwrap()\n",
+          "previous": "            })\n            .collect();\n        assert_eq!(rows.len(), 1, \"{label}\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\", \"{label}\");\n        let attempts: Vec<_> = rows[0][\"attempts\"]\n            .as_array()\n            .unwrap()\n"
+        },
+        {
+          "current": "        assert_eq!(\n            attempts\n                .iter()\n                .filter(|&&r| r == \"algebra.ordinary\")\n                .count(),\n            1\n        );\n",
+          "previous": "        assert_eq!(\n            attempts\n                .iter()\n                .filter(|&&r| r == \"algebra.composite-values\")\n                .count(),\n            1\n        );\n"
+        },
+        {
+          "current": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_merge_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": \"algebra.ordinary\",\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n",
+          "previous": "        serde_json::to_vec_pretty(&json!({\n            \"index\": index, \"label\": label, \"root\": name,\n            \"old_whole_merge_accepted\": true, \"checked_plan_succeeded\": true,\n            \"native_render_succeeded\": true, \"body_owner\": \"algebra.composite-values\",\n            \"qualification\": \"IR/render evidence only; compilation and proof are separate\"\n        }))\n        .unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/wide_add/inclusion.rs": {
+      "previous_sha256": "1c73baae813268db059af6b2eec3bd561b6563d8f61424d6dc21a1ddbea2e149",
+      "current_sha256": "edd508c0d1663a3f093b55d382af1c93259372c9ef914461f1b712290acb9322",
+      "predecessor_reconstruction": [
+        {
+          "current": "            })\n            .collect();\n        assert_eq!(owners.len(), 1, \"{name}\");\n        assert_eq!(owners[0][\"body_owner\"], \"algebra.ordinary\", \"{name}\");\n    }\n}\n",
+          "previous": "            })\n            .collect();\n        assert_eq!(owners.len(), 1, \"{name}\");\n        assert_eq!(\n            owners[0][\"body_owner\"], \"algebra.composite-values\",\n            \"{name}\"\n        );\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/wide_values/field_cast_source.rs": {
+      "previous_sha256": "742ee3f8eab3fda3f85131ea89256b0072397b644c459e0cd290186c28cabc5e",
+      "current_sha256": "22f38628b8bdcedd5a91ae87624401abd6178b7ed5064cc084bfb8e5b2d11408",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .collect();\n        assert_eq!(rows.len(), 1);\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n        let label = format!(\"source-{entry}\");\n        let metadata = json!({\n            \"label\":label,\"root\":entry,\"internal\":root.internal,\n",
+          "previous": "            .collect();\n        assert_eq!(rows.len(), 1);\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n        let label = format!(\"source-{entry}\");\n        let metadata = json!({\n            \"label\":label,\"root\":entry,\"internal\":root.internal,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/witness_inputs/inclusion.rs": {
+      "previous_sha256": "769eb3862400699e1d01aa159e024411d5f44818325751e910ff238e5b50ca1e",
+      "current_sha256": "a7a26824f3207764f035a229b83ce2d91c7ddf9a860520e123a18d02c31aca7e",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    if let Some(destination) = std::env::var_os(\"COMPACT_WITNESS_INPUT_PROBE_OUTPUT\") {\n        let base = std::path::PathBuf::from(destination);\n        std::fs::create_dir_all(&base).unwrap();\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.membership\");\n    if let Some(destination) = std::env::var_os(\"COMPACT_WITNESS_INPUT_PROBE_OUTPUT\") {\n        let base = std::path::PathBuf::from(destination);\n        std::fs::create_dir_all(&base).unwrap();\n"
+        },
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n}\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/zswap_inclusion.rs": {
+      "previous_sha256": "e4f7bf4298a13b6b7bce43c22adc8e068505d2d778dd9e6e3892fa89d3cedde3",
+      "current_sha256": "03c3d971957a02f777fe7102ae10c14f419e25011e0a08daa9bab7e70d37ec50",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod boundaries;\n#[path = \"zswap_inclusion/variants.rs\"]\nmod variants;\n\nfn source() -> Contract {\n    serde_json::from_str(include_str!(\n",
+          "previous": "mod boundaries;\n#[path = \"zswap_inclusion/variants.rs\"]\nmod variants;\n\n// Public Unit signatures now use the shared checked interface, including the\n// Uint128 member of qualified coins. Expression effect returns still use Zswap.\nfn expected_owner(root: &StatefulCircuit) -> &'static str {\n    if root.return_value == StateReturn::Unit {\n        \"algebra.unit-composition\"\n    } else {\n        \"algebra.zswap\"\n    }\n}\n\nfn source() -> Contract {\n    serde_json::from_str(include_str!(\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    let owner = \"algebra.ordinary\";\n    if r.return_value == StateReturn::Unit {\n        assert!(\n            has_public_program(&plan),\n            \"This retained Unit source has a public program\"\n        );\n    }\n    assert_eq!(rows[0][\"body_owner\"], owner, \"{label}\");\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect();\n    assert_eq!(rows.len(), 1, \"{label}\");\n    let owner = expected_owner(r);\n    if owner == \"algebra.unit-composition\" {\n        assert!(\n            has_public_program(&plan),\n            \"Unit requires public program evidence\"\n        );\n    }\n    assert_eq!(rows[0][\"body_owner\"], owner, \"{label}\");\n"
+        },
+        {
+          "current": "        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts.iter().filter(|&&r| r == owner).count(), 1);\n    assert_eq!(attempts, [\"algebra.ordinary\"]);\n\n    capture(c, name, label, &output.source, owner);\n}\n",
+          "previous": "        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts.iter().filter(|&&r| r == owner).count(), 1);\n    if owner == \"algebra.unit-composition\" {\n        assert!(\n            !attempts.contains(&\"algebra.zswap\"),\n            \"earlier Unit admission stops the later adapter\"\n        );\n    }\n\n    capture(c, name, label, &output.source, owner);\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment/resource_tests.rs": {
+      "previous_sha256": "37e0ea9f9e9cf844bbcc1e2c8f4414f9935dacd994c4c7770e5c11ca1bcb2a36",
+      "current_sha256": "c03e44255b4676437e969e6c2ad12e63ba7b605598c58087bbfd28fe71a91aef",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .collect::<Vec<_>>();\n        assert_eq!(roots.len(), 1);\n        if accepted {\n            assert_eq!(roots[0][\"body_owner\"], \"algebra.ordinary\");\n            assert_eq!(roots[0][\"outcome\"][\"status\"], \"supported\");\n        } else {\n            assert_ne!(roots[0][\"body_owner\"], \"algebra.ordinary\");\n            eprintln!(\"over-limit public admission: {}\", roots[0]);\n        }\n        let capabilities = rendered\n",
+          "previous": "            .collect::<Vec<_>>();\n        assert_eq!(roots.len(), 1);\n        if accepted {\n            assert_eq!(roots[0][\"body_owner\"], \"algebra.unit-actions\");\n            assert_eq!(roots[0][\"outcome\"][\"status\"], \"supported\");\n        } else {\n            assert_ne!(roots[0][\"body_owner\"], \"algebra.unit-actions\");\n            eprintln!(\"over-limit public admission: {}\", roots[0]);\n        }\n        let capabilities = rendered\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_map_migration_tests.rs": {
+      "previous_sha256": "2fd8cec616532ec27954262efc42b5a3787e7f53bb4bf010d1b180b553d3998f",
+      "current_sha256": "b36a74c2bb237fbe0c6774d56adc5118854af0343cf7daf1cac915d5186634d7",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|x| x[\"circuit\"] == ROOT && x[\"phase\"] == \"public_emission\" && x[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert!(\n        !attempts\n",
+          "previous": "        .iter()\n        .find(|x| x[\"circuit\"] == ROOT && x[\"phase\"] == \"public_emission\" && x[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert!(\n        !attempts\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_pure_migration_tests.rs": {
+      "previous_sha256": "b1d0ee2e2ce8cf2e38c21e12d83172c62a714d71d0b20f4bb8d61049cc2e6a19",
+      "current_sha256": "10f2947b0e2b1a424cf46cf8d99193160bb9be31ea0a5199c3d637e25dd024ae",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_map_migration_tests.rs": {
+      "previous_sha256": "2e6f50b7b6e33a4ab0104175cc08049857076e46a39eafaa0dd8de63bd366068",
+      "current_sha256": "484bb26ec866fa71720933ec2a49120f99622d8e18f5dcfa62e5ca41e033a089",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert!(\n        !attempts\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert!(\n        !attempts\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests.rs": {
+      "previous_sha256": "c73d6faed8f68c3d6a4e26b752a0f7d4b677d634e63811bd090d6ee52a03c99f",
+      "current_sha256": "f586306f821ec840e08f273d492b33fa7946a874d337f61bb31421d4644efa50",
+      "predecessor_reconstruction": [
+        {
+          "current": "            r[\"circuit\"] == \"setWatch\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert!(\n        !attempts\n",
+          "previous": "            r[\"circuit\"] == \"setWatch\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert!(\n        !attempts\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "5033ed630b7ffdbe16403d47a3cf2e87a101d61aeeb63d5c159eafb3cfa38f2f",
+      "current_sha256": "5e4b072379aabb6ed1360b2aabec08e102f652af57650cf696f2ca2ae03aa09b",
+      "predecessor_reconstruction": [
+        {
+          "current": "// See the License for the specific language governing permissions and\n// limitations under the License.\n\n//! One checked ordinary admission; the old staged selector is a test-only oracle.\n//!\n//! A validated plan owns success. Unsupported explicitly retains the existing\n//! legacy compatibility renderer; Invalid is fatal. Diagnostic projection below\n//! preserves prior error precedence without authorizing a different plan.\n//!\n//! Effectful-return admission is performed earlier by the caller, before helper\n//! routing and parameter validation. Keep that ordering outside this selector.\n",
+          "previous": "// See the License for the specific language governing permissions and\n// limitations under the License.\n\n//! Ordered checked-interface admission for recorded circuits.\n//!\n//! Checked attempts stop at the first admitted plan. Rejections\n//! from checked profiles are retained for later legacy diagnostic refinement;\n//! a rejection does not prevent an independent later profile from admitting.\n//!\n//! Effectful-return admission is performed earlier by the caller, before helper\n//! routing and parameter validation. Keep that ordering outside this selector.\n"
+        },
+        {
+          "current": "\nuse super::RecordingGap;\nuse super::effect_plan;\n#[cfg(test)]\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[cfg(test)]\n#[path = \"profile_selection/ordinary_domain.rs\"]\nmod ordinary_domain;\n#[cfg(test)]\n#[path = \"profile_selection/ordinary_migration_tests.rs\"]\nmod ordinary_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/single_attempt_tests.rs\"]\nmod single_attempt_tests;\n#[cfg(test)]\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n",
+          "previous": "\nuse super::RecordingGap;\nuse super::effect_plan;\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[path = \"profile_selection/ordinary_domain.rs\"]\nmod ordinary_domain;\n#[cfg(test)]\n#[path = \"profile_selection/ordinary_migration_tests.rs\"]\nmod ordinary_migration_tests;\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n"
+        },
+        {
+          "current": "\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\n#[cfg(test)]\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "/// Roll out the declared point result domain at its existing selector priority.\n/// Shape evidence never authorizes this route. Unsupported can try independent\n/// later families; a checked-plan invariant failure aborts before any fallback.\n#[cfg(test)]\nfn checked_jubjub_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "/// Roll out the declared point result domain at its existing selector priority.\n/// Shape evidence never authorizes this route. Unsupported can try independent\n/// later families; a checked-plan invariant failure aborts before any fallback.\nfn checked_jubjub_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "\n/// Ordinary Field interfaces are the migration boundary; body support follows\n/// checked operations. No one-slot or syntactic read/write evidence is required.\n#[cfg(test)]\nfn checked_terminal_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Ordinary Field interfaces are the migration boundary; body support follows\n/// checked operations. No one-slot or syntactic read/write evidence is required.\nfn checked_terminal_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "\n/// Ordinary Unit interfaces enter at the former unit-action priority. Body\n/// support is compositional: no helper/write counts or flat Cell paths authorize it.\n#[cfg(test)]\nfn checked_unit_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Ordinary Unit interfaces enter at the former unit-action priority. Body\n/// support is compositional: no helper/write counts or flat Cell paths authorize it.\nfn checked_unit_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "\n/// Bytes32 expression interfaces enter at the former context-query priority.\n/// Observation counts and whole-body shape audits do not authorize composition.\n#[cfg(test)]\nfn checked_context_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Bytes32 expression interfaces enter at the former context-query priority.\n/// Observation counts and whole-body shape audits do not authorize composition.\nfn checked_context_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "}\n\n/// Kernel interfaces roll out here; actual effects follow checked composition.\n#[cfg(test)]\nfn checked_kernel_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "}\n\n/// Kernel interfaces roll out here; actual effects follow checked composition.\nfn checked_kernel_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "\n/// Struct expression interfaces compose at the old composite selector priority.\n/// Internal helpers retain eligibility; body effects, not evidence counts, decide.\n#[cfg(test)]\nfn checked_composite_attempt(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Struct expression interfaces compose at the old composite selector priority.\n/// Internal helpers retain eligibility; body effects, not evidence counts, decide.\nfn checked_composite_attempt(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "}\n\n/// Retain unsupported diagnostics without treating them as global admission errors.\n#[cfg(test)]\nfn resolve_checked_attempt(\n    result: Result<TypedPlan, effect_plan::PlanError>,\n) -> Result<ProfileAttempt<TypedPlan>, RenderError> {\n",
+          "previous": "}\n\n/// Retain unsupported diagnostics without treating them as global admission errors.\nfn resolve_checked_attempt(\n    result: Result<TypedPlan, effect_plan::PlanError>,\n) -> Result<ProfileAttempt<TypedPlan>, RenderError> {\n"
+        },
+        {
+          "current": "\n/// Receive interfaces enter at the old receive priority, including internal helpers.\n/// Typed composition decides body support without wrapper or intent-count shape gates.\n#[cfg(test)]\nfn checked_receive_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Receive interfaces enter at the old receive priority, including internal helpers.\n/// Typed composition decides body support without wrapper or intent-count shape gates.\nfn checked_receive_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "\n/// Voting interfaces enter at the old voting priority, including internal helpers.\n/// Typed composition decides body support without operation or witness-count gates.\n#[cfg(test)]\nfn checked_voting_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// Voting interfaces enter at the old voting priority, including internal helpers.\n/// Typed composition decides body support without operation or witness-count gates.\nfn checked_voting_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "/// Guarded deposit interfaces enter at their existing selector priority.\n/// The beneficiary is any declared one-field Bytes<32> product. Typed effects,\n/// rather than a receive/merge prefix or static evidence counts, admit the body.\n#[cfg(test)]\nfn checked_guarded_deposit_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "/// Guarded deposit interfaces enter at their existing selector priority.\n/// The beneficiary is any declared one-field Bytes<32> product. Typed effects,\n/// rather than a receive/merge prefix or static evidence counts, admit the body.\nfn checked_guarded_deposit_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "    ))\n}\n\n#[cfg(test)]\nfn resolve_checked_plan(\n    result: Result<TypedPlan, effect_plan::PlanError>,\n) -> Result<Option<TypedPlan>, RenderError> {\n",
+          "previous": "    ))\n}\n\nfn resolve_checked_plan(\n    result: Result<TypedPlan, effect_plan::PlanError>,\n) -> Result<Option<TypedPlan>, RenderError> {\n"
+        },
+        {
+          "current": "\n/// External Unit carrier interfaces enter at the former Zswap priority.\n/// Typed effects decide body support; intent/query counts do not grant admission.\n#[cfg(test)]\nfn checked_zswap_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n",
+          "previous": "\n/// External Unit carrier interfaces enter at the former Zswap priority.\n/// Typed effects decide body support; intent/query counts do not grant admission.\nfn checked_zswap_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "    ))\n}\n\n#[cfg(test)]\npub(super) fn legacy_select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n",
+          "previous": "    ))\n}\n\npub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n"
+        },
+        {
+          "current": "        unit_composition_rejection,\n    })\n}\n\n/// Ordinary support has one authority. Effectful plans were already checked by\n/// the caller; its independent StartFunding compatibility path is unchanged.\npub(super) fn select(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure_circuits: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n    effectful_plan: Option<TypedPlan>,\n) -> Result<ProfileSelection, RenderError> {\n    if let Some(plan) = effectful_plan {\n        return Ok(admitted(plan));\n    }\n    match effect_plan::lower_with_calls_diagnostic(\n        circuit,\n        ledger_fields,\n        witnesses,\n        pure_circuits,\n        circuits,\n    ) {\n        Ok(plan) => {\n            #[cfg(test)]\n            super::admission_probe::trace::option(\"algebra.ordinary\", true);\n            Ok(admitted(plan))\n        }\n        Err(effect_plan::DiagnosticPlanError::Unsupported(rejection)) => {\n            #[cfg(test)]\n            super::admission_probe::trace::option(\"algebra.ordinary\", false);\n            Ok(compatibility_rejection(circuit, rejection))\n        }\n        Err(effect_plan::DiagnosticPlanError::Invalid(gap)) => {\n            Err(RenderError::RecordingPlanInvariant {\n                path: gap.path,\n                detail: gap.detail,\n            })\n        }\n    }\n}\n\nfn admitted(plan: TypedPlan) -> ProfileSelection {\n    ProfileSelection {\n        organizer_steps: Some(plan.steps),\n        typed_result: Some(plan.result),\n        shielded_send_rejection: None,\n        unit_composition_rejection: None,\n    }\n}\n\n/// Preserve the existing diagnostic consumers while legacy support is still\n/// explicit in render_recorded_item. These predicates cannot authorize output.\nfn compatibility_rejection(\n    circuit: &StatefulCircuit,\n    rejection: effect_plan::LoweringRejection,\n) -> ProfileSelection {\n    use crate::ir::{StateReturn, Type};\n    let mut selection = ProfileSelection {\n        organizer_steps: None,\n        typed_result: None,\n        shielded_send_rejection: None,\n        unit_composition_rejection: None,\n    };\n    if circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit {\n        // Keep every typed provenance field: action ordinal, phase, precision,\n        // concrete node, resource cause and exact component-boundary path.\n        selection.unit_composition_rejection = Some(rejection);\n    } else if matches!(circuit.result, Type::Struct { .. })\n        && matches!(circuit.return_value, StateReturn::Expression { .. })\n        && typed_plan::shielded_send_result(&circuit.result)\n    {\n        // Exactly the former composite-interface diagnostic projection. This\n        // consumes only the public gap; its later use is still refusal-only.\n        selection.shielded_send_rejection = Some(rejection.into_gap());\n    }\n    selection\n}\n",
+          "previous": "        unit_composition_rejection,\n    })\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/composite_migration_tests.rs": {
+      "previous_sha256": "d308e161fd4da3f83d5bbe33c988fd89d6ee9eb0b13dde6aa42f955e5bef9b9d",
+      "current_sha256": "0fb34304b5029c29fb395362eff8f3f932a6c9620973eabcf099a316b6db461e",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/composite_migration_tests/routing.rs": {
+      "previous_sha256": "9922d50357a5f525c58e77fd19591571373663bcb0ec914cf9945076fa83fd2f",
+      "current_sha256": "eae591720be414ac587cb00ab82bf5cedef3f16bf8870c0c219816273c90cad8",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n#[test]\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n#[test]\n"
+        },
+        {
+          "current": "        assert!(\n            rows.iter().any(|r| r[\"circuit\"] == name\n                && r[\"phase\"] == \"public_emission\"\n                && r[\"body_owner\"] == \"algebra.ordinary\"),\n            \"public {name}: {rows:?}\"\n        );\n    }\n",
+          "previous": "        assert!(\n            rows.iter().any(|r| r[\"circuit\"] == name\n                && r[\"phase\"] == \"public_emission\"\n                && r[\"body_owner\"] == \"algebra.composite-values\"),\n            \"public {name}: {rows:?}\"\n        );\n    }\n"
+        },
+        {
+          "current": "    assert_eq!(helper_row[\"internal\"], true);\n    assert_eq!(helper_row[\"helper\"], true);\n    assert_eq!(helper_row[\"phase\"], \"helper_planning\");\n    assert_eq!(helper_row[\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(helper_row[\"outcome\"][\"status\"], \"supported\");\n    assert!(!rows.iter().chain(helper_rows.iter()).any(|r| {\n        r[\"attempts\"]\n",
+          "previous": "    assert_eq!(helper_row[\"internal\"], true);\n    assert_eq!(helper_row[\"helper\"], true);\n    assert_eq!(helper_row[\"phase\"], \"helper_planning\");\n    assert_eq!(helper_row[\"body_owner\"], \"algebra.composite-values\");\n    assert_eq!(helper_row[\"outcome\"][\"status\"], \"supported\");\n    assert!(!rows.iter().chain(helper_rows.iter()).any(|r| {\n        r[\"attempts\"]\n"
+        },
+        {
+          "current": "        let maps = Context::new(contract);\n        let (_, rows) = trace::capture_json(|| {\n            let scope = trace::Scope::begin(root, false);\n            let selected = maps.legacy_selected(root).unwrap();\n            scope.finish(&Ok::<_, RenderError>(\n                crate::recorded::RecordingOutcome::Supported(()),\n            ));\n",
+          "previous": "        let maps = Context::new(contract);\n        let (_, rows) = trace::capture_json(|| {\n            let scope = trace::Scope::begin(root, false);\n            let selected = maps.selected(root).unwrap();\n            scope.finish(&Ok::<_, RenderError>(\n                crate::recorded::RecordingOutcome::Supported(()),\n            ));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/context_migration_tests.rs": {
+      "previous_sha256": "bd5a35e555488d4a6216b69f628fdb3c2cee96fcbcf6f72efd01da3b4f523d44",
+      "current_sha256": "981cc592850ec36b916a696845d959d111f135e80400e34c242f6032384a84af",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_context_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_context_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/context_migration_tests/routing.rs": {
+      "previous_sha256": "f8d23a6fe2a0c38f91c23e07a75dc1c143b6c577a2bbc949f8951adf42997a7c",
+      "current_sha256": "474d2b84ce1e0383aa7639c4a780825b4bb1d5d6d1b5158dfe9364b3920e8d75",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n"
+        },
+        {
+          "current": "    let context = Context::new(contract);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(root, false);\n        let selected = context.legacy_selected(root).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n",
+          "previous": "    let context = Context::new(contract);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(root, false);\n        let selected = context.selected(root).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests.rs": {
+      "previous_sha256": "106ac1e71a89a70630253e59a71df8137e7ad7f25baf84a1c5315493138489f2",
+      "current_sha256": "c55140845580db610ea06235ee95058870f1ceff679427e122e118ba2ed86473",
+      "predecessor_reconstruction": [
+        {
+          "current": "            r[\"circuit\"] == \"advance\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let attempts: Vec<_> = row[\"attempts\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts[0], \"algebra.ordinary\");\n    assert!(!attempts.iter().any(|route| route.starts_with(\"organizer.\")));\n    assert!(!attempts.contains(&\"organizer.enum-advance\"));\n    assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n",
+          "previous": "            r[\"circuit\"] == \"advance\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let attempts: Vec<_> = row[\"attempts\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts[0], \"algebra.membership\");\n    assert!(!attempts.iter().any(|route| route.starts_with(\"organizer.\")));\n    assert!(!attempts.contains(&\"organizer.enum-advance\"));\n    assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/funded_mint_migration_tests.rs": {
+      "previous_sha256": "2c767fc8d49f7421da75e35731ba0952f3dd6dd2286de99b9b8150f24d3b0f9a",
+      "current_sha256": "5a19f8b94d3dc3988d97f1bc603bb749bb9fd8e6fc43cbe19aa91abe73d44ac7",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        )\n    }\n}\nfn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "        )\n    }\n}\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.composite-values\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "    );\n    assert!(maps.domain(r).unwrap().is_some());\n    public_owner(&c, \"buy_in\");\n    let row = legacy_selected_trace(&c, r);\n    assert!(!attempts(&row).contains(&\"selector.funded-mint\"));\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n}\n",
+          "previous": "    );\n    assert!(maps.domain(r).unwrap().is_some());\n    public_owner(&c, \"buy_in\");\n    let row = selected_trace(&c, r);\n    assert!(!attempts(&row).contains(&\"selector.funded-mint\"));\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n}\n"
+        },
+        {
+          "current": "    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"buy_in\");\n    assert!(!attempts(&legacy_selected_trace(&c, root(&c))).contains(&\"selector.funded-mint\"));\n}\n\n#[test]\n",
+          "previous": "    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"buy_in\");\n    assert!(!attempts(&selected_trace(&c, root(&c))).contains(&\"selector.funded-mint\"));\n}\n\n#[test]\n"
+        },
+        {
+          "current": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n",
+          "previous": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests.rs": {
+      "previous_sha256": "d5957b71ce3ff6aa180fa9ca463b124435c291d06072dff9fa508f9ce7f6912d",
+      "current_sha256": "7bfea9de164da38eb54e5c40981865b21297456c78b3cf2297ac5826a7fb071e",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_guarded_deposit_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_guarded_deposit_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        )\n    }\n}\nfn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "        )\n    }\n}\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.guarded-deposit\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.guarded-deposit\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "        assert!(maps.old(r).is_some(), \"whole frozen oracle first\");\n        assert!(maps.domain(r).unwrap().is_some());\n        assert_eq!(\n            legacy_selected_trace(&c, r)[\"body_owner\"],\n            \"algebra.guarded-deposit\"\n        );\n        if internal {\n",
+          "previous": "        assert!(maps.old(r).is_some(), \"whole frozen oracle first\");\n        assert!(maps.domain(r).unwrap().is_some());\n        assert_eq!(\n            selected_trace(&c, r)[\"body_owner\"],\n            \"algebra.guarded-deposit\"\n        );\n        if internal {\n"
+        },
+        {
+          "current": "            assert_eq!(rows.as_array().unwrap().len(), 1);\n            assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n            assert_eq!(rows[0][\"helper\"], true);\n            assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n        } else {\n            public_owner(&c, &r.name);\n        }\n",
+          "previous": "            assert_eq!(rows.as_array().unwrap().len(), 1);\n            assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n            assert_eq!(rows[0][\"helper\"], true);\n            assert_eq!(rows[0][\"body_owner\"], \"algebra.guarded-deposit\");\n        } else {\n            public_owner(&c, &r.name);\n        }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests/routing.rs": {
+      "previous_sha256": "303db220fda86c991bf69a8e52bc79bc444b846740341d196b6411755cdde1ba",
+      "current_sha256": "0ed41b7451f6fa2c690a6cdb762c4d63fcda2a80dabd7e2c6057e3b488d9842a",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\n\n#[test]\nfn deposit_owner_keeps_priority_and_stops_later_families() {\n    let c = source();\n    let row = legacy_selected_trace(&c, root(&c));\n    assert_eq!(row[\"body_owner\"], \"algebra.guarded-deposit\");\n    let a = attempts(&row);\n    assert_eq!(\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n#[test]\nfn deposit_owner_keeps_priority_and_stops_later_families() {\n    let c = source();\n    let row = selected_trace(&c, root(&c));\n    assert_eq!(row[\"body_owner\"], \"algebra.guarded-deposit\");\n    let a = attempts(&row);\n    assert_eq!(\n"
+        },
+        {
+          "current": "    ] {\n        let c: Contract = serde_json::from_str(json).unwrap();\n        let r = c.stateful_circuits.iter().find(|r| r.name == name).unwrap();\n        let row = legacy_selected_trace(&c, r);\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.guarded-deposit\"));\n    }\n",
+          "previous": "    ] {\n        let c: Contract = serde_json::from_str(json).unwrap();\n        let r = c.stateful_circuits.iter().find(|r| r.name == name).unwrap();\n        let row = selected_trace(&c, r);\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.guarded-deposit\"));\n    }\n"
+        },
+        {
+          "current": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n",
+          "previous": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/kernel_migration_tests.rs": {
+      "previous_sha256": "a097398a43ee4d2c554ef508640c6a93a661d219ef7a9a8e25a541c7a1d17fe1",
+      "current_sha256": "2c16c62a625685ae034c798342c98e2c4d8194bbccac818254c0d098cf84ce50",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_kernel_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_kernel_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/kernel_migration_tests/routing.rs": {
+      "previous_sha256": "7b07131487f092c2043b62cbc5c0b34991daca838029fe257600bf80074fa92a",
+      "current_sha256": "0fa59f73adf96a1f4f27de8a991c82644242fe1b54badbfa070c93207f8e9a76",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n"
+        },
+        {
+          "current": "    let context = Context::new(contract);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(root, false);\n        let result = context.legacy_selected(root).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n",
+          "previous": "    let context = Context::new(contract);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(root, false);\n        let result = context.selected(root).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/membership_migration_tests.rs": {
+      "previous_sha256": "875bf083f9424ed6dad9337fdc68a0b5c9bb5cd96eeb214f44cbfe104148eae5",
+      "current_sha256": "26cd3ff2c2391e3c29d475570c9072b35f10752821c105930d4ff851cf5dac9c",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn old(&self, r: &StatefulCircuit) -> Option<TypedPlan> {\n        typed_plan::lower(r, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, r: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            r,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn old(&self, r: &StatefulCircuit) -> Option<TypedPlan> {\n        typed_plan::lower(r, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, r: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            r,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect()\n}\nfn legacy_selected(c: &Contract) -> serde_json::Value {\n    let r = &c.stateful_circuits[0];\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n",
+          "previous": "        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect()\n}\nfn selected(c: &Contract) -> serde_json::Value {\n    let r = &c.stateful_circuits[0];\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n"
+        },
+        {
+          "current": "        assert!(maps.old(r).is_none(), \"new composition: {r:?}\");\n        assert!(maps.domain(r).unwrap().is_some(), \"{r:?}\");\n        let row = emitted(&c, \"composed\");\n        assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n        let a = attempts(&row);\n        assert_eq!(a.iter().filter(|&&x| x == \"algebra.ordinary\").count(), 1);\n        assert_eq!(a, [\"algebra.ordinary\"]);\n        assert!(!a.contains(&\"selector.membership-optional\"));\n    }\n}\n",
+          "previous": "        assert!(maps.old(r).is_none(), \"new composition: {r:?}\");\n        assert!(maps.domain(r).unwrap().is_some(), \"{r:?}\");\n        let row = emitted(&c, \"composed\");\n        assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n        let a = attempts(&row);\n        assert_eq!(a.iter().filter(|&&x| x == \"algebra.membership\").count(), 1);\n        assert!(!a.contains(&\"algebra.jubjub-values\"));\n        assert!(!a.contains(&\"selector.membership-optional\"));\n    }\n}\n"
+        },
+        {
+          "current": "        .unwrap();\n    assert!(Context::new(&c).old(r).is_some());\n    assert!(Context::new(&c).domain(r).unwrap().is_some());\n    assert_eq!(emitted(&c, \"take_down\")[\"body_owner\"], \"algebra.ordinary\");\n    let mut c = subject(vec![], Type::Unit);\n    c.stateful_circuits[0].return_value = StateReturn::Unit;\n    assert_eq!(emitted(&c, \"composed\")[\"body_owner\"], \"algebra.ordinary\");\n}\n#[test]\nfn nearby_native_interfaces_decline_without_widening_to_all_public_values() {\n",
+          "previous": "        .unwrap();\n    assert!(Context::new(&c).old(r).is_some());\n    assert!(Context::new(&c).domain(r).unwrap().is_some());\n    assert_eq!(emitted(&c, \"take_down\")[\"body_owner\"], \"algebra.membership\");\n    let mut c = subject(vec![], Type::Unit);\n    c.stateful_circuits[0].return_value = StateReturn::Unit;\n    assert_eq!(emitted(&c, \"composed\")[\"body_owner\"], \"algebra.membership\");\n}\n#[test]\nfn nearby_native_interfaces_decline_without_widening_to_all_public_values() {\n"
+        },
+        {
+          "current": "        )\n    });\n    assert!(item.unwrap().is_supported());\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"helper\"], true);\n}\n#[test]\n",
+          "previous": "        )\n    });\n    assert!(item.unwrap().is_supported());\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.membership\");\n    assert_eq!(rows[0][\"helper\"], true);\n}\n#[test]\n"
+        },
+        {
+          "current": "        (\n            include_str!(\"../../../tests/welcome-organizer-schema13-ir.json\"),\n            None,\n            \"algebra.ordinary\",\n        ),\n        (\n            include_str!(\"../../../tests/effectful-return-schema20-ir.json\"),\n",
+          "previous": "        (\n            include_str!(\"../../../tests/welcome-organizer-schema13-ir.json\"),\n            None,\n            \"algebra.membership\",\n        ),\n        (\n            include_str!(\"../../../tests/effectful-return-schema20-ir.json\"),\n"
+        },
+        {
+          "current": "        });\n        let row = emitted(&c, name);\n        assert_eq!(row[\"body_owner\"], owner);\n        // The organizer was retired in #590. Its current ordinary\n        // owner runs once; the earlier effectful route still bypasses it.\n        let expected_ordinary_attempts = usize::from(owner == \"algebra.ordinary\");\n        assert_eq!(\n            attempts(&row)\n                .iter()\n                .filter(|&&route| route == \"algebra.ordinary\")\n                .count(),\n            expected_ordinary_attempts\n        );\n        assert!(!attempts(&row).contains(&\"organizer.organizer\"));\n    }\n",
+          "previous": "        });\n        let row = emitted(&c, name);\n        assert_eq!(row[\"body_owner\"], owner);\n        // The organizer was retired in #590. Its current checked membership\n        // owner runs once; the earlier effectful route still bypasses it.\n        let expected_membership_attempts = usize::from(owner == \"algebra.membership\");\n        assert_eq!(\n            attempts(&row)\n                .iter()\n                .filter(|&&route| route == \"algebra.membership\")\n                .count(),\n            expected_membership_attempts\n        );\n        assert!(!attempts(&row).contains(&\"organizer.organizer\"));\n    }\n"
+        },
+        {
+          "current": "            .unwrap()\n            .is_none()\n    );\n    let current = emitted(&c, \"composed\");\n    assert_eq!(current[\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(attempts(&current), [\"algebra.ordinary\"]);\n    let row = legacy_selected(&c);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    let a = attempts(&row);\n    assert!(\n",
+          "previous": "            .unwrap()\n            .is_none()\n    );\n    let row = emitted(&c, \"composed\");\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    let a = attempts(&row);\n    assert!(\n"
+        },
+        {
+          "current": "            .unwrap()\n            .is_none()\n    );\n    let row = legacy_selected(&c);\n    assert_ne!(row[\"body_owner\"], \"algebra.membership\");\n    let a = attempts(&row);\n    let at = a.iter().position(|&x| x == \"algebra.membership\").unwrap();\n",
+          "previous": "            .unwrap()\n            .is_none()\n    );\n    let row = selected(&c);\n    assert_ne!(row[\"body_owner\"], \"algebra.membership\");\n    let a = attempts(&row);\n    let at = a.iter().position(|&x| x == \"algebra.membership\").unwrap();\n"
+        },
+        {
+          "current": "        matches!(effect_plan::check_with_calls(r,&maps.ledger,&maps.witnesses,&maps.pure,&maps.circuits),Err(effect_plan::PlanError::Unsupported(gap)) if gap.path==\"parameters[1]\"&&gap.detail==\"duplicate parameter\")\n    );\n    assert!(maps.domain(r).unwrap().is_none());\n    assert_ne!(legacy_selected(&c)[\"body_owner\"], \"algebra.membership\");\n    let c = subject(\n        vec![Type::Unsigned {\n            max: format!(\"0{}\", u64::MAX),\n",
+          "previous": "        matches!(effect_plan::check_with_calls(r,&maps.ledger,&maps.witnesses,&maps.pure,&maps.circuits),Err(effect_plan::PlanError::Unsupported(gap)) if gap.path==\"parameters[1]\"&&gap.detail==\"duplicate parameter\")\n    );\n    assert!(maps.domain(r).unwrap().is_none());\n    assert_ne!(selected(&c)[\"body_owner\"], \"algebra.membership\");\n    let c = subject(\n        vec![Type::Unsigned {\n            max: format!(\"0{}\", u64::MAX),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/merge_migration_tests.rs": {
+      "previous_sha256": "914fd55932e8555c78d5a587b08848217f51faef77b2e348d566ee635433b8f7",
+      "current_sha256": "c29e54f8d5fe1416e98e09d73cffa0a29cd18b2793b0a0bff08692bd83a4003e",
+      "predecessor_reconstruction": [
+        {
+          "current": "            })\n            .collect();\n        assert_eq!(owners.len(), 1);\n        assert_eq!(owners[0][\"body_owner\"], \"algebra.ordinary\");\n        assert!(\n            !owners[0][\"attempts\"]\n                .as_array()\n",
+          "previous": "            })\n            .collect();\n        assert_eq!(owners.len(), 1);\n        assert_eq!(owners[0][\"body_owner\"], \"algebra.composite-values\");\n        assert!(\n            !owners[0][\"attempts\"]\n                .as_array()\n"
+        },
+        {
+          "current": "    });\n    assert!(item.unwrap().is_supported());\n    no_old_attempt(&rows);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n}\n#[test]\nfn composable_coin_result_does_not_require_old_merge_effect_counts() {\n",
+          "previous": "    });\n    assert!(item.unwrap().is_supported());\n    no_old_attempt(&rows);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n}\n#[test]\nfn composable_coin_result_does_not_require_old_merge_effect_counts() {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests.rs": {
+      "previous_sha256": "c64c6600759daf4a1b38dcfb849f2c1bb84f785842e1188916cdb60adf5a9a86",
+      "current_sha256": "0c9569334d7cd3612f9c420212be90d4014738e9297cd6b9b0b86a15f75a6220",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests.rs": {
+      "previous_sha256": "75202a2afc7579a657dac75b0ec57becffd17bbda61ee28a7022d04345520ca8",
+      "current_sha256": "f02fd3ec9f4013895836618ffc3f2dba09dc7ececcd1beb7ea31d5f138b05110",
+      "predecessor_reconstruction": [
+        {
+          "current": "        row[\"guards\"].as_array().unwrap().is_empty(),\n        \"all explicit opaque shape permits retired\"\n    );\n    if r.result == Type::Field {\n        assert!(cx.terminal(r).unwrap().is_some());\n        let attempts = row[\"attempts\"].as_array().unwrap();\n        assert_eq!(\n            attempts\n                .iter()\n                .filter(|a| a[\"route\"] == \"algebra.ordinary\")\n                .count(),\n            1\n        );\n",
+          "previous": "        row[\"guards\"].as_array().unwrap().is_empty(),\n        \"all explicit opaque shape permits retired\"\n    );\n    if owner == \"algebra.terminal-returns\" {\n        assert!(cx.terminal(r).unwrap().is_some());\n        let attempts = row[\"attempts\"].as_array().unwrap();\n        assert_eq!(\n            attempts\n                .iter()\n                .filter(|a| a[\"route\"] == \"algebra.terminal-returns\")\n                .count(),\n            1\n        );\n"
+        },
+        {
+          "current": "fn included(c: &Contract, name: &str) {\n    let cx = Context::new(c);\n    assert!(cx.old(cx.circuits[name]).unwrap(), \"complete old {name}\");\n    let text = current(c, name, \"algebra.ordinary\");\n    if cx.circuits[name].result == Type::Unit {\n        assert!(text.contains(\"record_insert\"));\n    } else {\n",
+          "previous": "fn included(c: &Contract, name: &str) {\n    let cx = Context::new(c);\n    assert!(cx.old(cx.circuits[name]).unwrap(), \"complete old {name}\");\n    let text = current(\n        c,\n        name,\n        if cx.circuits[name].result == Type::Unit {\n            \"algebra.unit-composition\"\n        } else {\n            \"algebra.terminal-returns\"\n        },\n    );\n    if cx.circuits[name].result == Type::Unit {\n        assert!(text.contains(\"record_insert\"));\n    } else {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests/inclusion.rs": {
+      "previous_sha256": "447d94788a22cb142edef95c255f01104b52af3c386da2e8fd6b9c9bbcffb80b",
+      "current_sha256": "024c06a739e33fe83de8bd38249b5e5c10a4ea2c2dc6dc746d168bed8c0524bc",
+      "predecessor_reconstruction": [
+        {
+          "current": "            let cx = Context::new(&c);\n            assert!(cx.old(cx.circuits[\"put\"]).unwrap());\n            assert!(cx.checked(cx.circuits[\"put\"]).is_ok());\n            assert!(current(&c, \"writeViaHelper\", \"algebra.ordinary\").contains(\"record_insert\"));\n        } else {\n            included(&c, \"put\");\n        }\n",
+          "previous": "            let cx = Context::new(&c);\n            assert!(cx.old(cx.circuits[\"put\"]).unwrap());\n            assert!(cx.checked(cx.circuits[\"put\"]).is_ok());\n            assert!(\n                current(&c, \"writeViaHelper\", \"algebra.unit-composition\").contains(\"record_insert\")\n            );\n        } else {\n            included(&c, \"put\");\n        }\n"
+        },
+        {
+          "current": "        let c = contract(v);\n        let cx = Context::new(&c);\n        assert!(!cx.old(cx.circuits[\"ensure\"]).unwrap());\n        let text = current(&c, \"ensure\", \"algebra.ordinary\");\n        if mode != \"non_map\" {\n            assert!(text.find(\"missing key\").unwrap() < text.find(\"record_lookup\").unwrap());\n        }\n",
+          "previous": "        let c = contract(v);\n        let cx = Context::new(&c);\n        assert!(!cx.old(cx.circuits[\"ensure\"]).unwrap());\n        let text = current(&c, \"ensure\", \"algebra.terminal-returns\");\n        if mode != \"non_map\" {\n            assert!(text.find(\"missing key\").unwrap() < text.find(\"record_lookup\").unwrap());\n        }\n"
+        },
+        {
+          "current": "        \"../../../../tests/effect-plan-maps-schema20-ir.json\"\n    ))\n    .unwrap();\n    assert!(current(&c, \"direct_lookup\", \"algebra.ordinary\").contains(\"record_lookup\"));\n    assert!(current(&c, \"direct_member\", \"algebra.ordinary\").contains(\"record_member\"));\n}\n",
+          "previous": "        \"../../../../tests/effect-plan-maps-schema20-ir.json\"\n    ))\n    .unwrap();\n    assert!(current(&c, \"direct_lookup\", \"algebra.terminal-returns\").contains(\"record_lookup\"));\n    assert!(current(&c, \"direct_member\", \"algebra.membership\").contains(\"record_member\"));\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests.rs": {
+      "previous_sha256": "a087ffd8b670f614570f73bd979d5a832c783a70def9f0ab619597115796a9b1",
+      "current_sha256": "644c4ae1dd9a8ef50a2801c264d7e7a3b1703fd2289cf84ea7e405e6871332b9",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .any(|c| c.name == \"set_topic\" && c.recorded && c.observed_call)\n    );\n    for (name, owner) in [\n        (\"set_topic\", \"algebra.ordinary\"),\n        (\"advance\", \"algebra.ordinary\"),\n        (\"add_voter\", \"algebra.ordinary\"),\n    ] {\n        let row = rows\n            .as_array()\n",
+          "previous": "            .any(|c| c.name == \"set_topic\" && c.recorded && c.observed_call)\n    );\n    for (name, owner) in [\n        (\"set_topic\", \"algebra.membership\"),\n        (\"advance\", \"algebra.membership\"),\n        (\"add_voter\", \"algebra.kernel\"),\n    ] {\n        let row = rows\n            .as_array()\n"
+        },
+        {
+          "current": "            .iter()\n            .map(|a| a[\"route\"].as_str().unwrap())\n            .collect();\n        assert_eq!(attempts[0], \"algebra.ordinary\");\n        assert!(!attempts.iter().any(|route| route.starts_with(\"organizer.\")));\n        assert!(!attempts.contains(&\"organizer.optional-write\"));\n        assert!(!attempts.contains(&\"organizer.enum-advance\"));\n        assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n        if name == \"set_topic\" {\n            assert_eq!(attempts[0], \"algebra.ordinary\");\n        }\n    }\n}\n",
+          "previous": "            .iter()\n            .map(|a| a[\"route\"].as_str().unwrap())\n            .collect();\n        assert_eq!(attempts[0], \"algebra.membership\");\n        assert!(!attempts.iter().any(|route| route.starts_with(\"organizer.\")));\n        assert!(!attempts.contains(&\"organizer.optional-write\"));\n        assert!(!attempts.contains(&\"organizer.enum-advance\"));\n        assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n        if name == \"set_topic\" {\n            assert_eq!(attempts[0], \"algebra.membership\");\n        }\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests/priority.rs": {
+      "previous_sha256": "4c70541c7d73596fe7eaacea98f85a36130d81715b3106dba7d959a1c239dfbd",
+      "current_sha256": "39c77e94f93394e2359c193f100fdcd63caa10ef1962f729faefa39f1446e036",
+      "predecessor_reconstruction": [
+        {
+          "current": "use super::*;\n\n#[test]\nfn ordinary_consolidates_declared_interfaces_and_preserves_effectful_bypass() {\n    let c = identity(Type::Field);\n    let (_, row) = public(&c, \"identity\");\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let attempts = row[\"attempts\"].as_array().unwrap();\n    assert_eq!(attempts.len(), 1);\n    assert_eq!(attempts[0][\"route\"], \"algebra.ordinary\");\n    let mut c = identity(Type::OpaqueBytes);\n    c.stateful_circuits[0].return_value = StateReturn::Effectful {\n        body: crate::ir::ReturnPlan::Value {\n",
+          "previous": "use super::*;\n\n#[test]\nfn ordinary_preserves_earlier_declared_and_effectful_owners() {\n    let c = identity(Type::Field);\n    let (_, row) = public(&c, \"identity\");\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .any(|a| a[\"route\"] == \"algebra.ordinary\")\n    );\n    let mut c = identity(Type::OpaqueBytes);\n    c.stateful_circuits[0].return_value = StateReturn::Effectful {\n        body: crate::ir::ReturnPlan::Value {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/organizer_migration_tests.rs": {
+      "previous_sha256": "bb69d84161cbab3b417a2bb240151f42e16492a6e8ca5dcfd1121ff8365f9863",
+      "current_sha256": "e22c7b2876f1540a82d82d096f476f603d8637ad52f1ffd060e3a258b7897d8e",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let (result, rows) = trace::capture_json(|| crate::render_with_capabilities(c));\n    let output = result.unwrap();\n    for (name, owner) in [\n        (\"add_participant\", \"algebra.ordinary\"),\n        (\"add_organizer\", \"algebra.ordinary\"),\n    ] {\n        assert!(\n            output\n",
+          "previous": "    let (result, rows) = trace::capture_json(|| crate::render_with_capabilities(c));\n    let output = result.unwrap();\n    for (name, owner) in [\n        (\"add_participant\", \"algebra.membership\"),\n        (\"add_organizer\", \"algebra.kernel\"),\n    ] {\n        assert!(\n            output\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/receive_migration_tests.rs": {
+      "previous_sha256": "11934128caf9ad1c7489ad8c87cf5da4c0232b2342abfe2c79a4ee8a42d85f69",
+      "current_sha256": "0b4e18a816c3d7015dfe65b04203d2b3a6460935a51b7095c784d34323c9dd28",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_receive_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_receive_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"actual invocation {name}\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        rows[0][\"attempts\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .filter(|a| a[\"route\"] == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"actual invocation {name}\");\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.shielded-receive\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        rows[0][\"attempts\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .filter(|a| a[\"route\"] == \"algebra.shielded-receive\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "        assert_eq!(rows.as_array().unwrap().len(), 1);\n        assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n        assert_eq!(rows[0][\"helper\"], true);\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    } else {\n        public_owner(c, name);\n    }\n",
+          "previous": "        assert_eq!(rows.as_array().unwrap().len(), 1);\n        assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n        assert_eq!(rows[0][\"helper\"], true);\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.shielded-receive\");\n    } else {\n        public_owner(c, name);\n    }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/receive_migration_tests/routing.rs": {
+      "previous_sha256": "f23a37f06620eecfd350c84e502ea014dbc59c67c53487997a0a7ada57f8a0be",
+      "current_sha256": "5e5d3810a6b1b4a6b00db422a2d65a8fd14167385862684cf94f2483d2bdab17",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\nfn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        // Selector evidence only; full capability is checked separately by public_owner.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        // Selector evidence only; full capability is checked separately by public_owner.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "#[test]\nfn actual_receive_owner_is_once_and_stops_later_profiles() {\n    let c = source();\n    let row = legacy_selected_trace(&c, root(&c));\n    assert_eq!(row[\"body_owner\"], \"algebra.shielded-receive\");\n    let a = attempts(&row);\n    assert_eq!(\n",
+          "previous": "#[test]\nfn actual_receive_owner_is_once_and_stops_later_profiles() {\n    let c = source();\n    let row = selected_trace(&c, root(&c));\n    assert_eq!(row[\"body_owner\"], \"algebra.shielded-receive\");\n    let a = attempts(&row);\n    assert_eq!(\n"
+        },
+        {
+          "current": "        .iter()\n        .find(|r| !r.internal)\n        .unwrap();\n    let row = legacy_selected_trace(&organizer, root);\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(!attempts(&row).contains(&\"algebra.shielded-receive\"));\n    let composite: Contract = serde_json::from_str(include_str!(\n",
+          "previous": "        .iter()\n        .find(|r| !r.internal)\n        .unwrap();\n    let row = selected_trace(&organizer, root);\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(!attempts(&row).contains(&\"algebra.shielded-receive\"));\n    let composite: Contract = serde_json::from_str(include_str!(\n"
+        },
+        {
+          "current": "        .iter()\n        .find(|r| r.name == \"snapshot\")\n        .unwrap();\n    let row = legacy_selected_trace(&composite, root);\n    assert_eq!(row[\"body_owner\"], \"algebra.composite-values\");\n    assert!(!attempts(&row).contains(&\"algebra.shielded-receive\"));\n}\n",
+          "previous": "        .iter()\n        .find(|r| r.name == \"snapshot\")\n        .unwrap();\n    let row = selected_trace(&composite, root);\n    assert_eq!(row[\"body_owner\"], \"algebra.composite-values\");\n    assert!(!attempts(&row).contains(&\"algebra.shielded-receive\"));\n}\n"
+        },
+        {
+          "current": "        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    assert!(\n        a.iter()\n",
+          "previous": "        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    assert!(\n        a.iter()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/reset_payout_migration_tests.rs": {
+      "previous_sha256": "74db08601667567c2d6c26be77c5c7591e0025700e02659a27bfe03de9f8b6d4",
+      "current_sha256": "67a3441aa21df735c99ea6bf73890926850654c659efe3add9bc7c3369ac8de5",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        )\n    }\n}\nfn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "        )\n    }\n}\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.composite-values\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "    assert!(maps.old(root(&c)).is_some(), \"whole frozen oracle first\");\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"cash_out\");\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    assert!(!a.contains(&\"selector.reset-payout\"));\n    assert!(!a.contains(&\"selector.funded-mint\"));\n",
+          "previous": "    assert!(maps.old(root(&c)).is_some(), \"whole frozen oracle first\");\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"cash_out\");\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    assert!(!a.contains(&\"selector.reset-payout\"));\n    assert!(!a.contains(&\"selector.funded-mint\"));\n"
+        },
+        {
+          "current": "    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"cash_out\");\n    assert!(!attempts(&legacy_selected_trace(&c, root(&c))).contains(&\"selector.reset-payout\"));\n}\n\n#[test]\n",
+          "previous": "    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"cash_out\");\n    assert!(!attempts(&selected_trace(&c, root(&c))).contains(&\"selector.reset-payout\"));\n}\n\n#[test]\n"
+        },
+        {
+          "current": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n",
+          "previous": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/send_migration_tests.rs": {
+      "previous_sha256": "3a2dd2ed6e8560290dbeb01474fc0cb5ffbbb24be9c8288f26386830ecbf9b2a",
+      "current_sha256": "fe2acd07ba3585720f651e083f3945dc739b63274de933d881eadefb1e3a6c38",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .filter(|r| r[\"internal\"] == false)\n    {\n        assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    }\n    let root = maps.circuits[\"sendShielded\"];\n    let (item, rows) = trace::capture_json(|| {\n",
+          "previous": "        .iter()\n        .filter(|r| r[\"internal\"] == false)\n    {\n        assert_eq!(row[\"body_owner\"], \"algebra.composite-values\");\n    }\n    let root = maps.circuits[\"sendShielded\"];\n    let (item, rows) = trace::capture_json(|| {\n"
+        },
+        {
+          "current": "    });\n    assert!(item.unwrap().is_supported());\n    no_old_attempt(&rows);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n}\n#[test]\nfn checked_composition_does_not_require_old_send_effect_counts_or_empty_actions() {\n",
+          "previous": "    });\n    assert!(item.unwrap().is_supported());\n    no_old_attempt(&rows);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n}\n#[test]\nfn checked_composition_does_not_require_old_send_effect_counts_or_empty_actions() {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/shielded_payout_migration_tests.rs": {
+      "previous_sha256": "2001e2046bc04b25b57e4eb20fa8048220a5f992f828242daf9baf52e11ba7bb",
+      "current_sha256": "56d8b8b7772c8a25be5339d16d590b32a5999f4a126b851142b5be8213034a9d",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_composite_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        )\n    }\n}\nfn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "        )\n    }\n}\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.composite-values\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "        assert!(maps.old(r).is_some(), \"whole frozen oracle first: {name}\");\n        assert!(maps.domain(r).unwrap().is_some());\n        public_owner(&c, name);\n        let row = legacy_selected_trace(&c, r);\n        let a = attempts(&row);\n        assert!(!a.contains(&\"selector.shielded-payout\"));\n        assert!(!a.contains(&\"selector.funded-mint\"));\n",
+          "previous": "        assert!(maps.old(r).is_some(), \"whole frozen oracle first: {name}\");\n        assert!(maps.domain(r).unwrap().is_some());\n        public_owner(&c, name);\n        let row = selected_trace(&c, r);\n        let a = attempts(&row);\n        assert!(!a.contains(&\"selector.shielded-payout\"));\n        assert!(!a.contains(&\"selector.funded-mint\"));\n"
+        },
+        {
+          "current": "    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"withdraw\");\n    assert!(!attempts(&legacy_selected_trace(&c, root(&c))).contains(&\"selector.shielded-payout\"));\n}\n\n#[test]\n",
+          "previous": "    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_some());\n    public_owner(&c, \"withdraw\");\n    assert!(!attempts(&selected_trace(&c, root(&c))).contains(&\"selector.shielded-payout\"));\n}\n\n#[test]\n"
+        },
+        {
+          "current": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n",
+          "previous": "    let maps = Context::new(&c);\n    assert!(maps.old(root(&c)).is_none());\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let at = a\n        .iter()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/terminal_migration_tests.rs": {
+      "previous_sha256": "bf6438e2141b79ce647c4fa886f58009dfb1c9c1b084c0272f65a8fc36658351",
+      "current_sha256": "19343483a7f8c06d206666cec53f6cebcbd5eb8ae1d57915777c2b38f59e0154",
+      "predecessor_reconstruction": [
+        {
+          "current": "            &self.circuits,\n        )\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, circuit: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            circuit,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "            &self.circuits,\n        )\n    }\n    fn selected(&self, circuit: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            circuit,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        );\n        let algebra = context.algebra(circuit).unwrap();\n        assert_eq!(\n            selected_tokens(context.legacy_selected(circuit).unwrap()),\n            Some(tokens(&algebra))\n        );\n        let rendered = crate::render_with_capabilities(&contract).unwrap();\n",
+          "previous": "        );\n        let algebra = context.algebra(circuit).unwrap();\n        assert_eq!(\n            selected_tokens(context.selected(circuit).unwrap()),\n            Some(tokens(&algebra))\n        );\n        let rendered = crate::render_with_capabilities(&contract).unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/terminal_migration_tests/routing.rs": {
+      "previous_sha256": "dc799b4f52bb5c3eaa1fb0ca862052b3d49afa6ac6de2ece0b4ee72cbf6c67d2",
+      "current_sha256": "66ad94a8464a04b42c63314db7148847ecd52c769998bf05f35313e1d44e6a43",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n\nfn legacy_selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {\n    let circuit = &contract.stateful_circuits[0];\n    let context = Context::new(contract);\n    let (selected, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(circuit, false);\n        let selected = context.legacy_selected(circuit).unwrap();\n        // This scope observes selector execution only, not final public capability.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n\nfn selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {\n    let circuit = &contract.stateful_circuits[0];\n    let context = Context::new(contract);\n    let (selected, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(circuit, false);\n        let selected = context.selected(circuit).unwrap();\n        // This scope observes selector execution only, not final public capability.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "    let old = context.old(circuit).unwrap();\n    let checked = context.algebra(circuit).unwrap();\n    assert_ne!(tokens(&old), tokens(&checked));\n    let (selected, row) = legacy_selected_trace(&contract);\n    assert_eq!(selected_tokens(selected), Some(tokens(&checked)));\n    assert_eq!(row[\"body_owner\"], \"algebra.terminal-returns\");\n    let attempted = attempts(&row);\n",
+          "previous": "    let old = context.old(circuit).unwrap();\n    let checked = context.algebra(circuit).unwrap();\n    assert_ne!(tokens(&old), tokens(&checked));\n    let (selected, row) = selected_trace(&contract);\n    assert_eq!(selected_tokens(selected), Some(tokens(&checked)));\n    assert_eq!(row[\"body_owner\"], \"algebra.terminal-returns\");\n    let attempted = attempts(&row);\n"
+        },
+        {
+          "current": "        \"../../../../tests/jubjub-scalar-cell-schema20-ir.json\"\n    ))\n    .unwrap();\n    let (selected, row) = legacy_selected_trace(&contract);\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.jubjub-values\");\n    assert!(!attempts(&row).contains(&\"algebra.terminal-returns\"));\n",
+          "previous": "        \"../../../../tests/jubjub-scalar-cell-schema20-ir.json\"\n    ))\n    .unwrap();\n    let (selected, row) = selected_trace(&contract);\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.jubjub-values\");\n    assert!(!attempts(&row).contains(&\"algebra.terminal-returns\"));\n"
+        },
+        {
+          "current": "            .unwrap()\n            .is_none()\n    );\n    let (_, row) = legacy_selected_trace(&contract);\n    let attempted = attempts(&row);\n    let position = |name| attempted.iter().position(|id| *id == name).unwrap();\n    assert!(position(\"algebra.terminal-returns\") < position(\"algebra.unit-actions\"));\n",
+          "previous": "            .unwrap()\n            .is_none()\n    );\n    let (_, row) = selected_trace(&contract);\n    let attempted = attempts(&row);\n    let position = |name| attempted.iter().position(|id| *id == name).unwrap();\n    assert!(position(\"algebra.terminal-returns\") < position(\"algebra.unit-actions\"));\n"
+        },
+        {
+          "current": "            .unwrap()\n            .is_none()\n    );\n    let (selected, row) = legacy_selected_trace(&contract);\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    let attempted = attempts(&row);\n",
+          "previous": "            .unwrap()\n            .is_none()\n    );\n    let (selected, row) = selected_trace(&contract);\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    let attempted = attempts(&row);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests.rs": {
+      "previous_sha256": "64000091498bb8e4e1611f519ccacfc2a488c8644867f6657f47379488399623",
+      "current_sha256": "8010c026c0920abfdc1971b8f93b5c2d7ce181d35e987dc0031a2f29294af156",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn complete_old_unit_root_uses_one_ordinary_attempt() {\n    let c = subject();\n    let old: ProfileAttempt<TypedPlan, typed_plan::CompositionRejection> =\n        typed_plan::lower_unit_composition_checked(\n",
+          "previous": "}\n\n#[test]\nfn complete_old_unit_root_moves_once_at_the_same_priority() {\n    let c = subject();\n    let old: ProfileAttempt<TypedPlan, typed_plan::CompositionRejection> =\n        typed_plan::lower_unit_composition_checked(\n"
+        },
+        {
+          "current": "        })\n        .collect();\n    assert_eq!(public.len(), 1);\n    assert_eq!(public[0][\"body_owner\"], \"algebra.ordinary\");\n    let routes: Vec<_> = public[0][\"attempts\"]\n        .as_array()\n        .unwrap()\n",
+          "previous": "        })\n        .collect();\n    assert_eq!(public.len(), 1);\n    assert_eq!(public[0][\"body_owner\"], \"algebra.unit-composition\");\n    let routes: Vec<_> = public[0][\"attempts\"]\n        .as_array()\n        .unwrap()\n"
+        },
+        {
+          "current": "        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(\n        routes.iter().filter(|&&r| r == \"algebra.ordinary\").count(),\n        1\n    );\n    assert!(!routes.contains(&\"selector.unit-composition\"));\n    assert!(!routes.contains(&\"algebra.zswap\"));\n    assert_eq!(routes, [\"algebra.ordinary\"]);\n}\n\n#[test]\n",
+          "previous": "        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(\n        routes\n            .iter()\n            .filter(|&&r| r == \"algebra.unit-composition\")\n            .count(),\n        1\n    );\n    assert!(!routes.contains(&\"selector.unit-composition\"));\n    assert!(!routes.contains(&\"algebra.zswap\"));\n    assert!(\n        routes\n            .iter()\n            .position(|&r| r == \"algebra.unit-actions\")\n            .unwrap()\n            < routes\n                .iter()\n                .position(|&r| r == \"algebra.unit-composition\")\n                .unwrap()\n    );\n}\n\n#[test]\n"
+        },
+        {
+          "current": "}\n\n#[test]\nfn argument_observations_survive_single_ordinary_admission() {\n    let mut c = subject();\n    c.stateful_circuits[1].parameters = vec![Parameter {\n        name: \"n\".into(),\n",
+          "previous": "}\n\n#[test]\nfn argument_observations_and_earlier_owner_priority_are_preserved() {\n    let mut c = subject();\n    c.stateful_circuits[1].parameters = vec![Parameter {\n        name: \"n\".into(),\n"
+        },
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == \"root\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(root[\"body_owner\"], \"algebra.ordinary\");\n    assert!(\n        !root[\"attempts\"]\n            .as_array()\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == \"root\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(root[\"body_owner\"], \"algebra.membership\");\n    assert!(\n        !root[\"attempts\"]\n            .as_array()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests/empty_execution.rs": {
+      "previous_sha256": "5a973bedee8cf6f83877c4e55c67cd0a403b035b28f225b59ac60da10d6532df",
+      "current_sha256": "32314439fe9e56e481f2417df23cec5f6e5a53633529036962faaae368cc663f",
+      "predecessor_reconstruction": [
+        {
+          "current": "                && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n",
+          "previous": "                && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests/interfaces.rs": {
+      "previous_sha256": "fe0490ced7883d68071ba12c874b32e62f476407d890df5a0051c048a4bbd21d",
+      "current_sha256": "69446c965890b31437320a9eb215b8923178e824edffb0ab98db76211d1e6415",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == \"root\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(root[\"body_owner\"], \"algebra.ordinary\");\n    let ProfileAttempt::Admitted(plan) = attempt_contract(c).unwrap() else {\n        panic!(\"expected checked Unit\")\n    };\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == \"root\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(root[\"body_owner\"], \"algebra.unit-composition\");\n    let ProfileAttempt::Admitted(plan) = attempt_contract(c).unwrap() else {\n        panic!(\"expected checked Unit\")\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_migration_tests.rs": {
+      "previous_sha256": "4890f8db5b46276f0175757c9a2b71e3cc5339067b48c45fa9f6f83b2937ab45",
+      "current_sha256": "db4a3d974809c79808a7b49a5354a8a5e793c0212f1343daca7c71927ec794ba",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn unit(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_unit_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn unit(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_unit_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_migration_tests/routing.rs": {
+      "previous_sha256": "5c7e1c2b9685631edee7bf7f0e5f85bc4451134ebf1d6391649ea357b5c1efef",
+      "current_sha256": "40d39165692f07fac5c9a4dd3cd6978d93208888d5e9fd1e2d887fe7d02b75a0",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n\nfn legacy_selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {\n    let root = &contract.stateful_circuits[0];\n    let context = Context::new(contract);\n    let (selected, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(root, false);\n        let selected = context.legacy_selected(root).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n\nfn selected_trace(contract: &Contract) -> (ProfileSelection, serde_json::Value) {\n    let root = &contract.stateful_circuits[0];\n    let context = Context::new(contract);\n    let (selected, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(root, false);\n        let selected = context.selected(root).unwrap();\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n        ));\n"
+        },
+        {
+          "current": "    let old = context.old(root).unwrap();\n    let algebra = context.algebra(root).unwrap();\n    assert_ne!(tokens(&old), tokens(&algebra));\n    let (selected, row) = legacy_selected_trace(&contract);\n    let (steps, result) = (\n        selected.organizer_steps.unwrap(),\n        selected.typed_result.unwrap(),\n",
+          "previous": "    let old = context.old(root).unwrap();\n    let algebra = context.algebra(root).unwrap();\n    assert_ne!(tokens(&old), tokens(&algebra));\n    let (selected, row) = selected_trace(&contract);\n    let (steps, result) = (\n        selected.organizer_steps.unwrap(),\n        selected.typed_result.unwrap(),\n"
+        },
+        {
+          "current": "    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: parameter(\"seed\"),\n    };\n    let (_, row) = legacy_selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-actions\"));\n}\n",
+          "previous": "    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: parameter(\"seed\"),\n    };\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-actions\"));\n}\n"
+        },
+        {
+          "current": "            .unwrap()\n            .is_none()\n    );\n    let (_, row) = legacy_selected_trace(&contract);\n    let attempted = attempts(&row);\n    let at = |name| attempted.iter().position(|r| *r == name).unwrap();\n    assert!(at(\"algebra.unit-actions\") < at(\"algebra.unit-composition\"));\n",
+          "previous": "            .unwrap()\n            .is_none()\n    );\n    let (_, row) = selected_trace(&contract);\n    let attempted = attempts(&row);\n    let at = |name| attempted.iter().position(|r| *r == name).unwrap();\n    assert!(at(\"algebra.unit-actions\") < at(\"algebra.unit-composition\"));\n"
+        },
+        {
+          "current": "        tokens(&context.unit(root).unwrap().unwrap()),\n        tokens(&context.algebra(root).unwrap())\n    );\n    let (_, row) = legacy_selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n    let rendered = crate::render_with_capabilities(&contract).unwrap();\n",
+          "previous": "        tokens(&context.unit(root).unwrap().unwrap()),\n        tokens(&context.algebra(root).unwrap())\n    );\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n    let rendered = crate::render_with_capabilities(&contract).unwrap();\n"
+        },
+        {
+          "current": "        .position(|c| c.name == \"lifecycle\")\n        .unwrap();\n    contract.stateful_circuits.swap(0, index);\n    let (_, row) = legacy_selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n\n",
+          "previous": "        .position(|c| c.name == \"lifecycle\")\n        .unwrap();\n    contract.stateful_circuits.swap(0, index);\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests.rs": {
+      "previous_sha256": "6fd8c23e23883e0679adfd281be7e1d0dcc3305fca6d195899916fffa0fb9791",
+      "current_sha256": "210bbd2293e110845c3769b68cb2ab388409510f9dc8ac68c95e81d7355f1779",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_voting_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        legacy_select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n",
+          "previous": "    fn domain(&self, c: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_voting_domain(c, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, c: &StatefulCircuit) -> Result<ProfileSelection, RenderError> {\n        select(\n            c,\n            &self.ledger,\n            &self.witnesses,\n"
+        },
+        {
+          "current": "        )\n    }\n}\nfn legacy_selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.legacy_selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n",
+          "previous": "        )\n    }\n}\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n    let (_, rows) = trace::capture_json(|| {\n        let scope = trace::Scope::begin(r, false);\n        let result = maps.selected(r).unwrap();\n        // This captures selector ownership only; public_owner checks actual emission.\n        scope.finish(&Ok::<_, RenderError>(\n            crate::recorded::RecordingOutcome::Supported(()),\n"
+        },
+        {
+          "current": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.ordinary\")\n            .count(),\n        1\n    );\n",
+          "previous": "        .filter(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.voting-commit\");\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&s| s == \"algebra.voting-commit\")\n            .count(),\n        1\n    );\n"
+        },
+        {
+          "current": "        let maps = Context::new(&c);\n        assert!(maps.old(r).is_some(), \"whole frozen oracle first\");\n        assert!(maps.domain(r).unwrap().is_some());\n        assert_eq!(\n            legacy_selected_trace(&c, r)[\"body_owner\"],\n            \"algebra.voting-commit\"\n        );\n        if internal {\n            let (item, rows) = trace::capture_json(|| {\n                let _phase = trace::HelperPlanning::begin();\n",
+          "previous": "        let maps = Context::new(&c);\n        assert!(maps.old(r).is_some(), \"whole frozen oracle first\");\n        assert!(maps.domain(r).unwrap().is_some());\n        assert_eq!(selected_trace(&c, r)[\"body_owner\"], \"algebra.voting-commit\");\n        if internal {\n            let (item, rows) = trace::capture_json(|| {\n                let _phase = trace::HelperPlanning::begin();\n"
+        },
+        {
+          "current": "            assert_eq!(rows.as_array().unwrap().len(), 1);\n            assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n            assert_eq!(rows[0][\"helper\"], true);\n            assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n        } else {\n            public_owner(&c, &r.name);\n        }\n",
+          "previous": "            assert_eq!(rows.as_array().unwrap().len(), 1);\n            assert_eq!(rows[0][\"phase\"], \"helper_planning\");\n            assert_eq!(rows[0][\"helper\"], true);\n            assert_eq!(rows[0][\"body_owner\"], \"algebra.voting-commit\");\n        } else {\n            public_owner(&c, &r.name);\n        }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/domain.rs": {
+      "previous_sha256": "85f1d0e5b8611ba15c8f1214f499a1ba6d2626b0269074a137b19d85afb9d2e2",
+      "current_sha256": "10bbc0a49765c02afcd472bde7807e1faf656625db9b5abda5c7d16ac8831beb",
+      "predecessor_reconstruction": [
+        {
+          "current": "            if gap.path == \"parameters[1]\" && gap.detail == \"duplicate parameter\"\n    ));\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    assert_ne!(row[\"body_owner\"], \"algebra.voting-commit\");\n    assert!(attempts(&row).contains(&\"algebra.guarded-deposit\"));\n    assert!(!attempts(&row).contains(&\"selector.funded-mint\"));\n",
+          "previous": "            if gap.path == \"parameters[1]\" && gap.detail == \"duplicate parameter\"\n    ));\n    assert!(maps.domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    assert_ne!(row[\"body_owner\"], \"algebra.voting-commit\");\n    assert!(attempts(&row).contains(&\"algebra.guarded-deposit\"));\n    assert!(!attempts(&row).contains(&\"selector.funded-mint\"));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": {
+      "previous_sha256": "91406932c2e9235bd4f76b273f7fdd72c3d2fef1d997cffb7210480f39cdba7f",
+      "current_sha256": "ebe9bced4fa4dda3f6c95aa6e7622a7530407c5f4fe10b9e09472ffe98ef19be",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\n// Direct legacy_selected traces below preserve the staged predecessor priority laws.\n// Current public/helper emission assertions, where present, use algebra.ordinary.\nuse super::*;\n\n#[test]\nfn voting_owner_runs_once_and_stops_later_profiles() {\n    let c = source();\n    let row = legacy_selected_trace(&c, root(&c));\n    assert_eq!(row[\"body_owner\"], \"algebra.voting-commit\");\n    let a = attempts(&row);\n    assert_eq!(\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n#[test]\nfn voting_owner_runs_once_and_stops_later_profiles() {\n    let c = source();\n    let row = selected_trace(&c, root(&c));\n    assert_eq!(row[\"body_owner\"], \"algebra.voting-commit\");\n    let a = attempts(&row);\n    assert_eq!(\n"
+        },
+        {
+          "current": "            .iter()\n            .find(|r| name.map_or(!r.internal, |name| r.name == name))\n            .unwrap();\n        let row = legacy_selected_trace(&c, r);\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.voting-commit\"));\n    }\n",
+          "previous": "            .iter()\n            .find(|r| name.map_or(!r.internal, |name| r.name == name))\n            .unwrap();\n        let row = selected_trace(&c, r);\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.voting-commit\"));\n    }\n"
+        },
+        {
+          "current": "        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = legacy_selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let voting = a\n        .iter()\n",
+          "previous": "        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let voting = a\n        .iter()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/witness_merkle_migration_tests.rs": {
+      "previous_sha256": "2ee2115e6fc27bf585d893e3e59aae33b7545ddd480fcf030be946f51ac51c64",
+      "current_sha256": "318b71f72bfc38edb50d20ec204ac6e1ebd5471961560f57ff8fd71c5f2272cf",
+      "predecessor_reconstruction": [
+        {
+          "current": "            r[\"circuit\"] == \"add_voter\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    let routes: Vec<_> = row[\"attempts\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(routes[0], \"algebra.ordinary\");\n    assert!(!routes.iter().any(|route| route.starts_with(\"organizer.\")));\n    assert!(!routes.contains(&\"organizer.witness-merkle\"));\n}\n",
+          "previous": "            r[\"circuit\"] == \"add_voter\" && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n        })\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.kernel\");\n    let routes: Vec<_> = row[\"attempts\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(routes[0], \"algebra.membership\");\n    assert!(!routes.iter().any(|route| route.starts_with(\"organizer.\")));\n    assert!(!routes.contains(&\"organizer.witness-merkle\"));\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": {
+      "previous_sha256": "d3d8203c43ad4378e40c2bbca09fbb90f871cca3d3cc4643e12a28b3efa5ce42",
+      "current_sha256": "adf4118ce86c9eccb1659792570476d4307b8dd527a4eea905b32ce4b5fe0137",
+      "predecessor_reconstruction": [
+        {
+          "current": "    fn domain(&self, r: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_zswap_domain(r, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    // Historical staged-priority oracle; production emission is checked separately.\n    fn legacy_selected(&self, r: &StatefulCircuit) -> (ProfileSelection, serde_json::Value) {\n        let (plan, rows) = trace::capture_json(|| {\n            let scope = trace::Scope::begin(r, r.internal);\n            let plan = legacy_select(\n                r,\n                &self.ledger,\n                &self.witnesses,\n",
+          "previous": "    fn domain(&self, r: &StatefulCircuit) -> Result<Option<TypedPlan>, RenderError> {\n        checked_zswap_domain(r, &self.ledger, &self.witnesses, &self.pure, &self.circuits)\n    }\n    fn selected(&self, r: &StatefulCircuit) -> (ProfileSelection, serde_json::Value) {\n        let (plan, rows) = trace::capture_json(|| {\n            let scope = trace::Scope::begin(r, r.internal);\n            let plan = select(\n                r,\n                &self.ledger,\n                &self.witnesses,\n"
+        },
+        {
+          "current": "                .is_none()\n        );\n        assert!(maps.domain(r).unwrap().is_some());\n        let (_, selector_row) = maps.legacy_selected(r);\n        assert_eq!(selector_row[\"body_owner\"], owner);\n        assert_eq!(attempts(&selector_row).last(), Some(&owner));\n    }\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n    let output = output.unwrap();\n    for (name, owner) in [\n        (\"produce\", \"algebra.ordinary\"),\n        (\"consume\", \"algebra.ordinary\"),\n    ] {\n        let capability = output\n            .capabilities\n",
+          "previous": "                .is_none()\n        );\n        assert!(maps.domain(r).unwrap().is_some());\n        let (_, selector_row) = maps.selected(r);\n        assert_eq!(selector_row[\"body_owner\"], owner);\n        assert_eq!(attempts(&selector_row).last(), Some(&owner));\n    }\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n    let output = output.unwrap();\n    for (name, owner) in [\n        (\"produce\", \"algebra.membership\"),\n        (\"consume\", \"algebra.zswap\"),\n    ] {\n        let capability = output\n            .capabilities\n"
+        },
+        {
+          "current": "        ),\n    ] {\n        let c: Contract = serde_json::from_str(text).unwrap();\n        let (_, row) = Context::new(&c).legacy_selected(root(&c, name));\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.zswap\"));\n    }\n",
+          "previous": "        ),\n    ] {\n        let c: Contract = serde_json::from_str(text).unwrap();\n        let (_, row) = Context::new(&c).selected(root(&c, name));\n        assert_eq!(row[\"body_owner\"], owner);\n        assert!(!attempts(&row).contains(&\"algebra.zswap\"));\n    }\n"
+        },
+        {
+          "current": "        \"whole frozen Zswap oracle also refuses this expression\"\n    );\n    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_none());\n    let (selected, row) = maps.legacy_selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_none());\n    let attempted = attempts(&row);\n    assert_eq!(\n",
+          "previous": "        \"whole frozen Zswap oracle also refuses this expression\"\n    );\n    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_none());\n    let (selected, row) = maps.selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_none());\n    let attempted = attempts(&row);\n    assert_eq!(\n"
+        },
+        {
+          "current": "        .is_none()\n    );\n    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_some());\n    let (selected, row) = maps.legacy_selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n",
+          "previous": "        .is_none()\n    );\n    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_some());\n    let (selected, row) = maps.selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n"
+        },
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.ordinary\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.unit-composition\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n"
+        },
+        {
+          "current": "            .count(),\n        0\n    );\n    assert_eq!(attempts(rows[0]), [\"algebra.ordinary\"]);\n    assert!(!attempts(rows[0]).contains(&\"selector.zswap\"));\n}\n",
+          "previous": "            .count(),\n        0\n    );\n    assert!(!attempts(rows[0]).contains(&\"algebra.ordinary\"));\n    assert!(!attempts(rows[0]).contains(&\"selector.zswap\"));\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/proved_set_sequence_migration_tests.rs": {
+      "previous_sha256": "284fc3101f981d488fbcbed7ee7d6ab17cbec08dd1c4e077c827ab62456bde70",
+      "current_sha256": "f99d72e71527787cf2e1c28b899acf38e555e61be05b19f5778d05febf46b69e",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    assert!(\n        row[\"guards\"].as_array().unwrap().is_empty(),\n        \"all explicit shape permits are now retired; generic rejection remains\"\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    assert!(\n        row[\"guards\"].as_array().unwrap().is_empty(),\n        \"all explicit shape permits are now retired; generic rejection remains\"\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/read_only_migration_tests.rs": {
+      "previous_sha256": "f08f815f090047ceb4613dc2f14fa738999d57277cacb852e17ddb280fd6ea0d",
+      "current_sha256": "8d3b56f02fb948044914e13b0818ad49094785c540cbb06a9809a5f77e926849",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.ordinary\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n",
+          "previous": "        .iter()\n        .find(|r| r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false)\n        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    assert!(\n        !row[\"attempts\"]\n            .as_array()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests.rs": {
+      "previous_sha256": "b0c6dd945ec7a4ded986c0b6d35b74e9911b53a42d373f3209c06a4685e1bc60",
+      "current_sha256": "4f0edaccdcd51113120b4b81b1acf6d6d5336a88144c1435ed0a0530dde0c5eb",
+      "predecessor_reconstruction": [
+        {
+          "current": "                r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n            })\n            .unwrap();\n        assert_eq!(row[\"body_owner\"], \"algebra.ordinary\", \"{name}\");\n        let attempts = row[\"attempts\"].as_array().unwrap();\n        assert!(\n            !attempts\n",
+          "previous": "                r[\"circuit\"] == name && r[\"phase\"] == \"public_emission\" && r[\"helper\"] == false\n            })\n            .unwrap();\n        assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\", \"{name}\");\n        let attempts = row[\"attempts\"].as_array().unwrap();\n        assert!(\n            !attempts\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/single_attempt_tests.rs": "3d742c7bc66c1ac57a0395579246be37707a9ee19be090f894d90b90612bb99b",
+    "tools/compact-rust-backend/src/recorded/profile_selection/single_attempt_tests/diagnostics.rs": "206e1da58f350acc978e1d59d4c79f056fcb0942aeaa477f8551bd9a4ec1efab",
+    "tools/compact-rust-backend/src/recorded/profile_selection/single_attempt_tests/interfaces.rs": "4ba58065ccf33dcac7ee586344ed9cc3327ff922b0aeb8e56b15038e70ba7b36",
+    "tools/compact-rust-backend/src/recorded/profile_selection/single_attempt_tests/pipeline.rs": "473cf3b632aa6f90f45586d92daa363a7d46cc9ac70d5fdc9f23fdade7e1e963",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "debbd3b153173b4c7f0ac94bb9f1c5fe7a4f5ba08e5f425df56ef966aa17f69c",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "15e39beaa5504e59deb329bdc05f90a93cfb1a6fa88990b18202a9337f5068df",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "62afdcc3aba0083a79072878e0e7a835743b0ce741304f6fe860e6526264eff8",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_domain.rs": "8e1356d5e725d94edfbc51e2e572db19ea5751147c77159e7f6e48372618d8ea",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "c24048ebaff1a2563f02c63d418279a9a4214801a4d2be99f30eb97262ce2994",
+    "tools/compact-rust-backend/src/recorded/item.rs": "3cc30c5235992b717f8b7ce0f5058c4abf827fabc83f7bb81fe0a5cbdad4fe07",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/profile_attempt.rs": "20943518e2036dd37f88de56e1bd98296072d6e961cb24464e4e196a1249c4d0",
+    "tools/compact-rust-backend/src/recorded/admission_probe/trace.rs": "bb667c50715acfae371d050de7ad833de3e8dbd34ee1de0ad1be496b3cf8041b"
+  },
+  "baseline_boundaries": 84,
+  "baseline_retired_routes": 36
+}

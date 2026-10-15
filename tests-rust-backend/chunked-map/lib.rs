@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -62,7 +62,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -189,66 +189,66 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
-            runtime::ledger::constructor_cell::<
+            >(Default::default())?,
+            runtime::ledger::try_constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(Default::default()),
+            >(Default::default())?,
             runtime::ledger::constructor_map(),
         ]);
         {
@@ -436,13 +436,16 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_0,
-                __compact_param_1,
+                __compact_effect_0,
+                __compact_effect_1,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn put_pair<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -452,19 +455,23 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = __compact_param_0;
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let __compact_effect_2: runtime::Field = __compact_param_2;
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_0,
-                __compact_param_2,
+                __compact_effect_0,
+                __compact_effect_2,
             )?;
-            let __compact_recorded_key_1 = __compact_param_1;
+            let __compact_effect_3: () = ();
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_1,
-                __compact_param_2,
+                __compact_effect_1,
+                __compact_effect_2,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_4: () = ();
+            let __compact_effect_5: () = ();
+            Ok(frame.finish(__compact_effect_5))
         }
         pub fn put_default<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -472,9 +479,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: bool = __compact_param_0;
             let frame =
-                crate::ledger_slots::table.record_insert_default(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::table.record_insert_default(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn has<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -482,9 +492,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) =
-                crate::ledger_slots::table.record_member(frame, __compact_param_0)?;
-            Ok(frame.finish(observed))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::table.record_member(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn get<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -494,9 +505,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
-                crate::ledger_slots::table.record_lookup(frame, __compact_param_0)?;
-            Ok(frame.finish(observed))
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
+                crate::ledger_slots::table.record_lookup(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn remove_key<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -504,8 +516,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::table.record_remove(frame, __compact_param_0)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: bool = __compact_param_0;
+            let frame = crate::ledger_slots::table.record_remove(frame, __compact_effect_0)?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn table_size<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -517,19 +532,19 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, u64) = crate::ledger_slots::table.record_size(frame)?;
-            Ok(frame.finish(
-                runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
-                    .expect("ledger Map size fits Uint<64>"),
-            ))
+            let (frame, __compact_map_size_0) = crate::ledger_slots::table.record_size(frame)?;
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(__compact_map_size_0 as u128)?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn table_is_empty<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) = crate::ledger_slots::table.record_is_empty(frame)?;
-            Ok(frame.finish(observed))
+            let (frame, __compact_effect_0): (_, bool) =
+                crate::ledger_slots::table.record_is_empty(frame)?;
+            Ok(frame.finish(__compact_effect_0))
         }
         pub fn reset_table<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -537,7 +552,9 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::table.record_reset(frame)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: () = ();
+            let __compact_effect_1: () = ();
+            Ok(frame.finish(__compact_effect_1))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

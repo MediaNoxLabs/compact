@@ -18,6 +18,7 @@ use super::*;
 use crate::coin_shapes::qualified_coin_type;
 pub(super) const WIDENED: &str = "18446744073709551616";
 pub(super) const SUM: &str = "36893488147419103231";
+#[cfg(test)]
 const U64: &str = "18446744073709551615";
 pub(super) fn helper_signature(c: &StatefulCircuit) -> bool {
     c.internal
@@ -45,6 +46,7 @@ pub(super) fn cell_type(ty: &Type) -> bool {
         || *ty == qualified_coin_type()
         || matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [tag, value] if tag.name == "is_some" && tag.ty == Type::Boolean && value.name == "value" && matches!(&value.ty, Type::Struct { name, fields } if name == "ZswapCoinPublicKey" && matches!(fields.as_slice(), [bytes] if bytes.name == "bytes" && bytes.ty == (Type::Bytes { length: 32 })))))
 }
+#[cfg(test)]
 struct Audit<'a> {
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
@@ -56,6 +58,7 @@ struct Audit<'a> {
     sets: usize,
     increments: usize,
 }
+#[cfg(test)]
 impl Audit<'_> {
     fn field(&self, field: &str, index: u8) -> Option<&LedgerFieldKind> {
         let f = self.ledger.get(field)?;
@@ -179,6 +182,7 @@ impl Audit<'_> {
         }
     }
 }
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -217,60 +221,43 @@ pub(super) fn lower<'a>(
         return None;
     }
     let mut plan = Plan {
-        ledger,
-        witnesses,
-        pure,
-        next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
-        context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: false,
-        phase_reset: true,
-        composite_domain: CompositeDomain::None,
-        composition_calls: None,
-        composition_lookup_sites: Default::default(),
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
-        counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
-        active_calls: HashSet::new(),
-        stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
+        declarations: Declarations {
+            ledger,
+            witnesses,
+            pure,
+            stateful_circuits: Some(circuits),
+        },
+        evidence: EffectEvidence::default(),
+        admission: AdmissionPolicy {
+            field_cell_slot: None,
+            effectful_field_cells: false,
+            read_only_assertions: false,
+            unit_actions: false,
+            phase_reset: true,
+            composite_domain: CompositeDomain::None,
+            composition_calls: None,
+            composition_lookup_sites: Default::default(),
+            counter_hash_helpers: false,
+        },
+        evaluation: EvaluationState {
+            next: 0,
+            context_query: false,
+            scalar_arguments: false,
+            scalar_body_depth: 0,
+            active_calls: HashSet::new(),
+        },
     };
 
     let mut steps = Vec::new();
     for action in &circuit.actions {
         plan.action(action, &Scope::new(), &mut steps)?;
     }
-    (plan.witness_calls == 1
-        && plan.counter_reads == 1
-        && plan.counter_comparisons == 1
-        && plan.counter_writes == 3
-        && plan.tree_writes == 1
-        && plan.set_writes == 2)
+    (plan.evidence.witness_calls == 1
+        && plan.evidence.counter_reads == 1
+        && plan.evidence.counter_comparisons == 1
+        && plan.evidence.counter_writes == 3
+        && plan.evidence.tree_writes == 1
+        && plan.evidence.set_writes == 2)
         .then_some(TypedPlan {
             steps,
             result: syn::parse_quote!(()),

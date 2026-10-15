@@ -1,0 +1,32 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export enum Phase { cold, hot }
+export struct Inner { amount: Field; tag: Bytes<3>; }
+export struct Envelope { inner: Inner; phase: Phase; }
+export ledger stored: Envelope;
+export ledger tag: Bytes<3>;
+export ledger phase: Phase;
+witness nextEnvelope(value: Envelope, tag: Bytes<3>, phase: Phase): Envelope;
+constructor() { stored = default<Envelope>; tag = default<Bytes<3>>; phase = Phase.cold; }
+
+pure circuit identity(value: Envelope): Envelope { return value; }
+circuit persist(value: Envelope): Envelope {
+  stored = disclose(value);
+  return stored;
+}
+export circuit run(selected: Boolean, seed: Field): Field {
+  const pair: [Field, Boolean] = [seed, selected];
+  assert(pair == [seed, selected], "tuple mismatch");
+  const initial = Envelope { inner: Inner { amount: seed, tag: pad(3, "tag") }, phase: Phase.hot };
+  const base = selected ? initial : default<Envelope>;
+  stored = disclose(base);
+  const value = nextEnvelope(base, initial.inner.tag, initial.phase);
+  const saved = persist(identity(value));
+  tag = disclose(value.inner.tag);
+  phase = disclose(value.phase);
+  const read = stored;
+  return disclose(read.inner.amount + saved.inner.amount + value.inner.amount);
+}

@@ -18,16 +18,24 @@
 //! `COMPACTC` selects the compiler executable. It defaults to `compactc` on
 //! PATH. Process arguments are passed directly, without shell interpolation.
 
+// Retain the original binary input-reader tests; production ingress is issued.
 #[path = "../bin_support/input.rs"]
 mod input;
+#[path = "../bin_support/source_diagnostic.rs"]
+mod source_diagnostic;
+#[path = "../bin_support/source_maps.rs"]
+mod source_maps;
+#[path = "../bin_support/staged_output.rs"]
+mod staged_output;
+use staged_output::StagedOutput;
 
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use std::process::{self, Command};
+use std::process;
 
-use compact_rust_backend::{ir::Contract, render};
+use compact_rust_backend::{ConfiguredFrontend, FrontendError, FrontendRequest, RenderOptions};
 
 fn run() -> Result<(), Box<dyn Error>> {
     let mut args = env::args_os().skip(1);
@@ -44,27 +52,45 @@ fn run() -> Result<(), Box<dyn Error>> {
     }
 
     let compiler = env::var_os("COMPACTC").unwrap_or_else(|| "compactc".into());
-    let status = Command::new(compiler)
-        .arg("--skip-zk")
-        .arg("--emit-rust-ir")
-        .arg(&source)
-        .arg(&output)
-        .status()?;
-    if !status.success() {
-        return Err(format!("compactc failed with {status}").into());
-    }
-
-    let contract_dir = output.join("contract");
-    let ir_path = contract_dir.join("compact-rust-ir.json");
-    let ir: Contract = serde_json::from_slice(&input::read(fs::File::open(&ir_path)?)?)?;
-    let rust = render(&ir)?;
-    fs::write(contract_dir.join("lib.rs"), rust)?;
+    let staging = StagedOutput::new(&output)?;
+    let artifacts = ConfiguredFrontend::new(compiler)
+        .invoke(FrontendRequest {
+            source,
+            arguments: vec!["--skip-zk".into()],
+            stage_parent: staging.path().to_path_buf(),
+        })
+        .map_err(|error| match error {
+            FrontendError::ProcessExit { code: Some(code) } => {
+                format!("compactc failed with exit status: {code}").into()
+            }
+            error => Box::new(error) as Box<dyn Error>,
+        })?;
+    // Preserve the original bounded file-reader and JSON decoding error phase.
+    // Drop this prevalidation value before the issued facade's semantic pass.
+    let decoded: compact_rust_backend::ir::Contract = serde_json::from_slice(&input::read(
+        fs::File::open(artifacts.output_dir().join("contract/compact-rust-ir.json"))?,
+    )?)?;
+    drop(decoded);
+    let issued = artifacts
+        .render(RenderOptions::default())
+        .map_err(|error| error as Box<dyn Error>)?;
+    // Only successful issued results may be moved out of the exclusive child.
+    // Promotion rechecks metadata and exact pair bytes under our output lock.
+    let original_frontend = artifacts.output_dir().to_path_buf();
+    artifacts.promote_into(&issued, staging.path())?;
+    source_maps::rebase(staging.path(), &original_frontend, &output)?;
+    fs::write(
+        staging.path().join("contract/lib.rs"),
+        &issued.rendered().source,
+    )?;
+    staging.publish(&output)?;
     Ok(())
 }
 
 fn main() {
     if let Err(error) = run() {
         eprintln!("compact-rustc: {error}");
+        source_diagnostic::failure("compact-rustc", error.as_ref());
         process::exit(1);
     }
 }

@@ -20,6 +20,7 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, LitInt, parse_macro_input};
 
+mod hash_input;
 mod merkle;
 mod struct_repr;
 mod witness_bridge;
@@ -70,6 +71,15 @@ pub fn compact_merkle_path(input: TokenStream) -> TokenStream {
 pub fn compact_struct_repr(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     struct_repr::expand(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+/// Derive exact hash-input atoms independently of ordinary ledger conversion.
+#[proc_macro_derive(CompactHashInput)]
+pub fn compact_hash_input(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    hash_input::expand(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
@@ -247,6 +257,13 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 }
 
                 impl ::midnight_compact_runtime::ledger::CellValue for #name {
+                    fn validate_cell_value(
+                        &self,
+                    ) -> ::core::result::Result<(), ::midnight_compact_runtime::CompactError> {
+                        #(<#types as ::midnight_compact_runtime::ledger::CellValue>::validate_cell_value(&self.#names)?;)*
+                        ::core::result::Result::Ok(())
+                    }
+
                     fn decode_cell_value(
                         __compact_cell_value: &::midnight_compact_runtime::fab::ValueSlice,
                     ) -> ::core::result::Result<Self, ::midnight_compact_runtime::CompactError> {

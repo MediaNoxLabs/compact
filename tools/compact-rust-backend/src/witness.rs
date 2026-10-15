@@ -20,7 +20,11 @@ use std::collections::{HashMap, HashSet};
 use proc_macro2::Span;
 
 use crate::ir::{LedgerField, LedgerFieldKind, WitnessDeclaration};
-use crate::{RenderError, ident, located, rust_type};
+use crate::{RenderError, located};
+use crate::{
+    native_header,
+    source_diagnostics::{Owner, RefusalObserver, RefusalSite},
+};
 
 pub(crate) struct WitnessSyntax<'a> {
     pub declarations: HashMap<&'a str, &'a WitnessDeclaration>,
@@ -31,31 +35,46 @@ pub(crate) struct WitnessSyntax<'a> {
 pub(crate) fn build<'a>(
     witnesses: &'a [WitnessDeclaration],
     ledger_fields: &[&LedgerField],
+    observer: Option<&dyn RefusalObserver>,
 ) -> Result<WitnessSyntax<'a>, RenderError> {
     let mut declarations = HashMap::new();
     let mut trait_methods = Vec::new();
     for witness in witnesses {
         located(witness.source.as_ref(), || {
-            let name = ident(&witness.name)?;
+            let name = native_header::identifier(
+                &witness.name,
+                RefusalSite::field(Owner::Witness(witness), "name"),
+                observer,
+            )?;
             if declarations
                 .insert(witness.name.as_str(), witness)
                 .is_some()
             {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Witness(witness), "name"));
+                }
                 return Err(RenderError::DuplicateWitness(witness.name.clone()));
             }
             let mut args = Vec::<syn::FnArg>::new();
             let mut parameter_names = HashSet::new();
             for (index, parameter) in witness.parameters.iter().enumerate() {
-                ident(&parameter.name)?;
+                native_header::identifier(
+                    &parameter.name,
+                    RefusalSite::field(Owner::Parameter(parameter), "name"),
+                    observer,
+                )?;
                 if !parameter_names.insert(parameter.name.as_str()) {
+                    if let Some(observer) = observer {
+                        observer.refused(RefusalSite::field(Owner::Parameter(parameter), "name"));
+                    }
                     return Err(RenderError::DuplicateParameter(parameter.name.clone()));
                 }
                 let parameter_name =
                     syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
-                let ty = rust_type(&parameter.ty)?;
+                let ty = native_header::carrier(&parameter.ty, observer)?;
                 args.push(syn::parse_quote!(#parameter_name: #ty));
             }
-            let result = rust_type(&witness.result)?;
+            let result = native_header::carrier(&witness.result, observer)?;
             trait_methods.push(syn::parse_quote! {
                 fn #name(
                     &self,
@@ -71,10 +90,14 @@ pub(crate) fn build<'a>(
     if !witnesses.is_empty() {
         for field in ledger_fields {
             located(field.source.as_ref(), || {
-                let name = ident(&field.id)?;
+                let name = native_header::identifier(
+                    &field.id,
+                    RefusalSite::field(Owner::Ledger(field), "id"),
+                    observer,
+                )?;
                 match &field.declaration {
                     LedgerFieldKind::Cell { ty } => {
-                        let ty = rust_type(ty)?;
+                        let ty = native_header::carrier(ty, observer)?;
                         ledger_view_methods.push(syn::parse_quote! {
                             pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
                                 crate::ledger_slots::#name.witness_read(self.meter)
@@ -91,7 +114,7 @@ pub(crate) fn build<'a>(
                     });
                     }
                     LedgerFieldKind::Set { ty } => {
-                        let ty = rust_type(ty)?;
+                        let ty = native_header::carrier(ty, observer)?;
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredSetView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
                             crate::ledger_slots::#name.witness_view(self.meter)
@@ -99,8 +122,8 @@ pub(crate) fn build<'a>(
                     });
                     }
                     LedgerFieldKind::Map { key, value } => {
-                        let key = rust_type(key)?;
-                        let value = rust_type(value)?;
+                        let key = native_header::carrier(key, observer)?;
+                        let value = native_header::carrier(value, observer)?;
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredMapView<'a, #key, #value, runtime::ledger::DefaultDB>, runtime::CompactError> {
                             crate::ledger_slots::#name.witness_view(self.meter)
@@ -108,7 +131,7 @@ pub(crate) fn build<'a>(
                     });
                     }
                     LedgerFieldKind::List { ty } => {
-                        let ty = rust_type(ty)?;
+                        let ty = native_header::carrier(ty, observer)?;
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredListView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
                             crate::ledger_slots::#name.witness_view(self.meter)

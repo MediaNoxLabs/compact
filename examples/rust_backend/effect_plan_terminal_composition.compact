@@ -1,0 +1,24 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger first: Field;
+export ledger second: Field;
+constructor() { first = 0; second = 0; }
+
+pure circuit combine(left: Field, right: Field): Field {
+  return transientHash<Vector<2, Field>>([left, right]);
+}
+export circuit update(seed: Field): Field {
+  const before = first;
+  const value = combine(before, seed);
+  first = disclose(value);
+  const after = second + value;
+  second = disclose(after);
+  return after;
+}
+export circuit optional_write(selected: Boolean, seed: Field): Field {
+  if (disclose(selected)) { first = disclose(seed); }
+  return seed;
+}

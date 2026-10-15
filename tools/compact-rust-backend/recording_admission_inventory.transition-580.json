@@ -1,0 +1,645 @@
+{
+  "schema_version": 1,
+  "issue": 580,
+  "baseline_commit": "1ff2726532da89fd37d875e27eb56235e0a116b4",
+  "claim": "Final old Unit selector retirement; exact live sources plus reversible signed predecessor, public-effect and interface checks remain. Not language or behavioral coverage.",
+  "previous_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "55050283c0525fd949780b55d2e7bf4b659e05452fdbd593763c4e9e9a095351"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "73ca3422910f820dbb79f50fe2367f21989dc36ef730586410df08efe158c216"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "19c125b58bc1b284880ad061c55a3a6f3b0b3c21473bef76688ecea7b00fd9c6",
+      "current_sha256": "bb8fb640b175569b93c53566be934e81c1eedd5868a3ad2787d6899ac1eb0771",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod profile_selection;\nmod pure_calls;\npub(crate) use helpers::plan_recorded_helpers;\n#[cfg(test)]\nuse profile_attempt::ProfileAttempt;\nuse pure_calls::closed_pure_field_call;\n#[cfg(test)]\n",
+          "previous": "mod profile_selection;\nmod pure_calls;\npub(crate) use helpers::plan_recorded_helpers;\nuse profile_attempt::ProfileAttempt;\nuse pure_calls::closed_pure_field_call;\n#[cfg(test)]\n"
+        },
+        {
+          "current": "        organizer_steps,\n        typed_result,\n        shielded_send_rejection,\n        unit_composition_rejection,\n    } = profile_selection::select(\n        circuit,\n        ledger_fields,\n",
+          "previous": "        organizer_steps,\n        typed_result,\n        shielded_send_rejection,\n        composition_rejection,\n    } = profile_selection::select(\n        circuit,\n        ledger_fields,\n"
+        },
+        {
+          "current": "                    &mut visiting,\n                    &mut legacy_precision,\n                )? {\n                    let gap = unit_composition_rejection.as_ref().map_or_else(\n                        || gap.clone(),\n                        |rejection| rejection.refine_action(index, legacy_precision, gap.clone()),\n                    );\n",
+          "previous": "                    &mut visiting,\n                    &mut legacy_precision,\n                )? {\n                    let gap = composition_rejection.as_ref().map_or_else(\n                        || gap.clone(),\n                        |rejection| rejection.refine_action(index, legacy_precision, gap.clone()),\n                    );\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": {
+      "previous_sha256": "2eaeaf69dd2e3e1b8da6edc97a385a1536c545c60127cf9786dfc6409c3e7a34",
+      "current_sha256": "d2eb974a80f1ccb472f157934306fa9fef16fba7354277ac4130ff1258a350ba",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod model;\n#[cfg(all(test, feature = \"experimental-recording-plan\"))]\nmod property_tests;\nmod public_effects;\nmod pure_certification;\nmod rejection;\nmod render;\n",
+          "previous": "mod model;\n#[cfg(all(test, feature = \"experimental-recording-plan\"))]\nmod property_tests;\nmod pure_certification;\nmod rejection;\nmod render;\n"
+        },
+        {
+          "current": "use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};\npub(super) use model::CheckedPlan;\npub(super) use public_effects::has_public_program;\npub(super) use rejection::{DiagnosticPlanError, LoweringRejection};\nuse std::collections::HashMap;\n\n/// Only Unsupported is eligible for a legacy attempt. Invalid represents a\n",
+          "previous": "use super::{RecordingGap, RecordingGapCode, typed_plan::TypedPlan};\nuse crate::ir::{LedgerField, PureCircuit, StatefulCircuit, WitnessDeclaration};\npub(super) use model::CheckedPlan;\npub(super) use rejection::DiagnosticPlanError;\nuse std::collections::HashMap;\n\n/// Only Unsupported is eligible for a legacy attempt. Invalid represents a\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": {
+      "previous_sha256": "cc344ce2de70e2cfbac2f2b54431c501879342e0c8f00ebadd2c2bb53ec201e2",
+      "current_sha256": "dafa745ed6fcb2ad9ab6d0555d0c2a6e26c57283b87d81fcff1717e24c330b06",
+      "predecessor_reconstruction": [
+        {
+          "current": "    next: usize,\n    root_action: Option<usize>,\n    failure_precision: Precision,\n    concrete_node: Option<Box<str>>,\n}\n\n#[cfg(test)]\n",
+          "previous": "    next: usize,\n    root_action: Option<usize>,\n    failure_precision: Precision,\n}\n\n#[cfg(test)]\n"
+        },
+        {
+          "current": "        next: 0,\n        root_action: None,\n        failure_precision: Precision::Unclassified,\n        concrete_node: None,\n    };\n    let mut scope = Scope::new();\n    let mut parameters = Vec::new();\n",
+          "previous": "        next: 0,\n        root_action: None,\n        failure_precision: Precision::Unclassified,\n    };\n    let mut scope = Scope::new();\n    let mut parameters = Vec::new();\n"
+        },
+        {
+          "current": "            gap,\n            root_action: lower.root_action,\n            precision: lower.failure_precision,\n            concrete_node: lower.concrete_node.take(),\n        })?;\n    let plan = Plan {\n        parameters,\n",
+          "previous": "            gap,\n            root_action: lower.root_action,\n            precision: lower.failure_precision,\n        })?;\n    let plan = Plan {\n        parameters,\n"
+        },
+        {
+          "current": "        self.concrete_failure(RecordingGap::action(action, path.into()))\n    }\n\n    fn unsupported_expression_reason(\n        &mut self,\n        expression: &Expr,\n        path: &str,\n        detail: &str,\n    ) -> RecordingGap {\n        // Keep the ordinary gap byte-for-byte. Only Unit diagnostic refinement\n        // consumes this actual node label; no display text is parsed.\n        self.concrete_node = Some(\n            RecordingGap::expression(expression, String::new())\n                .ir_node\n                .into_boxed_str(),\n        );\n        self.concrete_failure(invalid(path, detail))\n    }\n\n",
+          "previous": "        self.concrete_failure(RecordingGap::action(action, path.into()))\n    }\n\n    fn unsupported_expression_reason(&mut self, path: &str, detail: &str) -> RecordingGap {\n        // Keep the existing gap byte-for-byte; provenance is additive metadata.\n        self.concrete_failure(invalid(path, detail))\n    }\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/expressions.rs": {
+      "previous_sha256": "d01b3c98327de10aa2c00e2d5baa0a79ff17813211885c4aa516a3c8444d97b2",
+      "current_sha256": "7bc5bd1930907c5b485c4e3083e84002ca3ae769450bc5a7425b9469c676a95a",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    || opening.ty != (Type::Bytes { length: 32 })\n                {\n                    return Err(self.unsupported_expression_reason(\n                        expression,\n                        path,\n                        \"persistent commitment requires a Bytes32 pair and Bytes32 opening\",\n                    ));\n",
+          "previous": "                    || opening.ty != (Type::Bytes { length: 32 })\n                {\n                    return Err(self.unsupported_expression_reason(\n                        path,\n                        \"persistent commitment requires a Bytes32 pair and Bytes32 opening\",\n                    ));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": {
+      "previous_sha256": "bdff2919230c31b75a4fee39f19b66b8affa475c254b28e1c675d0d9309ff9f5",
+      "current_sha256": "677eaa227c2cabca4fa043e33c1b0562716b5354ac0a2a4a35c5a794c1d6d724",
+      "predecessor_reconstruction": [
+        {
+          "current": "    pub(super) gap: RecordingGap,\n    pub(super) root_action: Option<usize>,\n    pub(super) precision: Precision,\n    pub(super) concrete_node: Option<Box<str>>,\n}\n\nimpl From<RecordingGap> for LoweringRejection {\n",
+          "previous": "    pub(super) gap: RecordingGap,\n    pub(super) root_action: Option<usize>,\n    pub(super) precision: Precision,\n}\n\nimpl From<RecordingGap> for LoweringRejection {\n"
+        },
+        {
+          "current": "            gap,\n            root_action: None,\n            precision: Precision::Unclassified,\n            concrete_node: None,\n        }\n    }\n}\n\nimpl LoweringRejection {\n    /// Existing callers intentionally discard provenance without running lowering again.\n    pub(super) fn into_parts(self) -> (RecordingGap, Option<usize>, Precision, Option<Box<str>>) {\n        (\n            self.gap,\n            self.root_action,\n            self.precision,\n            self.concrete_node,\n        )\n    }\n\n    // Production Unit admission refines diagnostics using typed lowering provenance.\n    pub(in crate::recorded) fn refine_action(\n        &self,\n        ordinal: usize,\n",
+          "previous": "            gap,\n            root_action: None,\n            precision: Precision::Unclassified,\n        }\n    }\n}\n\nimpl LoweringRejection {\n    /// Existing callers intentionally discard provenance without running lowering again.\n    pub(super) fn into_parts(self) -> (RecordingGap, Option<usize>, Precision) {\n        (self.gap, self.root_action, self.precision)\n    }\n\n    // The Unit route has not migrated yet; its existing diagnostic oracle stays live.\n    #[cfg(test)]\n    pub(in crate::recorded) fn refine_action(\n        &self,\n        ordinal: usize,\n"
+        },
+        {
+          "current": "            && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse\n            && gap.code == super::RecordingGapCode::UnsupportedAction\n        {\n            let mut refined = self.gap.clone();\n            if let Some(node) = &self.concrete_node {\n                refined.ir_node = node.to_string();\n            }\n            refined\n        } else {\n            gap\n        }\n",
+          "previous": "            && legacy_precision == crate::recorded::LegacyActionPrecision::Coarse\n            && gap.code == super::RecordingGapCode::UnsupportedAction\n        {\n            self.gap.clone()\n        } else {\n            gap\n        }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection/tests.rs": {
+      "previous_sha256": "3bad4949bec343975335d4eaad0669bfb2c155ea9a553301fbcb7084fe8b2b3c",
+      "current_sha256": "ad756f908807bb016a81ddfab053b3780d8c7da9b201ee0f118a46d3388d9e9b",
+      "predecessor_reconstruction": [
+        {
+          "current": "fn refinement_requires_explicit_origin_not_display_strings() {\n    let mut rejection = refusal(&[circuit(\"root\", vec![empty(), unsupported()])]);\n    let coarse = RecordingGap::action(&unsupported(), \"arbitrary display path\".into());\n    let refined = rejection.refine_action(1, LegacyActionPrecision::Coarse, coarse.clone());\n    assert_eq!(\n        rejection.gap.ir_node, \"RecordedPlan\",\n        \"ordinary error remains unchanged\"\n    );\n    assert_eq!(refined.ir_node, \"Expr::PersistentCommit\");\n    assert_eq!(refined.path, rejection.gap.path);\n    assert_eq!(refined.detail, rejection.gap.detail);\n    assert_eq!(refined.code, rejection.gap.code);\n    assert_eq!(\n        rejection.refine_action(0, LegacyActionPrecision::Coarse, coarse.clone()),\n        coarse\n",
+          "previous": "fn refinement_requires_explicit_origin_not_display_strings() {\n    let mut rejection = refusal(&[circuit(\"root\", vec![empty(), unsupported()])]);\n    let coarse = RecordingGap::action(&unsupported(), \"arbitrary display path\".into());\n    assert_eq!(\n        rejection.refine_action(1, LegacyActionPrecision::Coarse, coarse.clone()),\n        rejection.gap\n    );\n    assert_eq!(\n        rejection.refine_action(0, LegacyActionPrecision::Coarse, coarse.clone()),\n        coarse\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/jubjub_projections.rs": {
+      "previous_sha256": "bce65611352e32617061e1cdf16bbd555d58202bd6b4b36207730e10724494e8",
+      "current_sha256": "a4303e9fe582326c4006d57b83d7c11208ed12e44eacfcc44823cf5e69e82b1e",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}: actual public emission\");\n    if require_old {\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.unit-composition\");\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    } else {\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n",
+          "previous": "        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1, \"{label}: actual public emission\");\n    if require_old {\n        assert_eq!(rows[0][\"body_owner\"], \"selector.unit-composition\");\n        assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n    } else {\n        assert_eq!(rows[0][\"body_owner\"], \"algebra.composite-values\");\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/source.rs": {
+      "previous_sha256": "0e3443499a99afa5bb699431e4553934dfe20c0f75f4b77baeeee2fe3b9975b4",
+      "current_sha256": "33a12883bb83b6516d511ade88483189bd6bb69e45c614b45d4a8bef28a2dbbf",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    (\n                        match *name {\n                            \"remove_service\" | \"drop\" | \"remove\" => \"algebra.membership\",\n                            _ => \"algebra.unit-composition\",\n                        },\n                        \"supported\",\n                    )\n",
+          "previous": "                    (\n                        match *name {\n                            \"remove_service\" | \"drop\" | \"remove\" => \"algebra.membership\",\n                            _ => \"selector.unit-composition\",\n                        },\n                        \"supported\",\n                    )\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/ordered_comparisons/probe.rs": {
+      "previous_sha256": "897c84093b16a732ec20cc700d030cd7e1e18a04e2bc8e62bb2ad728145350c7",
+      "current_sha256": "4bc3261b5950576089fc2e40a630bd18eaa8ba5788387b8175722a592bcc3824",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert_eq!(\n        rows[0][\"body_owner\"],\n        if require_old {\n            \"algebra.unit-composition\"\n        } else {\n            \"algebra.composite-values\"\n        }\n",
+          "previous": "    assert_eq!(\n        rows[0][\"body_owner\"],\n        if require_old {\n            \"selector.unit-composition\"\n        } else {\n            \"algebra.composite-values\"\n        }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/pure_unit_statements.rs": {
+      "previous_sha256": "71c0632fd957c6ec1235bd1f31fbddf0305e3c837ea26e5153eeba489ab332b0",
+      "current_sha256": "c81ba27a692a2d612c879cf07160a919dd443347cbbe45b1779f14b5257d4973",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let expected_owner = if label.starts_with(\"retained-guard-\") || !require_old {\n        \"algebra.membership\"\n    } else {\n        \"algebra.unit-composition\"\n    };\n    assert_eq!(rows[0][\"body_owner\"], expected_owner);\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n",
+          "previous": "    let expected_owner = if label.starts_with(\"retained-guard-\") || !require_old {\n        \"algebra.membership\"\n    } else {\n        \"selector.unit-composition\"\n    };\n    assert_eq!(rows[0][\"body_owner\"], expected_owner);\n    assert_eq!(rows[0][\"outcome\"][\"status\"], \"supported\");\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "753ecd7b51f195fad26573123e1b10f0c1bad2e1ef7238a35e98ea80b4fe98d1",
+      "current_sha256": "27b6c37833672c0008e2c4c794ae2e9b1ec0a03c8a3bd4a726439d0c2715b0da",
+      "predecessor_reconstruction": [
+        {
+          "current": "    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,\n};\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/broad_unit_inclusion_tests.rs\"]\n",
+          "previous": "    closed_organizer_gate_steps, closed_witness_admitted_merkle_insert_steps,\n};\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan::{self, CompositionRejection, TypedPlan};\n\n#[cfg(test)]\n#[path = \"profile_selection/broad_unit_inclusion_tests.rs\"]\n"
+        },
+        {
+          "current": "    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) unit_composition_rejection: Option<effect_plan::LoweringRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n",
+          "previous": "    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n"
+        },
+        {
+          "current": "    // profile can still admit the same circuit. Retain it only for a coarse\n    // generic return gap after every existing profile has declined.\n    let mut shielded_send_rejection = None;\n    let mut unit_composition_rejection = None;\n    let mut organizer_steps = if let Some(plan) = effectful_plan {\n        typed_result = Some(plan.result);\n        Some(plan.steps)\n",
+          "previous": "    // profile can still admit the same circuit. Retain it only for a coarse\n    // generic return gap after every existing profile has declined.\n    let mut shielded_send_rejection = None;\n    let mut composition_rejection = None;\n    let mut organizer_steps = if let Some(plan) = effectful_plan {\n        typed_result = Some(plan.result);\n        Some(plan.steps)\n"
+        },
+        {
+          "current": "                checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_composition = match through_unit {\n            Some(plan) => Some(plan),\n            None => match unit_domain::attempt(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n                circuits,\n            )? {\n                ProfileAttempt::Admitted(plan) => {\n                    record_option!(\"algebra.unit-composition\", Some(plan))\n                }\n                ProfileAttempt::Rejected(rejection) => {\n                    unit_composition_rejection = Some(rejection);\n                    record_option!(\"algebra.unit-composition\", None)\n                }\n                ProfileAttempt::NotApplicable => {\n                    record_option!(\"algebra.unit-composition\", None)\n                }\n            },\n        };\n        // A checked invariant failure must escape before any emission fallback.\n        let through_zswap = match through_composition {\n            Some(plan) => Some(plan),\n",
+          "previous": "                checked_unit_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        let through_composition = through_unit.or_else(|| {\n            match typed_plan::lower_unit_composition_checked(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n                circuits,\n            ) {\n                ProfileAttempt::Admitted(plan) => {\n                    record_option!(\"selector.unit-composition\", Some(plan))\n                }\n                ProfileAttempt::Rejected(rejection) => {\n                    composition_rejection = Some(rejection);\n                    record_option!(\"selector.unit-composition\", None)\n                }\n                ProfileAttempt::NotApplicable => {\n                    record_option!(\"selector.unit-composition\", None)\n                }\n            }\n        });\n        // A checked invariant failure must escape before any emission fallback.\n        let through_zswap = match through_composition {\n            Some(plan) => Some(plan),\n"
+        },
+        {
+          "current": "        organizer_steps,\n        typed_result,\n        shielded_send_rejection,\n        unit_composition_rejection,\n    })\n}\n",
+          "previous": "        organizer_steps,\n        typed_result,\n        shielded_send_rejection,\n        composition_rejection,\n    })\n}\n"
+        }
+      ],
+      "historical_sha256": "43ce168c20e4c392a8a4d14ce6093eaa18a34ecce95757159742abccb37b56b0",
+      "historical_reconstruction": [
+        {
+          "current": "use super::profile_attempt::ProfileAttempt;\nuse super::typed_plan::{self, CompositionRejection, TypedPlan};\n\n#[cfg(test)]\n#[path = \"profile_selection/broad_unit_inclusion_tests.rs\"]\nmod broad_unit_inclusion_tests;\n#[cfg(test)]\n#[path = \"profile_selection/composite_migration_tests.rs\"]\nmod composite_migration_tests;\n",
+          "previous": "use super::profile_attempt::ProfileAttempt;\nuse super::typed_plan::{self, CompositionRejection, TypedPlan};\n\n#[cfg(test)]\n#[path = \"profile_selection/composite_migration_tests.rs\"]\nmod composite_migration_tests;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/funded_mint_migration_tests.rs": {
+      "previous_sha256": "6e511caff9e5ce977d9ca519aa644af18c98de25c43543c3e4124bdd3e1ac9a0",
+      "current_sha256": "88d8aebaf037a0cd6de5f568cd40b5342d2ab842652b7249dad01ed4aa790bd7",
+      "predecessor_reconstruction": [
+        {
+          "current": "    public_owner(&c, \"buy_in\");\n    let row = selected_trace(&c, r);\n    assert!(!attempts(&row).contains(&\"selector.funded-mint\"));\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n}\n\n#[test]\n",
+          "previous": "    public_owner(&c, \"buy_in\");\n    let row = selected_trace(&c, r);\n    assert!(!attempts(&row).contains(&\"selector.funded-mint\"));\n    assert!(!attempts(&row).contains(&\"selector.unit-composition\"));\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/terminal_migration_tests/routing.rs": {
+      "previous_sha256": "7d1df2b021c2a62af8c82869c8e2997e5a39ef5d0369d57a398c687ee3178491",
+      "current_sha256": "e366a7f493184c2bb2d13d9bfe57d628cc3439fb1bd6c6d1d0336695a486c09f",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let position = |name| attempted.iter().position(|id| *id == name).unwrap();\n    assert!(position(\"algebra.terminal-returns\") < position(\"algebra.unit-actions\"));\n    assert!(!attempted.contains(&\"selector.phase-reset\"));\n    assert!(position(\"algebra.unit-actions\") < position(\"algebra.unit-composition\"));\n    assert!(position(\"algebra.unit-composition\") < position(\"algebra.zswap\"));\n    assert!(!attempted.contains(&\"selector.terminal-returns\"));\n}\n\n",
+          "previous": "    let position = |name| attempted.iter().position(|id| *id == name).unwrap();\n    assert!(position(\"algebra.terminal-returns\") < position(\"algebra.unit-actions\"));\n    assert!(!attempted.contains(&\"selector.phase-reset\"));\n    assert!(position(\"algebra.unit-actions\") < position(\"selector.unit-composition\"));\n    assert!(position(\"selector.unit-composition\") < position(\"algebra.zswap\"));\n    assert!(!attempted.contains(&\"selector.terminal-returns\"));\n}\n\n"
+        },
+        {
+          "current": "    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    let attempted = attempts(&row);\n    assert!(attempted.contains(&\"algebra.terminal-returns\"));\n    assert!(!attempted.contains(&\"algebra.unit-composition\"));\n}\n\n#[test]\n",
+          "previous": "    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    let attempted = attempts(&row);\n    assert!(attempted.contains(&\"algebra.terminal-returns\"));\n    assert!(!attempted.contains(&\"selector.unit-composition\"));\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_migration_tests/routing.rs": {
+      "previous_sha256": "93653a9e6fd4622e776d58d5cbc2cf3cd2755436b60b3db2063b03277059ad07",
+      "current_sha256": "84e26a904fec03b1520457f960a2278bffafc8002ac417df5093e878b5be0cde",
+      "predecessor_reconstruction": [
+        {
+          "current": "        1\n    );\n    assert!(!attempted.contains(&\"selector.unit-actions\"));\n    assert!(!attempted.contains(&\"algebra.unit-composition\"));\n}\n\n#[test]\n",
+          "previous": "        1\n    );\n    assert!(!attempted.contains(&\"selector.unit-actions\"));\n    assert!(!attempted.contains(&\"selector.unit-composition\"));\n}\n\n#[test]\n"
+        },
+        {
+          "current": "    let (_, row) = selected_trace(&contract);\n    let attempted = attempts(&row);\n    let at = |name| attempted.iter().position(|r| *r == name).unwrap();\n    assert!(at(\"algebra.unit-actions\") < at(\"algebra.unit-composition\"));\n    assert!(at(\"algebra.unit-composition\") < at(\"algebra.zswap\"));\n    assert!(!attempted.contains(&\"selector.unit-actions\"));\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n",
+          "previous": "    let (_, row) = selected_trace(&contract);\n    let attempted = attempts(&row);\n    let at = |name| attempted.iter().position(|r| *r == name).unwrap();\n    assert!(at(\"algebra.unit-actions\") < at(\"selector.unit-composition\"));\n    assert!(at(\"selector.unit-composition\") < at(\"algebra.zswap\"));\n    assert!(!attempted.contains(&\"selector.unit-actions\"));\n    let gap = crate::recorded::RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n"
+        },
+        {
+          "current": "    );\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n    let rendered = crate::render_with_capabilities(&contract).unwrap();\n    let capability = rendered\n        .capabilities\n",
+          "previous": "    );\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"selector.unit-composition\"));\n    let rendered = crate::render_with_capabilities(&contract).unwrap();\n    let capability = rendered\n        .capabilities\n"
+        },
+        {
+          "current": "    contract.stateful_circuits.swap(0, index);\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"algebra.unit-composition\"));\n\n    // Member's specialized return is not emitted by this source; exercise it as\n    // an explicitly IR-only public control alongside the real size/empty roots.\n",
+          "previous": "    contract.stateful_circuits.swap(0, index);\n    let (_, row) = selected_trace(&contract);\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-actions\");\n    assert!(!attempts(&row).contains(&\"selector.unit-composition\"));\n\n    // Member's specialized return is not emitted by this source; exercise it as\n    // an explicitly IR-only public control alongside the real size/empty roots.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": {
+      "previous_sha256": "3404ba58904d7a6f62a1e69a5b3824717767533b9466f2f30f2ad4b4caf89ee0",
+      "current_sha256": "682f182ade95222874c5f65dd97dda7204e925458bc4a43ed49b019630cef22b",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let attempted = attempts(&row);\n    assert_eq!(\n        &attempted[attempted.len() - 2..],\n        &[\"algebra.unit-composition\", \"algebra.zswap\"]\n    );\n    assert!(!attempted.contains(&\"selector.zswap\"));\n    crate::render_with_capabilities(&c).unwrap();\n",
+          "previous": "    let attempted = attempts(&row);\n    assert_eq!(\n        &attempted[attempted.len() - 2..],\n        &[\"selector.unit-composition\", \"algebra.zswap\"]\n    );\n    assert!(!attempted.contains(&\"selector.zswap\"));\n    crate::render_with_capabilities(&c).unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": {
+      "previous_sha256": "c47f5eda8e0577c202690cfac5c6c0cb76c64b827b5ac99e63face9ad5b76017",
+      "current_sha256": "c78a853183deb5c6292d8067e35e630abcf8688a36809bd8f1cf2b73e4771144",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod leaves;\nmod observations;\nuse admission::AdmissionPolicy;\n#[cfg(test)]\npub(super) use composition::CompositionRejection;\n\n#[cfg(test)]\npub(super) fn unit_composition_parameter_type(ty: &Type) -> bool {\n    composition::value_type(ty)\n}\n\nuse declarations::Declarations;\nuse evaluation::EvaluationState;\nuse evidence::EffectEvidence;\n",
+          "previous": "mod leaves;\nmod observations;\nuse admission::AdmissionPolicy;\npub(super) use composition::CompositionRejection;\nuse declarations::Declarations;\nuse evaluation::EvaluationState;\nuse evidence::EffectEvidence;\n"
+        },
+        {
+          "current": "    FieldObservations,\n    TerminalReturns,\n    JubjubValues,\n    // Constructed only by the retained whole-Unit oracle.\n    #[cfg_attr(not(test), allow(dead_code))]\n    UnitComposition,\n}\nimpl CompositeDomain {\n",
+          "previous": "    FieldObservations,\n    TerminalReturns,\n    JubjubValues,\n    UnitComposition,\n}\nimpl CompositeDomain {\n"
+        },
+        {
+          "current": "    voting_commit::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n#[cfg(test)]\npub(super) fn lower_unit_composition_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n",
+          "previous": "    voting_commit::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower_unit_composition_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs": {
+      "previous_sha256": "126c7f8922b304828021dc9124bded8729de64c72ccfb96794db9fb6537aa4a0",
+      "current_sha256": "6ba7e4bd2462be2b33437f8cf7bf5bd3ee3bebb897ce1ed7d12b55d9d83e0c42",
+      "predecessor_reconstruction": [
+        {
+          "current": "// limitations under the License.\n//! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.\nuse super::*;\n#[cfg(test)]\nuse relation_root_preflight::RelationPermit;\n\n// Shared Plan retains the policy representation; only the test oracle constructs it.\n#[cfg_attr(not(test), allow(dead_code))]\n#[derive(Clone, Copy)]\npub(super) enum AuditedCall<'a> {\n    PureValue(&'a PureCircuit),\n",
+          "previous": "// limitations under the License.\n//! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.\nuse super::*;\nuse relation_root_preflight::RelationPermit;\n\n#[derive(Clone, Copy)]\npub(super) enum AuditedCall<'a> {\n    PureValue(&'a PureCircuit),\n"
+        },
+        {
+          "current": "        _ => false,\n    }\n}\n#[cfg(test)]\npub(super) fn value_type(ty: &Type) -> bool {\n    match ty {\n        Type::OpaqueString | Type::Enum { .. } => true,\n",
+          "previous": "        _ => false,\n    }\n}\npub(super) fn value_type(ty: &Type) -> bool {\n    match ty {\n        Type::OpaqueString | Type::Enum { .. } => true,\n"
+        },
+        {
+          "current": "// Mutation accepts nonempty flat named products of previously audited scalar\n// values. The declared struct name/field order remain exact typed data, never\n// an admission dispatch key.\n#[cfg(test)]\npub(super) fn flat_string_point_product(ty: &Type) -> bool {\n    matches!(ty, Type::Struct { fields, .. }\n        if !fields.is_empty() && fields.iter().all(|field|\n            matches!(field.ty, Type::OpaqueString | Type::JubjubPoint)))\n}\n\n#[cfg(test)]\npub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {\n    matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }\n        if flat_string_point_product(value))\n",
+          "previous": "// Mutation accepts nonempty flat named products of previously audited scalar\n// values. The declared struct name/field order remain exact typed data, never\n// an admission dispatch key.\npub(super) fn flat_string_point_product(ty: &Type) -> bool {\n    matches!(ty, Type::Struct { fields, .. }\n        if !fields.is_empty() && fields.iter().all(|field|\n            matches!(field.ty, Type::OpaqueString | Type::JubjubPoint)))\n}\n\npub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {\n    matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }\n        if flat_string_point_product(value))\n"
+        },
+        {
+          "current": "    path.first() == Some(&field.index) && (1..=2).contains(&path.len())\n}\n/// Failure evidence stays private: capability JSON retains its existing schema.\n#[cfg(test)]\n#[derive(Debug)]\npub(in crate::recorded) struct CompositionRejection {\n    pub(super) gap: RecordingGap,\n",
+          "previous": "    path.first() == Some(&field.index) && (1..=2).contains(&path.len())\n}\n/// Failure evidence stays private: capability JSON retains its existing schema.\n#[derive(Debug)]\npub(in crate::recorded) struct CompositionRejection {\n    pub(super) gap: RecordingGap,\n"
+        },
+        {
+          "current": "    precision: RejectionPrecision,\n    phase: RejectionPhase,\n}\n#[cfg(test)]\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPrecision {\n    ConcreteNode,\n    EnclosingAction,\n    Obligation,\n}\n#[cfg(test)]\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPhase {\n    PolicyAudit,\n",
+          "previous": "    precision: RejectionPrecision,\n    phase: RejectionPhase,\n}\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPrecision {\n    ConcreteNode,\n    EnclosingAction,\n    Obligation,\n}\n#[derive(Debug, PartialEq, Eq)]\nenum RejectionPhase {\n    PolicyAudit,\n"
+        },
+        {
+          "current": "    FinalObligation,\n}\n\n#[cfg(test)]\nimpl CompositionRejection {\n    /// Refine only the same root action's coarse legacy refusal. Never inspect\n    /// diagnostic path/detail text, or override an earlier concrete error.\n",
+          "previous": "    FinalObligation,\n}\n\nimpl CompositionRejection {\n    /// Refine only the same root action's coarse legacy refusal. Never inspect\n    /// diagnostic path/detail text, or override an earlier concrete error.\n"
+        },
+        {
+          "current": "    }\n}\n\n#[cfg(test)]\nstruct Audit<'a> {\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n",
+          "previous": "    }\n}\n\nstruct Audit<'a> {\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n"
+        },
+        {
+          "current": "    root_action: usize,\n    failure: Option<CompositionRejection>,\n}\n#[cfg(test)]\nimpl Audit<'_> {\n    fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {\n        self.ledger\n",
+          "previous": "    root_action: usize,\n    failure: Option<CompositionRejection>,\n}\nimpl Audit<'_> {\n    fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {\n        self.ledger\n"
+        },
+        {
+          "current": "    }\n}\n\n#[cfg(test)]\npub(super) fn lower_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n",
+          "previous": "    }\n}\n\npub(super) fn lower_checked<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n"
+        },
+        {
+          "current": "#[path = \"composition/relation_composition_tests.rs\"]\nmod adr295_preflight;\n\n#[cfg(test)]\nmod selected_set_preflight;\n\n#[cfg(test)]\nmod nested_map_preflight;\n\n#[cfg(test)]\nmod relation_root_preflight;\n",
+          "previous": "#[path = \"composition/relation_composition_tests.rs\"]\nmod adr295_preflight;\n\nmod selected_set_preflight;\n\nmod nested_map_preflight;\n\nmod relation_root_preflight;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/tests.rs": {
+      "previous_sha256": "a0765208843e342d7eceb65b118a45a508d37fdd38568f31d4c8ae7b9733aa49",
+      "current_sha256": "609a43b3c6506ea9e4d3fdf8d6bafad82afa29cbeafdb80de4527b177978790b",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    // The frozen Audit stops at its enclosing hash shape. Checked lowering\n    // identifies the actual unsupported commitment inside that operand.\n    assert_eq!(gap.path, format!(\"{}.value\", still_rejected.gap.path));\n    assert_eq!(gap.ir_node, \"Expr::PersistentCommit\");\n}\n\n#[test]\n",
+          "previous": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    assert_eq!(gap.path, still_rejected.gap.path);\n    assert_eq!(gap.ir_node, \"Expr::TransientHash\");\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/map_composition.rs": {
+      "previous_sha256": "2db43f7ae0846f8255aa050b151b711a2694875ff10624be209c3e20418ec504",
+      "current_sha256": "af5e2e2474df19042eb9acc3aded4c3ef940c5eb63730d38dc20da6b3944aaf0",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn mixed_scalar_map_values_compose_while_empty_values_stay_outside_codec() {\n    assert!(!recorded(fixture(\"empty\"), \"put\"));\n    let output = render(fixture(\"mixed\"));\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n    );\n    assert!(\n        output\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_insert(\")\n    );\n}\n\n#[test]\n",
+          "previous": "}\n\n#[test]\nfn empty_and_unsupported_mixed_map_values_remain_native_only() {\n    for name in [\"empty\", \"mixed\"] {\n        assert!(!recorded(fixture(name), \"put\"), \"{name}\");\n    }\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/map_nested_product_composition.rs": {
+      "previous_sha256": "23cff93f7b1ca19e3fafdc100781318a40ba3e6b0b9de1a36765be7281554d0b",
+      "current_sha256": "2c2c95f1f694cdf838ac83e4118046c44cf7903dce76b15c95857aabe3e604c1",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn nested_product_domain_uses_scalar_codecs_and_rejects_empty_values() {\n    let mixed: Contract =\n        serde_json::from_str(include_str!(\"map-composition/mixed_map.json\")).unwrap();\n    let output = render_with_capabilities(&mixed).unwrap();\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n    );\n    assert!(\n        output\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_insert(\")\n    );\n    let empty: Value =\n        serde_json::from_str(include_str!(\"map-composition/empty_map.json\")).unwrap();\n    assert!(!recorded(empty, \"put\"));\n}\n",
+          "previous": "}\n\n#[test]\nfn nested_product_domain_does_not_admit_unreviewed_unsigned_or_empty_values() {\n    for source in [\n        include_str!(\"map-composition/mixed_map.json\"),\n        include_str!(\"map-composition/empty_map.json\"),\n    ] {\n        let value: Value = serde_json::from_str(source).unwrap();\n        assert!(!recorded(value, \"put\"));\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/map_point_composition.rs": {
+      "previous_sha256": "acfae8a68b2bfb14209bcbbd311d533c6cc2c18fc6a456f5798b1eeddb455727",
+      "current_sha256": "dbcb2a714e30d7c2e794a7e769acf4183daf3f8a7675959c6f0850e249f435cb",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn boolean_helper_composes_typed_effects_but_rejects_cycles_and_wrong_results() {\n    for mutation in [\"witness\", \"counter\", \"effect\", \"recursive\", \"wrong_result\"] {\n        let mut value = fixture();\n        let helper = circuit(&mut value, \"exists\");\n",
+          "previous": "}\n\n#[test]\nfn boolean_helper_rejects_hidden_witness_queries_and_effects() {\n    for mutation in [\"witness\", \"counter\", \"effect\", \"recursive\", \"wrong_result\"] {\n        let mut value = fixture();\n        let helper = circuit(&mut value, \"exists\");\n"
+        },
+        {
+          "current": "            \"wrong_result\" => helper[\"result\"] = json!({\"kind\":\"field\"}),\n            _ => unreachable!(),\n        }\n        if matches!(mutation, \"witness\" | \"counter\" | \"effect\") {\n            let output =\n                render_with_capabilities(&serde_json::from_value::<Contract>(value).unwrap())\n                    .unwrap();\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| c.name == \"upsert\" && c.recorded && c.observed_call)\n            );\n            let body = output.source.split(\"pub mod recorded\").nth(1).unwrap();\n            let operation = match mutation {\n                \"witness\" => \"witnesses.hidden(\",\n                \"counter\" => \"record_read(\",\n                _ => \"record_remove(\",\n            };\n            let baseline =\n                render_with_capabilities(&serde_json::from_value::<Contract>(fixture()).unwrap())\n                    .unwrap();\n            let before = baseline.source.split(\"pub mod recorded\").nth(1).unwrap();\n            assert!(\n                body.split_whitespace()\n                    .collect::<String>()\n                    .matches(operation)\n                    .count()\n                    > before\n                        .split_whitespace()\n                        .collect::<String>()\n                        .matches(operation)\n                        .count(),\n                \"{mutation}\"\n            );\n        } else {\n            assert!(!recorded(value, \"upsert\"), \"{mutation}\");\n        }\n    }\n}\n\n#[test]\nfn nested_value_membership_composes_direct_and_unselected_but_keeps_slot_authority() {\n    for unselected in [false, true] {\n        let mut value = fixture();\n        let root = circuit(&mut value, \"upsert\");\n",
+          "previous": "            \"wrong_result\" => helper[\"result\"] = json!({\"kind\":\"field\"}),\n            _ => unreachable!(),\n        }\n        assert!(!recorded(value, \"upsert\"), \"{mutation}\");\n    }\n}\n\n#[test]\nfn nested_value_membership_is_bounded_to_an_audited_boolean_helper() {\n    for unselected in [false, true] {\n        let mut value = fixture();\n        let root = circuit(&mut value, \"upsert\");\n"
+        },
+        {
+          "current": "            hidden[\"action\"] = original;\n            json!([hidden])\n        };\n        let output =\n            render_with_capabilities(&serde_json::from_value::<Contract>(value.clone()).unwrap())\n                .unwrap();\n        assert!(\n            output\n                .capabilities\n                .circuits\n                .iter()\n                .any(|c| c.name == \"upsert\" && c.recorded && c.observed_call)\n        );\n        let body = output.source.split(\"pub mod recorded\").nth(1).unwrap();\n        let baseline =\n            render_with_capabilities(&serde_json::from_value::<Contract>(fixture()).unwrap())\n                .unwrap();\n        let before = baseline.source.split(\"pub mod recorded\").nth(1).unwrap();\n        assert!(body.matches(\"record_member(\").count() > before.matches(\"record_member(\").count());\n        // The same reachable or unselected read still requires the declared slot.\n        let first = &mut circuit(&mut value, \"upsert\")[\"actions\"][0];\n        let binding = if unselected {\n            &mut first[\"then\"][\"bindings\"][0]\n        } else {\n            &mut first[\"bindings\"][0]\n        };\n        binding[\"value\"][\"index\"] = json!(99);\n        assert!(\n            !recorded(value, \"upsert\"),\n            \"invalid slot, unselected={unselected}\"\n        );\n    }\n}\n\n",
+          "previous": "            hidden[\"action\"] = original;\n            json!([hidden])\n        };\n        assert!(!recorded(value, \"upsert\"), \"unselected={unselected}\");\n    }\n}\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/point_composition.rs": {
+      "previous_sha256": "2fdde585ee92b12ade9aea2e10b525377899a96b0b5ac19717b5e739acf75700",
+      "current_sha256": "69c5a95c40845ca06c0ce8a1abfed6f9add9b73bcf13427ad00b64be993de8d3",
+      "predecessor_reconstruction": [
+        {
+          "current": "        if both {\n            condition[\"right\"] = json!({\"kind\":\"boolean\",\"value\":false});\n        }\n        if both {\n            let output =\n                render_with_capabilities(&serde_json::from_value::<Contract>(v).unwrap()).unwrap();\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| c.name == \"check\" && c.recorded && c.observed_call)\n            );\n            assert!(\n                output\n                    .source\n                    .split(\"pub mod recorded\")\n                    .nth(1)\n                    .unwrap()\n                    .contains(\" != \")\n            );\n        } else {\n            assert!(!recorded(v, \"check\")); // Boolean versus Field stays ill-typed.\n        }\n    }\n}\n#[test]\n",
+          "previous": "        if both {\n            condition[\"right\"] = json!({\"kind\":\"boolean\",\"value\":false});\n        }\n        assert!(!recorded(v, \"check\"));\n    }\n}\n#[test]\n"
+        },
+        {
+          "current": "            \"effect\"=>circuit(&mut v,\"changes\")[\"actions\"].as_array_mut().unwrap().push(json!({\"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\"then\":{\"kind\":\"sequence\",\"actions\":[]},\"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"native_witness_call\",\"builtin\":\"own_public_key\"}}})),\n            _=>unreachable!(),\n        }\n        if mutation == \"effect\" {\n            let output =\n                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())\n                    .unwrap();\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| c.name == \"check\" && c.recorded && c.observed_call)\n            );\n            assert!(\n                output\n                    .source\n                    .split(\"pub mod recorded\")\n                    .nth(1)\n                    .unwrap()\n                    .contains(\"own_coin_public_key()\")\n            );\n            // An unsupported operand at the same lazy position is still checked.\n            let actions = circuit(&mut v, \"changes\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"][\"value\"] = json!({\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}});\n        }\n        assert!(!recorded(v, \"check\"), \"{mutation}\");\n    }\n}\n",
+          "previous": "            \"effect\"=>circuit(&mut v,\"changes\")[\"actions\"].as_array_mut().unwrap().push(json!({\"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\"then\":{\"kind\":\"sequence\",\"actions\":[]},\"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"native_witness_call\",\"builtin\":\"own_public_key\"}}})),\n            _=>unreachable!(),\n        }\n        assert!(!recorded(v, \"check\"), \"{mutation}\");\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/recorded_helper_naming.rs": {
+      "previous_sha256": "4bd3ec9adf579f6827fab00e274c2202f86bac6b7d46a50a19a8ea72e95ca254",
+      "current_sha256": "92e503cd6c7994593881cd926b20696081d1534121d05b23c3be11a811f04740",
+      "predecessor_reconstruction": [
+        {
+          "current": "    for helper_name in [\"inner\", \"r#type\"] {\n        let mut fixture = contract(helper_name, true, true);\n        // The scalar Unit algebra inlines this helper. Keep this naming test on\n        // the existing shared-helper route using an unused Uint128 public input,\n        // outside both scalar and composed Unit public parameter domains.\n        for caller in fixture.stateful_circuits.iter_mut().filter(|c| !c.internal) {\n            caller.parameters.push(Parameter {\n                name: \"unused\".into(),\n                ty: Type::Unsigned {\n                    max: u128::MAX.to_string(),\n                },\n            });\n        }\n        let source = render(&fixture).unwrap();\n",
+          "previous": "    for helper_name in [\"inner\", \"r#type\"] {\n        let mut fixture = contract(helper_name, true, true);\n        // The scalar Unit algebra inlines this helper. Keep this naming test on\n        // the existing shared-helper route using an unused Uint8 public input,\n        // outside that rollout's Field/Boolean parameter domain.\n        for caller in fixture.stateful_circuits.iter_mut().filter(|c| !c.internal) {\n            caller.parameters.push(Parameter {\n                name: \"unused\".into(),\n                ty: Type::Unsigned { max: \"255\".into() },\n            });\n        }\n        let source = render(&fixture).unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/asset_recording.rs": {
+      "previous_sha256": "d7bae4b98c2b87593f9d0b739845b136dd0008696fb53c23511bf10aacd494d6",
+      "current_sha256": "f46c5e3bfb9aaab32375364dbee20a5373e578a85611363fc6f72277d62253e5",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn custody_grant_recording_composes_typed_lookup_and_pure_assertions() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../asset-grant-effective-schema12-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n",
+          "previous": "}\n\n#[test]\nfn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../asset-grant-effective-schema12-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n"
+        },
+        {
+          "current": "            .iter()\n            .find(|capability| capability.name == \"assertGrantEffective\")\n            .unwrap();\n        if capability.recorded {\n            let body = super::lifecycle_recording::generated_body(\n                &rendered.source,\n                \"recorded\",\n                \"assertGrantEffective\",\n            );\n            assert!(body.contains(\"record_lookup\"));\n        }\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&contract);\n",
+          "previous": "            .iter()\n            .find(|capability| capability.name == \"assertGrantEffective\")\n            .unwrap();\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&contract);\n"
+        },
+        {
+          "current": "    **key = Expr::Parameter {\n        name: \"grantId\".into(),\n    };\n    assert!(\n        recorded(&wrong_key).0,\n        \"an in-scope typed public key is valid\"\n    );\n\n    let mut changed_guard = contract;\n    let Expr::Sequence { steps, .. } = &mut changed_guard.circuits[0].body else {\n",
+          "previous": "    **key = Expr::Parameter {\n        name: \"grantId\".into(),\n    };\n    assert!(!recorded(&wrong_key).0, \"lookup must use the scoped key\");\n\n    let mut changed_guard = contract;\n    let Expr::Sequence { steps, .. } = &mut changed_guard.circuits[0].body else {\n"
+        },
+        {
+          "current": "        },\n    );\n    assert!(\n        recorded(&changed_guard).0,\n        \"additional certified assertions compose\"\n    );\n}\n\n#[test]\nfn guarded_struct_map_read_composes_typed_lookup_and_freshness_guards() {\n    let mut contract: Contract = serde_json::from_str(include_str!(\n        \"../asset-stored-record-fresh-schema12-ir.json\"\n    ))\n",
+          "previous": "        },\n    );\n    assert!(\n        !recorded(&changed_guard).0,\n        \"extra pure work is outside the closed guard\"\n    );\n}\n\n#[test]\nfn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {\n    let mut contract: Contract = serde_json::from_str(include_str!(\n        \"../asset-stored-record-fresh-schema12-ir.json\"\n    ))\n"
+        },
+        {
+          "current": "            .iter()\n            .find(|capability| capability.name == \"assertStoredRecordFresh\")\n            .unwrap();\n        if capability.recorded {\n            let body = super::lifecycle_recording::generated_body(\n                &rendered.source,\n                \"recorded\",\n                \"assertStoredRecordFresh\",\n            );\n            assert!(body.contains(\"record_lookup\"));\n        }\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&contract);\n",
+          "previous": "            .iter()\n            .find(|capability| capability.name == \"assertStoredRecordFresh\")\n            .unwrap();\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&contract);\n"
+        },
+        {
+          "current": "    **key = Expr::Parameter {\n        name: \"recordId\".into(),\n    };\n    assert!(\n        recorded(&wrong_key).0,\n        \"an in-scope typed public key is valid\"\n    );\n\n    let mut extra_pure_work = contract;\n    let Expr::Sequence { steps, .. } = &mut extra_pure_work.circuits[0].body else {\n",
+          "previous": "    **key = Expr::Parameter {\n        name: \"recordId\".into(),\n    };\n    assert!(!recorded(&wrong_key).0, \"lookup must use the scoped key\");\n\n    let mut extra_pure_work = contract;\n    let Expr::Sequence { steps, .. } = &mut extra_pure_work.circuits[0].body else {\n"
+        },
+        {
+          "current": "        },\n    );\n    assert!(\n        recorded(&extra_pure_work).0,\n        \"additional certified assertions compose\"\n    );\n}\n\n#[test]\nfn typed_opaque_struct_map_write_composes_scoped_values_and_source_order() {\n    let mut contract: Contract = serde_json::from_str(include_str!(\n        \"../asset-custody-grant-write-schema12-ir.json\"\n    ))\n",
+          "previous": "        },\n    );\n    assert!(\n        !recorded(&extra_pure_work).0,\n        \"pure body must stay in the audited subset\"\n    );\n}\n\n#[test]\nfn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {\n    let mut contract: Contract = serde_json::from_str(include_str!(\n        \"../asset-custody-grant-write-schema12-ir.json\"\n    ))\n"
+        },
+        {
+          "current": "            .iter()\n            .find(|capability| capability.name == \"setCustodyGrant\")\n            .unwrap();\n        if capability.recorded {\n            let body = super::lifecycle_recording::generated_body(\n                &rendered.source,\n                \"recorded\",\n                \"setCustodyGrant\",\n            );\n            assert!(body.contains(\"record_insert\"));\n            assert!(body.contains(\"record_remove\"));\n            assert!(body.contains(\"record_write\"));\n        }\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&contract);\n",
+          "previous": "            .iter()\n            .find(|capability| capability.name == \"setCustodyGrant\")\n            .unwrap();\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&contract);\n"
+        },
+        {
+          "current": "        name: \"grant\".into(),\n    };\n    assert!(\n        recorded(&unscoped_value).0,\n        \"the typed public struct is in scope\"\n    );\n\n    let mut wrong_key = contract.clone();\n",
+          "previous": "        name: \"grant\".into(),\n    };\n    assert!(\n        !recorded(&unscoped_value).0,\n        \"insert must use the bound struct value\"\n    );\n\n    let mut wrong_key = contract.clone();\n"
+        },
+        {
+          "current": "    *key = Expr::Parameter {\n        name: \"grantId\".into(),\n    };\n    assert!(\n        recorded(&wrong_key).0,\n        \"the public key is typed and in scope\"\n    );\n\n    let mut reordered = contract;\n    actions(&mut reordered).swap(3, 4);\n    assert!(\n        recorded(&reordered).0,\n        \"typed mutation order follows the source\"\n    );\n}\n\n#[test]\nfn typed_asset_map_write_composes_class_guards_and_typed_counts() {\n    let original: serde_json::Value =\n        serde_json::from_str(include_str!(\"../asset-record-write-schema13-ir.json\")).unwrap();\n    let recorded = |value: &serde_json::Value| {\n",
+          "previous": "    *key = Expr::Parameter {\n        name: \"grantId\".into(),\n    };\n    assert!(!recorded(&wrong_key).0, \"update must remove the bound key\");\n\n    let mut reordered = contract;\n    actions(&mut reordered).swap(3, 4);\n    assert!(\n        !recorded(&reordered).0,\n        \"Map insert must precede write continuation\"\n    );\n}\n\n#[test]\nfn typed_asset_map_write_requires_class_guard_and_insert_only_count() {\n    let original: serde_json::Value =\n        serde_json::from_str(include_str!(\"../asset-record-write-schema13-ir.json\")).unwrap();\n    let recorded = |value: &serde_json::Value| {\n"
+        },
+        {
+          "current": "            .iter()\n            .find(|capability| capability.name == \"setRecord\")\n            .unwrap();\n        if capability.recorded {\n            let body = super::lifecycle_recording::generated_body(\n                &rendered.source,\n                \"recorded\",\n                \"setRecord\",\n            );\n            assert!(body.contains(\"record_insert\"));\n            assert!(body.contains(\"record_increment\"));\n        }\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&original);\n    assert!(available);\n    assert!(source.contains(\"pub fn setRecord<Private\"));\n    assert!(source.contains(\"record_increment(frame\"));\n    assert!(source.contains(\"assertRecordClassKnown(\"));\n    assert!(source.contains(\"record_insert(\"));\n\n    // The checked guard follows the declared enum/member, not the oracle's\n    // spellings for either one. Mutation labels remain a bounded domain.\n",
+          "previous": "            .iter()\n            .find(|capability| capability.name == \"setRecord\")\n            .unwrap();\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&original);\n    assert!(available);\n    assert!(source.contains(\"pub fn setRecord<Private\"));\n    assert!(source.contains(\"record_increment(frame, 1_u16)\"));\n    assert!(source.contains(\"assertRecordClassKnown(\"));\n    assert!(source.contains(\"__compact_recorded_write_value.clone()\"));\n\n    // The checked guard follows the declared enum/member, not the oracle's\n    // spellings for either one. Mutation labels remain a bounded domain.\n"
+        },
+        {
+          "current": "    let mut wrong_class_argument = original.clone();\n    actions(&mut wrong_class_argument)[2][\"arguments\"][0][\"value\"][\"name\"] =\n        serde_json::json!(\"record\");\n    assert!(recorded(&wrong_class_argument).0);\n\n    let mut reordered = original.clone();\n    actions(&mut reordered).swap(2, 3);\n    assert!(recorded(&reordered).0);\n\n    let mut extra_class_step = original.clone();\n    extra_class_step[\"circuits\"][0][\"body\"][\"steps\"]\n        .as_array_mut()\n        .unwrap()\n        .push(original[\"circuits\"][0][\"body\"][\"steps\"][0].clone());\n    assert!(recorded(&extra_class_step).0);\n\n    let mut wrong_counter_amount = original.clone();\n    actions(&mut wrong_counter_amount)[3][\"otherwise\"][\"then\"][\"actions\"][1][\"bindings\"][0][\"value\"]\n        [\"value\"] = serde_json::json!(\"2\");\n    assert!(recorded(&wrong_counter_amount).0);\n\n    let mut wrong_counter_slot = original.clone();\n    actions(&mut wrong_counter_slot)[3][\"otherwise\"][\"then\"][\"actions\"][1][\"action\"][\"field\"] =\n",
+          "previous": "    let mut wrong_class_argument = original.clone();\n    actions(&mut wrong_class_argument)[2][\"arguments\"][0][\"value\"][\"name\"] =\n        serde_json::json!(\"record\");\n    assert!(!recorded(&wrong_class_argument).0);\n\n    let mut reordered = original.clone();\n    actions(&mut reordered).swap(2, 3);\n    assert!(!recorded(&reordered).0);\n\n    let mut extra_class_step = original.clone();\n    extra_class_step[\"circuits\"][0][\"body\"][\"steps\"]\n        .as_array_mut()\n        .unwrap()\n        .push(original[\"circuits\"][0][\"body\"][\"steps\"][0].clone());\n    assert!(!recorded(&extra_class_step).0);\n\n    let mut wrong_counter_amount = original.clone();\n    actions(&mut wrong_counter_amount)[3][\"otherwise\"][\"then\"][\"actions\"][1][\"bindings\"][0][\"value\"]\n        [\"value\"] = serde_json::json!(\"2\");\n    assert!(!recorded(&wrong_counter_amount).0);\n\n    let mut wrong_counter_slot = original.clone();\n    actions(&mut wrong_counter_slot)[3][\"otherwise\"][\"then\"][\"actions\"][1][\"action\"][\"field\"] =\n"
+        },
+        {
+          "current": "        .find(|circuit| circuit[\"name\"] == \"recordExists\")\n        .unwrap();\n    helper[\"return_value\"][\"value\"][\"otherwise\"][\"field\"] = serde_json::json!(\"records\");\n    assert!(recorded(&wrong_exists_map).0);\n}\n\n#[test]\nfn guarded_opaque_set_mutation_composes_typed_maps_and_branches() {\n    let original: serde_json::Value =\n        serde_json::from_str(include_str!(\"../asset-watch-write-schema13-ir.json\")).unwrap();\n    let recorded = |value: &serde_json::Value| {\n",
+          "previous": "        .find(|circuit| circuit[\"name\"] == \"recordExists\")\n        .unwrap();\n    helper[\"return_value\"][\"value\"][\"otherwise\"][\"field\"] = serde_json::json!(\"records\");\n    assert!(!recorded(&wrong_exists_map).0);\n}\n\n#[test]\nfn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {\n    let original: serde_json::Value =\n        serde_json::from_str(include_str!(\"../asset-watch-write-schema13-ir.json\")).unwrap();\n    let recorded = |value: &serde_json::Value| {\n"
+        },
+        {
+          "current": "            .iter()\n            .find(|capability| capability.name == \"setWatch\")\n            .unwrap();\n        if capability.recorded {\n            let body = super::lifecycle_recording::generated_body(\n                &rendered.source,\n                \"recorded\",\n                \"setWatch\",\n            );\n            assert!(body.contains(\"record_insert\"));\n            assert!(body.contains(\"record_remove\"));\n        }\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&original);\n",
+          "previous": "            .iter()\n            .find(|capability| capability.name == \"setWatch\")\n            .unwrap();\n        (capability.recorded, rendered.source)\n    };\n    let (available, source) = recorded(&original);\n"
+        },
+        {
+          "current": "    let mut wrong_key = original.clone();\n    actions(&mut wrong_key)[2][\"condition\"][\"arguments\"][0][\"value\"][\"name\"] =\n        serde_json::json!(\"recordId\");\n    assert!(recorded(&wrong_key).0);\n\n    let mut wrong_enum = original.clone();\n    actions(&mut wrong_enum)[1][\"condition\"][\"otherwise\"][\"right\"][\"variant\"] =\n        serde_json::json!(\"Add\");\n    assert!(recorded(&wrong_enum).0);\n\n    let mut reordered = original.clone();\n    actions(&mut reordered).swap(2, 3);\n    assert!(recorded(&reordered).0);\n\n    let mut wrong_set = original.clone();\n    actions(&mut wrong_set)[3][\"then\"][\"actions\"][1][\"field\"] = serde_json::json!(\"retiredKeys\");\n    assert!(recorded(&wrong_set).0);\n\n    let mut wrong_drop = original.clone();\n    let absent_condition = actions(&mut wrong_drop)[3][\"then\"][\"actions\"][0][\"condition\"].clone();\n    actions(&mut wrong_drop)[3][\"otherwise\"][\"then\"][\"actions\"][0][\"condition\"] = absent_condition;\n    assert!(recorded(&wrong_drop).0);\n\n    let mut duplicate_map = original.clone();\n    let helper = duplicate_map[\"stateful_circuits\"]\n",
+          "previous": "    let mut wrong_key = original.clone();\n    actions(&mut wrong_key)[2][\"condition\"][\"arguments\"][0][\"value\"][\"name\"] =\n        serde_json::json!(\"recordId\");\n    assert!(!recorded(&wrong_key).0);\n\n    let mut wrong_enum = original.clone();\n    actions(&mut wrong_enum)[1][\"condition\"][\"otherwise\"][\"right\"][\"variant\"] =\n        serde_json::json!(\"Add\");\n    assert!(!recorded(&wrong_enum).0);\n\n    let mut reordered = original.clone();\n    actions(&mut reordered).swap(2, 3);\n    assert!(!recorded(&reordered).0);\n\n    let mut wrong_set = original.clone();\n    actions(&mut wrong_set)[3][\"then\"][\"actions\"][1][\"field\"] = serde_json::json!(\"retiredKeys\");\n    assert!(!recorded(&wrong_set).0);\n\n    let mut wrong_drop = original.clone();\n    let absent_condition = actions(&mut wrong_drop)[3][\"then\"][\"actions\"][0][\"condition\"].clone();\n    actions(&mut wrong_drop)[3][\"otherwise\"][\"then\"][\"actions\"][0][\"condition\"] = absent_condition;\n    assert!(!recorded(&wrong_drop).0);\n\n    let mut duplicate_map = original.clone();\n    let helper = duplicate_map[\"stateful_circuits\"]\n"
+        },
+        {
+          "current": "        .find(|circuit| circuit[\"name\"] == \"recordExists\")\n        .unwrap();\n    helper[\"return_value\"][\"value\"][\"otherwise\"][\"field\"] = serde_json::json!(\"records\");\n    assert!(recorded(&duplicate_map).0);\n    let mut missing_set = original;\n    actions(&mut missing_set)[3][\"then\"][\"actions\"][1][\"field\"] = serde_json::json!(\"missing_set\");\n    assert!(!recorded(&missing_set).0);\n}\n",
+          "previous": "        .find(|circuit| circuit[\"name\"] == \"recordExists\")\n        .unwrap();\n    helper[\"return_value\"][\"value\"][\"otherwise\"][\"field\"] = serde_json::json!(\"records\");\n    assert!(!recorded(&duplicate_map).0);\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/map_recording.rs": {
+      "previous_sha256": "4eb287d0bab11e84db2b547c409eedc0806d0d4dc626f2db390a12ae9b81b654",
+      "current_sha256": "db2bd84638c25a7fa484033c02de9535d99644f8a3c4d0753e1945b3fbbdf2b1",
+      "predecessor_reconstruction": [
+        {
+          "current": "use compact_rust_backend::{RenderError, render, render_with_capabilities};\n\n#[test]\nfn opaque_string_map_recording_composes_writes_and_keeps_return_domain() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../opaque-string-map-schema13-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n",
+          "previous": "use compact_rust_backend::{RenderError, render, render_with_capabilities};\n\n#[test]\nfn opaque_string_map_recording_requires_closed_field_lookup_sequence() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../opaque-string-map-schema13-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n"
+        },
+        {
+          "current": "    contract.stateful_circuits[0].actions.push(original.clone());\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"put\".into(), true), (\"ensure\".into(), true)]\n    );\n    let source = render_with_capabilities(&contract).unwrap().source;\n    let body = super::lifecycle_recording::generated_body(&source, \"recorded\", \"put\");\n    assert_eq!(body.matches(\"record_insert\").count(), 2);\n    contract.stateful_circuits[0].actions.truncate(1);\n    let StateAction::MapInsert { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n",
+          "previous": "    contract.stateful_circuits[0].actions.push(original.clone());\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"put\".into(), false), (\"ensure\".into(), true)]\n    );\n    contract.stateful_circuits[0].actions.truncate(1);\n    let StateAction::MapInsert { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n"
+        },
+        {
+          "current": "    *value = Expr::FieldLiteral { value: \"7\".into() };\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"put\".into(), true), (\"ensure\".into(), true)]\n    );\n    contract.stateful_circuits[0].actions[0] = original;\n\n",
+          "previous": "    *value = Expr::FieldLiteral { value: \"7\".into() };\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"put\".into(), false), (\"ensure\".into(), true)]\n    );\n    contract.stateful_circuits[0].actions[0] = original;\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/merkle_recording.rs": {
+      "previous_sha256": "15515de5553f044334e0301a79fca65279984de9b1669b7c3e5d87ac65fe5b0e",
+      "current_sha256": "4f3dd30507c28ca2e65b892db438cd0bb5f7663ef53c9de4107ec762bee9e98a",
+      "predecessor_reconstruction": [
+        {
+          "current": "            name: \"position\".into(),\n        }),\n    };\n    let composed = render_with_capabilities(&contract).unwrap();\n    assert!(\n        composed\n            .capabilities\n            .circuits\n            .iter()\n            .all(|c| c.recorded && c.observed_call)\n    );\n    let body = super::lifecycle_recording::generated_body(&composed.source, \"recorded\", \"place\");\n    assert!(body.contains(\"record_insert_index\"));\n    assert!(body.contains(\"if \"));\n\n    let StateAction::MerkleInsertIndex {\n        value, position, ..\n",
+          "previous": "            name: \"position\".into(),\n        }),\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert_eq!(\n        rejected.capabilities.circuits[0]\n            .recording_unavailable\n            .as_ref()\n            .unwrap()\n            .ir_node,\n        \"StateAction::MerkleInsertIndex\"\n    );\n    assert!(rejected.capabilities.circuits[1].recorded);\n\n    let StateAction::MerkleInsertIndex {\n        value, position, ..\n"
+        },
+        {
+          "current": "            name: \"value\".into(),\n        }),\n    };\n    let composed = render_with_capabilities(&contract).unwrap();\n    assert!(\n        composed\n            .capabilities\n            .circuits\n            .iter()\n            .all(|c| c.recorded && c.observed_call)\n    );\n    let StateAction::MerkleInsertIndex { index, .. } =\n        &mut contract.stateful_circuits[0].actions[0]\n    else {\n        unreachable!()\n    };\n    *index = 99;\n    assert!(render_with_capabilities(&contract).is_err());\n}\n\n#[test]\nfn indexed_merkle_recording_composes_typed_conditional_position_binding() {\n    let position = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n",
+          "previous": "            name: \"value\".into(),\n        }),\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert!(rejected.capabilities.circuits[1].recorded);\n}\n\n#[test]\nfn indexed_merkle_recording_accepts_only_typed_literal_position_binding() {\n    let position = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n"
+        },
+        {
+          "current": "            max: u64::MAX.to_string(),\n        }),\n    };\n    let composed = render_with_capabilities(&contract).unwrap();\n    assert!(\n        composed.capabilities.circuits[0].recorded\n            && composed.capabilities.circuits[0].observed_call\n    );\n    let body = super::lifecycle_recording::generated_body(&composed.source, \"recorded\", \"replace\");\n    assert!(body.contains(\"if \") && body.contains(\"record_insert_index\"));\n    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n    };\n    bindings[0].value = Expr::Boolean { value: true };\n    assert!(render_with_capabilities(&contract).is_err());\n}\n\n#[test]\n",
+          "previous": "            max: u64::MAX.to_string(),\n        }),\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert!(!rejected.capabilities.circuits[0].observed_call);\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_calls.rs": {
+      "previous_sha256": "df95f0f80739b6b8727bdbf753a26b44d2721fa753fbae0ea97c40e83cd14efd",
+      "current_sha256": "a6421b8d3b81fe1882b3e6779da2676a807b46dbdfe5a8b3466a507e7b57819a",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .contains(\"fn __compact_recorded_body_storeVector\")\n    );\n    assert!(rendered.source.contains(\"pure_circuits::hashVector(\"));\n    let body =\n        super::lifecycle_recording::generated_body(&rendered.source, \"recorded\", \"conditional\");\n    assert!(body.contains(\"record_read\") && body.contains(\"record_write\"));\n    assert!(body.contains(\"hashVector\"));\n\n    contract.circuits[0].body = Expr::TransientHash {\n        value: Box::new(Expr::FieldLiteral { value: \"7\".into() }),\n",
+          "previous": "            .contains(\"fn __compact_recorded_body_storeVector\")\n    );\n    assert!(rendered.source.contains(\"pure_circuits::hashVector(\"));\n    assert!(rendered.source.contains(\"__compact_recorded_pair_arg_\"));\n\n    contract.circuits[0].body = Expr::TransientHash {\n        value: Box::new(Expr::FieldLiteral { value: \"7\".into() }),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_conditionals.rs": {
+      "previous_sha256": "9cafb7a2c20055f41c7ef40d5695b6b82501ee9edb264c27ac0d61d81dfc72af",
+      "current_sha256": "1c756677b2b2c274d2e8c76d169b25bb5f00348e8c2233e8e794a143d14b4cf0",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn ternary_struct_member_records_typed_literal_and_parameter_values() {\n    let box_ty = Type::Struct {\n        name: \"Box\".into(),\n        fields: vec![StructField {\n",
+          "previous": "}\n\n#[test]\nfn closed_ternary_struct_member_records_only_literal_field_values() {\n    let box_ty = Type::Struct {\n        name: \"Box\".into(),\n        fields: vec![StructField {\n"
+        },
+        {
+          "current": "    }];\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    let body = super::lifecycle_recording::generated_body(&rendered.source, \"recorded\", \"test\");\n    assert!(body.contains(\"record_write\") && body.contains(\"if \"));\n    let literal_body = body;\n\n    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n",
+          "previous": "    }];\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(rendered.source.contains(\"__compact_recorded_struct_\"));\n\n    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n"
+        },
+        {
+          "current": "        ty: uint,\n    };\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(\n        rendered.capabilities.circuits[0].recorded\n            && rendered.capabilities.circuits[0].observed_call\n    );\n    let body = super::lifecycle_recording::generated_body(&rendered.source, \"recorded\", \"test\");\n    // Generated parameters use positional Rust identifiers, not source names.\n    // Only the branch input changed: require the emitted body to reflect it.\n    assert_ne!(body, literal_body);\n    assert!(body.contains(\"if \") && body.contains(\"record_write\"));\n}\n",
+          "previous": "        ty: uint,\n    };\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(!rendered.capabilities.circuits[0].recorded);\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_guards.rs": {
+      "previous_sha256": "4ee87556c70bafa87c649a249723dd20e4c8064a1b4500718abe4696387fb326",
+      "current_sha256": "6639ef9b040340c6af80e6ad4fd9e5d64b5d6eaad012d87f6de0fc4708a26696",
+      "predecessor_reconstruction": [
+        {
+          "current": "use compact_rust_backend::{render, render_with_capabilities};\n\n#[test]\nfn recorded_mixed_width_guard_composes_typed_widths_and_public_reads() {\n    let mut contract = Contract {\n        schema_version: SCHEMA_VERSION,\n        type_aliases: vec![],\n",
+          "previous": "use compact_rust_backend::{render, render_with_capabilities};\n\n#[test]\nfn recorded_mixed_width_guard_requires_exact_public_widths_and_pure_operands() {\n    let mut contract = Contract {\n        schema_version: SCHEMA_VERSION,\n        type_aliases: vec![],\n"
+        },
+        {
+          "current": "            .recorded\n    };\n    assert!(recorded(&contract));\n    let source = render_with_capabilities(&contract).unwrap().source;\n    let body = super::lifecycle_recording::generated_body(&source, \"recorded\", \"matching\");\n    assert!(body.contains(\"record_increment\"));\n\n    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned {\n        max: \"65535\".into(),\n    };\n    assert!(recorded(&contract));\n    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: \"255\".into() };\n    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]\n    else {\n",
+          "previous": "            .recorded\n    };\n    assert!(recorded(&contract));\n    assert!(\n        render_with_capabilities(&contract)\n            .unwrap()\n            .source\n            .contains(\"__compact_recorded_widened_0\")\n    );\n\n    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned {\n        max: \"65535\".into(),\n    };\n    assert!(!recorded(&contract));\n    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: \"255\".into() };\n    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]\n    else {\n"
+        },
+        {
+          "current": "        field: \"stored\".into(),\n        index: 1,\n    };\n    assert!(recorded(&contract));\n    let source = render_with_capabilities(&contract).unwrap().source;\n    let body = super::lifecycle_recording::generated_body(&source, \"recorded\", \"matching\");\n    assert!(body.find(\"record_read\").unwrap() < body.find(\"record_increment\").unwrap());\n    let StateAction::CounterIncrement { index, .. } = &mut contract.stateful_circuits[0].actions[1]\n    else {\n        unreachable!()\n    };\n    *index = 99;\n    assert!(render_with_capabilities(&contract).is_err());\n}\n\n#[test]\nfn recorded_product_guard_composes_typed_pure_bodies_and_counter_amounts() {\n    let uint32 = Type::Unsigned {\n        max: \"4294967295\".into(),\n    };\n",
+          "previous": "        field: \"stored\".into(),\n        index: 1,\n    };\n    assert!(!recorded(&contract));\n}\n\n#[test]\nfn recorded_product_guard_requires_closed_pure_body_and_counter_one() {\n    let uint32 = Type::Unsigned {\n        max: \"4294967295\".into(),\n    };\n"
+        },
+        {
+          "current": "    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {\n        steps.push(Expr::Unit);\n    }\n    assert!(recorded(&contract));\n    contract = pristine.clone();\n    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body\n        && let Expr::Assert { condition, .. } = &mut steps[0]\n",
+          "previous": "    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {\n        steps.push(Expr::Unit);\n    }\n    assert!(!recorded(&contract));\n    contract = pristine.clone();\n    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body\n        && let Expr::Assert { condition, .. } = &mut steps[0]\n"
+        },
+        {
+          "current": "            max: \"17179869180\".into(),\n        };\n    }\n    assert!(recorded(&contract));\n    contract = pristine.clone();\n    if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {\n        bindings[0].value = Expr::UnsignedLiteral {\n",
+          "previous": "            max: \"17179869180\".into(),\n        };\n    }\n    assert!(!recorded(&contract));\n    contract = pristine.clone();\n    if let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[1] {\n        bindings[0].value = Expr::UnsignedLiteral {\n"
+        },
+        {
+          "current": "            max: \"65535\".into(),\n        };\n    }\n    assert!(recorded(&contract));\n    contract = pristine;\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {\n        arguments.swap(0, 1);\n    }\n    assert!(recorded(&contract));\n    let source = render_with_capabilities(&contract).unwrap().source;\n    let body = super::lifecycle_recording::generated_body(&source, \"recorded\", \"record\");\n    assert!(body.contains(\"record_increment\") && body.contains(\"guard\"));\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {\n        arguments.pop();\n    }\n    assert!(render_with_capabilities(&contract).is_err());\n}\n\n#[test]\n",
+          "previous": "            max: \"65535\".into(),\n        };\n    }\n    assert!(!recorded(&contract));\n    contract = pristine;\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[0].actions[0] {\n        arguments.swap(0, 1);\n    }\n    assert!(!recorded(&contract));\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_structs.rs": {
+      "previous_sha256": "8952a2df0accd62ccf804f9867674e1c0d1d3ee55217931d3d0ae614667ab9f9",
+      "current_sha256": "c904e6e9eac8c694c3b2f46027c3e8def71b549e5d288f7019ffcc0a40524f0b",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn recorded_struct_pure_guard_composes_typed_calls_and_continuations() {\n    let policy = Type::Struct {\n        name: \"Policy\".into(),\n        fields: vec![StructField {\n",
+          "previous": "}\n\n#[test]\nfn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {\n    let policy = Type::Struct {\n        name: \"Policy\".into(),\n        fields: vec![StructField {\n"
+        },
+        {
+          "current": "            index: 0,\n            value: Expr::FieldLiteral { value: \"2\".into() },\n        });\n    assert!(recorded(&contract));\n    contract = closed.clone();\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {\n        arguments[0] = Expr::Default {\n            ty: parameters[0].ty.clone(),\n        };\n    }\n    assert!(recorded(&contract));\n    contract = closed.clone();\n    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {\n        steps.push(Expr::Unit);\n    }\n    assert!(recorded(&contract));\n    contract = closed.clone();\n    contract.stateful_circuits[0].parameters.push(Parameter {\n        name: \"extra\".into(),\n",
+          "previous": "            index: 0,\n            value: Expr::FieldLiteral { value: \"2\".into() },\n        });\n    assert!(!recorded(&contract));\n    contract = closed.clone();\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {\n        arguments[0] = Expr::Default {\n            ty: parameters[0].ty.clone(),\n        };\n    }\n    assert!(!recorded(&contract));\n    contract = closed.clone();\n    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {\n        steps.push(Expr::Unit);\n    }\n    assert!(!recorded(&contract));\n    contract = closed.clone();\n    contract.stateful_circuits[0].parameters.push(Parameter {\n        name: \"extra\".into(),\n"
+        },
+        {
+          "current": "    {\n        arguments.push(Expr::FieldLiteral { value: \"3\".into() });\n    }\n    assert!(recorded(&contract));\n\n    // The checked effect sequence also supports different typed amounts and\n    // additional public operations after the same guard.\n    contract = closed;\n    contract.ledger_fields.push(LedgerField {\n        source: None,\n",
+          "previous": "    {\n        arguments.push(Expr::FieldLiteral { value: \"3\".into() });\n    }\n    assert!(!recorded(&contract));\n\n    // The same guard may precede precisely one compiler-emitted Uint<16>\n    // literal-one Let/Counter increment. Different amounts and extra actions\n    // cannot be admitted by this shortcut.\n    contract = closed;\n    contract.ledger_fields.push(LedgerField {\n        source: None,\n"
+        },
+        {
+          "current": "            max: \"65535\".into(),\n        };\n    }\n    assert!(recorded(&contract));\n    contract = counter.clone();\n    contract.stateful_circuits[1]\n        .actions\n",
+          "previous": "            max: \"65535\".into(),\n        };\n    }\n    assert!(!recorded(&contract));\n    contract = counter.clone();\n    contract.stateful_circuits[1]\n        .actions\n"
+        },
+        {
+          "current": "            field: \"accepted\".into(),\n            index: 1,\n        });\n    assert!(recorded(&contract));\n    contract = counter;\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {\n        arguments[1] = Expr::Default {\n            ty: parameters[1].ty.clone(),\n        };\n    }\n    assert!(recorded(&contract));\n    let source = render_with_capabilities(&contract).unwrap().source;\n    let body = super::lifecycle_recording::generated_body(&source, \"recorded\", \"caller\");\n    assert!(body.contains(\"guard\") && body.contains(\"record_increment\"));\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {\n        arguments.pop();\n    }\n    assert!(render_with_capabilities(&contract).is_err());\n}\n\n#[test]\n",
+          "previous": "            field: \"accepted\".into(),\n            index: 1,\n        });\n    assert!(!recorded(&contract));\n    contract = counter;\n    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {\n        arguments[1] = Expr::Default {\n            ty: parameters[1].ty.clone(),\n        };\n    }\n    assert!(!recorded(&contract));\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/set_composition.rs": {
+      "previous_sha256": "4bab66e84894400f8e04b90353c27f08914bf0a1449e2987ba64a2e5818b727b",
+      "current_sha256": "d0d0dc1fde4987c5099c2c824765cfb92fa2db3b5b118724126c9da315d470f5",
+      "predecessor_reconstruction": [
+        {
+          "current": "            }\n            _ => unreachable!(),\n        }\n        if kind == \"hidden_map\" {\n            let output =\n                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())\n                    .unwrap();\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| c.name == \"mutate\" && c.recorded && c.observed_call)\n            );\n            let body = output.source.split(\"pub mod recorded\").nth(1).unwrap();\n            assert!(\n                body.split_whitespace()\n                    .collect::<String>()\n                    .contains(\"other_map.record_remove(\")\n            );\n            // Typed mutation composition does not admit an unsupported Map reset.\n            let actions = declaration(&mut v, \"stateful_circuits\", \"mutate\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"] =\n                json!({\"kind\":\"map_reset\",\"field\":\"other_map\",\"index\":2});\n        }\n        assert!(!recorded(v, \"mutate\"), \"{kind}\");\n    }\n}\n",
+          "previous": "            }\n            _ => unreachable!(),\n        }\n        assert!(!recorded(v, \"mutate\"), \"{kind}\");\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/unit_composition.rs": {
+      "previous_sha256": "473e89c4db634a42ec5fef69deee95deb5ce10912c7f18368333491957b69858",
+      "current_sha256": "e13dffc19ea6404cb3885525327091b4e34736514befc83c2df1347adf3605d4",
+      "predecessor_reconstruction": [
+        {
+          "current": "    serde_json::from_str(include_str!(\"unit-composition/crypto.json\")).unwrap()\n}\n#[test]\nfn stateful_crypto_helpers_record_public_reads_and_reject_invalid_slots() {\n    assert!(recorded(crypto()));\n    for unused_binding in [false, true] {\n        let mut v = crypto();\n",
+          "previous": "    serde_json::from_str(include_str!(\"unit-composition/crypto.json\")).unwrap()\n}\n#[test]\nfn native_crypto_helpers_cannot_hide_a_public_read_and_fall_back_to_recorded() {\n    assert!(recorded(crypto()));\n    for unused_binding in [false, true] {\n        let mut v = crypto();\n"
+        },
+        {
+          "current": "            .as_array_mut()\n            .unwrap()\n            .push(json!({\"kind\":\"assert\",\"condition\":hidden,\"message\":\"hidden public effect\"}));\n        let output =\n            render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())\n                .unwrap();\n        assert!(\n            output\n                .capabilities\n                .circuits\n                .iter()\n                .any(|c| c.name == \"close\" && c.recorded && c.observed_call)\n        );\n        let body = output.source.split(\"pub mod recorded\").nth(1).unwrap();\n        let baseline =\n            render_with_capabilities(&serde_json::from_value::<Contract>(crypto()).unwrap())\n                .unwrap();\n        let before = baseline.source.split(\"pub mod recorded\").nth(1).unwrap();\n        assert!(body.matches(\"record_read(\").count() > before.matches(\"record_read(\").count());\n        let actions = circuit(&mut v, \"schnorrVerify\")[\"actions\"]\n            .as_array_mut()\n            .unwrap();\n        let condition = &mut actions.last_mut().unwrap()[\"condition\"];\n        let read = if unused_binding {\n            &mut condition[\"bindings\"][0][\"value\"]\n        } else {\n            &mut condition[\"otherwise\"]\n        };\n        read[\"index\"] = json!(99);\n        assert!(\n            !recorded(v),\n            \"invalid read slot, unused_binding={unused_binding}\"\n        );\n    }\n}\n#[test]\n",
+          "previous": "            .as_array_mut()\n            .unwrap()\n            .push(json!({\"kind\":\"assert\",\"condition\":hidden,\"message\":\"hidden public effect\"}));\n        assert!(!recorded(v), \"unused_binding={unused_binding}\");\n    }\n}\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/recording_profile_attempt.rs": {
+      "previous_sha256": "4a7842e1b1a6493c902c4ba19674259642e24f52bc1418a833922ab05a47a4bc",
+      "current_sha256": "4a7842e1b1a6493c902c4ba19674259642e24f52bc1418a833922ab05a47a4bc",
+      "predecessor_reconstruction": [],
+      "historical_sha256": "e0fd40c2c6074e69b47384d43fd7c7dd734a3cdc4d3c56d6cfff905c0672ca55",
+      "historical_reconstruction": [
+        {
+          "current": "    send.recording_unavailable.clone().unwrap()\n}\n\nfn admit_defaults_then_replace_with_unsupported_commit(mut value: Value) -> Value {\n    let output = rendered(value.clone());\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .all(|c| c.recorded && c.observed_call)\n    );\n\n    fn replace(node: &mut Value) -> usize {\n        if node[\"kind\"] == \"default\" && node[\"ty\"][\"kind\"] == \"opaque_string\" {\n            // The old default expression is now supported. Keep the same\n            // surrounding hash and source path, with an independently\n            // unsupported commitment input policy as the negative control.\n            *node = json!({\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}});\n            return 1;\n        }\n        match node {\n            Value::Array(nodes) => nodes.iter_mut().map(replace).sum(),\n            Value::Object(fields) => fields.values_mut().map(replace).sum(),\n            _ => 0,\n        }\n    }\n    assert!(replace(&mut value) > 0);\n    value\n}\n\n#[test]\nfn admitted_send_profiles_keep_native_and_recorded_surface() {\n    let source = rendered(source());\n",
+          "previous": "    send.recording_unavailable.clone().unwrap()\n}\n\n#[test]\nfn admitted_send_profiles_keep_native_and_recorded_surface() {\n    let source = rendered(source());\n"
+        },
+        {
+          "current": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": original\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);\n    assert_eq!(gap.path, \"actions[0]\");\n}\n\n#[test]\nfn supported_default_and_rejected_commit_keep_exact_unused_binding() {\n    let mut value = source();\n    let original = value[\"stateful_circuits\"][1][\"return_value\"][\"value\"].take();\n    value[\"stateful_circuits\"][1][\"return_value\"][\"value\"] = json!({\n",
+          "previous": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": original\n    });\n    let gap = send_gap(value);\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);\n    assert_eq!(gap.path, \"actions[0]\");\n}\n\n#[test]\nfn rejected_unused_dynamic_hash_reports_its_exact_binding() {\n    let mut value = source();\n    let original = value[\"stateful_circuits\"][1][\"return_value\"][\"value\"].take();\n    value[\"stateful_circuits\"][1][\"return_value\"][\"value\"] = json!({\n"
+        },
+        {
+          "current": "        }],\n        \"body\": original\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail\n            .contains(\"persistent commitment requires a Bytes32 pair and Bytes32 opening\")\n    );\n    assert_eq!(gap.path, \"return_value.value.bindings[0].value.value\");\n}\n\n#[test]\nfn defaults_and_rejected_commits_keep_unselected_and_nested_source_paths() {\n    let mut branch = source();\n    let original = branch[\"stateful_circuits\"][1][\"return_value\"][\"value\"].take();\n    let result_ty = branch[\"stateful_circuits\"][1][\"result\"].clone();\n",
+          "previous": "        }],\n        \"body\": original\n    });\n    let gap = send_gap(value);\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail\n            .contains(\"default requires a supported struct type\")\n    );\n    assert_eq!(gap.path, \"return_value.value.bindings[0].value.value\");\n}\n\n#[test]\nfn rejected_unselected_branch_and_nested_argument_keep_source_paths() {\n    let mut branch = source();\n    let original = branch[\"stateful_circuits\"][1][\"return_value\"][\"value\"].take();\n    let result_ty = branch[\"stateful_circuits\"][1][\"result\"].clone();\n"
+        },
+        {
+          "current": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": {\"kind\": \"default\", \"ty\": result_ty}}\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(branch));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(\n        gap.path,\n",
+          "previous": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": {\"kind\": \"default\", \"ty\": result_ty}}\n    });\n    let gap = send_gap(branch);\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(\n        gap.path,\n"
+        },
+        {
+          "current": "            \"value\": {\"kind\":\"transient_hash\", \"value\":{\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": first\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(\n        argument,\n    ));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail\n            .contains(\"persistent commitment requires a Bytes32 pair and Bytes32 opening\")\n    );\n    assert_eq!(\n        gap.path,\n",
+          "previous": "            \"value\": {\"kind\":\"transient_hash\", \"value\":{\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": first\n    });\n    let gap = send_gap(argument);\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail\n            .contains(\"default requires a supported struct type\")\n    );\n    assert_eq!(\n        gap.path,\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/public_effects.rs": "af25cd3bb4c95900cedd6e8aaff94bf092fa4f4fcc061b12e3dd33502380fdb2",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "cb304734df414c8ba0367338dc5b7ec7ad72448f2ddfef2a5f7697de2b70dcce",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests.rs": "bf4e4668546083d474b1f9461f5343cd80889b91d311de55c6ed508474db165d",
+    "tools/compact-rust-backend/src/recorded/effect_plan/model.rs": "d3a0d73bc7e18acfece4b99dde430143930052b0eac36f7474fee6b9325f735c",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs": "e7aa6a80f5e17b1728d7e694b8032d95b6b5d4fa079416a9ab8807180b90e41f",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json": "00445f0e9e4c42af6b8dda3a33912542ed46ad7c671f56daa55a160ce8f32b19",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json": "eda751f75344d765430226e2651201e947c1d1d584818c43fe024424df65df0c"
+  },
+  "test_only_markers": {
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": [
+      "pub(super) use composition::CompositionRejection;",
+      "pub(super) fn lower_unit_composition_checked<'a>("
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition.rs": [
+      "use relation_root_preflight::RelationPermit;",
+      "#[derive(Debug)]\npub(in crate::recorded) struct CompositionRejection {",
+      "#[derive(Debug, PartialEq, Eq)]\nenum RejectionPrecision {",
+      "#[derive(Debug, PartialEq, Eq)]\nenum RejectionPhase {",
+      "impl CompositionRejection {",
+      "struct Audit<'a> {",
+      "impl Audit<'_> {",
+      "pub(super) fn lower_checked<'a>(",
+      "mod selected_set_preflight;",
+      "mod nested_map_preflight;",
+      "mod relation_root_preflight;"
+    ]
+  }
+}

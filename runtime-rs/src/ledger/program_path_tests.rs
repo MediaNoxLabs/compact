@@ -47,7 +47,7 @@ fn mutation_operands_preserve_exact_encoding_boundaries() {
             merkle_insert_hash_index_program(p, FixedBytes([0; 32]), 0)
         }),
         ("plain default indexed", 15, |p| {
-            merkle_insert_index_default_program::<bool, _>(p, 0)
+            merkle_insert_index_program(p, bool::default(), 0)
         }),
         ("historic indexed", 14, |p| {
             historic_merkle_insert_index_program(p, true, 0)
@@ -56,7 +56,7 @@ fn mutation_operands_preserve_exact_encoding_boundaries() {
             historic_merkle_insert_hash_index_program(p, FixedBytes([0; 32]), 0)
         }),
         ("historic default indexed", 14, |p| {
-            historic_merkle_insert_index_default_program::<bool, _>(p, 0)
+            historic_merkle_insert_index_program(p, bool::default(), 0)
         }),
         ("reset history", 13, |p| {
             historic_reset_history_program(p.into())

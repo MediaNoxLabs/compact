@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "issue": 529,
+  "retired_route": "selector.composite-values",
+  "replacement_route": "algebra.composite-values",
+  "claim": "Seventh reviewed production admission family retirement, including Values, Intents and FieldObservations. Shared CompositeDomain evaluation remains in production for other families; 84 frozen boundaries are not language coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "original_source": "tools/compact-rust-backend/src/recorded/typed_plan.rs",
+  "original_source_sha256": "076a98d10acd036fbcc6d72195961e1ff10ae0745336ff12de71b6826a301ef0",
+  "reviewed_checkpoint": "910497c88b40f12fbd0ea548715b50095225c7f2",
+  "oracle_source": "tools/compact-rust-backend/src/recorded/typed_plan/composite_reference.rs",
+  "original_body_start": "pub(super) fn lower_composite<'a>(",
+  "oracle_body_start": "pub(super) fn lower<'a>(",
+  "original_functions_sha256": {
+    "fn composite_type(": "b91bd787b848cd1d99f3fe27c62b5336541ad0ffdeb4b37baecba9bef2bc7a55",
+    "fn composite_value(": "4304278362ae87c5b3bb95c799eb5f22dda0c2a1cc20acf6c841dbef7baf26bf",
+    "fn composite_circuit(": "c94fcf7bcdd956f8e2770994a12ca7958c6882cc330bc3bfbc561f30eae81611",
+    "pub(super) fn lower_composite<'a>(": "70061d85c4133514ad764cf4f5e19d35e3876fd9671c8a9e9428e92264822833"
+  },
+  "oracle_normalized_functions_sha256": {
+    "fn composite_type(": "b91bd787b848cd1d99f3fe27c62b5336541ad0ffdeb4b37baecba9bef2bc7a55",
+    "fn composite_value(": "4304278362ae87c5b3bb95c799eb5f22dda0c2a1cc20acf6c841dbef7baf26bf",
+    "fn composite_circuit(": "c94fcf7bcdd956f8e2770994a12ca7958c6882cc330bc3bfbc561f30eae81611",
+    "pub(super) fn lower_composite<'a>(": "70061d85c4133514ad764cf4f5e19d35e3876fd9671c8a9e9428e92264822833"
+  },
+  "field_observation_source": "tools/compact-rust-backend/src/recorded/typed_plan/field_observations.rs",
+  "field_observation_source_sha256": "c001d565438add4b63833c079bdf6f03c1ba227c3f5122410348457be563fd00",
+  "prior_kernel_transition_canonical_sha256": "8f1240de37d28db0d00543bbc84199a0d17adfecfb4219ad8aa9b1a4c5f80538",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "adb06ace75db3cb00f689fab7a55790cacb1929aebfc5981691a46964cb84196"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "78117e3e3a519f717b1f32e51a9c865e7bc8e86b9fcfcfbf6a2679dc1631efde"
+  },
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_composite",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "6b4964808a64ab9d901b1e7b2809644952d74ba1a0cd869bb1ea075853dbf9fb"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower",
+      "typed_plan::lower_shielded_receive",
+      "typed_plan::lower_voting_commit",
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_immediate_shielded_send",
+      "typed_plan::lower_shielded_send_checked",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_phase_reset",
+      "typed_plan::lower_unit_composition_checked",
+      "zswap_plan::lower"
+    ],
+    "function_sha256": "2293b59fc421d4a02496adf8e760d81838d40b4e923c20e3739d7474d0d204ed"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.immediate-send",
+    "selector.membership-optional",
+    "selector.phase-reset",
+    "selector.reset-payout",
+    "selector.shielded-merge",
+    "selector.shielded-payout",
+    "selector.shielded-receive",
+    "selector.shielded-send",
+    "selector.unit-composition",
+    "selector.voting-commit",
+    "selector.zswap"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values"
+  ],
+  "new_retired_routes": [
+    "selector.composite-values"
+  ],
+  "retained_shared_production_symbols": [
+    "CompositeDomain",
+    "Plan::expression",
+    "Plan::inline_call",
+    "intent_effect::emit",
+    "coin_shapes"
+  ]
+}

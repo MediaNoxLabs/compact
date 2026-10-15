@@ -1,0 +1,23 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Stored {
+  stamp: Uint<64>;
+  fields: Vector<2, Field>;
+  pair: [Field, Boolean];
+  wide: Uint<129>;
+}
+export ledger records: Map<Opaque<"string">, Stored>;
+constructor(id: Opaque<"string">, value: Stored) {
+  records.insert(disclose(id), disclose(value));
+}
+export pure circuit assertFresh(record: Stored, asOf: Uint<64>): [] {
+  assert(record.stamp <= asOf, "record is in the future");
+}
+export circuit readFresh(id: Opaque<"string">, asOf: Uint<64>): [] {
+  const key = disclose(id);
+  assert(records.member(key), "record does not exist");
+  const record = records.lookup(key);
+  assertFresh(record, disclose(asOf));
+}

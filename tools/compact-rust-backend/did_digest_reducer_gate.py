@@ -23,6 +23,7 @@ import re
 import shutil
 import sys
 
+import forge_circuits
 import local_parity_gate as common
 import resolve_ledger_test_static as ledger_static
 
@@ -51,7 +52,7 @@ def hashes(paths):
 def source_inventory():
     paths = [ROOT / SOURCE, ROOT / "Cargo.toml", ROOT / "Cargo.lock",
              ROOT / "tools/compact-rust-proof-smoke/Cargo.toml", Path(__file__),
-             Path(common.__file__), Path(ledger_static.__file__)]
+             Path(common.__file__), Path(forge_circuits.__file__), Path(ledger_static.__file__)]
     for folder in ("runtime-rs", "tools/compact-rust-backend/src",
                    "tools/compact-rust-proof-smoke/src", FIXTURE_ROOT):
         paths.extend(path for path in (ROOT / folder).rglob("*")
@@ -87,7 +88,7 @@ def run_gate(directory, compiler, scheme, target, environment=None, *, command=c
             path = Path(env.get(key, ""))
             require(bool(env.get(key)) and path.is_absolute() and path.is_dir(),
                     f"{key} must be an absolute existing directory")
-        zkir = shutil.which("zkir", path=env.get("PATH"))
+        zkir = forge_circuits.zkir_executable(env)
         require(zkir is not None, "reducer proof gate requires zkir")
         static_dir = Path(env["MIDNIGHT_LEDGER_TEST_STATIC_DIR"])
         dust_paths = []
@@ -110,8 +111,11 @@ def run_gate(directory, compiler, scheme, target, environment=None, *, command=c
                     "COMPACT_RUST_RUNTIME_DIR": str(ROOT), "CARGO_TARGET_DIR": str(target.resolve()),
                     "CARGO_INCREMENTAL": "0", "RUSTUP_TOOLCHAIN": "1.99.0",
                     "PYTHONDONTWRITEBYTECODE": "1"})
+        env = forge_circuits.configure_environment(env, directory / "forge",
+                                                   real_zkir=components["zkir"]["snapshot"])
+        receipt["key_generation"] = forge_circuits.provenance(env)
         def execute(argv, label, stdout_path=None):
-            command([str(arg) for arg in argv], label, directory, receipt, env=env,
+            command(forge_circuits.command([str(arg) for arg in argv], env), label, directory, receipt, env=env,
                     stdout_path=stdout_path)
         output = directory / "reducer"
         execute([components["compactc"]["snapshot"], "--target", "rust", "--skip-zk",

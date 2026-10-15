@@ -1,0 +1,939 @@
+{
+  "schema_version": 1,
+  "issue": 611,
+  "new_route_ids": [],
+  "baseline_commit": "7cad2355868222135dde1dcad95a747c385a1b75",
+  "claim": "Widen existing PersistentCommit value input to existing fixed-aligned FAB policy, preserving opening/result, operand order, canonical/resource and source opaque exclusions; preserve canonical/resource/default policies, prior selectors and retirement accounting.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/capabilities/resource_diagnostic_tests.rs": {
+      "previous_sha256": "c6984673b2fe0d5b0dae3e9df8cf6499e8e26740f583017cd84716a7098f6817",
+      "current_sha256": "6a36bc5ba558e05ced61ea483683bbf477bbba5c35dd625b38d984e6224aa3bb",
+      "predecessor_reconstruction": [
+        {
+          "current": "    report.circuits.iter().find(|row| row.name == ROOT).unwrap()\n}\nfn persistent_commit() -> Value {\n    json!({\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0_u8;32]}})\n}\n\nfn assert_resource(gap: &Value) {\n",
+          "previous": "    report.circuits.iter().find(|row| row.name == ROOT).unwrap()\n}\nfn persistent_commit() -> Value {\n    json!({\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0_u8;32]}})\n}\n\nfn assert_resource(gap: &Value) {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "dd119bd979eacf64a65fe3fefae44e59c113a70ed0f47a26fc712bd9bcb29e37",
+      "current_sha256": "4a8faec8126f83a58bdb9503b4fc02b9a642b389d73e278ac2ab5aad4ecb3f44",
+      "predecessor_reconstruction": [
+        {
+          "current": "        value\n    }};\n}\n\n#[cfg(test)]\npub(crate) mod test_support;\n\nmod diagnostics;\npub(crate) use diagnostics::RecordingOutcome;\n",
+          "previous": "        value\n    }};\n}\n\nmod diagnostics;\npub(crate) use diagnostics::RecordingOutcome;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests/inclusion.rs": {
+      "previous_sha256": "6bfd75758ba579eec70c1c69b3508605ae9059f18c60b2146a1ed28513e9affa",
+      "current_sha256": "76a772c29de66e04a644777268b3cd60078d9426073e3665882976a82e48b7a8",
+      "predecessor_reconstruction": [
+        {
+          "current": "        assert_old_positive(&contract(v), mode);\n    }\n    let mut v = isolated();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = contract(v);\n    let cx = Context::new(&c);\n    assert!(cx.prefix(), \"the permit alone ignores helper bodies\");\n",
+          "previous": "        assert_old_positive(&contract(v), mode);\n    }\n    let mut v = isolated();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = contract(v);\n    let cx = Context::new(&c);\n    assert!(cx.prefix(), \"the permit alone ignores helper bodies\");\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/expressions.rs": {
+      "previous_sha256": "8bb5d3565aeebb69a26bc87530fd55cb1fb62a635c550988ffc0e9276e62c05d",
+      "current_sha256": "8fab605327baf5bb7520d6b6f117727399d7b7db35891615b2a1af9a935379a7",
+      "predecessor_reconstruction": [
+        {
+          "current": "                let value = self.expression(value, scope, bindings, &format!(\"{path}.value\"))?;\n                let opening =\n                    self.expression(opening, scope, bindings, &format!(\"{path}.opening\"))?;\n                if !validate::fixed_aligned_fab_type(&value.ty)\n                    || opening.ty != (Type::Bytes { length: 32 })\n                {\n                    return Err(self.unsupported_expression_reason(\n                        expression,\n                        path,\n                        \"persistent commitment requires a fixed aligned FAB value and Bytes32 opening\",\n                    ));\n                }\n                (\n",
+          "previous": "                let value = self.expression(value, scope, bindings, &format!(\"{path}.value\"))?;\n                let opening =\n                    self.expression(opening, scope, bindings, &format!(\"{path}.opening\"))?;\n                if value.ty\n                    != (Type::Tuple {\n                        elements: vec![Type::Bytes { length: 32 }; 2],\n                    })\n                    || opening.ty != (Type::Bytes { length: 32 })\n                {\n                    return Err(self.unsupported_expression_reason(\n                        expression,\n                        path,\n                        \"persistent commitment requires a Bytes32 pair and Bytes32 opening\",\n                    ));\n                }\n                (\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection/tests.rs": {
+      "previous_sha256": "f5894d9cb817e7499481c988393a1379e5c848d08b6c22cd0016bad5a9c6d61d",
+      "current_sha256": "8bb2a9eb6e0380120f168d0cb2bb16cb0ffa8ce8527d7cd5ae6dc188901df4e4",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n\n// Concrete diagnostic control: opaque persistent input is native-IR valid but\n// rejected by the Compact frontend. Fixed Field commitments are now supported.\nuse super::*;\nuse crate::ir::*;\nuse crate::recorded::{LegacyActionPrecision, effect_plan};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n\nuse super::*;\nuse crate::ir::*;\nuse crate::recorded::{LegacyActionPrecision, effect_plan};\n"
+        },
+        {
+          "current": "}\nfn unsupported() -> StateAction {\n    StateAction::Expression {\n        value: crate::recorded::test_support::opaque_commit_policy(),\n    }\n}\nfn empty() -> StateAction {\n",
+          "previous": "}\nfn unsupported() -> StateAction {\n    StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(field()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }\n}\nfn empty() -> StateAction {\n"
+        },
+        {
+          "current": "    assert_eq!(rejection.precision, Precision::Unclassified);\n\n    let mut root = circuit(\"root\", vec![empty(), empty()]);\n    root.result = Type::Bytes { length: 32 };\n    root.return_value = StateReturn::Expression {\n        value: crate::recorded::test_support::opaque_commit_policy(),\n    };\n    let rejection = refusal(&[root]);\n    assert_eq!(rejection.root_action, None);\n",
+          "previous": "    assert_eq!(rejection.precision, Precision::Unclassified);\n\n    let mut root = circuit(\"root\", vec![empty(), empty()]);\n    root.result = Type::Field;\n    root.return_value = StateReturn::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(field()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n    let rejection = refusal(&[root]);\n    assert_eq!(rejection.root_action, None);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests.rs": {
+      "previous_sha256": "dfb5d31e3fbae616ee2f0311733c8b27beac422b024727ed172fff999fe5b313",
+      "current_sha256": "abea1a5c065f13d3634f4a145d3b387da2da2fac096450520167f7a68c8369aa",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod ordinary;\n#[path = \"tests/own_public_key.rs\"]\nmod own_public_key;\n#[path = \"tests/persistent_commit.rs\"]\nmod persistent_commit;\n#[path = \"tests/phase_reset_inclusion.rs\"]\nmod phase_reset_inclusion;\n#[path = \"tests/pure_inclusion.rs\"]\n",
+          "previous": "mod ordinary;\n#[path = \"tests/own_public_key.rs\"]\nmod own_public_key;\n#[path = \"tests/phase_reset_inclusion.rs\"]\nmod phase_reset_inclusion;\n#[path = \"tests/pure_inclusion.rs\"]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/context_queries.rs": {
+      "previous_sha256": "3a299a397a0c5c1fa0f06d57f8c4182e4488a24543e2975a29a4ae950e974d9a",
+      "current_sha256": "d46e98c2331c355cc50015f54171186868d4d5258451bd8828342e3387af5c7f",
+      "predecessor_reconstruction": [
+        {
+          "current": "    )\n}\n#[test]\nfn forged_commit_preserves_opening_output_and_live_operands() {\n    validate::check(commitment(), environment(address_type())).unwrap();\n    // A live Bytes32 operand is a valid fixed FAB, not a forged pair anymore.\n    let mut single = commitment();\n    let Operation::PersistentCommit { value: input, .. } = &mut single.body.bindings[3].operation\n    else {\n        unreachable!()\n    };\n    *input = value(0, bytes_type());\n    validate::check(single, environment(address_type())).unwrap();\n    for mode in 1..6 {\n        let mut forged = commitment();\n        let Operation::PersistentCommit {\n            value: input,\n",
+          "previous": "    )\n}\n#[test]\nfn forged_commit_requires_pair_bytes_opening_output_and_live_operands() {\n    validate::check(commitment(), environment(address_type())).unwrap();\n    for mode in 0..6 {\n        let mut forged = commitment();\n        let Operation::PersistentCommit {\n            value: input,\n"
+        },
+        {
+          "current": "            unreachable!()\n        };\n        match mode {\n            1 => {\n                *opening = value(\n                    2,\n",
+          "previous": "            unreachable!()\n        };\n        match mode {\n            0 => *input = value(0, bytes_type()),\n            1 => {\n                *opening = value(\n                    2,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/rich_values.rs": {
+      "previous_sha256": "f95ae0477506746bd3b407831a079bbbf774126ac100049736b8ffeee19d23c3",
+      "current_sha256": "025666ae57a9c91e752192cf5957760b2ee2805a602c21cf3227e17eaaa693de",
+      "predecessor_reconstruction": [
+        {
+          "current": "        y: Box::new(literal(\"1\")),\n    };\n    render(&checked(constructed, Type::JubjubPoint)).unwrap();\n    let commitment = Expr::PersistentCommit {\n        value: Box::new(literal(\"0\")),\n        opening: Box::new(bytes(0)),\n    };\n    render(&checked(commitment, bytes_type())).unwrap();\n    let gap = refusal(\n        crate::recorded::test_support::unsupported_commit(),\n        bytes_type(),\n    );\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n}\n\n#[test]\n",
+          "previous": "        y: Box::new(literal(\"1\")),\n    };\n    render(&checked(constructed, Type::JubjubPoint)).unwrap();\n    let unsupported = Expr::PersistentCommit {\n        value: Box::new(literal(\"0\")),\n        opening: Box::new(bytes(0)),\n    };\n    assert!(\n        refusal(unsupported, bytes_type())\n            .detail\n            .contains(\"persistent commitment\")\n    );\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "16706fea10aec2310e90e7e945d7ff4a004e77997fb310c4219ed4c07877f6a2",
+      "current_sha256": "3762572d1eaaf9850077a775074be6d41eb5861e3a691767e708cdd802327412",
+      "predecessor_reconstruction": [
+        {
+          "current": "            Operation::PersistentCommit { value, opening } => {\n                use_value(value)?;\n                use_value(opening)?;\n                fixed_aligned_fab_type(&value.ty)\n                    && opening.ty == (Type::Bytes { length: 32 })\n                    && *ty == (Type::Bytes { length: 32 })\n            }\n",
+          "previous": "            Operation::PersistentCommit { value, opening } => {\n                use_value(value)?;\n                use_value(opening)?;\n                value.ty\n                    == (Type::Tuple {\n                        elements: vec![Type::Bytes { length: 32 }; 2],\n                    })\n                    && opening.ty == (Type::Bytes { length: 32 })\n                    && *ty == (Type::Bytes { length: 32 })\n            }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_pure_migration_tests/inclusion.rs": {
+      "previous_sha256": "47d781e4f02076c43155e211ebb2e19eaf591e8a0d88d7ea0eccfea65c4eb9d9",
+      "current_sha256": "9d339cc611f136cdae2ad5fb3ea9c5bdf1fb8424cd86c36f5131de6bbd6cede2",
+      "predecessor_reconstruction": [
+        {
+          "current": "    helper(\n        &mut v,\n        \"finish\",\n        json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]),\n    );\n    root(&mut v)[\"actions\"][1] = call(\"finish\");\n    let c = contract(v);\n",
+          "previous": "    helper(\n        &mut v,\n        \"finish\",\n        json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]),\n    );\n    root(&mut v)[\"actions\"][1] = call(\"finish\");\n    let c = contract(v);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_map_migration_tests/boundaries.rs": {
+      "previous_sha256": "5c952fba0b053d8fc5efdbd913b4ffd4b8e1499103b28950d9d8e8cc2d95866e",
+      "current_sha256": "744808120f8ec418164298a537b28a9bd42c689ea7d4f1944cadaa7c0cec0b81",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn unsupported_or_recursive_helpers_never_count_as_complete_old_admission() {\n    let mut v = fixture();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = contract(v);\n    for name in ROOTS {\n        let cx = Context::new(&c, name);\n",
+          "previous": "#[test]\nfn unsupported_or_recursive_helpers_never_count_as_complete_old_admission() {\n    let mut v = fixture();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = contract(v);\n    for name in ROOTS {\n        let cx = Context::new(&c, name);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests/boundaries.rs": {
+      "previous_sha256": "4e28a229328784e2eb34da2d10bf4de86582c7ab8132aaf515299a5336d5ef0a",
+      "current_sha256": "7ab31dcf31138465f1ee9994d75c9bd697a6634fa2406484db2fc9d5b247f28f",
+      "predecessor_reconstruction": [
+        {
+          "current": "    named(&mut v,\"assertWritable\")[\"actions\"].as_array_mut().unwrap().push(json!({\n        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    let cx = Context::new(&c);\n",
+          "previous": "    named(&mut v,\"assertWritable\")[\"actions\"].as_array_mut().unwrap().push(json!({\n        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    let cx = Context::new(&c);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/context_migration_tests.rs": {
+      "previous_sha256": "211130c0d340700dd12227abb973c6b4e278b0016efcb16ab53b380050215adc",
+      "current_sha256": "bd5a35e555488d4a6216b69f628fdb3c2cee96fcbcf6f72efd01da3b4f523d44",
+      "predecessor_reconstruction": [
+        {
+          "current": "            index: 1,\n        },\n        commit(bytes(), bytes(), Expr::BytesLiteral { bytes: vec![0; 31] }),\n        commit(parameter(\"unknown\"), bytes(), project(address())),\n    ];\n    let single = subject(Expr::PersistentCommit {\n        value: Box::new(Expr::Tuple {\n            elements: vec![project(address())],\n        }),\n        opening: Box::new(bytes()),\n    });\n    let single_context = Context::new(&single);\n    assert!(single_context.old(&single.stateful_circuits[0]).is_none());\n    assert!(single_context.algebra(&single.stateful_circuits[0]).is_ok());\n    assert!(\n        crate::render_with_capabilities(&single)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n            .recorded\n    );\n    for (i, value) in cases.into_iter().enumerate() {\n        let contract = subject(value);\n        let context = Context::new(&contract);\n",
+          "previous": "            index: 1,\n        },\n        commit(bytes(), bytes(), Expr::BytesLiteral { bytes: vec![0; 31] }),\n        Expr::PersistentCommit {\n            value: Box::new(Expr::Tuple {\n                elements: vec![project(address())],\n            }),\n            opening: Box::new(bytes()),\n        },\n        commit(parameter(\"unknown\"), bytes(), project(address())),\n    ];\n    for (i, value) in cases.into_iter().enumerate() {\n        let contract = subject(value);\n        let context = Context::new(&contract);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/context_migration_tests/routing.rs": {
+      "previous_sha256": "8db4870a3cfdf573064c34f5c21e4965c6d5b8c4c52328005cbd7bfc007d8630",
+      "current_sha256": "905898361c1c879707d7afb4e74083629301675dc1361fb81cf1e8560ec0a073",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n"
+        },
+        {
+          "current": "        value: Box::new(Expr::JubjubPointX {\n            value: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n                    value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n                    opening: Box::new(Expr::FieldToBytes32 {\n                        value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                    }),\n",
+          "previous": "        value: Box::new(Expr::JubjubPointX {\n            value: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n                    value: Box::new(Expr::JubjubPointX {\n                        value: Box::new(Expr::HashToCurve {\n                            value: Box::new(project(address())),\n                        }),\n                    }),\n                    opening: Box::new(Expr::FieldToBytes32 {\n                        value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                    }),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests/boundaries.rs": {
+      "previous_sha256": "894579e046990ef58ed16a75bcb8a27e6548a68f9c83948b971f30e1fadf3ea6",
+      "current_sha256": "7301b2fbafae74776629b519008d7208b23b540363cfd9685999253acc133383",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"kind\":\"if\", \"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n",
+          "previous": "        \"kind\":\"if\", \"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/funded_mint_migration_tests.rs": {
+      "previous_sha256": "88d8aebaf037a0cd6de5f568cd40b5342d2ab842652b7249dad01ed4aa790bd7",
+      "current_sha256": "7817f80112c877543ed9df47116972aa70122d832ef16f050e883d66d8c3ab22",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Funded mint is subsumed by existing generic composition; no new route is added.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Funded mint is subsumed by existing generic composition; no new route is added.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests/routing.rs": {
+      "previous_sha256": "2c03cd2a9bfd5359c29272e23e9e264d0454a83b21a4d2a91bb6cbec13e75d4b",
+      "current_sha256": "ef2e8ab96f2650eaac4c7c983c2433850f85c8b686ef2456e8dc93cec9151aa9",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n#[test]\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\n\n#[test]\n"
+        },
+        {
+          "current": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/jubjub_migration_tests.rs": {
+      "previous_sha256": "00b96ff94e81dfc949b19aa62984133f1478f24da63fd8c930ce04303360b1d4",
+      "current_sha256": "2c16521120074d121a9e8d0f1ee8288a7172bae7273654bad581b3903ea3d7c0",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn point_values_compose_with_fixed_persistent_commit_inputs() {\n    let mut contract = subject();\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::EcNeg {\n",
+          "previous": "}\n\n#[test]\nfn point_values_are_checked_without_widening_persistent_commit_inputs() {\n    let mut contract = subject();\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::EcNeg {\n"
+        },
+        {
+          "current": "    let context = Context::new(&contract);\n    let circuit = &contract.stateful_circuits[0];\n    assert!(context.old(circuit).is_none());\n    assert!(context.algebra(circuit).is_ok());\n    assert!(context.selected(circuit).unwrap().typed_result.is_some());\n    let rendered = crate::render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(rendered.source.contains(\"persistent_commit\"));\n    // A genuine unsupported fixed-value operation stays a separate boundary.\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(crate::recorded::test_support::unsupported_commit()),\n        },\n    };\n    let context = Context::new(&contract);\n    assert!(context.algebra(&contract.stateful_circuits[0]).is_err());\n    assert!(\n        !crate::render_with_capabilities(&contract)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n            .recorded\n    );\n}\n\n",
+          "previous": "    let context = Context::new(&contract);\n    let circuit = &contract.stateful_circuits[0];\n    assert!(context.old(circuit).is_none());\n    assert!(matches!(\n        context.algebra(circuit),\n        Err(effect_plan::PlanError::Unsupported(_))\n    ));\n    assert!(context.selected(circuit).unwrap().typed_result.is_none());\n    let rendered = crate::render_with_capabilities(&contract).unwrap();\n    assert!(!rendered.capabilities.circuits[0].recorded);\n    assert_eq!(\n        rendered.capabilities.circuits[0]\n            .recording_unavailable\n            .as_ref()\n            .unwrap()\n            .ir_node,\n        \"StateReturn::Expression\"\n    );\n}\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/kernel_migration_tests/routing.rs": {
+      "previous_sha256": "f0434667df3e8e2c9c0aff286a032dda0ab6bc55f28470ca8a372981470f4b03",
+      "current_sha256": "ea69a4377cf0fc73a7abdd15496b1fd8b2878f6792419aa93e7643c6cc507465",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nuse crate::recorded::admission_probe::trace;\nfn trace(contract: &Contract) -> serde_json::Value {\n"
+        },
+        {
+          "current": "    let mut contract = subject();\n    contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::FieldToBytes32 {\n                value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n            }),\n",
+          "previous": "    let mut contract = subject();\n    contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(Expr::JubjubPointX {\n                value: Box::new(Expr::HashToCurve {\n                    value: Box::new(parameter(\"domain\")),\n                }),\n            }),\n            opening: Box::new(Expr::FieldToBytes32 {\n                value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n            }),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/membership_migration_tests.rs": {
+      "previous_sha256": "bbc4c78892df70b28f7ba5529312ffd076504a97ebf5c4f24949c7370f249ab2",
+      "current_sha256": "775967b34a01e519fd2ea2e67fe6c375f1654f5cdef526ead98282626a756d43",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n//! Declared membership interfaces, actual ownership and ordered refusal behavior.\n//! Finite whole-old inclusion is covered separately by membership_inclusion tests.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, StateAction, StateReturn, StructField, Type};\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n//! Declared membership interfaces, actual ownership and ordered refusal behavior.\n//! Finite whole-old inclusion is covered separately by membership_inclusion tests.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, StateAction, StateReturn, StructField, Type};\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "    );\n    c.stateful_circuits[0].actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    );\n    c.stateful_circuits[0].actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/merge_migration_tests.rs": {
+      "previous_sha256": "c48666d35425d42860f83a06109a45a2977830924cccd79f1f63a1a802caa76d",
+      "current_sha256": "791e67e721175c7665f20a0f0ad73c7b53277715133cc85b1932bf8ff4931c53",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Merge is subsumed by earlier composition; ordinary fallback diagnostics stay intact.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};\nuse crate::recorded::{RecordingGapCode, admission_probe::trace};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Merge is subsumed by earlier composition; ordinary fallback diagnostics stay intact.\nuse super::*;\nuse crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};\nuse crate::recorded::{RecordingGapCode, admission_probe::trace};\n"
+        },
+        {
+          "current": "fn unsupported_hash() -> Expr {\n    Expr::TransientHash {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    }\n",
+          "previous": "fn unsupported_hash() -> Expr {\n    Expr::TransientHash {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests/boundaries.rs": {
+      "previous_sha256": "2395f8dfd4d100323369e97ec03bc53b856e1c72a31c816e1b8ad72c62cd9a86",
+      "current_sha256": "81cf152feb467b7bce9d3670502ed3b4bbe88f9dfa2d3d79ad5f6ec9b0c21d0e",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n#[test]\nfn malformed_declarations_and_operands_fail_native_validation_before_selection() {\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\n#[test]\nfn malformed_declarations_and_operands_fail_native_validation_before_selection() {\n"
+        },
+        {
+          "current": "    let mut c = fixture();\n    root(&mut c, \"hasName\").actions = vec![StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }];\n",
+          "previous": "    let mut c = fixture();\n    root(&mut c, \"hasName\").actions = vec![StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }];\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests/boundaries.rs": {
+      "previous_sha256": "b0bcb7f60faf2b16838340be7472df2d6716254e8bf13ef3a11e5f7118164845",
+      "current_sha256": "f11ad1cbdd05ba83daaf898f150f28948cb6950773e4dd662fbb15193aefb753",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n#[test]\nfn map_slots_operands_and_let_types_remain_native_authorities() {\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\n#[test]\nfn map_slots_operands_and_let_types_remain_native_authorities() {\n"
+        },
+        {
+          "current": "    r.return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            }),\n        },\n",
+          "previous": "    r.return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            }),\n        },\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests/boundaries.rs": {
+      "previous_sha256": "44a584753255cf3d021699f99929fac34b08978182f2875bc6f6776712be0f5d",
+      "current_sha256": "a3e7870f6adadae296e0d07b1e467b8d9d3b513d0dc68c26ab068ad796c46b81",
+      "predecessor_reconstruction": [
+        {
+          "current": "    for unselected in [false, true] {\n        let mut value = fixture();\n        let unsupported = json!({\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}});\n        let action = if unselected {\n            json!({\"kind\":\"if\", \"condition\":{\"kind\":\"boolean\",\"value\":true},\n",
+          "previous": "    for unselected in [false, true] {\n        let mut value = fixture();\n        let unsupported = json!({\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}});\n        let action = if unselected {\n            json!({\"kind\":\"if\", \"condition\":{\"kind\":\"boolean\",\"value\":true},\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests/priority.rs": {
+      "previous_sha256": "4728b934c9c168af6af4061239749529bb2e59e1064756cb460f26c731bf390a",
+      "current_sha256": "6b6944791a96d6e36192230d0e3e63b00c6460be0bb52a0a7ff98fe74bbc24e5",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n#[test]\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\n\n#[test]\n"
+        },
+        {
+          "current": "    let mut c = identity(Type::Bytes { length: 32 });\n    c.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    let mut c = identity(Type::Bytes { length: 32 });\n    c.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/organizer_migration_tests/boundaries.rs": {
+      "previous_sha256": "49ee8119c64f575fe53eca2b84b5ff21666d8258d0ee08311057056dddb40009",
+      "current_sha256": "22bdcfeceedbb924b6458bd298cd79e5ba6b60a602ee7bf3d8df759d9ba7ff4a",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let mut v = fixture();\n    named(&mut v,\"stateful_circuits\",\"add_participant\")[\"actions\"].as_array_mut().unwrap().push(json!({\n        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c, \"add_participant\").unwrap().is_none());\n",
+          "previous": "    let mut v = fixture();\n    named(&mut v,\"stateful_circuits\",\"add_participant\")[\"actions\"].as_array_mut().unwrap().push(json!({\n        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c, \"add_participant\").unwrap().is_none());\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/receive_migration_tests/routing.rs": {
+      "previous_sha256": "7fe4ec0d8c70b100c6a027133e94451fbdb2b6d01c9d3295f6b15d8423103fb6",
+      "current_sha256": "518d1f9c229c1aed009e1282a5113970b6977062532d1897a7d7edafae2750d1",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n    let maps = Context::new(c);\n"
+        },
+        {
+          "current": "    root_mut(&mut c).actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n                opening: Box::new(Expr::FieldToBytes32 {\n                    value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                }),\n",
+          "previous": "    root_mut(&mut c).actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(Expr::JubjubPointX {\n                    value: Box::new(Expr::HashToCurve {\n                        value: Box::new(parameter(\"coin\")),\n                    }),\n                }),\n                opening: Box::new(Expr::FieldToBytes32 {\n                    value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                }),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/reset_payout_migration_tests.rs": {
+      "previous_sha256": "62cfee742619d8594fef2b5e43d660933f51a1d863c3b5dd68c26f66aa5d46be",
+      "current_sha256": "a25a3638870cd2b1a848dcfd9bff1820a7229d3a708107eae7dc77ae10170aa8",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Reset payout is subsumed by existing generic composition; no new route is added.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Reset payout is subsumed by existing generic composition; no new route is added.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/send_migration_tests.rs": {
+      "previous_sha256": "bcd81c82a43301ce1c535a9b2a57e4ec5117b2cacef2e0d6efbc62dc9f21ca11",
+      "current_sha256": "3a2dd2ed6e8560290dbeb01474fc0cb5ffbbb24be9c8288f26386830ecbf9b2a",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Send is subsumed by generic checked composition; diagnostics survive fallback.\n// Concrete diagnostic control: opaque persistent input is native-IR valid but\n// rejected by the Compact frontend. Fixed Field commitments are now supported.\nuse super::*;\nuse crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Send is subsumed by generic checked composition; diagnostics survive fallback.\nuse super::*;\nuse crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "            ty: Type::Field,\n            value: Expr::TransientHash {\n                value: Box::new(Expr::PersistentCommit {\n                    value: Box::new(Expr::Default {\n                        ty: Type::OpaqueString,\n                    }),\n                    opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n                }),\n            },\n",
+          "previous": "            ty: Type::Field,\n            value: Expr::TransientHash {\n                value: Box::new(Expr::PersistentCommit {\n                    value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                    opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n                }),\n            },\n"
+        },
+        {
+          "current": "                ty: Type::Field,\n                value: Expr::TransientHash {\n                    value: Box::new(Expr::PersistentCommit {\n                        value: Box::new(Expr::Default {\n                            ty: Type::OpaqueString,\n                        }),\n                        opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n                    }),\n                },\n",
+          "previous": "                ty: Type::Field,\n                value: Expr::TransientHash {\n                    value: Box::new(Expr::PersistentCommit {\n                        value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                        opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n                    }),\n                },\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/shielded_payout_migration_tests.rs": {
+      "previous_sha256": "3df37e2778d80af5b81c9d08f55596e67be5658ff0481be8585bb2beb2fd6016",
+      "current_sha256": "8ee76bfd3c57455c2e82fe0e78286f8c7988ac2d8ea145dd619b63f15459d803",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Shielded payout is subsumed by existing generic composition; no new route is added.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Shielded payout is subsumed by existing generic composition; no new route is added.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/terminal_migration_tests/routing.rs": {
+      "previous_sha256": "521bb28afa0376a08d5ddc005475fda25b7efad191433fc0a8bd103efba4ad09",
+      "current_sha256": "5fd927f91193b9ba8664afead7d0201b1c7c08c6fad56721dfdd5c4cf853d05c",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n\n"
+        },
+        {
+          "current": "    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            }),\n        },\n",
+          "previous": "    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            }),\n        },\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain/tests.rs": {
+      "previous_sha256": "13f5654ad1105a1d6516872bd78042b47986c628a3ab8293130a8e05d1d92a4f",
+      "current_sha256": "64000091498bb8e4e1611f519ccacfc2a488c8644867f6657f47379488399623",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// Concrete diagnostic control: opaque persistent input is native-IR valid but\n// rejected by the Compact frontend. Fixed Field commitments are now supported.\nuse super::*;\nuse crate::ir::{\n    Contract, CounterAmount, Expr, LedgerFieldKind, Parameter, SCHEMA_VERSION, StateAction,\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\nuse crate::ir::{\n    Contract, CounterAmount, Expr, LedgerFieldKind, Parameter, SCHEMA_VERSION, StateAction,\n"
+        },
+        {
+          "current": "    let mut c = subject();\n    c.stateful_circuits[0].actions[1] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::Default {\n                ty: Type::OpaqueString,\n            }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    let mut c = subject();\n    c.stateful_circuits[0].actions[1] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": {
+      "previous_sha256": "c5154fa60a5a6d9eb2b6a397780278c26305c212f5932711c5b12c9c425d6dad",
+      "current_sha256": "9442d95fdabef08090fd4140e3ec73db347ff089cce5e06650bfd9bb2a621707",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n#[test]\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\nuse super::*;\n\n#[test]\n"
+        },
+        {
+          "current": "fn unsupported_body_preserves_later_independent_attempt_order() {\n    let mut c = source();\n    let r = root_mut(&mut c);\n    r.actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n                opening: Box::new(Expr::FieldToBytes32 {\n                    value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                }),\n",
+          "previous": "fn unsupported_body_preserves_later_independent_attempt_order() {\n    let mut c = source();\n    let r = root_mut(&mut c);\n    let coin = r.parameters[1].name.clone();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(Expr::JubjubPointX {\n                    value: Box::new(Expr::HashToCurve {\n                        value: Box::new(Expr::Parameter { name: coin }),\n                    }),\n                }),\n                opening: Box::new(Expr::FieldToBytes32 {\n                    value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                }),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/witness_merkle_migration_tests/boundaries.rs": {
+      "previous_sha256": "9c3397255608ebda240565deab72775ced6a7484849abf073fbccf59197c23ea",
+      "current_sha256": "6927efe697c572cf76ab102823a325c72af19e18cf542efb3ed48f012587190b",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c).unwrap().is_none());\n",
+          "previous": "        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c).unwrap().is_none());\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": {
+      "previous_sha256": "7c6febb1d1704a6f32c37bade8f3b894e7629dba4bdc494cdcdeba2c48245987",
+      "current_sha256": "2400343aea70afddc8fd6f75df0d535152dc073483a804114bcf282f2fd1d683",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! The carrier domain is an interface boundary, not a whole-body recognizer.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! The carrier domain is an interface boundary, not a whole-body recognizer.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "        value: Expr::Equal {\n            left: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n                    value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n                    opening: Box::new(Expr::FieldToBytes32 {\n                        value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                    }),\n",
+          "previous": "        value: Expr::Equal {\n            left: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n                    value: Box::new(Expr::JubjubPointX {\n                        value: Box::new(Expr::HashToCurve {\n                            value: Box::new(Expr::BytesLiteral { bytes: vec![7; 32] }),\n                        }),\n                    }),\n                    opening: Box::new(Expr::FieldToBytes32 {\n                        value: Box::new(Expr::FieldLiteral { value: \"1\".into() }),\n                    }),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/proved_set_sequence_migration_tests/boundaries.rs": {
+      "previous_sha256": "b3fd0d116d37dfdab6449858ceb28874aa83e8b1fd6aaea7b5036438a22cdc46",
+      "current_sha256": "8e9ecb5a330ed4c007e1c272145d3e2e5b2093deecba9b4b585acf430c61602b",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[test]\nfn unsupported_first_effect_and_recursive_helper_do_not_skip_to_the_old_permit() {\n    let mut v = fixture();\n    root(&mut v)[\"actions\"].as_array_mut().unwrap().insert(0,json!({\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}));\n    let c = contract(v);\n    let cx = Context::new(&c);\n    let Err(effect_plan::PlanError::Unsupported(gap)) = cx.checked(cx.circuits[\"check_in\"]) else {\n        panic!(\"unsupported first effect\")\n    };\n    assert_eq!(gap.path, \"actions[0].value.value\");\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n    let output = crate::render_with_capabilities(&c).unwrap();\n    assert!(\n        output\n",
+          "previous": "#[test]\nfn unsupported_first_effect_and_recursive_helper_do_not_skip_to_the_old_permit() {\n    let mut v = fixture();\n    root(&mut v)[\"actions\"].as_array_mut().unwrap().insert(0,json!({\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}));\n    let c = contract(v);\n    let cx = Context::new(&c);\n    let Err(effect_plan::PlanError::Unsupported(gap)) = cx.checked(cx.circuits[\"check_in\"]) else {\n        panic!(\"unsupported first effect\")\n    };\n    assert_eq!(gap.path, \"actions[0].value\");\n    let output = crate::render_with_capabilities(&c).unwrap();\n    assert!(\n        output\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/typed_plan/composition/tests.rs": {
+      "previous_sha256": "609a43b3c6506ea9e4d3fdf8d6bafad82afa29cbeafdb80de4527b177978790b",
+      "current_sha256": "f43abe8cd67ca8a7e10644c557fe91f684ecbb84033d4cf6cec4cb92eca142c4",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .find(|x| x.name == \"close\")\n            .unwrap();\n        assert!(capability.recorded && capability.observed_call);\n        // Fixed commitments are supported. This explicit opaque-input native-IR\n        // control is frontend-excluded and retains concrete policy provenance.\n        let expression = &mut circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"];\n        expression[\"left\"] = json!({\"kind\":\"hash_to_curve\",\"value\":{\n            \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"default\",\"ty\":{\"kind\":\"opaque_string\"}},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n        }});\n        let still_rejected = rejected(v.clone(), \"close\");\n",
+          "previous": "            .find(|x| x.name == \"close\")\n            .unwrap();\n        assert!(capability.recorded && capability.observed_call);\n        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.\n        let expression = &mut circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"];\n        expression[\"left\"] = json!({\"kind\":\"hash_to_curve\",\"value\":{\n            \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"jubjub_point_x\",\"value\":expression[\"left\"].clone()},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n        }});\n        let still_rejected = rejected(v.clone(), \"close\");\n"
+        },
+        {
+          "current": "    assert!(capability.recorded && capability.observed_call);\n    let binding = &mut circuit(&mut v, \"close\")[\"actions\"][0][\"arguments\"][0][\"bindings\"][0];\n    binding[\"value\"] = json!({\"kind\":\"transient_hash\", \"value\":{\n        \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"default\",\"ty\":{\"kind\":\"opaque_string\"}},\n        \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n    }});\n    let still_rejected = rejected(v.clone(), \"close\");\n",
+          "previous": "    assert!(capability.recorded && capability.observed_call);\n    let binding = &mut circuit(&mut v, \"close\")[\"actions\"][0][\"arguments\"][0][\"bindings\"][0];\n    binding[\"value\"] = json!({\"kind\":\"transient_hash\", \"value\":{\n        \"kind\":\"persistent_commit\",\"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n        \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}\n    }});\n    let still_rejected = rejected(v.clone(), \"close\");\n"
+        },
+        {
+          "current": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    // This opaque-input control is frontend-excluded native IR. The frozen\n    // Audit stops at its enclosing hash shape. Checked lowering\n    // identifies the actual unsupported commitment inside that operand.\n    assert_eq!(gap.path, format!(\"{}.value\", still_rejected.gap.path));\n    assert_eq!(gap.ir_node, \"Expr::PersistentCommit\");\n",
+          "previous": "        .unwrap();\n    assert!(!capability.recorded && !capability.observed_call);\n    let gap = capability.recording_unavailable.as_ref().unwrap();\n    // The frozen Audit stops at its enclosing hash shape. Checked lowering\n    // identifies the actual unsupported commitment inside that operand.\n    assert_eq!(gap.path, format!(\"{}.value\", still_rejected.gap.path));\n    assert_eq!(gap.ir_node, \"Expr::PersistentCommit\");\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests/boundaries.rs": {
+      "previous_sha256": "8e369809c76e7821728920ddb051c26cdb30666fbb9d560102787a717ea98b93",
+      "current_sha256": "3527addce89a608536b23fb991bb35badac2dc2604a7ee6b60e4eed367f82662",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"kind\":\"if\", \"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n",
+          "previous": "        \"kind\":\"if\", \"condition\":{\"kind\":\"boolean\",\"value\":true},\n        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/support.rs": {
+      "previous_sha256": "d262860152f9d7836d3164d48151f344c88df46af535ddf7a94f0b9deda9251d",
+      "current_sha256": "688bbe2f9c187473b40c00bdb87e9338a8983f7611280b21050b6354e6ba7c1c",
+      "predecessor_reconstruction": [
+        {
+          "current": "        stateful_circuits: vec![],\n    }\n}\n\n/// Native-valid typed IR, still unsupported by the recording algebra. The full\n/// VectorMap sentinel was rendered with the frozen #609 compiler; this helper\n/// is an IR control and makes no additional Compact frontend claim.\npub fn unsupported_commit_input() -> compact_rust_backend::ir::Expr {\n    use compact_rust_backend::ir::{Expr, Parameter, Type};\n    Expr::VectorMap {\n        parameter: Parameter {\n            name: \"sentinel_item\".into(),\n            ty: Type::Field,\n        },\n        source: Box::new(Expr::Tuple {\n            elements: vec![Expr::FieldLiteral { value: \"1\".into() }],\n        }),\n        body: Box::new(Expr::Parameter {\n            name: \"sentinel_item\".into(),\n        }),\n        result: Type::Field,\n        length: 1,\n    }\n}\n",
+          "previous": "        stateful_circuits: vec![],\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recording_capabilities.rs": {
+      "previous_sha256": "d74293729ca7876e9620cd5469c12630ae8b711ce472ab1a24118c64480c8fc3",
+      "current_sha256": "29048c34b82dde4f78afdfbe3c94b55aff4288fc1df0efeec98002778a7d9510",
+      "predecessor_reconstruction": [
+        {
+          "current": "    };\n    actions[1] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(super::support::unsupported_commit_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    };\n    actions[1] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        },
+        {
+          "current": "    };\n    **otherwise = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(super::support::unsupported_commit_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n",
+          "previous": "    };\n    **otherwise = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n"
+        },
+        {
+          "current": "    };\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n    // Recursive opaque vectors now have qualified storage codecs. Tuple9 is\n    // native-renderable but remains beyond the tuple8 storage codec boundary.\n    let opaque_vector = Type::Vector {\n        element: Box::new(Type::OpaqueString),\n        length: 2,\n    };\n    contract.ledger_fields[0].declaration = LedgerFieldKind::Cell {\n        ty: opaque_vector.clone(),\n    };\n    contract.stateful_circuits[0].actions[0] = StateAction::CellWrite {\n        field: \"small\".into(),\n        index: 0,\n        value: Expr::Default { ty: opaque_vector },\n    };\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n    let unsupported_storage = Type::Tuple {\n        elements: vec![Type::Field; 9],\n    };\n    contract.ledger_fields[0].declaration = LedgerFieldKind::Cell {\n        ty: unsupported_storage.clone(),\n",
+          "previous": "    };\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n    // Owned scalar storage is supported; an opaque vector remains outside the\n    // qualified storage codec even though its local Default is representable.\n    let unsupported_storage = Type::Vector {\n        element: Box::new(Type::OpaqueString),\n        length: 2,\n    };\n    contract.ledger_fields[0].declaration = LedgerFieldKind::Cell {\n        ty: unsupported_storage.clone(),\n"
+        },
+        {
+          "current": "    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n\n    // Preserve the newly supported nested scalar default, then exercise the\n    // same callee diagnostic with a native-valid unsupported VectorMap child.\n    contract.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::Default { ty: Type::Boolean },\n    }];\n",
+          "previous": "    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n\n    // Preserve the newly supported nested scalar default, then exercise the\n    // same callee diagnostic with a refused commitment input policy.\n    contract.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::Default { ty: Type::Boolean },\n    }];\n"
+        },
+        {
+          "current": "    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n    contract.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(super::support::unsupported_commit_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }];\n",
+          "previous": "    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n    contract.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }];\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_guards.rs": {
+      "previous_sha256": "6639ef9b040340c6af80e6ad4fd9e5d64b5d6eaad012d87f6de0fc4708a26696",
+      "current_sha256": "2017dee5c188f4fdedd6bfd4da94e2b11d792b2b297b2e1c41d13e0914cac875",
+      "predecessor_reconstruction": [
+        {
+          "current": "    };\n    **left = Expr::TransientHash {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(super::support::unsupported_commit_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n",
+          "previous": "    };\n    **left = Expr::TransientHash {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_calls.rs": {
+      "previous_sha256": "a6421b8d3b81fe1882b3e6779da2676a807b46dbdfe5a8b3466a507e7b57819a",
+      "current_sha256": "bb86cbddaa35dc2613507316150be890078b6c9cbb905b0a763a688f9031890b",
+      "predecessor_reconstruction": [
+        {
+          "current": "        source\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        0\n    );\n    assert_eq!(\n        source.matches(\"__compact_recorded_body_innerValue\").count(),\n        0\n    );\n    assert!(source.contains(\"pub fn outerA<Private\"));\n    assert!(source.contains(\"pub fn outerB<Private\"));\n",
+          "previous": "        source\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        1\n    );\n    assert_eq!(\n        source.matches(\"__compact_recorded_body_innerValue\").count(),\n        1\n    );\n    assert!(source.contains(\"pub fn outerA<Private\"));\n    assert!(source.contains(\"pub fn outerB<Private\"));\n"
+        },
+        {
+          "current": "        source\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        0\n    );\n    assert_eq!(\n        source.matches(\"__compact_recorded_body_innerValue\").count(),\n        0\n    );\n    for name in [\"outerA\", \"outerB\"] {\n        assert_scoped_witness_write(&source, name);\n        assert_eq!(recorded_function(&source, name).matches(\" + \").count(), 2);\n    }\n\n    // The compiler lowers `value = innerValue(1, 2) + 3` to a Field\n    // action binding with an expression-nested call. Its checked scoped body\n",
+          "previous": "        source\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        1\n    );\n    assert_eq!(\n        source.matches(\"__compact_recorded_body_innerValue\").count(),\n        1\n    );\n    assert!(source.contains(\"__compact_param_0: runtime::Field\"));\n    assert!(source.contains(\"__compact_param_1: runtime::Field\"));\n\n    // The compiler lowers `value = innerValue(1, 2) + 3` to a Field\n    // action binding with an expression-nested call. Its checked scoped body\n"
+        },
+        {
+          "current": "        source\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        0\n    );\n    assert_eq!(\n        source.matches(\"__compact_recorded_body_innerValue\").count(),\n        0\n    );\n    assert!(source.contains(\"pub fn outerNested<Private\"));\n    assert_scoped_witness_write(&source, \"outerNested\");\n",
+          "previous": "        source\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        1\n    );\n    assert_eq!(\n        source.matches(\"__compact_recorded_body_innerValue\").count(),\n        1\n    );\n    assert!(source.contains(\"pub fn outerNested<Private\"));\n    assert_scoped_witness_write(&source, \"outerNested\");\n"
+        },
+        {
+          "current": "        nested_only\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        0\n    );\n    assert_eq!(\n        nested_only\n            .matches(\"__compact_recorded_body_innerValue\")\n            .count(),\n        0\n    );\n\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n",
+          "previous": "        nested_only\n            .matches(\"fn __compact_recorded_body_innerValue<\")\n            .count(),\n        1\n    );\n    assert_eq!(\n        nested_only\n            .matches(\"__compact_recorded_body_innerValue\")\n            .count(),\n        1\n    );\n\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n"
+        },
+        {
+          "current": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // A native-valid unsupported VectorMap child refuses a later nested step.\n    contract.stateful_circuits[0]\n        .actions\n        .push(StateAction::Expression {\n            value: Expr::PersistentCommit {\n                value: Box::new(super::support::unsupported_commit_input()),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        });\n",
+          "previous": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // The unchanged commitment input domain refuses a later nested step.\n    contract.stateful_circuits[0]\n        .actions\n        .push(StateAction::Expression {\n            value: Expr::PersistentCommit {\n                value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        });\n"
+        },
+        {
+          "current": "    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(super::support::unsupported_commit_input()),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            }),\n        },\n",
+          "previous": "    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n                value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            }),\n        },\n"
+        },
+        {
+          "current": "            .all(|c| c.recorded && c.observed_call)\n    );\n    assert!(\n        !rendered\n            .source\n            .contains(\"fn __compact_recorded_body_storeVector\"),\n        \"checked callers inline the body, so no unused definition is emitted\"\n    );\n    assert!(rendered.source.contains(\"pure_circuits::hashVector(\"));\n    let body =\n",
+          "previous": "            .all(|c| c.recorded && c.observed_call)\n    );\n    assert!(\n        rendered\n            .source\n            .contains(\"fn __compact_recorded_body_storeVector\")\n    );\n    assert!(rendered.source.contains(\"pure_circuits::hashVector(\"));\n    let body =\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_hashes.rs": {
+      "previous_sha256": "9fdb13e8567a28facda537702fed27d7925a1900f84f8b6734f2af79ccdaa973",
+      "current_sha256": "a51eab4fac9117504240a22b85e5ec8ec93ded1cdef3195fcd886f5c8d3e0305",
+      "predecessor_reconstruction": [
+        {
+          "current": "    };\n    bindings[0].value = Expr::TransientHash {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(super::support::unsupported_commit_input()),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n",
+          "previous": "    };\n    bindings[0].value = Expr::TransientHash {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n"
+        },
+        {
+          "current": "}\n\n#[test]\nfn persistent_hash_helper_recording_composes_effects_and_preserves_formals() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../inline-type-scope-schema12-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n",
+          "previous": "}\n\n#[test]\nfn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../inline-type-scope-schema12-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n"
+        },
+        {
+          "current": "        });\n    let rendered = render_with_capabilities(&effectful).unwrap();\n    assert!(\n        rendered\n            .capabilities\n            .circuits\n            .iter()\n",
+          "previous": "        });\n    let rendered = render_with_capabilities(&effectful).unwrap();\n    assert!(\n        !rendered\n            .capabilities\n            .circuits\n            .iter()\n"
+        },
+        {
+          "current": "            .unwrap()\n            .recorded\n    );\n    let helper = effectful\n        .stateful_circuits\n        .iter_mut()\n        .find(|circuit| circuit.name == \"scalarHelper\")\n        .unwrap();\n    let StateAction::CellWrite { index, .. } = helper.actions.last_mut().unwrap() else {\n        unreachable!()\n    };\n    *index = 99;\n    assert!(render_with_capabilities(&effectful).is_err());\n    let mut wrong_width = contract.clone();\n    wrong_width\n        .stateful_circuits\n",
+          "previous": "            .unwrap()\n            .recorded\n    );\n    let mut wrong_width = contract.clone();\n    wrong_width\n        .stateful_circuits\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/set_recording.rs": {
+      "previous_sha256": "d24907fcc81f0f47be95cdfebb4226696ddc46cfd2610f986daecdee30bc14cd",
+      "current_sha256": "1a85bbb8463983f9bf4dac0b66cee2dfe181c8bda361e10c274d4090eeee60f7",
+      "predecessor_reconstruction": [
+        {
+          "current": "use compact_rust_backend::{RenderError, render, render_with_capabilities};\n\n#[test]\nfn opaque_string_set_recording_composes_defaults_and_checks_declared_keys() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../opaque-string-set-schema13-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n",
+          "previous": "use compact_rust_backend::{RenderError, render, render_with_capabilities};\n\n#[test]\nfn opaque_string_set_recording_composes_typed_operations_and_rejects_unsupported_defaults() {\n    let mut contract: Contract =\n        serde_json::from_str(include_str!(\"../opaque-string-set-schema13-ir.json\")).unwrap();\n    contract.schema_version = SCHEMA_VERSION;\n"
+        },
+        {
+          "current": "    };\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"addName\".into(), true), (\"hasName\".into(), true)]\n    );\n    let output = render_with_capabilities(&contract).unwrap();\n    assert!(\n        generated_body(&output.source, \"recorded\", \"hasName\")\n            .contains(&quote::quote!(.record_member).to_string())\n    );\n    let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value\n    else {\n        unreachable!()\n    };\n    *value = Expr::FieldLiteral { value: \"1\".into() };\n    assert!(matches!(\n        render(&contract),\n        Err(RenderError::Located { error, .. })\n            if matches!(*error, RenderError::TypeMismatch { expected: Type::OpaqueString, actual: Type::Field })\n    ));\n}\n\n#[test]\n",
+          "previous": "    };\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"addName\".into(), true), (\"hasName\".into(), false)]\n    );\n}\n\n#[test]\n"
+        },
+        {
+          "current": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // Keep the now-supported default callback value. A commitment with an unsupported VectorMap child\n    // in its local prefix still refuses recording at that exact argument path.\n    let StateAction::Expression {\n        value: Expr::WitnessCall { arguments, .. },\n",
+          "previous": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // Keep the now-supported default callback value. An unsupported commitment\n    // in its local prefix still refuses recording at that exact argument path.\n    let StateAction::Expression {\n        value: Expr::WitnessCall { arguments, .. },\n"
+        },
+        {
+          "current": "            name: \"unsupported_commit\".into(),\n            ty: Type::Bytes { length: 32 },\n            value: Expr::PersistentCommit {\n                value: Box::new(super::support::unsupported_commit_input()),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        }],\n",
+          "previous": "            name: \"unsupported_commit\".into(),\n            ty: Type::Bytes { length: 32 },\n            value: Expr::PersistentCommit {\n                value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        }],\n"
+        },
+        {
+          "current": "    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    // The checked domain refuses the VectorMap child, then the retained witness\n    // fallback's cell_source rejects the enclosing Let argument atomically.\n    let gap = rejected.capabilities.circuits[0]\n        .recording_unavailable\n",
+          "previous": "    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    // The checked domain refuses the commitment, then the retained witness\n    // fallback's cell_source rejects the enclosing Let argument atomically.\n    let gap = rejected.capabilities.circuits[0]\n        .recording_unavailable\n"
+        },
+        {
+          "current": "    contract.ledger_fields[1].declaration = LedgerFieldKind::Set {\n        ty: Type::OpaqueBytes,\n    };\n    let bytes = render_with_capabilities(&contract).unwrap();\n    assert!(\n        bytes.capabilities.circuits[0].recorded && bytes.capabilities.circuits[0].observed_call\n    );\n    let body = generated_body(&bytes.source, \"recorded\", \"check_in\");\n    assert!(body.find(\"record_member\").unwrap() < body.find(\"record_insert\").unwrap());\n    assert!(body.find(\"record_insert\").unwrap() < body.find(\"record_remove\").unwrap());\n    contract.stateful_circuits[0].parameters[0].ty = Type::Field;\n    assert!(matches!(\n        render(&contract),\n        Err(RenderError::TypeMismatch { .. })\n    ));\n}\n\n#[test]\n",
+          "previous": "    contract.ledger_fields[1].declaration = LedgerFieldKind::Set {\n        ty: Type::OpaqueBytes,\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert_eq!(\n        rejected.capabilities.circuits[0]\n            .recording_unavailable\n            .as_ref()\n            .unwrap()\n            .path,\n        \"actions[0]\"\n    );\n}\n\n#[test]\n"
+        },
+        {
+          "current": "            name: \"unsupported_commit\".into(),\n            ty: Type::Bytes { length: 32 },\n            value: Expr::PersistentCommit {\n                value: Box::new(super::support::unsupported_commit_input()),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        },\n    );\n    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(!defaulted.capabilities.circuits[0].recorded);\n    // The retained commitment-binding fallback refuses the VectorMap operand\n    // before opening evaluation or the later enum binding.\n    let gap = defaulted.capabilities.circuits[0]\n        .recording_unavailable\n        .as_ref()\n        .unwrap();\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n    assert_eq!(gap.path, \"actions[0].bindings[0].value.value\");\n}\n\n#[test]\nfn typed_pure_vector_calls_record_set_keys_and_keep_callee_authority() {\n    let mut contract = identity(Type::Unit, Expr::Unit);\n    let vector = Type::Vector {\n        element: Box::new(Type::Field),\n",
+          "previous": "            name: \"unsupported_commit\".into(),\n            ty: Type::Bytes { length: 32 },\n            value: Expr::PersistentCommit {\n                value: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        },\n    );\n    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(!defaulted.capabilities.circuits[0].recorded);\n    // The retained commitment-binding fallback accepts a Field literal value\n    // but requires a Bytes32 CellRead opening. Its first concrete refusal is\n    // therefore this literal opening, before it reaches the enum binding.\n    let gap = defaulted.capabilities.circuits[0]\n        .recording_unavailable\n        .as_ref()\n        .unwrap();\n    assert_eq!(gap.ir_node, \"Expr::BytesLiteral\");\n    assert_eq!(gap.path, \"actions[0].bindings[0].value.opening\");\n}\n\n#[test]\nfn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavailable() {\n    let mut contract = identity(Type::Unit, Expr::Unit);\n    let vector = Type::Vector {\n        element: Box::new(Type::Field),\n"
+        },
+        {
+          "current": "\n    contract.circuits[0].body = Expr::Default { ty: vector.clone() };\n    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(\n        defaulted.capabilities.circuits[0].recorded\n            && defaulted.capabilities.circuits[0].observed_call\n    );\n    let body = generated_body(&defaulted.source, \"recorded\", \"test\");\n    assert!(\n        body.find(&quote::quote!(crate::pure_circuits::getVector()).to_string())\n            .unwrap()\n            < body\n                .find(&quote::quote!(.record_insert).to_string())\n                .unwrap()\n    );\n\n    contract.circuits[0].body = Expr::Vector {\n",
+          "previous": "\n    contract.circuits[0].body = Expr::Default { ty: vector.clone() };\n    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(!defaulted.capabilities.circuits[0].recorded);\n    assert_eq!(\n        defaulted.capabilities.circuits[0]\n            .recording_unavailable\n            .as_ref()\n            .unwrap()\n            .ir_node,\n        \"StateAction::Let\"\n    );\n\n    contract.circuits[0].body = Expr::Vector {\n"
+        },
+        {
+          "current": "        arguments: vec![Expr::FieldLiteral { value: \"7\".into() }],\n    };\n    let argument_bearing = render_with_capabilities(&contract).unwrap();\n    assert!(\n        argument_bearing.capabilities.circuits[0].recorded\n            && argument_bearing.capabilities.circuits[0].observed_call\n    );\n    let body = generated_body(&argument_bearing.source, \"recorded\", \"test\");\n    assert!(\n        body.find(&quote::quote!(crate::pure_circuits::getVector).to_string())\n            .unwrap()\n            < body\n                .find(&quote::quote!(.record_insert).to_string())\n                .unwrap()\n    );\n    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n    };\n    let Expr::Call { arguments, .. } = &mut bindings[0].value else {\n        unreachable!()\n    };\n    arguments.clear();\n    assert!(\n        render(&contract).is_err(),\n        \"callee arity remains authoritative\"\n    );\n}\n\n#[test]\n",
+          "previous": "        arguments: vec![Expr::FieldLiteral { value: \"7\".into() }],\n    };\n    let argument_bearing = render_with_capabilities(&contract).unwrap();\n    assert!(!argument_bearing.capabilities.circuits[0].recorded);\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/recording_profile_attempt.rs": {
+      "previous_sha256": "4a7842e1b1a6493c902c4ba19674259642e24f52bc1418a833922ab05a47a4bc",
+      "current_sha256": "9634cf66f40a971450fed8689e5af9d9123ef773240f0399e6e4a4f5b9035b40",
+      "predecessor_reconstruction": [
+        {
+          "current": "    send.recording_unavailable.clone().unwrap()\n}\n\nfn admit_defaults_then_replace_with_source_rejected_opaque_commit(mut value: Value) -> Value {\n    let output = rendered(value.clone());\n    assert!(\n        output\n",
+          "previous": "    send.recording_unavailable.clone().unwrap()\n}\n\nfn admit_defaults_then_replace_with_unsupported_commit(mut value: Value) -> Value {\n    let output = rendered(value.clone());\n    assert!(\n        output\n"
+        },
+        {
+          "current": "        if node[\"kind\"] == \"default\" && node[\"ty\"][\"kind\"] == \"opaque_string\" {\n            // The old default expression is now supported. Keep the same\n            // surrounding hash and source path, with an independently\n            // opaque persistent commitment policy as the negative control.\n            // This is native-valid IR but explicitly rejected by the Compact\n            // frontend; it is not a source-valid language coverage gap.\n            *node = json!({\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"default\",\"ty\":{\"kind\":\"opaque_string\"}},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}});\n            return 1;\n        }\n",
+          "previous": "        if node[\"kind\"] == \"default\" && node[\"ty\"][\"kind\"] == \"opaque_string\" {\n            // The old default expression is now supported. Keep the same\n            // surrounding hash and source path, with an independently\n            // unsupported commitment input policy as the negative control.\n            *node = json!({\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}});\n            return 1;\n        }\n"
+        },
+        {
+          "current": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": original\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(value));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);\n    assert_eq!(gap.path, \"actions[0]\");\n}\n",
+          "previous": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": original\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedAction);\n    assert_eq!(gap.path, \"actions[0]\");\n}\n"
+        },
+        {
+          "current": "        }],\n        \"body\": original\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(value));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail.contains(\n            \"persistent commitment requires a fixed aligned FAB value and Bytes32 opening\"\n        )\n    );\n    assert_eq!(gap.path, \"return_value.value.bindings[0].value.value\");\n}\n",
+          "previous": "        }],\n        \"body\": original\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(value));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail\n            .contains(\"persistent commitment requires a Bytes32 pair and Bytes32 opening\")\n    );\n    assert_eq!(gap.path, \"return_value.value.bindings[0].value.value\");\n}\n"
+        },
+        {
+          "current": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": {\"kind\": \"default\", \"ty\": result_ty}}\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(branch));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(\n        gap.path,\n",
+          "previous": "            \"value\": {\"kind\": \"transient_hash\", \"value\": {\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": {\"kind\": \"default\", \"ty\": result_ty}}\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(branch));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(\n        gap.path,\n"
+        },
+        {
+          "current": "            \"value\": {\"kind\":\"transient_hash\", \"value\":{\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": first\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_source_rejected_opaque_commit(argument));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail.contains(\n            \"persistent commitment requires a fixed aligned FAB value and Bytes32 opening\"\n        )\n    );\n    assert_eq!(\n        gap.path,\n",
+          "previous": "            \"value\": {\"kind\":\"transient_hash\", \"value\":{\"kind\":\"default\", \"ty\":{\"kind\":\"opaque_string\"}}}\n        }], \"body\": first\n    });\n    let gap = send_gap(admit_defaults_then_replace_with_unsupported_commit(\n        argument,\n    ));\n    assert_eq!(gap.code, RecordingGapCode::UnsupportedExpression);\n    assert_eq!(gap.ir_node, \"RecordedPlan\");\n    assert!(\n        gap.detail\n            .contains(\"persistent commitment requires a Bytes32 pair and Bytes32 opening\")\n    );\n    assert_eq!(\n        gap.path,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/point_composition.rs": {
+      "previous_sha256": "69c5a95c40845ca06c0ce8a1abfed6f9add9b73bcf13427ad00b64be993de8d3",
+      "current_sha256": "1126346e8786fd1893deb39017bd85533029fd5048a02dfb6938f04cc3fd9956",
+      "predecessor_reconstruction": [
+        {
+          "current": "                    .unwrap()\n                    .contains(\"own_coin_public_key()\")\n            );\n            // The newly supported Field commitment at the same lazy position\n            // remains admitted; an unsupported child is still checked.\n            let actions = circuit(&mut v, \"changes\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"][\"value\"] = json!({\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}});\n            assert!(recorded(v.clone(), \"check\"));\n            let actions = circuit(&mut v, \"changes\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"][\"value\"][\"value\"] = json!({\"kind\":\"vector_map\",\n                \"parameter\":{\"name\":\"sentinel_item\",\"ty\":{\"kind\":\"field\"}},\n                \"source\":{\"kind\":\"tuple\",\"elements\":[{\"kind\":\"field_literal\",\"value\":\"1\"}]},\n                \"body\":{\"kind\":\"parameter\",\"name\":\"sentinel_item\"},\n                \"result\":{\"kind\":\"field\"},\"length\":1});\n        }\n        assert!(!recorded(v, \"check\"), \"{mutation}\");\n    }\n",
+          "previous": "                    .unwrap()\n                    .contains(\"own_coin_public_key()\")\n            );\n            // An unsupported operand at the same lazy position is still checked.\n            let actions = circuit(&mut v, \"changes\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"][\"value\"] = json!({\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}});\n        }\n        assert!(!recorded(v, \"check\"), \"{mutation}\");\n    }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/unit_composition.rs": {
+      "previous_sha256": "e13dffc19ea6404cb3885525327091b4e34736514befc83c2df1347adf3605d4",
+      "current_sha256": "603a1ce7f8bba0077daf103e998258b30a2fc16a61f425776058ed59096a343a",
+      "predecessor_reconstruction": [
+        {
+          "current": "            \"chunked={chunked}\"\n        );\n\n        // Fixed-FAB Field commitments now compose in the unselected helper arm.\n        circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"] = json!({\n            \"kind\":\"expression\", \"value\": {\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8; 32]}}\n        });\n        assert!(recorded(v.clone()));\n        // Keep whole-helper admission negative using a native-valid typed IR\n        // VectorMap child, not an obsolete commitment input restriction.\n        circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"][\"value\"] = json!({\"kind\":\"vector_map\",\n                \"parameter\":{\"name\":\"sentinel_item\",\"ty\":{\"kind\":\"field\"}},\n                \"source\":{\"kind\":\"tuple\",\"elements\":[{\"kind\":\"field_literal\",\"value\":\"1\"}]},\n                \"body\":{\"kind\":\"parameter\",\"name\":\"sentinel_item\"},\n                \"result\":{\"kind\":\"field\"},\"length\":1});\n        let contract: Contract = serde_json::from_value(v).unwrap();\n        let output = render_with_capabilities(&contract).unwrap();\n        let capability = output\n",
+          "previous": "            \"chunked={chunked}\"\n        );\n\n        // Native fixed-FAB commitments remain wider than the checked Bytes32 pair.\n        circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"] = json!({\n            \"kind\":\"expression\", \"value\": {\"kind\":\"persistent_commit\",\n                \"value\":{\"kind\":\"field_literal\",\"value\":\"0\"},\n                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8; 32]}}\n        });\n        let contract: Contract = serde_json::from_value(v).unwrap();\n        let output = render_with_capabilities(&contract).unwrap();\n        let capability = output\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/inputs.rs": {
+      "previous_sha256": "4038124b06b0ba8b68cc3324ba9fb43f792612bc1dc23ce475be608be76a714f",
+      "current_sha256": "d540b93f2b267a226bfc119e98fde714b04ddf7cf8ae8f3824c1d7ada96962d6",
+      "predecessor_reconstruction": [
+        {
+          "current": "    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\n// #611 replaces obsolete public refusal controls in one test-only oracle owner.\n// Pin this separate checkpoint to avoid a self-referential inventory manifest.\nconst COMMIT_INPUTS_SHA256: &str =\n    \"4feeb870cede6548b17cc870c6d67f545274f9c98c73923e691acca665c45caf\";\nconst COMMIT_INPUTS: &[u8] = include_bytes!(\"legacy-commit-inputs-611.json\");\n\nfn commit_inputs_manifest(bytes: &[u8]) -> Result<Value, String> {\n    if digest(bytes) != COMMIT_INPUTS_SHA256 {\n        return Err(\"unreviewed commitment test checkpoint\".into());\n    }\n    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\nfn projected_legacy_source(\n    path: &str,\n    current: &str,\n    retirement: &Value,\n    resource_metadata: &Value,\n) -> Result<String, String> {\n    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS)?;\n    let before_commit = legacy_source(path, current, &commit_inputs)?;\n    let before_metadata = legacy_source(path, &before_commit, resource_metadata)?;\n    legacy_source(path, &before_metadata, retirement)\n}\n\n",
+          "previous": "    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\nfn projected_legacy_source(\n    path: &str,\n    current: &str,\n    retirement: &Value,\n    resource_metadata: &Value,\n) -> Result<String, String> {\n    let before_metadata = legacy_source(path, current, resource_metadata)?;\n    legacy_source(path, &before_metadata, retirement)\n}\n\n"
+        },
+        {
+          "current": "    }\n    authority[\"retirement_projection\"] = retirement;\n    authority[\"resource_metadata_projection\"] = resource_metadata;\n    authority[\"commit_input_test_projection\"] = commit_inputs_manifest(COMMIT_INPUTS).unwrap();\n    authority\n}\n\n",
+          "previous": "    }\n    authority[\"retirement_projection\"] = retirement;\n    authority[\"resource_metadata_projection\"] = resource_metadata;\n    authority\n}\n\n"
+        },
+        {
+          "current": "    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();\n    assert!(resource_metadata_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    assert!(retirement_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let commit_inputs = commit_inputs_manifest(COMMIT_INPUTS).unwrap();\n    assert!(commit_inputs_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for (path, row) in commit_inputs[\"owners\"].as_object().unwrap() {\n        let current = std::fs::read_to_string(root.join(path)).unwrap();\n        assert_eq!(\n            digest(\n                legacy_source(path, &current, &commit_inputs)\n                    .unwrap()\n                    .as_bytes()\n            ),\n            row[\"previous_sha256\"]\n        );\n        assert!(legacy_source(path, &(current.clone() + \"\\n// drift\\n\"), &commit_inputs).is_err());\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let partial = current.replacen(\n            edit[\"current\"].as_str().unwrap(),\n            edit[\"previous\"].as_str().unwrap(),\n            1,\n        );\n        assert_ne!(partial, current);\n        assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());\n    }\n    for (path, row) in retirement[\"owners\"].as_object().unwrap() {\n        let current = std::fs::read_to_string(root.join(path)).unwrap();\n        assert_eq!(\n",
+          "previous": "    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();\n    assert!(resource_metadata_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    assert!(retirement_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for (path, row) in retirement[\"owners\"].as_object().unwrap() {\n        let current = std::fs::read_to_string(root.join(path)).unwrap();\n        assert_eq!(\n"
+        },
+        {
+          "current": "            .is_err()\n        );\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let before_commit = legacy_source(path, &current, &commit_inputs).unwrap();\n        let before_metadata = legacy_source(path, &before_commit, &resource_metadata).unwrap();\n        let partial = before_metadata.replacen(\n            edit[\"current\"].as_str().unwrap(),\n            edit[\"previous\"].as_str().unwrap(),\n",
+          "previous": "            .is_err()\n        );\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let before_metadata = legacy_source(path, &current, &resource_metadata).unwrap();\n        let partial = before_metadata.replacen(\n            edit[\"current\"].as_str().unwrap(),\n            edit[\"previous\"].as_str().unwrap(),\n"
+        },
+        {
+          "current": "        );\n        assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());\n    }\n    // Every original source digest remains mandatory after all exact stages.\n    let authority = legacy_authority();\n    assert_eq!(authority[\"files\"].as_array().unwrap().len(), 49);\n    let path = \"tools/compact-rust-backend/src/recorded/typed_plan/composition.rs\";\n",
+          "previous": "        );\n        assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());\n    }\n    // Every original source digest remains mandatory after both exact stages.\n    let authority = legacy_authority();\n    assert_eq!(authority[\"files\"].as_array().unwrap().len(), 49);\n    let path = \"tools/compact-rust-backend/src/recorded/typed_plan/composition.rs\";\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/merkle_recording.rs": {
+      "previous_sha256": "4f3dd30507c28ca2e65b892db438cd0bb5f7663ef53c9de4107ec762bee9e98a",
+      "current_sha256": "539e8ccfd1857df61cf230d28f601cafd20d969da8d2bdfcbf721d2e194c21e5",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(rendered.capabilities.circuits[0].observed_call);\n\n    // Typed composition accepts computed roots and preceding tree effects.\n    let mut computed = contract.clone();\n    let StateReturn::MerkleCheckRoot { root, .. } = &mut computed.stateful_circuits[0].return_value\n    else {\n",
+          "previous": "    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(rendered.capabilities.circuits[0].observed_call);\n\n    let mut computed = contract.clone();\n    let StateReturn::MerkleCheckRoot { root, .. } = &mut computed.stateful_circuits[0].return_value\n    else {\n"
+        },
+        {
+          "current": "    };\n    *root = Expr::Default { ty: digest.clone() };\n    assert!(\n        render_with_capabilities(&computed)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n",
+          "previous": "    };\n    *root = Expr::Default { ty: digest.clone() };\n    assert!(\n        !render_with_capabilities(&computed)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n"
+        },
+        {
+          "current": "            value: Expr::Boolean { value: true },\n        });\n    assert!(\n        render_with_capabilities(&effectful)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n",
+          "previous": "            value: Expr::Boolean { value: true },\n        });\n    assert!(\n        !render_with_capabilities(&effectful)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n"
+        },
+        {
+          "current": "        *root = Expr::Default { ty: digest.clone() };\n    }\n    assert!(\n        render_with_capabilities(&computed_historic)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n            .recorded\n    );\n    let mut effectful_historic = historic.clone();\n    effectful_historic.stateful_circuits[0]\n",
+          "previous": "        *root = Expr::Default { ty: digest.clone() };\n    }\n    assert!(\n        !render_with_capabilities(&computed_historic)\n            .map(|rendered| rendered.capabilities.circuits[0].recorded)\n            .unwrap_or(false)\n    );\n    let mut effectful_historic = historic.clone();\n    effectful_historic.stateful_circuits[0]\n"
+        },
+        {
+          "current": "            value: Expr::Boolean { value: true },\n        });\n    assert!(\n        render_with_capabilities(&effectful_historic)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n            .recorded\n    );\n\n    contract.stateful_circuits[0].parameters[0].ty = Type::Field;\n",
+          "previous": "            value: Expr::Boolean { value: true },\n        });\n    assert!(\n        !render_with_capabilities(&effectful_historic)\n            .map(|rendered| rendered.capabilities.circuits[0].recorded)\n            .unwrap_or(false)\n    );\n\n    contract.stateful_circuits[0].parameters[0].ty = Type::Field;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_conditionals.rs": {
+      "previous_sha256": "1c756677b2b2c274d2e8c76d169b25bb5f00348e8c2233e8e794a143d14b4cf0",
+      "current_sha256": "2cbf373f158655da5ea2f40ee737285be6006bf5dd5e78ef9f15dd2d168913f1",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn recorded_conditional_field_pair_preserves_native_predicate_and_arm_validation() {\n    let mut contract: Contract = serde_json::from_str(include_str!(\n        \"../../fixtures/recorded-closed-conditional-field-pair.json\"\n    ))\n",
+          "previous": "}\n\n#[test]\nfn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {\n    let mut contract: Contract = serde_json::from_str(include_str!(\n        \"../../fixtures/recorded-closed-conditional-field-pair.json\"\n    ))\n"
+        },
+        {
+          "current": "    contract.schema_version = SCHEMA_VERSION;\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    // Check the emitted conditional, independently of a retired temporary name.\n    let body = super::lifecycle_recording::generated_body(\n        &rendered.source,\n        \"recorded\",\n        &contract.stateful_circuits[0].name,\n    );\n    assert!(body.contains(\"if \"), \"{body}\");\n\n    let closed = contract.clone();\n    let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n",
+          "previous": "    contract.schema_version = SCHEMA_VERSION;\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(\n        rendered\n            .source\n            .contains(\"__compact_recorded_conditional_pair_\")\n    );\n\n    let closed = contract.clone();\n    let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n"
+        },
+        {
+          "current": "}\n\n#[test]\nfn unsigned_ternary_comparison_records_typed_literal_and_parameter_arms() {\n    let uint = Type::Unsigned { max: \"255\".into() };\n    let narrow = Type::Unsigned { max: \"1\".into() };\n    let arm = |value: &str| Expr::Coerce {\n",
+          "previous": "}\n\n#[test]\nfn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {\n    let uint = Type::Unsigned { max: \"255\".into() };\n    let narrow = Type::Unsigned { max: \"1\".into() };\n    let arm = |value: &str| Expr::Coerce {\n"
+        },
+        {
+          "current": "        ty: narrow,\n    };\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    // An unselected branch must still have a valid parameter binding.\n    contract.stateful_circuits[0]\n        .parameters\n        .retain(|p| p.name != \"y\");\n    assert!(render_with_capabilities(&contract).is_err());\n}\n\n#[test]\n",
+          "previous": "        ty: narrow,\n    };\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(!rendered.capabilities.circuits[0].recorded);\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/map_composition.rs": {
+      "previous_sha256": "af5e2e2474df19042eb9acc3aded4c3ef940c5eb63730d38dc20da6b3944aaf0",
+      "current_sha256": "8907824834b43407b2667f06d6d6ad284ccd566ffe31e43efca2d749a1c9b304",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn mixed_and_empty_map_products_use_their_declared_codecs() {\n    let empty = render(fixture(\"empty\"));\n    assert!(\n        empty\n            .capabilities\n            .circuits\n            .iter()\n            .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n    );\n    assert!(\n        empty\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_insert(\")\n    );\n    let output = render(fixture(\"mixed\"));\n    assert!(\n        output\n",
+          "previous": "}\n\n#[test]\nfn mixed_scalar_map_values_compose_while_empty_values_stay_outside_codec() {\n    assert!(!recorded(fixture(\"empty\"), \"put\"));\n    let output = render(fixture(\"mixed\"));\n    assert!(\n        output\n"
+        },
+        {
+          "current": "                \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n                \"otherwise\":otherwise\n            }));\n        let output = render(value.clone());\n        assert!(\n            output\n                .capabilities\n                .circuits\n                .iter()\n                .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n        );\n        assert!(\n            output\n                .source\n                .split(\"pub mod recorded\")\n                .nth(1)\n                .unwrap()\n                .contains(\"record_reset(\")\n        );\n        let hidden = &mut circuit(&mut value, \"put\")[\"actions\"]\n            .as_array_mut()\n            .unwrap()\n            .last_mut()\n            .unwrap()[\"otherwise\"];\n        if unused {\n            hidden[\"action\"][\"index\"] = json!(99);\n        } else {\n            hidden[\"index\"] = json!(99);\n        }\n        assert!(\n            !recorded(value, \"put\"),\n            \"unselected wrong slot, unused={unused}\"\n        );\n    }\n    let mut value = fixture(\"pair\");\n",
+          "previous": "                \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n                \"otherwise\":otherwise\n            }));\n        assert!(\n            !render(value)\n                .capabilities\n                .circuits\n                .iter()\n                .find(|row| row.name == \"put\")\n                .unwrap()\n                .recorded\n        );\n    }\n    let mut value = fixture(\"pair\");\n"
+        },
+        {
+          "current": "                         \"value\":{\"kind\":\"map_is_empty\",\"field\":\"entries\",\"index\":0}}],\n            \"action\":{\"kind\":\"sequence\",\"actions\":[]}\n        }));\n    let output = render(value.clone());\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n    );\n    assert!(\n        output\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_is_empty(\")\n    );\n    circuit(&mut value, \"put\")[\"actions\"]\n        .as_array_mut()\n        .unwrap()\n        .last_mut()\n        .unwrap()[\"bindings\"][0][\"value\"][\"index\"] = json!(99);\n    assert!(!recorded(value, \"put\"), \"unused query wrong slot\");\n}\n\n#[test]\n",
+          "previous": "                         \"value\":{\"kind\":\"map_is_empty\",\"field\":\"entries\",\"index\":0}}],\n            \"action\":{\"kind\":\"sequence\",\"actions\":[]}\n        }));\n    assert!(\n        !render(value)\n            .capabilities\n            .circuits\n            .iter()\n            .find(|row| row.name == \"put\")\n            .unwrap()\n            .recorded\n    );\n}\n\n#[test]\n"
+        },
+        {
+          "current": "                })),\n            _ => unreachable!(),\n        }\n        if mutation == \"helper_hidden_map\" {\n            let output = render(value.clone());\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n            );\n            assert!(\n                output\n                    .source\n                    .split(\"pub mod recorded\")\n                    .nth(1)\n                    .unwrap()\n                    .contains(\"record_reset(\")\n            );\n            circuit(&mut value, \"bump\")[\"actions\"]\n                .as_array_mut()\n                .unwrap()\n                .last_mut()\n                .unwrap()[\"otherwise\"][\"index\"] = json!(99);\n        }\n        assert!(!recorded(value, \"put\"), \"{mutation}\");\n    }\n}\n",
+          "previous": "                })),\n            _ => unreachable!(),\n        }\n        assert!(!recorded(value, \"put\"), \"{mutation}\");\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/map_nested_product_composition.rs": {
+      "previous_sha256": "2c2c95f1f694cdf838ac83e4118046c44cf7903dce76b15c95857aabe3e604c1",
+      "current_sha256": "90fa351fe23dd650b94f85fcafc2348aa33a3978a2ac07a51cd835bd74cd2a64",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn nested_product_helper_audit_checks_hidden_slots_cycles_and_enum_types() {\n    for mutation in [\"hidden_branch\", \"helper_cycle\", \"wrong_arity\", \"wrong_enum\"] {\n        let mut value = fixture(\"nested\");\n        match mutation {\n",
+          "previous": "}\n\n#[test]\nfn nested_product_helper_audit_rejects_hidden_effects_cycle_and_wrong_enum_type() {\n    for mutation in [\"hidden_branch\", \"helper_cycle\", \"wrong_arity\", \"wrong_enum\"] {\n        let mut value = fixture(\"nested\");\n        match mutation {\n"
+        },
+        {
+          "current": "            }\n            _ => unreachable!(),\n        }\n        if mutation == \"hidden_branch\" {\n            let output = render_with_capabilities(\n                &serde_json::from_value::<Contract>(value.clone()).unwrap(),\n            )\n            .unwrap();\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| c.name == \"upsert\" && c.recorded && c.observed_call)\n            );\n            assert!(\n                output\n                    .source\n                    .split(\"pub mod recorded\")\n                    .nth(1)\n                    .unwrap()\n                    .contains(\"record_reset(\")\n            );\n            first_kind_mut(&mut circuit(&mut value, \"upsert\")[\"actions\"], \"map_reset\").unwrap()[\"index\"] =\n                json!(99);\n        }\n        let name = if mutation == \"wrong_enum\" {\n            \"put\"\n        } else {\n",
+          "previous": "            }\n            _ => unreachable!(),\n        }\n        let name = if mutation == \"wrong_enum\" {\n            \"put\"\n        } else {\n"
+        },
+        {
+          "current": "}\n\n#[test]\nfn nested_product_domain_includes_empty_fixed_products() {\n    let mixed: Contract =\n        serde_json::from_str(include_str!(\"map-composition/mixed_map.json\")).unwrap();\n    let output = render_with_capabilities(&mixed).unwrap();\n",
+          "previous": "}\n\n#[test]\nfn nested_product_domain_uses_scalar_codecs_and_rejects_empty_values() {\n    let mixed: Contract =\n        serde_json::from_str(include_str!(\"map-composition/mixed_map.json\")).unwrap();\n    let output = render_with_capabilities(&mixed).unwrap();\n"
+        },
+        {
+          "current": "    );\n    let empty: Value =\n        serde_json::from_str(include_str!(\"map-composition/empty_map.json\")).unwrap();\n    let output =\n        render_with_capabilities(&serde_json::from_value::<Contract>(empty).unwrap()).unwrap();\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n    );\n    assert!(\n        output\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_insert(\")\n    );\n}\n",
+          "previous": "    );\n    let empty: Value =\n        serde_json::from_str(include_str!(\"map-composition/empty_map.json\")).unwrap();\n    assert!(!recorded(empty, \"put\"));\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/map_point_composition.rs": {
+      "previous_sha256": "dbcb2a714e30d7c2e794a7e769acf4183daf3f8a7675959c6f0850e249f435cb",
+      "current_sha256": "c2061934fbd3e5b2c1220d25a7686036dd1c23060bea98a35fd635abd514cb42",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn nested_string_and_empty_products_have_typed_recorded_insertion() {\n    let nested: Value =\n        serde_json::from_str(include_str!(\"map-composition/nested_map.json\")).unwrap();\n    assert!(recorded(nested, \"put\"));\n    let empty: Value =\n        serde_json::from_str(include_str!(\"map-composition/empty_map.json\")).unwrap();\n    let output =\n        render_with_capabilities(&serde_json::from_value::<Contract>(empty).unwrap()).unwrap();\n    assert!(\n        output\n            .capabilities\n            .circuits\n            .iter()\n            .any(|c| c.name == \"put\" && c.recorded && c.observed_call)\n    );\n    assert!(\n        output\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_insert(\")\n    );\n}\n\n#[test]\n",
+          "previous": "}\n\n#[test]\nfn nested_string_product_records_and_empty_product_remains_outside_domain() {\n    let nested: Value =\n        serde_json::from_str(include_str!(\"map-composition/nested_map.json\")).unwrap();\n    assert!(recorded(nested, \"put\"));\n    let empty: Value =\n        serde_json::from_str(include_str!(\"map-composition/empty_map.json\")).unwrap();\n    assert!(!recorded(empty, \"put\"));\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/list_recording.rs": {
+      "previous_sha256": "d848271e19f1c943d213a4afdb2a08adbaf18481fe735513a95f6bbe33d85000",
+      "current_sha256": "4648d12bade5103d75a251ac49f2e8c4c621edd7fa5ff451b138d9aad5086766",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn field_and_boolean_vector_heads_record_with_declared_slot_authority() {\n    fn contract_for(element: Type) -> Contract {\n        let vector = Type::Vector {\n            element: Box::new(element),\n",
+          "previous": "}\n\n#[test]\nfn field_vector_list_head_value_records_without_admitting_other_vector_elements() {\n    fn contract_for(element: Type) -> Contract {\n        let vector = Type::Vector {\n            element: Box::new(element),\n"
+        },
+        {
+          "current": "    assert!(field.source.contains(\"record_head::<crate::types::Maybe\"));\n\n    let boolean = render_with_capabilities(&contract_for(Type::Boolean)).unwrap();\n    assert!(\n        boolean.capabilities.circuits[0].recorded && boolean.capabilities.circuits[0].observed_call\n    );\n    assert!(\n        boolean\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_head::<crate::types::Maybe\")\n    );\n    let mut wrong_slot = contract_for(Type::Boolean);\n    let StateAction::Assert {\n        condition: Expr::Equal { left, .. },\n        ..\n    } = &mut wrong_slot.stateful_circuits[0].actions[0]\n    else {\n        unreachable!()\n    };\n    let Expr::StructField { value, .. } = left.as_mut() else {\n        unreachable!()\n    };\n    let Expr::ListHead { index, .. } = value.as_mut() else {\n        unreachable!()\n    };\n    *index = 99;\n    assert!(render(&wrong_slot).is_err());\n}\n\n#[test]\nfn bytes_and_opaque_list_heads_record_with_exact_type_and_length() {\n    fn contract_for(element: Type, value: Expr) -> Contract {\n        let maybe = Type::Struct {\n            name: \"Maybe\".into(),\n",
+          "previous": "    assert!(field.source.contains(\"record_head::<crate::types::Maybe\"));\n\n    let boolean = render_with_capabilities(&contract_for(Type::Boolean)).unwrap();\n    assert!(!boolean.capabilities.circuits[0].recorded);\n    assert!(!boolean.capabilities.circuits[0].observed_call);\n}\n\n#[test]\nfn literal_bytes_list_head_records_only_with_exact_length_and_excludes_opaque() {\n    fn contract_for(element: Type, value: Expr) -> Contract {\n        let maybe = Type::Struct {\n            name: \"Maybe\".into(),\n"
+        },
+        {
+          "current": "    };\n    let positive = render_with_capabilities(&contract_for(bytes.clone(), literal)).unwrap();\n    assert!(positive.capabilities.circuits[0].recorded);\n    let body = super::lifecycle_recording::generated_body(&positive.source, \"recorded\", \"test\");\n    // generated_body is parsed Rust printed as tokens, not rustfmt source.\n    assert!(body.contains(&quote::quote!(runtime::FixedBytes<4>).to_string()));\n    let literal = body\n        .find(&quote::quote!(runtime::FixedBytes::new).to_string())\n        .unwrap();\n    let head = body\n        .find(&quote::quote!(record_head::<crate::types::Maybe, _, _>).to_string())\n        .unwrap();\n    assert!(literal < head);\n    assert!(\n        positive\n            .source\n",
+          "previous": "    };\n    let positive = render_with_capabilities(&contract_for(bytes.clone(), literal)).unwrap();\n    assert!(positive.capabilities.circuits[0].recorded);\n    assert!(positive.source.contains(\"__compact_recorded_bytes_\"));\n    assert!(\n        positive\n            .source\n"
+        },
+        {
+          "current": "    ));\n\n    let opaque = Type::OpaqueString;\n    let supported = render_with_capabilities(&contract_for(\n        opaque.clone(),\n        Expr::Default { ty: opaque.clone() },\n    ))\n    .unwrap();\n    assert!(\n        supported.capabilities.circuits[0].recorded\n            && supported.capabilities.circuits[0].observed_call\n    );\n    assert!(\n        supported\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_head::<crate::types::Maybe\")\n    );\n    let wrong_type = contract_for(opaque, Expr::Boolean { value: true });\n    assert!(matches!(\n        render(&wrong_type),\n        Err(RenderError::TypeMismatch { .. })\n    ));\n}\n\n#[test]\n",
+          "previous": "    ));\n\n    let opaque = Type::OpaqueString;\n    let unsupported =\n        render_with_capabilities(&contract_for(opaque.clone(), Expr::Default { ty: opaque }))\n            .unwrap();\n    assert!(!unsupported.capabilities.circuits[0].recorded);\n    assert!(!unsupported.capabilities.circuits[0].observed_call);\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/map_recording.rs": {
+      "previous_sha256": "db2bd84638c25a7fa484033c02de9535d99644f8a3c4d0753e1945b3fbbdf2b1",
+      "current_sha256": "13677cfb0d4194cbf0e1b00f9d81b856de524f2c2d28fd297743b01ca4beeffa",
+      "predecessor_reconstruction": [
+        {
+          "current": "    **body = Expr::FieldLiteral { value: \"7\".into() };\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"put\".into(), true), (\"ensure\".into(), true)]\n    );\n    let output = render_with_capabilities(&contract).unwrap();\n    let body = super::lifecycle_recording::generated_body(&output.source, \"recorded\", \"ensure\");\n    let lookup = body\n        .find(&quote::quote!(.record_lookup).to_string())\n        .unwrap();\n    // Field constants use the exact canonical 32-byte little-endian encoding.\n    let bytes = [7u8].into_iter().chain([0u8; 31]);\n    let literal = body\n        .find(&quote::quote!([#(#bytes,)*]).to_string())\n        .unwrap();\n    assert!(lookup < literal);\n    let StateReturn::Expression {\n        value: Expr::Let { body, .. },\n    } = &mut contract.stateful_circuits[1].return_value\n    else {\n        unreachable!()\n    };\n    **body = Expr::Boolean { value: true };\n    assert!(matches!(\n        render(&contract),\n        Err(RenderError::Located { error, .. })\n            if matches!(*error, RenderError::TypeMismatch { expected: Type::Field, actual: Type::Boolean })\n    ));\n}\n\n#[test]\n",
+          "previous": "    **body = Expr::FieldLiteral { value: \"7\".into() };\n    assert_eq!(\n        statuses(&contract),\n        vec![(\"put\".into(), true), (\"ensure\".into(), false)]\n    );\n}\n\n#[test]\n"
+        },
+        {
+          "current": "        index: 0,\n        key: Expr::Parameter { name: \"key\".into() },\n    }];\n    let output = render_with_capabilities(&contract).unwrap();\n    assert!(\n        output.capabilities.circuits[0].recorded && output.capabilities.circuits[0].observed_call\n    );\n    assert!(\n        output\n            .source\n            .split(\"pub mod recorded\")\n            .nth(1)\n            .unwrap()\n            .contains(\"record_insert_default(\")\n    );\n    let StateAction::MapInsertDefault { key, .. } = &mut contract.stateful_circuits[0].actions[0]\n    else {\n        unreachable!()\n    };\n    *key = Expr::Parameter {\n        name: \"value\".into(),\n    };\n    assert!(matches!(\n        render(&contract),\n        Err(RenderError::TypeMismatch { .. })\n    ));\n\n    // A nested ledger Map has a structural slot, but its value still has no\n    // CellValue codec for scalar insert and lookup operations.\n",
+          "previous": "        index: 0,\n        key: Expr::Parameter { name: \"key\".into() },\n    }];\n    assert!(!render(&contract).unwrap().contains(\"pub mod recorded\"));\n\n    // A nested ledger Map has a structural slot, but its value still has no\n    // CellValue codec for scalar insert and lookup operations.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/recorded_helper_naming.rs": {
+      "previous_sha256": "d585f9a8a289c40e65e1dffa3cf8cc1ba370137aad107426ba502a4253e111b0",
+      "current_sha256": "9af483fbb1fe921a3d90ddd09ea1c7cb19889afb57588276a7bd476d8f617314",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n}\n\n// Ordinary checked returns now inline CounterRead callers. These naming laws\n// need a real legacy call: the existing unsigned identity VectorMap binding is\n// independently native-valid and legacy-supported, but not yet checked.\nfn legacy_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {\n    let mut fixture = contract(helper_name, caller, collide);\n    let scalar = Type::Unsigned { max: \"255\".into() };\n    for circuit in &mut fixture.stateful_circuits {\n        if !matches!(circuit.return_value, StateReturn::CounterRead { .. }) {\n            continue;\n        }\n        let actions = std::mem::take(&mut circuit.actions);\n        circuit.actions = vec![StateAction::Let {\n            bindings: vec![LocalBinding {\n                name: \"mapped_for_legacy\".into(),\n                ty: Type::Vector {\n                    element: Box::new(scalar.clone()),\n                    length: 1,\n                },\n                value: Expr::VectorMap {\n                    parameter: Parameter {\n                        name: \"item\".into(),\n                        ty: scalar.clone(),\n                    },\n                    source: Box::new(Expr::Tuple {\n                        elements: vec![Expr::UnsignedLiteral {\n                            value: \"1\".into(),\n                            max: \"255\".into(),\n                        }],\n                    }),\n                    body: Box::new(Expr::Parameter {\n                        name: \"item\".into(),\n                    }),\n                    result: scalar.clone(),\n                    length: 1,\n                },\n            }],\n            action: Box::new(StateAction::Sequence { actions }),\n        }];\n    }\n    fixture\n}\n\n#[test]\nfn raw_spelled_helper_records_without_changing_native_name() {\n    let native = render(&legacy_contract(\"r#type\", false, false)).unwrap();\n    syn::parse_file(&native).unwrap();\n    assert!(native.contains(\"pub(crate) fn r#type<\"));\n\n    let recorded = render_with_capabilities(&legacy_contract(\"r#type\", true, false)).unwrap();\n    syn::parse_file(&recorded.source).unwrap();\n    assert!(recorded.source.contains(\"pub(crate) fn r#type<\"));\n    assert!(recorded.source.contains(\"fn __compact_recorded_body_type<\"));\n",
+          "previous": "    }\n}\n\n#[test]\nfn raw_spelled_helper_records_without_changing_native_name() {\n    let native = render(&contract(\"r#type\", false, false)).unwrap();\n    syn::parse_file(&native).unwrap();\n    assert!(native.contains(\"pub(crate) fn r#type<\"));\n\n    let recorded = render_with_capabilities(&contract(\"r#type\", true, false)).unwrap();\n    syn::parse_file(&recorded.source).unwrap();\n    assert!(recorded.source.contains(\"pub(crate) fn r#type<\"));\n    assert!(recorded.source.contains(\"fn __compact_recorded_body_type<\"));\n"
+        },
+        {
+          "current": "\n#[test]\nfn compact_dollar_normalization_retains_existing_helper_spelling() {\n    let source = render(&legacy_contract(\"a$b\", true, false)).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert!(source.contains(\"pub(crate) fn a_b<\"));\n    assert!(source.contains(\"fn __compact_recorded_body_a_b<\"));\n",
+          "previous": "\n#[test]\nfn compact_dollar_normalization_retains_existing_helper_spelling() {\n    let source = render(&contract(\"a$b\", true, false)).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert!(source.contains(\"pub(crate) fn a_b<\"));\n    assert!(source.contains(\"fn __compact_recorded_body_a_b<\"));\n"
+        },
+        {
+          "current": "#[test]\nfn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {\n    for helper_name in [\"inner\", \"r#type\"] {\n        // The complete identity-map binding keeps a real legacy action call;\n        // CounterRead by itself is now covered by checked ordinary returns.\n        let fixture = legacy_contract(helper_name, true, true);\n        let source = render(&fixture).unwrap();\n        syn::parse_file(&source).unwrap();\n        let suffix = helper_name\n",
+          "previous": "#[test]\nfn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {\n    for helper_name in [\"inner\", \"r#type\"] {\n        // CounterRead keeps this complete root on actual legacy action dispatch.\n        // The canonical Uint128 public parameter is no longer a routing boundary.\n        let fixture = contract(helper_name, true, true);\n        let source = render(&fixture).unwrap();\n        syn::parse_file(&source).unwrap();\n        let suffix = helper_name\n"
+        },
+        {
+          "current": "\n#[test]\nfn raw_spelled_sibling_occupies_the_preferred_helper_name() {\n    let mut contract = legacy_contract(\"r#type\", true, true);\n    contract.stateful_circuits[2].name = \"r#__compact_recorded_body_type\".into();\n    let source = render(&contract).unwrap();\n    syn::parse_file(&source).unwrap();\n",
+          "previous": "\n#[test]\nfn raw_spelled_sibling_occupies_the_preferred_helper_name() {\n    let mut contract = contract(\"r#type\", true, true);\n    contract.stateful_circuits[2].name = \"r#__compact_recorded_body_type\".into();\n    let source = render(&contract).unwrap();\n    syn::parse_file(&source).unwrap();\n"
+        },
+        {
+          "current": "\n#[test]\nfn raw_spelled_sibling_also_occupies_the_fallback_name() {\n    let mut contract = legacy_contract(\"inner\", true, true);\n    let mut fallback_collision = contract.stateful_circuits[1].clone();\n    fallback_collision.name = \"r#__compact_recorded_body_1_x696e6e6572\".into();\n    contract.stateful_circuits.push(fallback_collision);\n",
+          "previous": "\n#[test]\nfn raw_spelled_sibling_also_occupies_the_fallback_name() {\n    let mut contract = contract(\"inner\", true, true);\n    let mut fallback_collision = contract.stateful_circuits[1].clone();\n    fallback_collision.name = \"r#__compact_recorded_body_1_x696e6e6572\".into();\n    contract.stateful_circuits.push(fallback_collision);\n"
+        },
+        {
+          "current": "\n#[test]\nfn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {\n    let mut fixture = legacy_contract(\"inner\", true, false);\n    let mut leaf = fixture.stateful_circuits[0].clone();\n    leaf.name = \"leaf\".into();\n    fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {\n",
+          "previous": "\n#[test]\nfn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {\n    let mut fixture = contract(\"inner\", true, false);\n    let mut leaf = fixture.stateful_circuits[0].clone();\n    leaf.name = \"leaf\".into();\n    fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {\n"
+        },
+        {
+          "current": "    checked.name = \"checked\".into();\n    checked.result = Type::Unit;\n    checked.return_value = StateReturn::Unit;\n    // Keep the second caller genuinely checked; only the first has the legacy\n    // identity-map binding. Preserve its original transitive helper call.\n    let StateAction::Let { action, .. } = checked.actions.remove(0) else {\n        unreachable!()\n    };\n    let StateAction::Sequence { actions } = *action else {\n        unreachable!()\n    };\n    checked.actions = actions;\n    fixture.stateful_circuits.push(checked);\n    let rendered = render_with_capabilities(&fixture).unwrap();\n    assert!(\n",
+          "previous": "    checked.name = \"checked\".into();\n    checked.result = Type::Unit;\n    checked.return_value = StateReturn::Unit;\n    fixture.stateful_circuits.push(checked);\n    let rendered = render_with_capabilities(&fixture).unwrap();\n    assert!(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/private_effects.rs": {
+      "previous_sha256": "585084d64c661521d00b829a0c8aa62270d4cc216a4b026f3c8bcb020492fb82",
+      "current_sha256": "7ac2fe9197e8b6f4bff617387bf962b6a2ef26cffe0ae91bfbcda7215e7ba932",
+      "predecessor_reconstruction": [
+        {
+          "current": "    syn::parse_file(&shared).unwrap();\n    assert_eq!(\n        shared.matches(\"fn __compact_recorded_body_inner<\").count(),\n        0\n    );\n    // Scalar Unit roots now inline the checked helper body. Verify each real\n    // caller retains its witnessed write, independently of the shared symbol.\n",
+          "previous": "    syn::parse_file(&shared).unwrap();\n    assert_eq!(\n        shared.matches(\"fn __compact_recorded_body_inner<\").count(),\n        1\n    );\n    // Scalar Unit roots now inline the checked helper body. Verify each real\n    // caller retains its witnessed write, independently of the shared symbol.\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/set_composition.rs": {
+      "previous_sha256": "d0d0dc1fde4987c5099c2c824765cfb92fa2db3b5b118724126c9da315d470f5",
+      "current_sha256": "566f299597d60183e1908fff7df9fd119d707fcbad98ac149b3d9bd722e28c16",
+      "predecessor_reconstruction": [
+        {
+          "current": "// See the License for the specific language governing permissions and\n// limitations under the License.\n\nuse compact_rust_backend::{RenderError, ir::Contract, render_with_capabilities};\nuse serde_json::{Value, json};\nfn fixture(name: &str) -> Value {\n    serde_json::from_str(match name {\n",
+          "previous": "// See the License for the specific language governing permissions and\n// limitations under the License.\n\nuse compact_rust_backend::{ir::Contract, render_with_capabilities};\nuse serde_json::{Value, json};\nfn fixture(name: &str) -> Value {\n    serde_json::from_str(match name {\n"
+        },
+        {
+          "current": "                    .collect::<String>()\n                    .contains(\"other_map.record_remove(\")\n            );\n            // Map reset is also a typed effect, including in an unselected branch.\n            let actions = declaration(&mut v, \"stateful_circuits\", \"mutate\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"] =\n                json!({\"kind\":\"map_reset\",\"field\":\"other_map\",\"index\":2});\n            let output =\n                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())\n                    .unwrap();\n            assert!(\n                output\n                    .capabilities\n                    .circuits\n                    .iter()\n                    .any(|c| { c.name == \"mutate\" && c.recorded && c.observed_call })\n            );\n            let body = output.source.split(\"pub mod recorded\").nth(1).unwrap();\n            assert!(\n                body.split_whitespace()\n                    .collect::<String>()\n                    .contains(\"other_map.record_reset(\")\n            );\n\n            // The operation must still resolve the declared field/index pair.\n            let actions = declaration(&mut v, \"stateful_circuits\", \"mutate\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"][\"index\"] = json!(9);\n            let error =\n                render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())\n                    .err()\n                    .expect(\"invalid Map slot must fail native validation\");\n            let RenderError::Located { error, .. } = error else {\n                panic!(\"expected native source location for the invalid Map slot\");\n            };\n            assert!(\n                matches!(*error, RenderError::UnknownLedgerField(ref field) if field == \"other_map\")\n            );\n        }\n        assert!(!recorded(v, \"mutate\"), \"{kind}\");\n    }\n",
+          "previous": "                    .collect::<String>()\n                    .contains(\"other_map.record_remove(\")\n            );\n            // Typed mutation composition does not admit an unsupported Map reset.\n            let actions = declaration(&mut v, \"stateful_circuits\", \"mutate\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"] =\n                json!({\"kind\":\"map_reset\",\"field\":\"other_map\",\"index\":2});\n        }\n        assert!(!recorded(v, \"mutate\"), \"{kind}\");\n    }\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/persistent_commit.rs": "2b86aba0539b565da99dafdd79f4d99d40d8f81d47308dc58103ce3dd1740c7e",
+    "tools/compact-rust-backend/src/recorded/test_support.rs": "65f0b59c40301b565a936657de38636d92ea8ae52b96c585692f2f480673ba5c",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json": "4feeb870cede6548b17cc870c6d67f545274f9c98c73923e691acca665c45caf",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/fab.rs": "97881c6df7c5069eade09db9e3667c0e7e1df5ced197b12c1fba415b11b315c4",
+    "runtime-rs/src/natives.rs": "20b97e8e385121c5e0f0c66ed0fe4acfd7fd137dc6b93da17f82c6cc055febc1",
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/leaf.rs": "33e2a9d45831d80a78434ac81dea2b7cf7deec2a0089fbf74e6e089d6ec3cf1b",
+    "compiler/analysis-passes.ss": "1e1beb4be9ca74cc229e533b65493874f7ab024b675892160faeca91fe5efc75",
+    "tools/compact-rust-backend/src/lib.rs": "b5e1abc6d5f9d8cff753c302b2650fa7a845e6560015a3a9f97329ee61359493",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/storage.rs": "7baba1007d829e4f396a1e80fc00f1b1fafdbcaeebc931845d3b0110f992c0f1",
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": "46d7015357ea3d57becb9849e77cbb86d8b500a8c8fd2440dcf9497f9d9c9cdd",
+    "runtime-rs/src/context/map.rs": "e6acc1e7aaceda69a8517ea2c25b3ac728d2472743c406ca4a0670113de03c0b",
+    "runtime-rs/src/ledger/collections.rs": "3c3e36056578589d336d9a2dbbd8739c0b1e78c09abf1780cebbb7afaa54081d",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "8aca56f33658029b7402ea388a7a14bd8e6121c4d4dd98a47858f31eb55ae0d4",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "c7f3762db72f2f012e6c085ee2ab425042f5f6af9283cf1e03d87f93e2a3328c",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": "3b2536023286adfbc028305c9afcf8402a87f71d62373c420eccc240e4ff3cd6",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/tests/welcome-schema20-ir.json": "8963572627b26394b74d550ec94e87b7b4848ba7edf8c3b2ffd509e54129d6ea"
+  },
+  "anchor_adaptations": [],
+  "baseline_retired_routes": 34,
+  "baseline_boundaries": 84
+}

@@ -18,12 +18,16 @@
 //! This component emits the existing expression language. Circuit action/return
 //! assembly belongs to the parent; public convenience methods belong to facade.
 
-use crate::circuit_analysis::{circuit_emits_native_private_output, circuit_uses_witness};
+use crate::circuit_analysis::{
+    circuit_emits_native_private_output_observed, circuit_uses_witness_observed,
+};
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{
     ComparisonOperator, Expr, LedgerField, LedgerFieldKind, NativeWitnessBuiltin, PureCircuit,
     StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
+use crate::native_representation;
+use crate::source_diagnostics::{Owner, RefusalSite};
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
     expression_with_calls, field_to_bytes_32_syntax, ident, ledger_path_expr,
@@ -33,8 +37,12 @@ use crate::{
 use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
-/// Dispatch structural recursion before allocating operation-specific syntax temporaries.
-/// The small dispatcher keeps nested source expressions off the large operation frame.
+mod observer;
+use observer::StateExpressionContext;
+pub(crate) use observer::StateExpressionContext as NativeExpressionContext;
+
+/// Originless compatibility entry; recursive children use the observed dispatcher.
+#[cfg(test)]
 #[expect(
     clippy::too_many_arguments,
     reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
@@ -50,17 +58,41 @@ pub(crate) fn render_state_expression(
     ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
+    let environment = StateExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    render_state_expression_observed(
+        value,
+        parameters,
+        statements,
+        next_temp,
+        query_effect,
+        &environment,
+    )
+}
+
+/// Dispatch structural recursion before allocating operation-specific syntax temporaries.
+/// The small dispatcher keeps nested source expressions off the large operation frame.
+pub(crate) fn render_state_expression_observed(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+    query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::Let { .. } | Expr::Sequence { .. } | Expr::If { .. } => render_control_expression(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::StructLiteral { .. }
         | Expr::StructField { .. }
@@ -68,72 +100,53 @@ pub(crate) fn render_state_expression(
         | Expr::TupleIndex { .. } => render_aggregate_expression(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         _ => render_operation_expression(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
     }
 }
 
 /// Lower lexical control flow, preserving branch-local statements and binding scopes.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
-)]
 fn render_control_expression(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::Sequence { steps, value } => {
             let mut witness_effect = false;
             for step in steps {
-                let (rendered, ty, effect) = render_state_expression(
+                let (rendered, ty, effect) = render_state_expression_observed(
                     step,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 statements.extend(discard_expression(rendered, &ty));
                 witness_effect |= effect;
             }
-            let (rendered, ty, effect) = render_state_expression(
+            let (rendered, ty, effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             Ok((rendered, ty, witness_effect || effect))
         }
@@ -143,16 +156,13 @@ fn render_control_expression(
             otherwise,
         } => {
             let evaluate_condition = condition_needs_statement(condition);
-            let (condition, condition_ty, condition_effect) = render_state_expression(
+            let (condition, condition_ty, condition_effect) = render_state_expression_observed(
                 condition,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if condition_ty != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
@@ -164,42 +174,33 @@ fn render_control_expression(
                 if evaluate_condition {
                     statements.push(syn::parse_quote!(let _ = #condition;));
                 }
-                let (value, ty, effect) = render_state_expression(
+                let (value, ty, effect) = render_state_expression_observed(
                     then,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 return Ok((value, ty, condition_effect || effect));
             }
             let mut then_statements = Vec::new();
-            let (then_value, then_ty, then_effect) = render_state_expression(
+            let (then_value, then_ty, then_effect) = render_state_expression_observed(
                 then,
                 parameters,
-                witnesses,
                 &mut then_statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let mut else_statements = Vec::new();
-            let (else_value, else_ty, else_effect) = render_state_expression(
+            let (else_value, else_ty, else_effect) = render_state_expression_observed(
                 otherwise,
                 parameters,
-                witnesses,
                 &mut else_statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if then_ty != else_ty {
                 return Err(RenderError::TypeMismatch {
@@ -229,16 +230,13 @@ fn render_control_expression(
             let mut effect = false;
             for binding in bindings {
                 ident(&binding.name)?;
-                let (rendered, actual, binding_effect) = render_state_expression(
+                let (rendered, actual, binding_effect) = render_state_expression_observed(
                     &binding.value,
                     &locals,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 if actual != binding.ty {
                     return Err(RenderError::TypeMismatch {
@@ -256,16 +254,13 @@ fn render_control_expression(
                 locals.insert(binding.name.as_str(), (&binding.ty, local_name));
                 effect |= binding_effect;
             }
-            let (rendered, ty, body_effect) = render_state_expression(
+            let (rendered, ty, body_effect) = render_state_expression_observed(
                 body,
                 &locals,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             Ok((rendered, ty, effect || body_effect))
         }
@@ -274,21 +269,15 @@ fn render_control_expression(
 }
 
 /// Lower ordered aggregate construction and projections using the shared dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
-)]
 fn render_aggregate_expression(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
+    let source = value;
     match value {
         Expr::StructLiteral { ty, fields } => {
             let Type::Struct {
@@ -296,26 +285,26 @@ fn render_aggregate_expression(
                 fields: declarations,
             } = ty
             else {
+                environment.refused(source);
                 return Err(RenderError::InvalidStructField("<literal>".into()));
             };
             if fields.len() != declarations.len() {
+                environment.refused(source);
                 return Err(RenderError::InvalidStructField(name.clone()));
             }
             let mut members = Vec::<syn::FieldValue>::with_capacity(fields.len());
             let mut witness_effect = false;
             for (value, declaration) in fields.iter().zip(declarations) {
-                let (rendered, actual, effect) = render_state_expression(
+                let (rendered, actual, effect) = render_state_expression_observed(
                     value,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 if actual != declaration.ty {
+                    environment.refused(value);
                     return Err(RenderError::TypeMismatch {
                         expected: declaration.ty.clone(),
                         actual,
@@ -344,46 +333,46 @@ fn render_aggregate_expression(
             field,
             index,
         } => {
-            let (value, ty, witness_effect) = render_state_expression(
+            let (value, ty, witness_effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Struct { fields, .. } = ty else {
+                environment.refused(source);
                 return Err(RenderError::InvalidStructField(field.clone()));
             };
             let declaration = fields
                 .get(*index)
                 .filter(|declaration| declaration.name == *field)
-                .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
+                .ok_or_else(|| {
+                    environment.refused(source);
+                    RenderError::InvalidStructField(field.clone())
+                })?;
             let name = ident(field)?;
             let field_value = retained_value(syn::parse_quote!((#value).#name), &declaration.ty);
             Ok((field_value, declaration.ty.clone(), witness_effect))
         }
         Expr::TupleIndex { value, index } => {
-            let (value, ty, witness_effect) = render_state_expression(
+            let (value, ty, witness_effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Tuple { elements } = ty else {
+                environment.refused(source);
                 return Err(RenderError::ExpectedTuple(ty));
             };
             let result = elements
                 .get(*index)
-                .ok_or(RenderError::InvalidTupleIndex(*index))?
+                .ok_or(RenderError::InvalidTupleIndex(*index))
+                .inspect_err(|_| environment.refused(source))?
                 .clone();
             let index = syn::Index::from(*index);
             Ok((syn::parse_quote!((#value).#index), result, witness_effect))
@@ -393,16 +382,13 @@ fn render_aggregate_expression(
             let mut types = Vec::new();
             let mut effect = false;
             for element in elements {
-                let (rendered, ty, element_effect) = render_state_expression(
+                let (rendered, ty, element_effect) = render_state_expression_observed(
                     element,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 let element_name = syn::Ident::new(
                     &format!("__compact_element_{}", *next_temp),
@@ -425,20 +411,13 @@ fn render_aggregate_expression(
 }
 
 /// Lower calls, queries, crypto and scalar operations; structural recursion is dispatched above.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
-)]
 fn render_operation_expression(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::CellRead { .. }
@@ -457,24 +436,18 @@ fn render_operation_expression(
         | Expr::MapIsEmpty { .. } => render_observation_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::Call { .. } | Expr::WitnessCall { .. } => render_call_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::KernelSelf { .. }
         | Expr::KernelClaim { .. }
@@ -484,13 +457,10 @@ fn render_operation_expression(
         | Expr::NativeWitnessCall { .. } => render_effect_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::Coerce { .. }
         | Expr::FieldCast { .. }
@@ -498,13 +468,10 @@ fn render_operation_expression(
         | Expr::UnsignedCast { .. } => render_conversion_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::UnsignedAdd { .. }
         | Expr::UnsignedSubtract { .. }
@@ -517,24 +484,18 @@ fn render_operation_expression(
         | Expr::Compare { .. } => render_arithmetic_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::Assert { .. } => render_assertion_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
         Expr::TransientHash { .. }
         | Expr::PersistentHash { .. }
@@ -554,35 +515,27 @@ fn render_operation_expression(
         | Expr::EcMul { .. } => render_crypto_operation(
             value,
             parameters,
-            witnesses,
             statements,
             next_temp,
-            circuits,
-            stateful_circuits,
-            ledger_fields,
             query_effect,
+            environment,
         ),
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_observation_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
+    let ledger_fields = environment.ledger_fields;
     match value {
         Expr::CellRead { field, index } => {
             let declaration = ledger_fields
@@ -620,16 +573,13 @@ fn render_observation_operation(
             if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (threshold, actual, _) = render_state_expression(
+            let (threshold, actual, _) = render_state_expression_observed(
                 threshold,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let expected = Type::Unsigned {
                 max: u64::MAX.to_string(),
@@ -692,16 +642,13 @@ fn render_observation_operation(
             let LedgerFieldKind::Set { ty } = &declaration.declaration else {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
-            let (item, actual, witness_effect) = render_state_expression(
+            let (item, actual, witness_effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if actual != *ty {
                 return Err(RenderError::TypeMismatch {
@@ -742,16 +689,13 @@ fn render_observation_operation(
             else {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
-            let (key, actual, witness_effect) = render_state_expression(
+            let (key, actual, witness_effect) = render_state_expression_observed(
                 key,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if actual != *key_ty {
                 return Err(RenderError::TypeMismatch {
@@ -797,16 +741,13 @@ fn render_observation_operation(
             {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (root, actual, witness_effect) = render_state_expression(
+            let (root, actual, witness_effect) = render_state_expression_observed(
                 root,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let expected = Type::Struct {
                 name: "MerkleTreeDigest".into(),
@@ -986,46 +927,53 @@ fn render_observation_operation(
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_call_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
+    let source = value;
+    let witnesses = environment.witnesses;
+    let circuits = environment.circuits;
+    let stateful_circuits = environment.stateful_circuits;
     match value {
         Expr::Call { name, arguments } => {
             let (formal_parameters, result, stateful, callee_uses_witness, callee_emits_native) =
                 if let Some(callee) = stateful_circuits.get(name.as_str()) {
-                    let effect =
-                        circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
-                    let native = circuit_emits_native_private_output(
+                    let effect = circuit_uses_witness_observed(
                         callee,
                         stateful_circuits,
                         &mut HashSet::new(),
+                        Some(RefusalSite::field(Owner::Expr(source), "name")),
+                        environment.observer,
+                    )?;
+                    let native = circuit_emits_native_private_output_observed(
+                        callee,
+                        stateful_circuits,
+                        &mut HashSet::new(),
+                        Some(RefusalSite::field(Owner::Expr(source), "name")),
+                        environment.observer,
                     )?;
                     (&callee.parameters, &callee.result, true, effect, native)
                 } else {
-                    let callee = circuits
-                        .get(name.as_str())
-                        .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+                    let callee = circuits.get(name.as_str()).ok_or_else(|| {
+                        environment.refused(source);
+                        RenderError::UnknownCircuit(name.clone())
+                    })?;
                     (&callee.parameters, &callee.result, false, false, false)
                 };
             if arguments.len() != formal_parameters.len() {
+                environment.refused(source);
                 return Err(RenderError::ArgumentCount {
                     circuit: name.clone(),
                     expected: formal_parameters.len(),
@@ -1035,18 +983,16 @@ fn render_call_operation(
             let mut rendered_arguments = Vec::<syn::Expr>::with_capacity(arguments.len());
             let mut witness_effect = false;
             for (argument, parameter) in arguments.iter().zip(formal_parameters) {
-                let (rendered, actual, effect) = render_state_expression(
+                let (rendered, actual, effect) = render_state_expression_observed(
                     argument,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 if actual != parameter.ty {
+                    environment.refused(argument);
                     return Err(RenderError::TypeMismatch {
                         expected: parameter.ty.clone(),
                         actual,
@@ -1097,10 +1043,12 @@ fn render_call_operation(
             }
         }
         Expr::WitnessCall { name, arguments } => {
-            let declaration = witnesses
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+            let declaration = witnesses.get(name.as_str()).ok_or_else(|| {
+                environment.refused(source);
+                RenderError::UnknownWitness(name.clone())
+            })?;
             if arguments.len() != declaration.parameters.len() {
+                environment.refused(source);
                 return Err(RenderError::ArgumentCount {
                     circuit: name.clone(),
                     expected: declaration.parameters.len(),
@@ -1109,18 +1057,16 @@ fn render_call_operation(
             }
             let mut rendered_arguments = Vec::<syn::Expr>::with_capacity(arguments.len());
             for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
-                let (rendered, actual, _) = render_state_expression(
+                let (rendered, actual, _) = render_state_expression_observed(
                     argument,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 if actual != parameter.ty {
+                    environment.refused(argument);
                     return Err(RenderError::TypeMismatch {
                         expected: parameter.ty.clone(),
                         actual,
@@ -1163,8 +1109,10 @@ fn render_call_operation(
             statements.push(syn::parse_quote!(context.private_state = #private_name;));
             let transcript_value =
                 retained_value(syn::parse_quote!(#value_name), &declaration.result);
+            let transcript_value =
+                crate::hash_input::private_output(transcript_value, &declaration.result);
             statements.push(syn::parse_quote! {
-                private_transcript_outputs.push(runtime::fab::AlignedValue::from(#transcript_value));
+                private_transcript_outputs.push(#transcript_value);
             });
             Ok((
                 syn::parse_quote!(#value_name),
@@ -1172,36 +1120,24 @@ fn render_call_operation(
                 true,
             ))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_effect_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::KernelSelf { ty } => {
-            let expected = Type::Struct {
-                name: "ContractAddress".into(),
-                fields: vec![StructField {
-                    name: "bytes".into(),
-                    ty: Type::Bytes { length: 32 },
-                }],
-            };
+            let expected = crate::ir::contract_address_type();
             if *ty != expected {
                 return Err(RenderError::TypeMismatch {
                     expected,
@@ -1232,16 +1168,13 @@ fn render_effect_operation(
         | Expr::KernelMintShielded {
             domain: argument, ..
         } => {
-            let (rendered, actual, mut witness_effect) = render_state_expression(
+            let (rendered, actual, mut witness_effect) = render_state_expression_observed(
                 argument,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let expected = Type::Bytes { length: 32 };
             if actual != expected {
@@ -1272,16 +1205,13 @@ fn render_effect_operation(
                     syn::parse_quote!(context.#method(runtime::ledger::#carrier(runtime::ledger::HashOutput(#name.into_array())))?)
                 }
                 Expr::KernelMintShielded { amount, .. } => {
-                    let (rendered, actual, effect) = render_state_expression(
+                    let (rendered, actual, effect) = render_state_expression_observed(
                         amount,
                         parameters,
-                        witnesses,
                         statements,
                         next_temp,
-                        circuits,
-                        stateful_circuits,
-                        ledger_fields,
                         query_effect,
+                        environment,
                     )?;
                     let expected = Type::Unsigned {
                         max: u64::MAX.to_string(),
@@ -1302,16 +1232,13 @@ fn render_effect_operation(
         }
         Expr::CreateZswapInput { coin } | Expr::CreateZswapOutput { coin, .. } => {
             let is_input = matches!(value, Expr::CreateZswapInput { .. });
-            let (rendered, actual, mut witness_effect) = render_state_expression(
+            let (rendered, actual, mut witness_effect) = render_state_expression_observed(
                 coin,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let expected = if is_input {
                 qualified_coin_type()
@@ -1329,16 +1256,13 @@ fn render_effect_operation(
             statements.push(syn::parse_quote!(let #coin_name = #rendered;));
             let info: syn::Expr = syn::parse_quote!(runtime::ledger::coin_info_from_compact(#coin_name.nonce,#coin_name.color,#coin_name.value.value()));
             if let Expr::CreateZswapOutput { recipient, .. } = value {
-                let (rendered, actual, effect) = render_state_expression(
+                let (rendered, actual, effect) = render_state_expression_observed(
                     recipient,
                     parameters,
-                    witnesses,
                     statements,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     query_effect,
+                    environment,
                 )?;
                 let expected = shielded_recipient_type();
                 if actual != expected {
@@ -1379,39 +1303,30 @@ fn render_effect_operation(
                 false,
             ))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_conversion_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::Coerce { value, ty } => {
-            let (rendered, actual, effect) = render_state_expression(
+            let (rendered, actual, effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             Ok((
                 coerce_expression(rendered, &actual, ty, 0)?,
@@ -1420,16 +1335,13 @@ fn render_conversion_operation(
             ))
         }
         Expr::FieldCast { value } => {
-            let (value, actual, effect) = render_state_expression(
+            let (value, actual, effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Unsigned { max } = &actual else {
                 return Err(RenderError::ExpectedUnsigned(actual));
@@ -1443,16 +1355,13 @@ fn render_conversion_operation(
             Ok((rendered, Type::Field, effect))
         }
         Expr::FieldToBytes32 { value } => {
-            let (rendered, actual, effect) = render_state_expression(
+            let (rendered, actual, effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if actual != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -1468,16 +1377,13 @@ fn render_conversion_operation(
         }
         Expr::UnsignedCast { max, value } => {
             unsigned_maximum(max)?;
-            let (rendered, actual, effect) = render_state_expression(
+            let (rendered, actual, effect) = render_state_expression_observed(
                 value,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Unsigned { max: source_max } = actual else {
                 return Err(RenderError::TypeMismatch {
@@ -1491,41 +1397,32 @@ fn render_conversion_operation(
                 effect,
             ))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_arithmetic_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::UnsignedAdd { max, left, right }
         | Expr::UnsignedSubtract { max, left, right }
         | Expr::UnsignedMultiply { max, left, right } => {
-            let (left, left_ty, left_effect) = render_state_expression(
+            let (left, left_ty, left_effect) = render_state_expression_observed(
                 left,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Unsigned { max: left_max } = left_ty else {
                 return Err(RenderError::TypeMismatch {
@@ -1539,16 +1436,13 @@ fn render_arithmetic_operation(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
+            let (right, right_ty, right_effect) = render_state_expression_observed(
                 right,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Unsigned { max: right_max } = right_ty else {
                 return Err(RenderError::TypeMismatch {
@@ -1578,16 +1472,13 @@ fn render_arithmetic_operation(
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
         | Expr::Multiply { left, right } => {
-            let (left, left_ty, left_effect) = render_state_expression(
+            let (left, left_ty, left_effect) = render_state_expression_observed(
                 left,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if left_ty != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -1601,16 +1492,13 @@ fn render_arithmetic_operation(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
+            let (right, right_ty, right_effect) = render_state_expression_observed(
                 right,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if right_ty != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -1633,16 +1521,13 @@ fn render_arithmetic_operation(
             Ok((rendered, Type::Field, left_effect || right_effect))
         }
         Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
-            let (left, left_ty, left_effect) = render_state_expression(
+            let (left, left_ty, left_effect) = render_state_expression_observed(
                 left,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let left_name = syn::Ident::new(
                 &format!("__compact_value_{}", *next_temp),
@@ -1650,16 +1535,13 @@ fn render_arithmetic_operation(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
+            let (right, right_ty, right_effect) = render_state_expression_observed(
                 right,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if right_ty != left_ty {
                 return Err(RenderError::TypeMismatch {
@@ -1667,6 +1549,12 @@ fn render_arithmetic_operation(
                     actual: right_ty,
                 });
             }
+            let operation = if matches!(value, Expr::Equal { .. }) {
+                native_representation::Operation::Equal
+            } else {
+                native_representation::Operation::NotEqual
+            };
+            native_representation::check_tuple_traits(operation, &left_ty)?;
             let rendered = if matches!(value, Expr::Equal { .. }) {
                 syn::parse_quote!(#left_name == #right)
             } else {
@@ -1679,16 +1567,13 @@ fn render_arithmetic_operation(
             left,
             right,
         } => {
-            let (left, left_ty, left_effect) = render_state_expression(
+            let (left, left_ty, left_effect) = render_state_expression_observed(
                 left,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Unsigned { max } = &left_ty else {
                 return Err(RenderError::ExpectedUnsigned(left_ty));
@@ -1705,16 +1590,13 @@ fn render_arithmetic_operation(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) = render_state_expression(
+            let (right, right_ty, right_effect) = render_state_expression_observed(
                 right,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let Type::Unsigned { max } = &right_ty else {
                 return Err(RenderError::ExpectedUnsigned(right_ty));
@@ -1739,39 +1621,30 @@ fn render_arithmetic_operation(
             };
             Ok((rendered, Type::Boolean, left_effect || right_effect))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_assertion_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::Assert { condition, message } => {
-            let (condition, actual, effect) = render_state_expression(
+            let (condition, actual, effect) = render_state_expression_observed(
                 condition,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if actual != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
@@ -1789,26 +1662,20 @@ fn render_assertion_operation(
                 effect,
             ))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 // Same-owner operation family; recursive operands return through the small dispatcher.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "native expression lowering keeps declarations and ordered query effects explicit"
-)]
 fn render_crypto_operation(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
-    circuits: &HashMap<&str, &PureCircuit>,
-    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
-    ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
+    environment: &StateExpressionContext<'_, '_>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::TransientHash { value: input }
@@ -1821,29 +1688,42 @@ fn render_crypto_operation(
         | Expr::JubjubPointY { value: input }
         | Expr::EcNeg { value: input }
         | Expr::JubjubScalarFromNative { value: input } => {
-            let (rendered, actual, effect) = render_state_expression(
+            let (rendered, actual, effect) = render_state_expression_observed(
                 input,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let (operation, result): (syn::Path, Type) = match value {
                 Expr::TransientHash { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::TransientHash,
+                        &actual,
+                    )?;
                     (syn::parse_quote!(runtime::transient_hash), Type::Field)
                 }
-                Expr::PersistentHash { .. } => (
-                    syn::parse_quote!(runtime::persistent_hash),
-                    Type::Bytes { length: 32 },
-                ),
-                Expr::Keccak256 { .. } => (
-                    syn::parse_quote!(runtime::keccak256),
-                    Type::Bytes { length: 32 },
-                ),
+                Expr::PersistentHash { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::PersistentHash,
+                        &actual,
+                    )?;
+                    (
+                        syn::parse_quote!(runtime::persistent_hash),
+                        Type::Bytes { length: 32 },
+                    )
+                }
+                Expr::Keccak256 { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::Keccak256,
+                        &actual,
+                    )?;
+                    (
+                        syn::parse_quote!(runtime::keccak256),
+                        Type::Bytes { length: 32 },
+                    )
+                }
                 Expr::DegradeToTransient { .. } => {
                     if actual != (Type::Bytes { length: 32 }) {
                         return Err(RenderError::TypeMismatch {
@@ -1869,6 +1749,10 @@ fn render_crypto_operation(
                     )
                 }
                 Expr::HashToCurve { .. } => {
+                    native_representation::check_tuple_traits(
+                        native_representation::Operation::HashToCurve,
+                        &actual,
+                    )?;
                     (syn::parse_quote!(runtime::hash_to_curve), Type::JubjubPoint)
                 }
                 Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. } | Expr::EcNeg { .. } => {
@@ -1902,6 +1786,12 @@ fn render_crypto_operation(
                 }
                 _ => unreachable!(),
             };
+            let rendered = if matches!(value, Expr::TransientHash { .. } | Expr::HashToCurve { .. })
+            {
+                crate::hash_input::syntax(rendered, &actual)
+            } else {
+                rendered
+            };
             Ok((syn::parse_quote!(#operation(#rendered)), result, effect))
         }
         Expr::TransientCommit {
@@ -1912,16 +1802,13 @@ fn render_crypto_operation(
             value: input,
             opening,
         } => {
-            let (input, _, input_effect) = render_state_expression(
+            let (input, input_type, input_effect) = render_state_expression_observed(
                 input,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let input_name = syn::Ident::new(
                 &format!("__compact_value_{}", *next_temp),
@@ -1929,16 +1816,13 @@ fn render_crypto_operation(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #input_name = #input;));
-            let (opening, actual, opening_effect) = render_state_expression(
+            let (opening, actual, opening_effect) = render_state_expression_observed(
                 opening,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let (expected, operation, result): (Type, syn::Path, Type) = match value {
                 Expr::TransientCommit { .. } => (
@@ -1956,23 +1840,31 @@ fn render_crypto_operation(
             if actual != expected {
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
+            let tuple_operation = if matches!(value, Expr::TransientCommit { .. }) {
+                native_representation::Operation::TransientCommit
+            } else {
+                native_representation::Operation::PersistentCommit
+            };
+            native_representation::check_tuple_traits(tuple_operation, &input_type)?;
+            let input = if matches!(value, Expr::TransientCommit { .. }) {
+                crate::hash_input::syntax(syn::parse_quote!(#input_name), &input_type)
+            } else {
+                syn::parse_quote!(#input_name)
+            };
             Ok((
-                syn::parse_quote!(#operation(#input_name, #opening)),
+                syn::parse_quote!(#operation(#input, #opening)),
                 result,
                 input_effect || opening_effect,
             ))
         }
         Expr::EcMulGenerator { scalar } => {
-            let (scalar, actual, effect) = render_state_expression(
+            let (scalar, actual, effect) = render_state_expression_observed(
                 scalar,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             if actual != Type::Field {
                 return Err(RenderError::TypeMismatch {
@@ -1992,16 +1884,13 @@ fn render_crypto_operation(
             point: left,
             scalar: right,
         } => {
-            let (left, actual, left_effect) = render_state_expression(
+            let (left, actual, left_effect) = render_state_expression_observed(
                 left,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let expected_left = if matches!(value, Expr::ConstructJubjubPoint { .. }) {
                 Type::Field
@@ -2020,16 +1909,13 @@ fn render_crypto_operation(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, actual, right_effect) = render_state_expression(
+            let (right, actual, right_effect) = render_state_expression_observed(
                 right,
                 parameters,
-                witnesses,
                 statements,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 query_effect,
+                environment,
             )?;
             let (expected, operation, fallible): (Type, syn::Path, bool) = match value {
                 Expr::ConstructJubjubPoint { .. } => (
@@ -2053,10 +1939,14 @@ fn render_crypto_operation(
             };
             Ok((rendered, Type::JubjubPoint, left_effect || right_effect))
         }
-        _ => expression_with_calls(value, parameters, circuits)
+        _ => environment
+            .pure_expression(value, parameters)
             .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod tuple_capabilities;

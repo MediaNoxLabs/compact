@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "issue": 603,
+  "baseline_commit": "3c7639679ffb8dd6faac08da218b96cf7168885a",
+  "claim": "Admit exactly one OpaqueString to Boolean through complete checked lowering and retire the closed opaque Set permit after old two-form qualification; preserve native and resource authority.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "8c442d8a2089d8627a25a0f766e91f713ee97b630a50350b4325dbbcc0a4b7ee",
+      "current_sha256": "4a62867d145b2ee26e4b4bf15c520d388b7fdc39a7c3dda9bb9ca7e16812ad4e",
+      "predecessor_reconstruction": [
+        {
+          "current": "/// The one-operation OpaqueString Set shapes proved by the set oracle. Keep\n/// the field, physical index, and parameter source tied to the typed IR so\n/// general opaque expressions remain outside the recording surface.\n#[cfg(test)]\nfn closed_opaque_set_operation(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n",
+          "previous": "/// The one-operation OpaqueString Set shapes proved by the set oracle. Keep\n/// the field, physical index, and parameter source tied to the typed IR so\n/// general opaque expressions remain outside the recording surface.\nfn closed_opaque_set_operation(\n    circuit: &StatefulCircuit,\n    ledger_fields: &HashMap<&str, &LedgerField>,\n"
+        },
+        {
+          "current": "            \"guard.proved-opaque-set-sequence\",\n            proved_opaque_set_sequence(circuit)\n        )\n        && opaque_map_operation.is_none()\n        && !organizer_gate\n    {\n",
+          "previous": "            \"guard.proved-opaque-set-sequence\",\n            proved_opaque_set_sequence(circuit)\n        )\n        && !record_guard!(\n            \"guard.closed-opaque-set-operation\",\n            closed_opaque_set_operation(circuit, ledger_fields)\n        )\n        && opaque_map_operation.is_none()\n        && !organizer_gate\n    {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "5d09e79880ebf286a94cea6437e1e13c378710d5c25797f9894149a05dcdb260",
+      "current_sha256": "64d3ad9d523ff764aac37f3b1fc740ed7942c3854bd812fa5c26479bbad6fd7c",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/opaque_boolean_migration_tests.rs\"]\nmod opaque_boolean_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/send_migration_tests.rs\"]\n",
+          "previous": "#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/send_migration_tests.rs\"]\n"
+        },
+        {
+          "current": "    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    // This declared interface accepts every independently checked return form;\n    // its eligibility does not depend on Set/Map operations or body shape.\n    if circuit.result == Type::Boolean\n        && matches!(circuit.parameters.as_slice(), [p] if p.ty == Type::OpaqueString)\n    {\n        return resolve_checked_plan(effect_plan::lower_with_calls(\n            circuit, ledger, witnesses, pure, circuits,\n        ));\n    }\n    let uint64 = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n",
+          "previous": "    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n    use crate::ir::{StateReturn, Type};\n    let uint64 = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests.rs": {
+      "previous_sha256": "ae2db0588c99591be350af41c6bc33e5498654e07a7ff4c1a71d2eb1e2468a83",
+      "current_sha256": "0eab15453e93d0b514802222caf380b33439d5c768cf75c5b2c5728c7c324eff",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(!guards.iter().any(|g| matches!(\n        g[\"route\"].as_str(),\n        Some(\"guard.closed-opaque-asset-removal\" | \"guard.closed-opaque-set-operation\")\n    )));\n    for route in [\n        \"guard.closed-opaque-map-operation\",\n        \"guard.proved-opaque-set-sequence\",\n    ] {\n        assert!(\n            guards.iter().any(|g| g[\"route\"] == route),\n",
+          "previous": "        .unwrap();\n    assert_eq!(row[\"body_owner\"], \"algebra.membership\");\n    let guards = row[\"guards\"].as_array().unwrap();\n    assert!(\n        !guards\n            .iter()\n            .any(|g| g[\"route\"] == \"guard.closed-opaque-asset-removal\")\n    );\n    for route in [\n        \"guard.closed-opaque-map-operation\",\n        \"guard.proved-opaque-set-sequence\",\n        \"guard.closed-opaque-set-operation\",\n    ] {\n        assert!(\n            guards.iter().any(|g| g[\"route\"] == route),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/map_operations/source.rs": {
+      "previous_sha256": "33a12883bb83b6516d511ade88483189bd6bb69e45c614b45d4a8bef28a2dbbf",
+      "current_sha256": "78f3dcae0c3065610553083169bb74c6dd6d065698359e23773aa38d24f309ca",
+      "predecessor_reconstruction": [
+        {
+          "current": "                        },\n                        \"supported\",\n                    )\n                } else if *name == \"direct_member\" {\n                    // The one-string Boolean interface now admits direct Map\n                    // membership; the separate Field lookup interface does not.\n                    (\"algebra.membership\", \"supported\")\n                } else if *name == \"direct_lookup\" {\n                    (\"return.dispatch\", \"unsupported\")\n                } else {\n                    (\"algebra.composite-values\", \"supported\")\n",
+          "previous": "                        },\n                        \"supported\",\n                    )\n                } else if name.starts_with(\"direct_\") {\n                    (\"return.dispatch\", \"unsupported\")\n                } else {\n                    (\"algebra.composite-values\", \"supported\")\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests.rs": "5ce6961a9c0d863b1d5551d297e6104ec4e5ec368ce14f84871c921ba2b7f340",
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests/boundaries.rs": "2395f8dfd4d100323369e97ec03bc53b856e1c72a31c816e1b8ad72c62cd9a86",
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests/inclusion.rs": "993ab1c49ebeab9d68393579d25e0624e37dde543caf4ffb5f11837621a2d538",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "7729b2cc66fa3597d8573dfeac783af60cedf5b46b8e1ee3e75cbc1300f48a1c",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/sets.rs": "bc492e473efdf8abab77f67f3f24310ab0ec6c5a8aedb920f7518ae9efa568a2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": "97a9bac2f54a8d3d808b51fe0a796839b6d4db559af71cce47629d3d8a1fea44",
+    "tools/compact-rust-backend/tests/effect-plan-maps-schema20-ir.json": "7e14aa7979314f761a7b3433aae02dbe2a7f69affa8fca9ef107468a16d9cc57",
+    "tools/compact-rust-backend/tests/opaque-string-set-schema20-ir.json": "732c6682905f68cc25eeee544448e99aef68b221d9f90901bf71a52b660b20a1"
+  },
+  "anchor_adaptations": [
+    {
+      "route": "final.shielded-gap-precedence",
+      "previous": {
+        "source": "tools/compact-rust-backend/src/recorded.rs",
+        "text": "if !organizer_gate\n        && !guarded_map_read_gate",
+        "baseline_occurrences": 3
+      },
+      "current": [
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate {",
+          "occurrences": 2
+        },
+        {
+          "source": "tools/compact-rust-backend/src/recorded.rs",
+          "text": "if !organizer_gate\n        && circuit.actions.is_empty()",
+          "occurrences": 1
+        }
+      ],
+      "reason": "Remove only retired guarded Struct flag from existing assembly and diagnostic precedence; exact signed whole-owner reconstruction authenticates all surrounding code."
+    }
+  ]
+}

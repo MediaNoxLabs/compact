@@ -251,10 +251,11 @@ fn reject_wallet_mutation(kind: WalletMutation) {
                     c.zswap_state.pending_outputs.insert(commitment, coin);
             }
             WalletMutation::MerkleTree => {
-                c.zswap_state.merkle_tree =
-                    c.zswap_state
-                        .merkle_tree
-                        .update_hash(0, HashOutput([5; 32]), ());
+                c.zswap_state.merkle_tree = c
+                    .zswap_state
+                    .merkle_tree
+                    .try_update_hash(0, HashOutput([5; 32]), ())
+                    .expect("valid test wallet tree index");
             }
         }
         // Exactly one wallet field changes. In particular, do not increment

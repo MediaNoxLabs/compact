@@ -847,6 +847,10 @@ pub enum PrepareCallError {
     ReplayStateMismatch,
     Partition(String),
     EmptyTranscript,
+    NonCanonicalPrivateOutput {
+        output_index: usize,
+        atom_index: usize,
+    },
     CoinPublicKeyMismatch,
     UnboundZswapIntents,
     ZswapPlanMismatch,
@@ -872,6 +876,13 @@ impl fmt::Display for PrepareCallError {
             Self::UnboundZswapIntents => formatter
                 .write_str("Zswap intent-bearing calls require exact offer-backed preparation"),
             Self::EmptyTranscript => formatter.write_str("recorded call has no ledger transcript"),
+            Self::NonCanonicalPrivateOutput {
+                output_index,
+                atom_index,
+            } => write!(
+                formatter,
+                "private output {output_index} atom {atom_index} is not in canonical form"
+            ),
             Self::CoinPublicKeyMismatch => {
                 formatter.write_str("execution coin key differs from sealed recording identity")
             }
@@ -918,6 +929,24 @@ fn prepare_call_inner<Private, Output: Into<AlignedValue>, D: DB>(
     }
     if !offer_bound && !recorded.public.final_intents().is_empty() {
         return Err(PrepareCallError::UnboundZswapIntents);
+    }
+    // Exact in-memory source values can contain opaque trailing zeros. The
+    // official serialized proof bridge rejects these atoms; never silently
+    // normalize them or prepare a binding different from the executed witness.
+    for (output_index, output) in recorded
+        .execution
+        .private_transcript_outputs
+        .iter()
+        .enumerate()
+    {
+        for (atom_index, atom) in output.value.0.iter().enumerate() {
+            if !atom.is_in_normal_form() {
+                return Err(PrepareCallError::NonCanonicalPrivateOutput {
+                    output_index,
+                    atom_index,
+                });
+            }
+        }
     }
     let replay = recorded
         .public

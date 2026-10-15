@@ -1,0 +1,21 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Relations { less: Boolean; lessEqual: Boolean; greater: Boolean; greaterEqual: Boolean; }
+export struct Outcome { less: Boolean; }
+witness left(): Uint<8>;
+witness right(): Uint<64>;
+export circuit compare(a: Uint<8>, b: Uint<64>): Relations {
+  calls.increment(1);
+  return Relations { less: a < b, lessEqual: a <= b, greater: a > b, greaterEqual: a >= b };
+}
+export circuit compare128(a: Uint<128>, b: Uint<128>): Relations {
+  calls.increment(1);
+  return Relations { less: a < b, lessEqual: a <= b, greater: a > b, greaterEqual: a >= b };
+}
+export circuit witnessed(selected: Boolean): Outcome {
+  calls.increment(1);
+  return Outcome { less: disclose(selected) ? (disclose(left()) < disclose(right())) : false };
+}

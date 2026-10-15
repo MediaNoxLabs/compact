@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "issue": 627,
+  "parent_issue": 622,
+  "slice": "B",
+  "baseline_commit": "05217556bd2fe699ffdc2a0828d4908b894f98ae",
+  "claim": "Shared syntax-free coercion plans and native formatter, retaining original recorded root value domains. Deliberate627 per-conversion compiler work correction from existing DEFAULT limits; no route retirement, totalcontractmemory/CPU promise or full622body/508closure.",
+  "new_retired_route_ids": [],
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "044d74fe33d021c3f42643e37511b46a60f1d5b6ccd530965bade6f246175f83"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "044d74fe33d021c3f42643e37511b46a60f1d5b6ccd530965bade6f246175f83"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/pure_semantics.rs": {
+      "previous_sha256": "b2620338dc2574c4caa2964e29907881e502cce74a31a92dd5115eec5f41fc81",
+      "current_sha256": "65a6a3ede899809f7a7dfbfdb7d31fdd1d3ffb48369c65fbc586f36298e0856c",
+      "predecessor_reconstruction": [
+        {
+          "current": "//!\n//! Policies in this module construct no Rust syntax. Native interpreters consume\n//! checked facts. The complete expression-body certification fold is still being\n//! migrated; carrier checks alone do not complete ADR-0473 or issue #622.\n\npub(crate) mod carrier;\npub(crate) mod coercion;\npub(crate) mod identifier;\npub(crate) mod numeric;\n",
+          "previous": "//!\n//! Policies in this module construct no Rust syntax. Native interpreters consume\n//! checked facts. The complete expression-body certification fold is still being\n//! migrated; carrier checks alone do not complete ADR-0473 or issue #622.\n\npub(crate) mod carrier;\npub(crate) mod identifier;\npub(crate) mod numeric;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/pure_semantics/numeric.rs": {
+      "previous_sha256": "92745029f87f14a651813ed7fa5641c6486135dc663fdcd7cd6c81e3a395468b",
+      "current_sha256": "206d10d63845161361eb5fe8fa33607789cf0ce52042797a8504135ffd4bfdbb",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(crate) fn checked_unsigned_cast(\n    source_max: &str,\n    target_max: &str,\n) -> Result<UnsignedCastStrategy, RenderError> {\n    let source = unsigned_maximum(source_max)?;\n    let target = unsigned_maximum(target_max)?;\n    Ok(cast_strategy_from_bounds(source, target))\n}\n\n/// Derive output selection from already parsed bounds. Widening callers apply\n/// their own ordered bound relation; explicit casts also allow narrowing.\npub(crate) fn cast_strategy_from_bounds(\n    source: UnsignedMaximum,\n    target: UnsignedMaximum,\n) -> UnsignedCastStrategy {\n    match (source, target) {\n        (UnsignedMaximum::Small(source), UnsignedMaximum::Small(target)) => {\n            UnsignedCastStrategy::SmallToSmall { source, target }\n        }\n        (UnsignedMaximum::Small(_), UnsignedMaximum::Wide { high, low }) => {\n            UnsignedCastStrategy::SmallToWide { high, low }\n        }\n        (UnsignedMaximum::Wide { high, low }, UnsignedMaximum::Small(target)) => {\n            UnsignedCastStrategy::WideToSmall { high, low, target }\n        }\n        (UnsignedMaximum::Wide { .. }, UnsignedMaximum::Wide { high, low }) => {\n            UnsignedCastStrategy::WideToWide { high, low }\n        }\n    }\n}\n\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\npub(crate) enum UnsignedArithmeticStrategy {\n    Small {\n        kind: ArithmeticKind,\n",
+          "previous": "pub(crate) fn checked_unsigned_cast(\n    source_max: &str,\n    target_max: &str,\n) -> Result<UnsignedCastStrategy, RenderError> {\n    let source = unsigned_maximum(source_max)?;\n    let target = unsigned_maximum(target_max)?;\n    Ok(match (source, target) {\n        (UnsignedMaximum::Small(source), UnsignedMaximum::Small(target)) => {\n            UnsignedCastStrategy::SmallToSmall { source, target }\n        }\n        (UnsignedMaximum::Small(_), UnsignedMaximum::Wide { high, low }) => {\n            UnsignedCastStrategy::SmallToWide { high, low }\n        }\n        (UnsignedMaximum::Wide { high, low }, UnsignedMaximum::Small(target)) => {\n            UnsignedCastStrategy::WideToSmall { high, low, target }\n        }\n        (UnsignedMaximum::Wide { .. }, UnsignedMaximum::Wide { high, low }) => {\n            UnsignedCastStrategy::WideToWide { high, low }\n        }\n    })\n}\n\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\npub(crate) enum UnsignedArithmeticStrategy {\n    Small {\n        kind: ArithmeticKind,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/value_lowering.rs": {
+      "previous_sha256": "9ad723285694ef489775214425f2680dce3ab443a7bea38a48e9d97fb57fb302",
+      "current_sha256": "b413a3b0707c36968a26326ed870e1006f3d2b42e26a52055fb7e57850e7c91e",
+      "predecessor_reconstruction": [
+        {
+          "current": "\nuse crate::RenderError;\nuse crate::ir::{Expr, Type};\nuse proc_macro2::Span;\n\nuse crate::pure_semantics::numeric::{\n    ArithmeticKind, UnsignedArithmeticStrategy, checked_unsigned_arithmetic, checked_unsigned_cast,\n};\npub(crate) use crate::pure_semantics::numeric::{\n    UnsignedMaximum, field_literal_bytes, unsigned_maximum,\n};\n\npub(crate) fn wide_uint_type(high: u128, low: u128) -> syn::Type {\n",
+          "previous": "\nuse crate::RenderError;\nuse crate::ir::{Expr, Type};\nuse proc_macro2::Span;\n\nuse crate::pure_semantics::numeric::{\n    ArithmeticKind, UnsignedArithmeticStrategy, UnsignedCastStrategy, checked_unsigned_arithmetic,\n    checked_unsigned_cast,\n};\npub(crate) use crate::pure_semantics::numeric::{\n    UnsignedMaximum, field_literal_bytes, unsigned_maximum,\n};\n\npub(crate) fn wide_uint_type(high: u128, low: u128) -> syn::Type {\n"
+        },
+        {
+          "current": "\npub(crate) fn unsigned_cast_syntax(\n    value: syn::Expr,\n    source_max: &str,\n    target_max: &str,\n) -> Result<syn::Expr, RenderError> {\n    Ok(coercion::render_unsigned_cast(\n        value,\n        checked_unsigned_cast(source_max, target_max)?,\n    ))\n}\n\n/// Both expression emitters consume the same checked runtime arithmetic strategy.\npub(crate) fn unsigned_arithmetic_syntax(\n    operation: &Expr,\n    left: syn::Expr,\n",
+          "previous": "\npub(crate) fn unsigned_cast_syntax(\n    value: syn::Expr,\n    source_max: &str,\n    target_max: &str,\n) -> Result<syn::Expr, RenderError> {\n    Ok(match checked_unsigned_cast(source_max, target_max)? {\n        UnsignedCastStrategy::SmallToSmall { source, target } => {\n            let source = syn::LitInt::new(&source.to_string(), Span::call_site());\n            let target = syn::LitInt::new(&target.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::cast_unsigned::<#source, #target>(#value)?)\n        }\n        UnsignedCastStrategy::SmallToWide { high, low } => {\n            let target = wide_uint_type(high, low);\n            syn::parse_quote!(<#target>::from_le_bytes(&(#value).value().to_le_bytes())?)\n        }\n        UnsignedCastStrategy::WideToSmall { high, low, target } => {\n            let target = syn::LitInt::new(&target.to_string(), Span::call_site());\n            let high = syn::LitInt::new(&high.to_string(), Span::call_site());\n            let low = syn::LitInt::new(&low.to_string(), Span::call_site());\n            syn::parse_quote!(runtime::narrow_wide_uint::<#target, #high, #low>(#value)?)\n        }\n        UnsignedCastStrategy::WideToWide { high, low } => {\n            let target = wide_uint_type(high, low);\n            syn::parse_quote!(<#target>::from_le_bytes((#value).as_le_bytes())?)\n        }\n    })\n}\n\n/// Both expression emitters consume the same checked runtime arithmetic strategy.\npub(crate) fn unsigned_arithmetic_syntax(\n    operation: &Expr,\n    left: syn::Expr,\n"
+        },
+        {
+          "current": "        Some(ty) => ty,\n        None => return Ok(None),\n    };\n    Ok(Some((key, value)))\n}\n\npub(crate) fn coerce_expression(\n    value: syn::Expr,\n    actual: &Type,\n    target: &Type,\n    depth: usize,\n) -> Result<syn::Expr, RenderError> {\n    let plan = crate::pure_semantics::coercion::plan_coercion(actual, target)?;\n    Ok(coercion::render(&plan, value, depth))\n}\n\n// Existing output contracts inspect conversion fallibility independently of\n// source-expression evaluation. Production support belongs to the neutral plan.\n#[cfg(test)]\nstruct Coercion {\n    expression: syn::Expr,\n    may_fail: bool,\n}\n\n#[cfg(test)]\nfn coercion(\n    value: syn::Expr,\n    actual: &Type,\n    target: &Type,\n    depth: usize,\n) -> Result<Coercion, RenderError> {\n    let plan = crate::pure_semantics::coercion::plan_coercion(actual, target)?;\n    Ok(Coercion {\n        expression: coercion::render(&plan, value, depth),\n        may_fail: plan.may_fail(),\n    })\n}\n\npub(crate) fn copy_type(ty: &Type) -> bool {\n    match ty {\n        Type::Struct { .. }\n        | Type::Vector { .. }\n",
+          "previous": "        Some(ty) => ty,\n        None => return Ok(None),\n    };\n    Ok(Some((key, value)))\n}\n\n/// Whether conversion syntax needs an enclosing Result owner, including checked\n/// operations whose valid input bounds guarantee success. The source expression\n/// is evaluated outside element closures and is not included in this property.\nstruct Coercion {\n    expression: syn::Expr,\n    may_fail: bool,\n}\n\nimpl Coercion {\n    fn infallible(expression: syn::Expr) -> Self {\n        Self {\n            expression,\n            may_fail: false,\n        }\n    }\n}\n\nstruct AggregateCoercion {\n    items: Vec<syn::Ident>,\n    expressions: Vec<syn::Expr>,\n    may_fail: bool,\n}\n\nfn coerce_aggregate_fields(\n    sources: &[Type],\n    targets: &[Type],\n    depth: usize,\n) -> Result<AggregateCoercion, RenderError> {\n    debug_assert_eq!(sources.len(), targets.len());\n    let items = (0..sources.len())\n        .map(|index| {\n            syn::Ident::new(\n                &format!(\"__compact_cast_item_{depth}_{index}\"),\n                Span::call_site(),\n            )\n        })\n        .collect::<Vec<_>>();\n    let mapped = items\n        .iter()\n        .zip(sources.iter().zip(targets))\n        .map(|(item, (source_ty, target_ty))| {\n            coercion(syn::parse_quote!(#item), source_ty, target_ty, depth + 1)\n        })\n        .collect::<Result<Vec<_>, _>>()?;\n    let may_fail = mapped.iter().any(|child| child.may_fail);\n    Ok(AggregateCoercion {\n        items,\n        expressions: mapped.into_iter().map(|child| child.expression).collect(),\n        may_fail,\n    })\n}\n\npub(crate) fn coerce_expression(\n    value: syn::Expr,\n    actual: &Type,\n    target: &Type,\n    depth: usize,\n) -> Result<syn::Expr, RenderError> {\n    Ok(coercion(value, actual, target, depth)?.expression)\n}\n\nfn coercion(\n    value: syn::Expr,\n    actual: &Type,\n    target: &Type,\n    depth: usize,\n) -> Result<Coercion, RenderError> {\n    if actual == target {\n        return Ok(Coercion::infallible(value));\n    }\n    match (actual, target) {\n        (Type::Unsigned { max }, Type::Field) => match unsigned_maximum(max)? {\n            UnsignedMaximum::Small(_) => Ok(Coercion::infallible(\n                syn::parse_quote!(runtime::Field::from((#value).value())),\n            )),\n            UnsignedMaximum::Wide { .. } => {\n                Ok(Coercion::infallible(syn::parse_quote!((#value).as_field())))\n            }\n        },\n        (Type::Unsigned { max: source_max }, Type::Unsigned { max: target_max }) => {\n            let bounds = |value: UnsignedMaximum| match value {\n                UnsignedMaximum::Small(low) => (0, low),\n                UnsignedMaximum::Wide { high, low } => (high, low),\n            };\n            if bounds(unsigned_maximum(source_max)?) > bounds(unsigned_maximum(target_max)?) {\n                return Err(RenderError::TypeMismatch {\n                    expected: target.clone(),\n                    actual: actual.clone(),\n                });\n            }\n            Ok(Coercion {\n                expression: unsigned_cast_syntax(value, source_max, target_max)?,\n                may_fail: true,\n            })\n        }\n        (\n            Type::Vector {\n                element: source_element,\n                length: source_length,\n            },\n            Type::Vector {\n                element: target_element,\n                length: target_length,\n            },\n        ) if source_length == target_length => {\n            let source =\n                syn::Ident::new(&format!(\"__compact_cast_source_{depth}\"), Span::call_site());\n            let item = syn::Ident::new(&format!(\"__compact_cast_item_{depth}\"), Span::call_site());\n            let Coercion {\n                expression: mapped,\n                may_fail,\n            } = coercion(\n                syn::parse_quote!(#item),\n                source_element,\n                target_element,\n                depth + 1,\n            )?;\n            let expression = if may_fail {\n                // A Result-returning conversion must run in the enclosing owner,\n                // not an infallible array.map closure. Keep one loop per vector\n                // level: unrolling would multiply output by nested dimensions.\n                let converted =\n                    syn::Ident::new(&format!(\"__compact_cast_values_{depth}\"), Span::call_site());\n                let length = syn::LitInt::new(&source_length.to_string(), Span::call_site());\n                syn::parse_quote!({\n                    let #source = #value;\n                    let mut #converted = ::std::vec::Vec::with_capacity(#length);\n                    for #item in #source.into_array() {\n                        #converted.push(#mapped);\n                    }\n                    runtime::FixedVector::new(<[_; #length]>::try_from(#converted)\n                        .expect(\"Vector coercion preserves its length\"))\n                })\n            } else {\n                syn::parse_quote!({\n                    let #source = #value;\n                    runtime::FixedVector::new(#source.into_array().map(|#item| #mapped))\n                })\n            };\n            Ok(Coercion {\n                expression,\n                may_fail,\n            })\n        }\n        (Type::Tuple { elements: sources }, Type::Tuple { elements: targets })\n            if sources.len() == targets.len() && !sources.is_empty() =>\n        {\n            let source =\n                syn::Ident::new(&format!(\"__compact_cast_source_{depth}\"), Span::call_site());\n            let AggregateCoercion {\n                items,\n                expressions: mapped,\n                may_fail,\n            } = coerce_aggregate_fields(sources, targets, depth)?;\n            Ok(Coercion {\n                may_fail,\n                expression: syn::parse_quote!({\n                    let #source = #value;\n                    let (#(#items),*,) = #source;\n                    (#(#mapped),*,)\n                }),\n            })\n        }\n        (\n            Type::Tuple { elements: sources },\n            Type::Vector {\n                element: target_element,\n                length,\n            },\n        ) if sources.len() == *length && !sources.is_empty() => {\n            let source =\n                syn::Ident::new(&format!(\"__compact_cast_source_{depth}\"), Span::call_site());\n            let targets = vec![*target_element.clone(); sources.len()];\n            let AggregateCoercion {\n                items,\n                expressions: mapped,\n                may_fail,\n            } = coerce_aggregate_fields(sources, &targets, depth)?;\n            Ok(Coercion {\n                may_fail,\n                expression: syn::parse_quote!({\n                    let #source = #value;\n                    let (#(#items),*,) = #source;\n                    runtime::FixedVector::new([#(#mapped),*])\n                }),\n            })\n        }\n        (\n            Type::Vector {\n                element: source_element,\n                length,\n            },\n            Type::Tuple { elements: targets },\n        ) if *length == targets.len() && !targets.is_empty() => {\n            let source =\n                syn::Ident::new(&format!(\"__compact_cast_source_{depth}\"), Span::call_site());\n            let sources = vec![*source_element.clone(); targets.len()];\n            let AggregateCoercion {\n                items,\n                expressions: mapped,\n                may_fail,\n            } = coerce_aggregate_fields(&sources, targets, depth)?;\n            Ok(Coercion {\n                may_fail,\n                expression: syn::parse_quote!({\n                    let #source = #value;\n                    let [#(#items),*] = #source.into_array();\n                    (#(#mapped),*,)\n                }),\n            })\n        }\n        _ => Err(RenderError::TypeMismatch {\n            expected: target.clone(),\n            actual: actual.clone(),\n        }),\n    }\n}\n\npub(crate) fn copy_type(ty: &Type) -> bool {\n    match ty {\n        Type::Struct { .. }\n        | Type::Vector { .. }\n"
+        },
+        {
+          "current": "}\n\n#[cfg(test)]\nmod tests;\n\npub(crate) mod carrier;\n\nmod coercion;\n",
+          "previous": "}\n\n#[cfg(test)]\nmod tests;\n\npub(crate) mod carrier;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/resource_limits.rs": {
+      "previous_sha256": "22628b4a30a43c7744b0cc6ee0fce7fa23cade1bbd2737497fb1ff7017fc84fe",
+      "current_sha256": "2adc7200e599c300e19b1d2415f6ef5b7682f5e22c1cd8cc1f39f9b32a85c48b",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n/// Defensive bounds for checked recording calls also entered by private tests.\n/// Public generation still performs the complete borrowed-IR preflight first.\npub(crate) fn recording_call_limits() -> (usize, usize) {\n    (Limits::DEFAULT.call_depth, Limits::DEFAULT.expanded_work)\n}\n/// Conversion expansion is independent of annotation size. These use the\n/// production allowances; the test-only census envelope is not support policy.\npub(crate) fn coercion_work_limit() -> usize {\n    Limits::DEFAULT.expanded_work\n}\npub(crate) fn coercion_pending_limit() -> usize {\n    Limits::DEFAULT.pending\n}\npub(crate) fn recording_block_depth_limit() -> usize {\n    Limits::DEFAULT.expanded_depth\n}\nfn check_frames(metrics: &Metrics, limits: Limits) -> Result<(), LimitError> {\n    for (i, kind) in [\n",
+          "previous": "}\n\n/// Defensive bounds for checked recording calls also entered by private tests.\n/// Public generation still performs the complete borrowed-IR preflight first.\npub(crate) fn recording_call_limits() -> (usize, usize) {\n    (Limits::DEFAULT.call_depth, Limits::DEFAULT.expanded_work)\n}\npub(crate) fn recording_block_depth_limit() -> usize {\n    Limits::DEFAULT.expanded_depth\n}\nfn check_frames(metrics: &Metrics, limits: Limits) -> Result<(), LimitError> {\n    for (i, kind) in [\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs": {
+      "previous_sha256": "4e10cf69cb441f3a6a5de0d357a20b2d45c758be4c6b4bf7d2315775f8dce593",
+      "current_sha256": "ff29854509a3f72ac342b0313b17772d608dd1423b36ca4ae38620eb06eea4d4",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n}\n\n/// Exact native aggregate conversion relation, with no syntax construction.\n/// Callers independently bound/canonicalize both types before recursive comparison.\npub(super) fn coercible(source: &Type, target: &Type) -> bool {\n    // Private callers receive the same defensive root bounds as native coercion.\n    // Domain validity still precedes identity: malformed native identity values\n    // must not become recordable through the shared conversion relation.\n    crate::resource_limits::recording_type_nodes(source).is_ok()\n        && crate::resource_limits::recording_type_nodes(target).is_ok()\n        && value_type(source)\n        && value_type(target)\n        && crate::pure_semantics::coercion::plan_coercion(source, target).is_ok()\n}\n\n/// Recorded witness outputs use the qualified official aligned FAB domain.\n/// This includes owned opaque leaves and standalone tuples through arity11;\n/// named products retain their stricter generated-derive representation limits.\n/// Canonical declarations and size/depth budgets are checked by each caller first.\n",
+          "previous": "    }\n}\n\n/// Exact native aggregate conversion relation, with no syntax construction.\n/// Callers independently bound/canonicalize both types before recursive comparison.\npub(super) fn coercible(source: &Type, target: &Type) -> bool {\n    if !value_type(source) || !value_type(target) {\n        return false;\n    }\n    if source == target {\n        return true;\n    }\n    match (source, target) {\n        (Type::Unsigned { .. }, Type::Field) => unsigned_bound(source).is_some(),\n        (Type::Unsigned { .. }, Type::Unsigned { .. }) => {\n            fn limbs(bound: crate::UnsignedMaximum) -> (u128, u128) {\n                match bound {\n                    crate::UnsignedMaximum::Small(low) => (0, low),\n                    crate::UnsignedMaximum::Wide { high, low } => (high, low),\n                }\n            }\n            matches!((unsigned_bound(source),unsigned_bound(target)),(Some(a),Some(b)) if limbs(a)<=limbs(b))\n        }\n        (\n            Type::Vector {\n                element: a,\n                length: n,\n            },\n            Type::Vector {\n                element: b,\n                length: m,\n            },\n        ) => n == m && coercible(a, b),\n        (Type::Tuple { elements: a }, Type::Tuple { elements: b }) => {\n            !a.is_empty() && a.len() == b.len() && a.iter().zip(b).all(|(a, b)| coercible(a, b))\n        }\n        (Type::Tuple { elements }, Type::Vector { element, length }) => {\n            !elements.is_empty()\n                && elements.len() == *length\n                && elements.iter().all(|source| coercible(source, element))\n        }\n        (Type::Vector { element, length }, Type::Tuple { elements }) => {\n            !elements.is_empty()\n                && elements.len() == *length\n                && elements.iter().all(|target| coercible(element, target))\n        }\n        _ => false,\n    }\n}\n\n/// Recorded witness outputs use the qualified official aligned FAB domain.\n/// This includes owned opaque leaves and standalone tuples through arity11;\n/// named products retain their stricter generated-derive representation limits.\n/// Canonical declarations and size/depth budgets are checked by each caller first.\n"
+        },
+        {
+          "current": "/// Canonical named definitions and resource budgets are still caller authority.\npub(super) fn default_value_type(ty: &Type) -> bool {\n    value_type(ty)\n        && crate::resource_limits::recording_type_nodes(ty)\n            .is_ok_and(|nodes| default_tuple_traits_supported(&nodes))\n}\n\n#[cfg(test)]\nmod coercion_tests;\n",
+          "previous": "/// Canonical named definitions and resource budgets are still caller authority.\npub(super) fn default_value_type(ty: &Type) -> bool {\n    value_type(ty)\n        && crate::resource_limits::recording_type_nodes(ty)\n            .is_ok_and(|nodes| default_tuple_traits_supported(&nodes))\n}\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/pure_semantics/coercion.rs": "c9b3623f19f5b8f040644f61f9c779fd8ba7acf70358cf6235f1c01c25e3c36e",
+    "tools/compact-rust-backend/src/pure_semantics/coercion/equality.rs": "39fafec347fabce3cb4945abff98eb894809d9c8102c56052d897471521b9435",
+    "tools/compact-rust-backend/src/pure_semantics/coercion/old_reference.rs": "54130ba4ae286464ee2c45d8ce7ef198c26dcb7c57b7a75bdcc6d0601201b0b4",
+    "tools/compact-rust-backend/src/pure_semantics/coercion/tests.rs": "d420d5b10afd9833d12b2e76e44fc416467d0045750e813fdfa24bb82a16e259",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain/coercion_tests.rs": "93a7f9aa7f7aa3678eb4200325446d8e4c5ee5c1ec44f44bfbe6c03f8ec8e36d",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain/coercion_tests/old_reference.rs": "ff4d49742efa1e941ea2098762c3a3db457ee1f9f2d0f260992169ac3800d792",
+    "tools/compact-rust-backend/src/value_lowering/coercion.rs": "8bf495d91546c3ea8c378b4ebb1c4877fe50d6a9c6ad86adf47292f831b45606",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/resource_limits/borrowed_types.rs": "701b17d7ad93aa1e8f2e660b7636ca6228eb8265db219626fddc23d2ccf796c4",
+    "tools/compact-rust-backend/src/recorded/effect_plan/pure_certification/native.rs": "55de2819245cbef5bc6c52a79384e209fed0876adb825b5f715337e0dc3be504"
+  },
+  "historical_manifests": {
+    "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json": "37f77eb423c5fc376c5d1617cf38e9292e5f9d29e7c4048da9944b949611ace4",
+    "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json": "e6cbf5fc5fea53f8e5677191d14b77bd241b247573a46d0dd388bdfb2e43cf62",
+    "tools/compact-rust-backend/recording_admission_inventory.baseline.json": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+    "tools/compact-rust-backend/recording_admission_inventory.calls-519.json": "f44eaa757c58bc1ed31dd8b31485270148cf79762cb468f3a0e96acc5ed43c00",
+    "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json": "9add6f3b7af78856707e6fc2735d86a7e3ce98e26cff6ebc14efd9ce823b1876",
+    "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json": "e6905af2f56e6a81df5f39c5db309eddee66af5a4fd99255dea5bddf31a5f54c",
+    "tools/compact-rust-backend/recording_admission_inventory.generic-qualification-619.json": "f3f1bb230f291fb234ad8be23db5f4b1274bec413880568a75811743296dd34a",
+    "tools/compact-rust-backend/recording_admission_inventory.generic-retirement-618.json": "29fd2fd89bf107adae4c543481d49be76b9ee6d574490268660ad022bd495510",
+    "tools/compact-rust-backend/recording_admission_inventory.helper-discovery-620.json": "7ef7b579963aa5cbb349c3ab7081d383f1afb58c5013dc363aae25e1d0be3f99",
+    "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json": "3d3b619c4175d99f586abe1adffac2a2889547907f0870acfbfd17d3affac3f6",
+    "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json": "7643d54832ddcc9d25df9607ad7c6f7356132a5d1c56195a0e0451140d1888bb",
+    "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json": "57fe81ffbe2009557df148a78d29dd3de451d96a4c5e86a586bc8e9dee67c288",
+    "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json": "eb8eab632bbb18cc667f47d173f98cb5ef7338a6292491cdacca919d08fa7cdf",
+    "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json": "a6243d8845df24b08042d16b799a9de21a75d5a7801966c53913cc72779bab54",
+    "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json": "b1702d8f322da3edc71c4a8aea4044df0ead1fbecb7bb8c028b7db2b87826968",
+    "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json": "82388a62ad3b867ceb39816d55a54471b1c6e75b8077dd982efff9db915beb74",
+    "tools/compact-rust-backend/recording_admission_inventory.native-tuple-621.json": "b953fad599da7b2e192ed1e49e75ae46d2e002642b386dff2e7d1bc6b94f814f",
+    "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json": "a9ca3590dfe958a25b5f99ae5373a2a5c851962f645ee3cc52a58c9021035e82",
+    "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json": "7cb2096ee32cd3fe07bc01d9359948ec840c690c06871eccd69522f510f6d54b",
+    "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json": "af77a7584cb76b5b63795578b7a83c4c3c9aa5c076ee80fb977a9b1547d6be04",
+    "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json": "d1ffeb82d6514e184b8921ceb98fe7d6fb5b8eaee08f769d0e6ecc5ca8e735eb",
+    "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json": "68fa18ab62ae676873586a02e1eace175a318ada1f93b51a58173c499a88e58d",
+    "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json": "2c6eae6dd47caa2bfbf935096daef59c15d139b92938469803e909eb0df6a9da",
+    "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json": "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145",
+    "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json": "627cedbf268cdb6e53006fc6d1778604a53f8e676095042f107393e97356ab8f",
+    "tools/compact-rust-backend/recording_admission_inventory.shared-pure-semantics-622a.json": "56e5dcd95630b8bc0e85e1de997e380f0126e0d0efc130ece446be8459e451bc",
+    "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json": "d67b2cc703de3ac93a7a4d01ccb884b0ad571927b0784401008fc7595eeb11f4",
+    "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json": "cc5cde950e7f6f696acd6ab846b68d90a78319d60e58115b56db4a1f6fa24cf2",
+    "tools/compact-rust-backend/recording_admission_inventory.stateful-tuple-624.json": "9127373f0baf663c9635107ac99a98b7899f70d4970ca0064bde456754883e26",
+    "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json": "06e2fc20429f3782f50d078075d96c9a3907b289e1ca0a147dbe30073437c71b",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-511.json": "09d6cd8545012c54f9445d112c459a9af982073cdd9e163c22746b2fc7b3f396",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-517.json": "bbf66c692db93531609d4517dcd96dbbf607ad76724b69fbde0a93873560ab00",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-521.json": "38920475549f1664b1f206a186f1ff71d5a994b4fab6bd7542b629b1d925d8f6",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-525.json": "f017f7ff1a7a0a942fc842238f83fd049aee1b114e4e261c4d52ec6c0973b99e",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-526.json": "e15599f5588a00cd6471cb255ce96bc44a7a89f451fdc006a0165b7030483703",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-527.json": "273b0554b1b35139a0a9e306d0f675015aa2fd6120c6d4d5e9a827861865ddbf",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-529.json": "9bd01cfc79f34fe9fd957f4f4c5147f8900a84bc7b76346fad113e8e0938f002",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-536.json": "c4cd774b92e0d06ec8fe48e8595afc5e24c7eea2af311db71efc51e180dc68c4",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-547.json": "ea0341026c5fd4085dfc6a67ca1b444a97c6b8b765aa7592859d3c563deba2fb",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-549.json": "c7f2b0366b405c67a7e9226b2e7fe44364e47bcb66d6001e27aca23c9e81b259",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-550.json": "2d35621b15e729edaf9d5c98b09b960c22296f13e63e0de1f2d24962cb2f1a22",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-553.json": "6f7d1c96df82dcc85d847f1a4df5546ea99ecf0f82cee5340150080e06d72e73",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-560.json": "c3eb19b5bdb37ebf013f3f990988c2959c389324728afaae6a23a6fe501d6b2e",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-561.json": "d31d1fdfb4586df9bb02bd387f8e18a1d2c9bd0c04ca52c270631fea22b85f80",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-565.json": "2819417c7b2c3222444627a0a9716cc392f3b5ca797df17919845778623c7dfa",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-566.json": "be2b63dec8ce2dbcba3d641032bc79eddd2d166c5bc940b54fe29b2c5dbcad26",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-569.json": "b09f390c8d30e3310cb9fe58a59319a7a61c4615d18718ecacf958ef5ef30647",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-570.json": "1ac02976ac663a99ca761f562de840879823100d72d038b08d000cbf3a625bb8",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-572.json": "909ab4af3988d9544201eda3e71c82861e651acc9f1c7895a43af1983b7c5379",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-580.json": "8da209575f8e93345e23449e144e7b966d099394c1a6f7e22512173be2a2bc5f",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-587.json": "e6c18b3a0d417c0b06a663545e790c8e60e5ab95f7a8a1d4e3cd54e38d49f796",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-588.json": "c135b2c14703803d1cdce746a958d26f4383dc01d162b8dde7d98f9f902c8953",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-589.json": "c064b62d9030d4c00cf0ee9748866fafccb847e932a133de7c9fe1ed472c0172",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-590.json": "7171213d00b32f7870d387e9046ec4029f0a2f52b046f69ce5476251aca742ca",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-591.json": "c01018aeb3436e90bdd73dd25b699ae1bb1ead1d798034b8eb50daaa5c6d2305",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-592.json": "06ae91053575e134acf08136436560ef0e27b9b2ce5727cdd7a4d6f6cc488ec3",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-594.json": "65683de7d5af1f648474c864fd7f989198ee5da398cbfa4997b2f80350c63586",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-596.json": "25fb661f31e18ac420b5ad838814fc70bcadd9d168a36d4237da068c69d47104",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-600.json": "3e88356bfc539c466e7a3a935da0eb5e4feb16cb4b8f76c40dbd5d0e4623cc45",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-601.json": "8ad0e89bdcb92e5eb69fd9a5e93af9305a8bfb55967965189b93504764351d2c",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-603.json": "69e86e790fa15a76c45a417d7e29c9f9ffbe638f474daee13eb1ee68f6868dc2",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-604.json": "86f622bdcb009f0b1912f769258af157497877855c664442cd78024b77e97963",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-605.json": "c2f9444eba2e7de7da19e1f93a92debbd31a2b644e930f2443b790206f3ece28",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json": "b91bed20247bd0e513ebabaf845764bce43599c3f9c0d39c8e55584e5d0b26d9",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json": "f7e0d5bededbf7e2a57d30da2b5c3673d13242a5eabe4d62b9dfa74d7f2f6cd0",
+    "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json": "0bac8e290d255cf3ad503f6661048dd4ae09419ccafc0b3b312e8e1d328b8e59",
+    "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json": "fce9d30228aaf6cd70defe683c743a1eb2589dd67f4553bfa86962a1838da898",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json": "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4",
+    "tools/compact-rust-backend/recording_admission_inventory.target-edition-626.json": "2dc330f45cf2ee0a0c8cb841fc44740bda32a372da2ec8a03d296facbf293446"
+  },
+  "oracle_authorities": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json": "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json": "adfbe698a69f9a31e0bc36bdfc0260099cdfd6daf43d222d97a49811042ebfed",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-audited-local-614.json": "3e433671c8b8c9086350ccbbe2f9898385a258a6482b5c97ac378f28014c9bcf",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json": "4feeb870cede6548b17cc870c6d67f545274f9c98c73923e691acca665c45caf",
+    "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json": "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json": "eda751f75344d765430226e2651201e947c1d1d584818c43fe024424df65df0c",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json": "00445f0e9e4c42af6b8dda3a33912542ed46ad7c671f56daa55a160ce8f32b19"
+  },
+  "predecessor_options": {
+    "transition": "tools/compact-rust-backend/recording_admission_inventory.transition-511.json",
+    "instrumentation": "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json",
+    "jubjub_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-517.json",
+    "call_extension": "tools/compact-rust-backend/recording_admission_inventory.calls-519.json",
+    "terminal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-521.json",
+    "unit_actions_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-525.json",
+    "context_query_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-526.json",
+    "kernel_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-527.json",
+    "composite_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-529.json",
+    "receive_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-536.json",
+    "unit_domain_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json",
+    "voting_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-547.json",
+    "phase_reset_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-549.json",
+    "immediate_send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-550.json",
+    "zswap_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-553.json",
+    "membership_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-560.json",
+    "send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-561.json",
+    "observation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json",
+    "merge_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-565.json",
+    "guarded_deposit_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-566.json",
+    "routing_test_extension": "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json",
+    "reset_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-569.json",
+    "shielded_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-570.json",
+    "inequality_test_extension": "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json",
+    "funded_mint_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-572.json",
+    "keccak_test_extension": "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json",
+    "aligned_test_extension": "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json",
+    "encoding_extension": "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json",
+    "negation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json",
+    "value_test_extension": "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json",
+    "unit_composition_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-580.json",
+    "optional_write_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-587.json",
+    "enum_advance_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-588.json",
+    "witness_merkle_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-589.json",
+    "organizer_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-590.json",
+    "unsigned_product_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-591.json",
+    "opaque_set_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-592.json",
+    "unit_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json",
+    "map_value_extension": "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json",
+    "guarded_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-594.json",
+    "opaque_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-596.json",
+    "resource_diagnostics_extension": "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+    "empty_recording_extension": "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json",
+    "guarded_pure_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-600.json",
+    "reachable_helpers_extension": "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json",
+    "key_only_map_removal_extension": "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json",
+    "asset_removal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-601.json",
+    "opaque_boolean_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-603.json",
+    "opaque_field_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-604.json",
+    "proved_set_sequence_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-605.json",
+    "ordinary_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json",
+    "storage_codec_extension": "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json",
+    "list_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json",
+    "map_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json",
+    "persistent_commit_extension": "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json",
+    "vector_map_extension": "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json",
+    "audited_local_transition": "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json",
+    "read_only_transition": "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json",
+    "single_admission_transition": "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json",
+    "start_funding_transition": "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json",
+    "generic_qualification_extension": "tools/compact-rust-backend/recording_admission_inventory.generic-qualification-619.json",
+    "generic_retirement_transition": "tools/compact-rust-backend/recording_admission_inventory.generic-retirement-618.json",
+    "helper_discovery_transition": "tools/compact-rust-backend/recording_admission_inventory.helper-discovery-620.json",
+    "native_tuple_extension": "tools/compact-rust-backend/recording_admission_inventory.native-tuple-621.json",
+    "stateful_tuple_extension": "tools/compact-rust-backend/recording_admission_inventory.stateful-tuple-624.json",
+    "shared_pure_semantics_extension": "tools/compact-rust-backend/recording_admission_inventory.shared-pure-semantics-622a.json",
+    "target_edition_identifiers_extension": "tools/compact-rust-backend/recording_admission_inventory.target-edition-626.json"
+  },
+  "original_oracle_preservation": {
+    "authority": "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json",
+    "original_files": 49,
+    "stages": [
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-audited-local-614.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json",
+      "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json"
+    ],
+    "new_owner_overlap": []
+  },
+  "source_freeze_sha256": "a5472be01cf4f701c56efdbf70dbde7f0a42062eaa7d452eae8a32f95577adab",
+  "signed_baseline_source_authority_sha256": "9673d64a852e33633e920940708905a232b06229cda0b5d22419c5e87df60a1b",
+  "qualification_limits": [
+    "Conversion groundwork only; complete expressionbody/bindings Synbridge still pending622.",
+    "Existing recorded root value_type preconditions remain independent of native conversion plans.",
+    "627 corrects per-conversion conservative compiler work131072 and pending4096; no aggregate contractmemory/CPU guarantee.",
+    "Normal-output compatibility and affectedresource refusals are distinct validation claims.",
+    "All other domain/native/numeric functions and production DEFAULT remain unchanged."
+  ],
+  "production_closure": {
+    "preserved_functions": {
+      "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs:public_interface_type": "0fa9ac7bdb784225d213799d0b42754151adbc38f67584c9e68880590c60d80b",
+      "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs:value_type": "e172114f5a0470313c59c0cf62a019362f146472af66cabfceb0f026abe0bc4c",
+      "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs:derives_supported": "e6fa6855f391a16302c9a70bcc9d3516c637067037e8998d2710273fd710ba0f",
+      "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs:witness_result_type": "397154a4661946c81ee31046db75b9811efdb4d7db239ed3e50544966190ce98",
+      "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs:default_tuple_traits_supported": "e96ceb0a2975703bf602fd46a1b0ff9637d5239b312f83f01792e66b498ed96a",
+      "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs:default_value_type": "90c941e5aaa815f8c317681353efe03af23dceeb4a78616ae404a5989e676b35",
+      "tools/compact-rust-backend/src/value_lowering.rs:wide_uint_type": "cbd8fab7c80e16a8a37f33761303df5b109664423b927be47fe42fa0aeaec3e1",
+      "tools/compact-rust-backend/src/value_lowering.rs:field_to_bytes_32_syntax": "42facc6f83a2f1e9933c6a03b2d747588e7b9d478f2509f460917ab171cd5cd0",
+      "tools/compact-rust-backend/src/value_lowering.rs:unsigned_arithmetic_syntax": "bb7aab3788f0115e1514bf8429a01b76ab3048cfeed5bf039a23c221938f2de0",
+      "tools/compact-rust-backend/src/value_lowering.rs:rust_type": "47bdd83fbfe056d84c1543fa8d7f11e5482517243a63d5ff040d844e99def473",
+      "tools/compact-rust-backend/src/value_lowering.rs:map_slot_value_type": "dc27f9fefb0422a3ac317ebaca25af37d361fb467a5b10be6283f53c8373d4b2",
+      "tools/compact-rust-backend/src/value_lowering.rs:map_slot_types": "863711895403c718c9e720fb57cc435b473ef96b674fe54a7b33e158483c0242",
+      "tools/compact-rust-backend/src/value_lowering.rs:copy_type": "650d843a57164d734a5a61895315bc84634d6858ad5f07c0848c9aaabfaa9467",
+      "tools/compact-rust-backend/src/value_lowering.rs:retained_value": "fedf56d95f65e121bb3303d16630251a494a63e15f86eaf3acdabb3298453b9c",
+      "tools/compact-rust-backend/src/pure_semantics/numeric.rs:field_literal_bytes": "234ab614825c66a6da24f3dcd53ca99f4c3c04ac8a4fcfba7372b5f02b255487",
+      "tools/compact-rust-backend/src/pure_semantics/numeric.rs:unsigned_maximum": "e41299bffb4104902fb41288ab2dfcd965d1a861eb38d61b059a9ca596a3b837",
+      "tools/compact-rust-backend/src/pure_semantics/numeric.rs:checked_unsigned_arithmetic": "4ba6ddf2fa9a3debcd5ec3a01341ab17b226b1a77bbf8d8674e2285076fc055d"
+    },
+    "root_domain_preconditions": "existing value_type(source/target) retained before shared plan",
+    "neutral_plan_sha256": "c9b3623f19f5b8f040644f61f9c779fd8ba7acf70358cf6235f1c01c25e3c36e",
+    "native_formatter_sha256": "8bf495d91546c3ea8c378b4ebb1c4877fe50d6a9c6ad86adf47292f831b45606",
+    "compiler_work": {
+      "issue": 627,
+      "limit": 131072,
+      "pending_limit": 4096,
+      "scope": "per conversion conservative compiler units; not total contract memory or CPU guarantee"
+    },
+    "body_syntax_bridge": "still pending622; conversion groundwork only",
+    "new_retired_routes": []
+  }
+}

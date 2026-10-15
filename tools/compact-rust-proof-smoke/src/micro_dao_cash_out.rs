@@ -26,6 +26,12 @@ use runtime::transaction::{
 };
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the complete original source before keys, seeded state or funding.
+    // Proving-key provenance is qualified separately from source identity.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_test_center_micro_dao_fixture::RETAINED_IR,
+    )?;
     const NAME: &str = "cash_out";
     let mut rng = StdRng::seed_from_u64(0x0212_0000);
     let seeded = support::seeded(&support::Settings::default())?;
@@ -311,4 +317,54 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         "original cash_out: nonzero historical pot99 at index1 to user output index2, default-strict proof/apply, complete reset and saved sent result, exact nullifier replay refusal; seeded prior DAO and separate Dust"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod source_binding_tests {
+    use super::*;
+
+    #[test]
+    fn exact_complete_source_ir_is_accepted() {
+        let retained = compact_rust_test_center_micro_dao_fixture::RETAINED_IR;
+        counter_scenario::validate_ir(retained.as_bytes(), retained).unwrap();
+    }
+
+    #[test]
+    fn all_selected_cases_reject_missing_and_changed_ir_before_setup() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-cash_out-source-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        let error = run(&root).unwrap_err();
+        assert_eq!(
+            error.downcast_ref::<io::Error>().unwrap().kind(),
+            io::ErrorKind::NotFound
+        );
+        assert!(!root.exists());
+        std::fs::create_dir_all(root.join("contract")).unwrap();
+        let mut changed: serde_json::Value =
+            serde_json::from_str(compact_rust_test_center_micro_dao_fixture::RETAINED_IR).unwrap();
+        let other = changed["stateful_circuits"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|circuit| circuit["name"] != "cash_out")
+            .unwrap();
+        other["name"] = serde_json::json!("wrong-source");
+        let bytes = serde_json::to_vec(&changed).unwrap();
+        let path = root.join("contract/compact-rust-ir.json");
+        std::fs::write(&path, &bytes).unwrap();
+        assert_eq!(
+            run(&root).unwrap_err().to_string(),
+            "Proof artifact IR differs from the generated source fixture"
+        );
+        assert!(!root.join("keys").exists());
+        assert_eq!(std::fs::read(&path).unwrap(), bytes);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }

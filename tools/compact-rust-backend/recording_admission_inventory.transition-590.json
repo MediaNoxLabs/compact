@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "issue": 590,
+  "baseline_commit": "3c717bf951f14779a6643118d73cff54a251d28a",
+  "claim": "Remove final organizer admission; authenticate unchanged whole-old oracle and measured checked ownership. Source inventory is not language coverage.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "0439e3142921067c9eddc8eba509af45b60d5a21fd473bfee11f775a7e0e64ff"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "bb8fb640b175569b93c53566be934e81c1eedd5868a3ad2787d6899ac1eb0771",
+      "current_sha256": "f6d8714546518436028fa81089ebd914d70b35c8630d23564f3bf6a08913f2c8",
+      "predecessor_reconstruction": [
+        {
+          "current": "use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;\n\nmod facade;\n#[cfg(test)]\nmod guarded_mutations;\nmod helpers;\nmod item;\n",
+          "previous": "use legacy::opaque_set::closed_guarded_opaque_set_mutation_steps;\n\nmod facade;\nmod guarded_mutations;\nmod helpers;\nmod item;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "490d9ed5589fadc8788f220a1aff929a671992dd137406c3d2967e6441a6e664",
+      "current_sha256": "5d09e79880ebf286a94cea6437e1e13c378710d5c25797f9894149a05dcdb260",
+      "predecessor_reconstruction": [
+        {
+          "current": "// See the License for the specific language governing permissions and\n// limitations under the License.\n\n//! Ordered checked-interface admission for recorded circuits.\n//!\n//! Checked attempts stop at the first admitted plan. Rejections\n//! from checked profiles are retained for later legacy diagnostic refinement;\n//! a rejection does not prevent an independent later profile from admitting.\n//!\n",
+          "previous": "// See the License for the specific language governing permissions and\n// limitations under the License.\n\n//! Ordered organizer and typed-profile admission for recorded circuits.\n//!\n//! Organizer attempts intentionally use eager `or`: their validation errors\n//! remain observable even when an earlier organizer returned steps. Typed\n//! attempts use lazy `or_else` and stop at the first admitted plan. Rejections\n//! from checked profiles are retained for later legacy diagnostic refinement;\n//! a rejection does not prevent an independent later profile from admitting.\n//!\n"
+        },
+        {
+          "current": "\nuse super::RecordingGap;\nuse super::effect_plan;\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/organizer_migration_tests.rs\"]\nmod organizer_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/witness_merkle_migration_tests.rs\"]\n",
+          "previous": "\nuse super::RecordingGap;\nuse super::effect_plan;\nuse super::guarded_mutations::closed_organizer_gate_steps;\nuse super::profile_attempt::ProfileAttempt;\nuse super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n#[cfg(test)]\n#[path = \"profile_selection/witness_merkle_migration_tests.rs\"]\n"
+        },
+        {
+          "current": "mod funded_mint_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Absence of checked steps permits legacy action lowering. The caller owns\n/// whether a retained gap can refine a failure.\npub(super) struct ProfileSelection {\n    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n",
+          "previous": "mod funded_mint_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\npub(super) struct ProfileSelection {\n    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n"
+        },
+        {
+          "current": "        typed_result = Some(plan.result);\n        Some(plan.steps)\n    } else {\n        None\n    };\n    let typed_prefix = if organizer_steps.is_none() {\n        match record_option!(\n",
+          "previous": "        typed_result = Some(plan.result);\n        Some(plan.steps)\n    } else {\n        record_option!(\n            \"organizer.organizer\",\n            closed_organizer_gate_steps(\n                circuit,\n                ledger_fields,\n                witnesses,\n                pure_circuits,\n                circuits\n            )?\n        )\n    };\n    let typed_prefix = if organizer_steps.is_none() {\n        match record_option!(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests.rs": {
+      "previous_sha256": "09d089a31941879d757e6c9c1e42dbcd9bf3b28a25212fcba347dd1525b34fb1",
+      "current_sha256": "a087ffd8b670f614570f73bd979d5a832c783a70def9f0ab619597115796a9b1",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .iter()\n            .map(|a| a[\"route\"].as_str().unwrap())\n            .collect();\n        assert_eq!(attempts[0], \"algebra.membership\");\n        assert!(!attempts.iter().any(|route| route.starts_with(\"organizer.\")));\n        assert!(!attempts.contains(&\"organizer.optional-write\"));\n        assert!(!attempts.contains(&\"organizer.enum-advance\"));\n        assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n        if name == \"set_topic\" {\n            assert_eq!(attempts[0], \"algebra.membership\");\n        }\n    }\n}\n",
+          "previous": "            .iter()\n            .map(|a| a[\"route\"].as_str().unwrap())\n            .collect();\n        assert_eq!(&attempts[..1], &[\"organizer.organizer\"]);\n        assert!(!attempts.contains(&\"organizer.optional-write\"));\n        assert!(!attempts.contains(&\"organizer.enum-advance\"));\n        assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n        if name == \"set_topic\" {\n            assert_eq!(attempts[1], \"algebra.membership\");\n        }\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests.rs": {
+      "previous_sha256": "9c20b76030ce3f30dd0510302408fb83e8d6fd2d173f53254c9601adbe3ca5e9",
+      "current_sha256": "106ac1e71a89a70630253e59a71df8137e7ad7f25baf84a1c5315493138489f2",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(attempts[0], \"algebra.membership\");\n    assert!(!attempts.iter().any(|route| route.starts_with(\"organizer.\")));\n    assert!(!attempts.contains(&\"organizer.enum-advance\"));\n    assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n}\n",
+          "previous": "        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(\n        &attempts[..2],\n        &[\"organizer.organizer\", \"algebra.membership\"]\n    );\n    assert!(!attempts.contains(&\"organizer.enum-advance\"));\n    assert!(!attempts.contains(&\"organizer.witness-merkle\"));\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/witness_merkle_migration_tests.rs": {
+      "previous_sha256": "7013a718ad07117b72427194b60b11d971e44bdc8e0edf8cec2d38f4cdaa8139",
+      "current_sha256": "2ee2115e6fc27bf585d893e3e59aae33b7545ddd480fcf030be946f51ac51c64",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(routes[0], \"algebra.membership\");\n    assert!(!routes.iter().any(|route| route.starts_with(\"organizer.\")));\n    assert!(!routes.contains(&\"organizer.witness-merkle\"));\n}\n",
+          "previous": "        .iter()\n        .map(|a| a[\"route\"].as_str().unwrap())\n        .collect();\n    assert_eq!(routes[0], \"organizer.organizer\");\n    assert!(!routes.contains(&\"organizer.witness-merkle\"));\n}\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/organizer_migration_tests.rs": "bb69d84161cbab3b417a2bb240151f42e16492a6e8ca5dcfd1121ff8365f9863",
+    "tools/compact-rust-backend/src/recorded/profile_selection/organizer_migration_tests/inclusion.rs": "06eaba80f05f49ba27b6087b48c8c8e0f4631f54e80340039d323a30c08988d1",
+    "tools/compact-rust-backend/src/recorded/profile_selection/organizer_migration_tests/boundaries.rs": "49ee8119c64f575fe53eca2b84b5ff21666d8258d0ee08311057056dddb40009",
+    "tools/compact-rust-backend/src/recorded/guarded_mutations.rs": "261416a25c68f17f6c37e5c4d91348c4b68216e94bca15f4c8777a44361808e0"
+  }
+}

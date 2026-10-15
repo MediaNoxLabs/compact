@@ -15,9 +15,13 @@
 //! Guarded receive followed by an optional historical merge and typed Cell
 //! updates. This module audits admission and provenance; Plan owns evaluation,
 //! lexical scope, exact types, query order and branch-local frame ownership.
-use super::immediate_send::{parameter, uncoerced};
+use super::immediate_send::parameter;
+#[cfg(test)]
+use super::immediate_send::uncoerced;
 use super::*;
-use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
+use crate::coin_shapes::qualified_coin_type;
+#[cfg(test)]
+use crate::coin_shapes::shielded_coin_type;
 
 pub(super) fn read_type(ty: &Type) -> bool {
     matches!(
@@ -64,6 +68,7 @@ pub(super) fn forwards_received_coin(action: &StateAction, formal: &str) -> bool
 }
 
 // Flow summarizes each executable path, independently of static node totals.
+#[cfg(test)]
 #[derive(Clone, Copy, Default)]
 struct Flow {
     received: bool,
@@ -71,6 +76,7 @@ struct Flow {
     stores: usize,
 }
 
+#[cfg(test)]
 struct Audit<'a> {
     seed: &'a str,
     price_amount: Option<&'a str>,
@@ -82,6 +88,7 @@ struct Audit<'a> {
     writes: usize,
     coin_slot: Option<(String, u8)>,
 }
+#[cfg(test)]
 impl Audit<'_> {
     fn slot(&mut self, field: &str, index: u8) -> bool {
         let slot = (field.to_owned(), index);
@@ -271,6 +278,7 @@ impl Audit<'_> {
 // Shared admission of a received coin followed by exactly one qualified store
 // per execution path. Price arithmetic is opted into by the funded-mint profile;
 // the original guarded deposit retains its previous expression domain.
+#[cfg(test)]
 pub(super) fn prefix(
     circuit: &StatefulCircuit,
     seed: &str,
@@ -300,6 +308,7 @@ pub(super) fn prefix(
         && (audit.receives, audit.merges, audit.writes) == (1, 1, 2)
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -356,19 +365,19 @@ pub(super) fn lower<'a>(
     }
     // Counts are structural (both branches), while generated execution retains
     // exactly the selected branch. No counters, collections or hidden effects.
-    (plan.witness_calls == 1
-        && plan.cell_reads == 5
-        && plan.cell_writes == 4
-        && plan.qualified_cell_writes == 2
-        && plan.kernel_self_reads == 4
-        && plan.zswap_inputs == 2
-        && plan.zswap_outputs == 2
-        && plan.intent_queries == 5
-        && plan.counter_reads == 0
-        && plan.counter_writes == 0
-        && plan.counter_comparisons == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0)
+    (plan.evidence.witness_calls == 1
+        && plan.evidence.cell_reads == 5
+        && plan.evidence.cell_writes == 4
+        && plan.evidence.qualified_cell_writes == 2
+        && plan.evidence.kernel_self_reads == 4
+        && plan.evidence.zswap_inputs == 2
+        && plan.evidence.zswap_outputs == 2
+        && plan.evidence.intent_queries == 5
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: syn::parse_quote!(()),

@@ -1,0 +1,1011 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "marker",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "count",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "step",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "item",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "value_Compact1",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "item"
+                }
+              }
+            ],
+            "body": {
+              "kind": "assert",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value_Compact1"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "item"
+                }
+              },
+              "message": "inner fold binding"
+            }
+          }
+        ],
+        "value": {
+          "kind": "add",
+          "left": {
+            "kind": "parameter",
+            "name": "value"
+          },
+          "right": {
+            "kind": "parameter",
+            "name": "item"
+          }
+        }
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 43,
+        "column": 1
+      }
+    },
+    {
+      "name": "folded",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "vector_fold_call",
+        "name": "step",
+        "initial": {
+          "kind": "parameter",
+          "name": "value"
+        },
+        "source": {
+          "kind": "tuple",
+          "elements": [
+            {
+              "kind": "field_literal",
+              "value": "1"
+            },
+            {
+              "kind": "unsigned_literal",
+              "value": "2",
+              "max": "2"
+            }
+          ]
+        },
+        "accumulator": {
+          "kind": "field"
+        },
+        "element": {
+          "kind": "field"
+        },
+        "length": 2
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 47,
+        "column": 1
+      }
+    },
+    {
+      "name": "dollars",
+      "parameters": [
+        {
+          "name": "_value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "_value_Compact1",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "_local",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "parameter",
+              "name": "_value"
+            }
+          }
+        ],
+        "body": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "_local_Compact1",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "_value_Compact1"
+              }
+            }
+          ],
+          "body": {
+            "kind": "add",
+            "left": {
+              "kind": "parameter",
+              "name": "_local"
+            },
+            "right": {
+              "kind": "parameter",
+              "name": "_local_Compact1"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 52,
+        "column": 1
+      }
+    },
+    {
+      "name": "alias_a",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "other",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "value_Compact1",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "other"
+                }
+              }
+            ],
+            "body": {
+              "kind": "assert",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value_Compact1"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "other"
+                }
+              },
+              "message": "alias local"
+            }
+          }
+        ],
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 58,
+        "column": 3
+      }
+    },
+    {
+      "name": "alias_b",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "other",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "value_Compact1",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "other"
+                }
+              }
+            ],
+            "body": {
+              "kind": "assert",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value_Compact1"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "other"
+                }
+              },
+              "message": "alias local"
+            }
+          }
+        ],
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 58,
+        "column": 3
+      }
+    },
+    {
+      "name": "same",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "other",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "value_Compact1",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "parameter",
+                  "name": "other"
+                }
+              }
+            ],
+            "body": {
+              "kind": "assert",
+              "condition": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value_Compact1"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "other"
+                }
+              },
+              "message": "alias local"
+            }
+          }
+        ],
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "source": {
+        "file": "scopes.compact",
+        "line": 58,
+        "column": 3
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "shadow",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "other",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "kernel_claim",
+          "claim": "coin_spend",
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value_Compact1",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "other"
+              }
+            }
+          ],
+          "action": {
+            "kind": "expression",
+            "value": {
+              "kind": "kernel_claim",
+              "claim": "nullifier",
+              "value": {
+                "kind": "parameter",
+                "name": "value_Compact1"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_return",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "result"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "result",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "add",
+                "left": {
+                  "kind": "parameter",
+                  "name": "value"
+                },
+                "right": {
+                  "kind": "field_literal",
+                  "value": "1"
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "cell_write",
+                "field": "marker",
+                "index": 0,
+                "value": {
+                  "kind": "parameter",
+                  "name": "result"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 16,
+        "column": 1
+      }
+    },
+    {
+      "name": "siblings",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value_Compact1",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "field_literal",
+                "value": "2"
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "marker",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "value_Compact1"
+            }
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value_Compact2",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "field_literal",
+                "value": "3"
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "marker",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "value_Compact2"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "nested",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value_Compact1",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "field_literal",
+                "value": "2"
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "value_Compact2",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "field_literal",
+                      "value": "3"
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "marker",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value_Compact2"
+                  }
+                }
+              },
+              {
+                "kind": "cell_write",
+                "field": "marker",
+                "index": 0,
+                "value": {
+                  "kind": "parameter",
+                  "name": "value_Compact1"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "suffix",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "value_Compact1",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "value_Compact2",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "tmp_1",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "add",
+          "left": {
+            "kind": "add",
+            "left": {
+              "kind": "parameter",
+              "name": "value"
+            },
+            "right": {
+              "kind": "parameter",
+              "name": "value_Compact2"
+            }
+          },
+          "right": {
+            "kind": "parameter",
+            "name": "tmp_1"
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value_Compact3",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "value_Compact1"
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "marker",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "value_Compact3"
+            }
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value_Compact1_Compact1",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_1"
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "marker",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "value_Compact1_Compact1"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 33,
+        "column": 1
+      }
+    },
+    {
+      "name": "counter_scopes",
+      "parameters": [
+        {
+          "name": "amount",
+          "ty": {
+            "kind": "unsigned",
+            "max": "65535"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "return_value": {
+        "kind": "counter_read",
+        "field": "count",
+        "index": 1
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "amount_Compact1",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "2",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "amount_Compact1"
+            }
+          }
+        },
+        {
+          "kind": "counter_increment",
+          "field": "count",
+          "index": 1,
+          "amount": {
+            "kind": "parameter",
+            "name": "amount"
+          }
+        }
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 38,
+        "column": 1
+      }
+    },
+    {
+      "name": "read_marker",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "marker",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 50,
+        "column": 1
+      }
+    },
+    {
+      "name": "read_count",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "return_value": {
+        "kind": "counter_read",
+        "field": "count",
+        "index": 1
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "scopes.compact",
+        "line": 51,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "amount",
+        "ty": {
+          "kind": "unsigned",
+          "max": "65535"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "amount_Compact1",
+            "ty": {
+              "kind": "unsigned",
+              "max": "65535"
+            },
+            "value": {
+              "kind": "unsigned_literal",
+              "value": "2",
+              "max": "65535"
+            }
+          }
+        ],
+        "step": {
+          "kind": "counter_increment",
+          "field": "count",
+          "index": 1,
+          "amount": {
+            "kind": "literal",
+            "value": 2
+          }
+        }
+      },
+      {
+        "kind": "for_each",
+        "binding": {
+          "name": "amount_Compact2",
+          "ty": {
+            "kind": "unsigned",
+            "max": "65535"
+          }
+        },
+        "values": [
+          {
+            "kind": "unsigned_literal",
+            "value": "3",
+            "max": "65535"
+          },
+          {
+            "kind": "unsigned_literal",
+            "value": "4",
+            "max": "65535"
+          }
+        ],
+        "steps": [
+          {
+            "kind": "counter_increment",
+            "field": "count",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "amount_Compact2"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "counter_increment",
+        "field": "count",
+        "index": 1,
+        "amount": {
+          "kind": "parameter",
+          "name": "amount"
+        }
+      }
+    ],
+    "source": {
+      "file": "scopes.compact",
+      "line": 7,
+      "column": 1
+    }
+  }
+}

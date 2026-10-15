@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger difference: Uint<8>;
+export ledger product: Uint<16>;
+export ledger narrowed: Uint<8>;
+export struct Receipt { difference: Uint<8>; product: Uint<16>; }
+export struct NarrowReceipt { value: Uint<8>; }
+witness operand(tag: Field, value: Uint<8>): Uint<8>;
+constructor() { difference = 0; product = 0; narrowed = 0; }
+circuit multiply(left: Uint<8>, right: Uint<8>, tag: Field): Uint<16> {
+  return operand(tag, left) * operand(tag + 1, right);
+}
+export circuit run(left: Uint<8>, right: Uint<8>, selected: Boolean): Receipt {
+  const result = operand(1, left) - operand(2, right);
+  difference = disclose(result);
+  const multiplied: Uint<16> = selected ? multiply(left, right, 3) : 0;
+  product = disclose(multiplied);
+  return Receipt { difference: difference, product: product };
+}
+export circuit narrow(left: Uint<8>, right: Uint<8>, selected: Boolean): NarrowReceipt {
+  const result: Uint<8> = selected ? multiply(left, right, 5) as Uint<8> : 0;
+  narrowed = disclose(result);
+  return NarrowReceipt { value: narrowed };
+}

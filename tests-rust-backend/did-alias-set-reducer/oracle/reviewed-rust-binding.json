@@ -1,0 +1,32 @@
+{
+  "format": "compact-reviewed-rust-binding/v1",
+  "scope": "Checked opaque Boolean interface routing (#603). Original TypeScript capture bytes remain unchanged; only recorded member_control uses typed composition. Current Rust generation is independently reviewed; no fresh TS execution or DID proof claim.",
+  "captures": [
+    {
+      "file": "cases.json",
+      "sha256": "d3cf44aa06a987c8e91fd8d431827344c66dad4ce6834f97b7c71201ce95e600"
+    }
+  ],
+  "replacements": [
+    {
+      "path": "tests-rust-backend/did-alias-set-reducer/lib.rs",
+      "captured_sha256": "940fc875f9e46fbc96a7b032f3fed103aed5888e42820227de3c3bd30554fc1c",
+      "current_sha256": "3d00dbc3afc4b75fa40d5f9ec11fddb40551a4deebb022c9627a41fae3501fa2"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-set-reducer/tests/provenance.rs",
+      "captured_sha256": "45c85b81df82974d92b59ee6a0c05d3d56bc58b6a1df83839bb26aab5f1b9a5b",
+      "current_sha256": "f41742f0c026919ce48cdf947115c5b375c6b993ba0f775ff5ccfa9780036438"
+    }
+  ],
+  "reviewed_artifacts": [
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    },
+    {
+      "path": "tests-rust-backend/did-alias-set-reducer/tests/provenance.rs",
+      "sha256": "f41742f0c026919ce48cdf947115c5b375c6b993ba0f775ff5ccfa9780036438"
+    }
+  ]
+}

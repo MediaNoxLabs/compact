@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "issue": 622,
+  "slice": "D1b",
+  "baseline_commit": "8ecf01cbf0cde90831b597b2a3245e6ce1b00f77",
+  "claim": "Complete generic conversion family, shared child contract and native checked-fact consumer; body Syn bridge remains pending622; source authority is not language coverage.",
+  "new_retired_route_ids": [],
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "044d74fe33d021c3f42643e37511b46a60f1d5b6ccd530965bade6f246175f83"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "044d74fe33d021c3f42643e37511b46a60f1d5b6ccd530965bade6f246175f83"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/lib.rs": {
+      "current_sha256": "401221124164ee97e8a66bc9fed8402cf61a590fe9a171c66660f64e12111b56",
+      "previous_sha256": "8686c94be5d12aa388a5fdbc3c9ad3f055eecc03d595114e9b52fbabf0ad6658",
+      "predecessor_reconstruction": [
+        {
+          "current": "fn pure_conversion_expression(\n    expr: &Expr,\n    parameters: &HashMap<&str, (&Type, syn::Ident)>,\n    circuits: &HashMap<&str, &PureCircuit>,\n) -> Result<(syn::Expr, Type), RenderError> {\n    use pure_semantics::conversion::{ConversionSource, fold_conversion};\n    let source = match expr {\n        Expr::FieldCast { value } => ConversionSource::FieldCast { value },\n        Expr::FieldToBytes32 { value } => ConversionSource::FieldToBytes32 { value },\n        Expr::Coerce { value, ty } => ConversionSource::Coerce { value, ty },\n        Expr::UnsignedCast { max, value } => ConversionSource::UnsignedCast { max, value },\n        _ => unreachable!(\"private pure-expression dispatcher selects this family\"),\n    };\n    let typed = fold_conversion(\n        source,\n        &mut pure_native::children::NativeChildren::new(parameters, circuits),\n        &mut pure_native::leaf::NativeLeafSink::new(),\n    )?;\n    Ok((typed.output, typed.ty))\n}",
+          "previous": "fn pure_conversion_expression(\n    expr: &Expr,\n    parameters: &HashMap<&str, (&Type, syn::Ident)>,\n    circuits: &HashMap<&str, &PureCircuit>,\n) -> Result<(syn::Expr, Type), RenderError> {\n    match expr {\n        Expr::FieldCast { value } => {\n            let (value, actual) = expression_with_calls(value, parameters, circuits)?;\n            let Type::Unsigned { max } = &actual else {\n                return Err(RenderError::ExpectedUnsigned(actual));\n            };\n            let rendered = match unsigned_maximum(max)? {\n                UnsignedMaximum::Small(_) => {\n                    syn::parse_quote!(runtime::Field::from((#value).value()))\n                }\n                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),\n            };\n            Ok((rendered, Type::Field))\n        }\n        Expr::FieldToBytes32 { value } => {\n            let (value, actual) = expression_with_calls(value, parameters, circuits)?;\n            if actual != Type::Field {\n                return Err(RenderError::TypeMismatch {\n                    expected: Type::Field,\n                    actual,\n                });\n            }\n            Ok((field_to_bytes_32_syntax(value), Type::Bytes { length: 32 }))\n        }\n        Expr::Coerce { value, ty } => {\n            let (value, actual) = expression_with_calls(value, parameters, circuits)?;\n            Ok((coerce_expression(value, &actual, ty, 0)?, ty.clone()))\n        }\n        Expr::UnsignedCast { max, value } => {\n            unsigned_maximum(max)?;\n            let (value, actual) = expression_with_calls(value, parameters, circuits)?;\n            let Type::Unsigned { max: source_max } = actual else {\n                return Err(RenderError::TypeMismatch {\n                    expected: Type::Unsigned { max: max.clone() },\n                    actual,\n                });\n            };\n            Ok((\n                unsigned_cast_syntax(value, &source_max, max)?,\n                Type::Unsigned { max: max.clone() },\n            ))\n        }\n        _ => unreachable!(\"private pure-expression dispatcher selects this family\"),\n    }\n}"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/pure_native.rs": {
+      "current_sha256": "858795154682c3441f2156942880d314287b5f47c5ed7df8b16c566b50bfb83b",
+      "previous_sha256": "ace8f72a567ace11e6bf722cd6b8e7224f3c10594d079c0aa2d542c806d0db83",
+      "predecessor_reconstruction": [
+        {
+          "current": "\npub(crate) mod children;\npub(crate) mod conversion;\n",
+          "previous": ""
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/pure_native/tests.rs": {
+      "current_sha256": "00614abcb71270c536f95839fe2dddf9561ab61d0b75c31bca43aab3d5f6fe71",
+      "previous_sha256": "579658eba6f8bbe102b646fd82316d94494517874f40864409b488c1dc32a7c7",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod shared_conversion;\n",
+          "previous": ""
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/pure_semantics.rs": {
+      "current_sha256": "50faad0e0e48b79dba349412349080af906a53e3b7dd0de9e2baa09199ce2a01",
+      "previous_sha256": "f9e110b94936a15d6f5648afb9347fa28e3c9e4431a11f34cd4b5735c654d48d",
+      "predecessor_reconstruction": [
+        {
+          "current": "\npub(crate) mod children;\npub(crate) mod conversion;\n",
+          "previous": ""
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/pure_semantics/sink.rs": {
+      "current_sha256": "d72b64750609689028032dd97eb800fed38a1acb4cc1affe4791a0ff74036530",
+      "previous_sha256": "307a302dd6bd89d0cf43bbb65bcc73aae8b2eaccdf2a445315a02e8db3357885",
+      "predecessor_reconstruction": [
+        {
+          "current": "\n/// Consumers render complete checked conversions; they cannot accept/refuse\n/// support. Associated value/binding/carrier types are shared with leaf output.\npub(crate) trait ConversionSink: LeafSink {\n    fn conversion(\n        &mut self,\n        facts: super::conversion::ConversionFacts,\n        child: Self::Value,\n    ) -> Self::Value;\n}\n",
+          "previous": ""
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/value_lowering.rs": {
+      "current_sha256": "30cdeaa9c7d47e89534e8aa044d16a6f237ac41dbfc69d1d33f961bf0e7b76bf",
+      "previous_sha256": "8b405650fca8f973aa954db0f684a5a2880a8880fec5ad3ad2e6c7d3b93a6ab6",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(crate) mod coercion;",
+          "previous": "mod coercion;"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/value_lowering/coercion.rs": {
+      "current_sha256": "a63633055efa5d034a3a59d96caa6f295b185597c6d4495f6bba14e62e375515",
+      "previous_sha256": "8bf495d91546c3ea8c378b4ebb1c4877fe50d6a9c6ad86adf47292f831b45606",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(crate) fn render_unsigned_cast(",
+          "previous": "pub(super) fn render_unsigned_cast("
+        },
+        {
+          "current": "pub(crate) fn render(",
+          "previous": "pub(super) fn render("
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/pure_semantics/children.rs": "02d3bb0e0271b11e2ff8fe987efd4dd9a856d1a778b795a1bd32d98f83cb1808",
+    "tools/compact-rust-backend/src/pure_semantics/conversion.rs": "c4a231a8b573d5841f79cbaacba0c9ea50afb83d1bc8d99644768cc06053a371",
+    "tools/compact-rust-backend/src/pure_semantics/conversion/tests.rs": "74bed6fe26cec1ab242d77630c8f51e7dbac3859a7b588f22de59c30e2376c24",
+    "tools/compact-rust-backend/src/pure_native/children.rs": "bfa38d6847a7c933da6da5037a172049656452ee8a891f3d21a74a3e7cb22bac",
+    "tools/compact-rust-backend/src/pure_native/conversion.rs": "a8f00908187f40fe73299af25bdaa594d4358fcec265ed40481d560125b9f87c",
+    "tools/compact-rust-backend/src/pure_native/tests/shared_conversion.rs": "15efa08f24b90b2a57bfb643902f010aee98e4da63bd567b4045a3f37719bf47",
+    "tools/compact-rust-backend/src/pure_native/tests/shared_conversion/workers.rs": "10c929b8c0aa196c9862e6b16fb2dde2a33b8f3efeb25a6215b3d2ac605991dc",
+    "tools/compact-rust-backend/src/pure_native/dispatch.rs": "6142c465d9c403ece111d2c2973009cfd87bbaeb772c8cfa006ba3ae0d018a9b",
+    "tools/compact-rust-backend/src/pure_native/control.rs": "22d3f7b422b0d3c8dab13ac51d05f5ab721695529b51b511f62fd49ec1d81a5c",
+    "tools/compact-rust-backend/src/pure_native/fragment.rs": "3487fc80cdf75fee43ae703beaca36338e4eecf5d8bae18f6c364715e641a306",
+    "tools/compact-rust-backend/src/recorded/effect_plan/pure_certification/native.rs": "63683b545021a4dd8da7016e6ca676d965b387d676ec8ff6d9a950fea1c0f901",
+    "tools/compact-rust-backend/src/pure_native/tests/old_oracle/conversion.rs": "18bea4e7d42507f33cfa08d6277fa604559ff3226dfa8072233895b0fd03ad91",
+    "tools/compact-rust-backend/src/pure_semantics/leaf.rs": "9f361d5599cdb84578ccf2fae018d1bd6f41dffe52076528a778bb8cc4920f72",
+    "tools/compact-rust-backend/src/pure_semantics/scope.rs": "c636be5b417ec20c932c24141de9a688e3071b008ab6a91884367ecfb02b9581",
+    "tools/compact-rust-backend/src/pure_semantics/ownership.rs": "076d1265a5c02831eb504813f5ce658c405cf41dce5d90da82621e242101c064",
+    "tools/compact-rust-backend/src/pure_native/leaf.rs": "f77693eeaabd57343e1c8799bacb76711f98b6165ddb277ac2eeb18a615ccd47",
+    "tools/compact-rust-backend/src/pure_semantics/carrier.rs": "0cac0806615ef4a8379c5e031788a6b5a0a00d32713149896393a6d79d54fd24",
+    "tools/compact-rust-backend/src/pure_semantics/identifier.rs": "4965d8fb05f1cce66ca5632fc446ab8a808e17d64513b5bf1bcf698d9ffba170",
+    "tools/compact-rust-backend/src/pure_semantics/numeric.rs": "206d10d63845161361eb5fe8fa33607789cf0ce52042797a8504135ffd4bfdbb",
+    "tools/compact-rust-backend/src/pure_semantics/coercion.rs": "c9b3623f19f5b8f040644f61f9c779fd8ba7acf70358cf6235f1c01c25e3c36e",
+    "tools/compact-rust-backend/src/resource_limits.rs": "2adc7200e599c300e19b1d2415f6ef5b7682f5e22c1cd8cc1f39f9b32a85c48b",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/resource_limits/borrowed_types.rs": "701b17d7ad93aa1e8f2e660b7636ca6228eb8265db219626fddc23d2ccf796c4",
+    "tools/compact-rust-backend/src/value_lowering/carrier.rs": "010ae928202724ec5a31fff99f72b76428ad6fd0c11912e582bd29762b430873",
+    "tools/compact-rust-backend/src/naming.rs": "ba5a245974e45af8807a0999094f248e41c117f08e1a1dfc6b483a305c34eb20",
+    "tools/compact-rust-backend/recording_admission_inventory_shared_leaf.py": "b07d427267328d1176b46d85a5551cc77610430e40f5e88ea61818e285e09b9a",
+    "tools/compact-rust-backend/recording_admission_inventory_shared_leaf_test_support.py": "edd367d400b1aaebdb48019f11abd6a034ac5c0933cb84873e5139b99fe11531",
+    "tools/compact-rust-backend/recording_admission_inventory_unit_fragment.py": "990aee056ff2e9e698d5f67b7e5c419378f2b3b08feda9f7048ea2b13508b38b",
+    "tools/compact-rust-backend/recording_admission_inventory_shared_coercion.py": "f9bd5ff7b16c5e58a46a62115c1a154d28a3d3ceaf6eebf40fa5c9943f920ec6",
+    "tools/compact-rust-backend/recording_admission_inventory_shared_conversion_test_support.py": "eefe62eaeb8c2cf36932504bf93a347947c2b318cb403e776a46417ee767110e"
+  },
+  "historical_manifests": {
+    "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json": "37f77eb423c5fc376c5d1617cf38e9292e5f9d29e7c4048da9944b949611ace4",
+    "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json": "e6cbf5fc5fea53f8e5677191d14b77bd241b247573a46d0dd388bdfb2e43cf62",
+    "tools/compact-rust-backend/recording_admission_inventory.baseline.json": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+    "tools/compact-rust-backend/recording_admission_inventory.calls-519.json": "f44eaa757c58bc1ed31dd8b31485270148cf79762cb468f3a0e96acc5ed43c00",
+    "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json": "9add6f3b7af78856707e6fc2735d86a7e3ce98e26cff6ebc14efd9ce823b1876",
+    "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json": "e6905af2f56e6a81df5f39c5db309eddee66af5a4fd99255dea5bddf31a5f54c",
+    "tools/compact-rust-backend/recording_admission_inventory.generic-qualification-619.json": "f3f1bb230f291fb234ad8be23db5f4b1274bec413880568a75811743296dd34a",
+    "tools/compact-rust-backend/recording_admission_inventory.generic-retirement-618.json": "29fd2fd89bf107adae4c543481d49be76b9ee6d574490268660ad022bd495510",
+    "tools/compact-rust-backend/recording_admission_inventory.helper-discovery-620.json": "7ef7b579963aa5cbb349c3ab7081d383f1afb58c5013dc363aae25e1d0be3f99",
+    "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json": "3d3b619c4175d99f586abe1adffac2a2889547907f0870acfbfd17d3affac3f6",
+    "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json": "7643d54832ddcc9d25df9607ad7c6f7356132a5d1c56195a0e0451140d1888bb",
+    "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json": "57fe81ffbe2009557df148a78d29dd3de451d96a4c5e86a586bc8e9dee67c288",
+    "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json": "eb8eab632bbb18cc667f47d173f98cb5ef7338a6292491cdacca919d08fa7cdf",
+    "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json": "a6243d8845df24b08042d16b799a9de21a75d5a7801966c53913cc72779bab54",
+    "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json": "b1702d8f322da3edc71c4a8aea4044df0ead1fbecb7bb8c028b7db2b87826968",
+    "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json": "82388a62ad3b867ceb39816d55a54471b1c6e75b8077dd982efff9db915beb74",
+    "tools/compact-rust-backend/recording_admission_inventory.native-tuple-621.json": "b953fad599da7b2e192ed1e49e75ae46d2e002642b386dff2e7d1bc6b94f814f",
+    "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json": "a9ca3590dfe958a25b5f99ae5373a2a5c851962f645ee3cc52a58c9021035e82",
+    "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json": "7cb2096ee32cd3fe07bc01d9359948ec840c690c06871eccd69522f510f6d54b",
+    "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json": "af77a7584cb76b5b63795578b7a83c4c3c9aa5c076ee80fb977a9b1547d6be04",
+    "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json": "d1ffeb82d6514e184b8921ceb98fe7d6fb5b8eaee08f769d0e6ecc5ca8e735eb",
+    "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json": "68fa18ab62ae676873586a02e1eace175a318ada1f93b51a58173c499a88e58d",
+    "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json": "2c6eae6dd47caa2bfbf935096daef59c15d139b92938469803e909eb0df6a9da",
+    "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json": "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145",
+    "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json": "627cedbf268cdb6e53006fc6d1778604a53f8e676095042f107393e97356ab8f",
+    "tools/compact-rust-backend/recording_admission_inventory.shared-pure-semantics-622a.json": "56e5dcd95630b8bc0e85e1de997e380f0126e0d0efc130ece446be8459e451bc",
+    "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json": "d67b2cc703de3ac93a7a4d01ccb884b0ad571927b0784401008fc7595eeb11f4",
+    "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json": "cc5cde950e7f6f696acd6ab846b68d90a78319d60e58115b56db4a1f6fa24cf2",
+    "tools/compact-rust-backend/recording_admission_inventory.stateful-tuple-624.json": "9127373f0baf663c9635107ac99a98b7899f70d4970ca0064bde456754883e26",
+    "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json": "06e2fc20429f3782f50d078075d96c9a3907b289e1ca0a147dbe30073437c71b",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-511.json": "09d6cd8545012c54f9445d112c459a9af982073cdd9e163c22746b2fc7b3f396",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-517.json": "bbf66c692db93531609d4517dcd96dbbf607ad76724b69fbde0a93873560ab00",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-521.json": "38920475549f1664b1f206a186f1ff71d5a994b4fab6bd7542b629b1d925d8f6",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-525.json": "f017f7ff1a7a0a942fc842238f83fd049aee1b114e4e261c4d52ec6c0973b99e",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-526.json": "e15599f5588a00cd6471cb255ce96bc44a7a89f451fdc006a0165b7030483703",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-527.json": "273b0554b1b35139a0a9e306d0f675015aa2fd6120c6d4d5e9a827861865ddbf",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-529.json": "9bd01cfc79f34fe9fd957f4f4c5147f8900a84bc7b76346fad113e8e0938f002",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-536.json": "c4cd774b92e0d06ec8fe48e8595afc5e24c7eea2af311db71efc51e180dc68c4",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-547.json": "ea0341026c5fd4085dfc6a67ca1b444a97c6b8b765aa7592859d3c563deba2fb",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-549.json": "c7f2b0366b405c67a7e9226b2e7fe44364e47bcb66d6001e27aca23c9e81b259",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-550.json": "2d35621b15e729edaf9d5c98b09b960c22296f13e63e0de1f2d24962cb2f1a22",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-553.json": "6f7d1c96df82dcc85d847f1a4df5546ea99ecf0f82cee5340150080e06d72e73",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-560.json": "c3eb19b5bdb37ebf013f3f990988c2959c389324728afaae6a23a6fe501d6b2e",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-561.json": "d31d1fdfb4586df9bb02bd387f8e18a1d2c9bd0c04ca52c270631fea22b85f80",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-565.json": "2819417c7b2c3222444627a0a9716cc392f3b5ca797df17919845778623c7dfa",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-566.json": "be2b63dec8ce2dbcba3d641032bc79eddd2d166c5bc940b54fe29b2c5dbcad26",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-569.json": "b09f390c8d30e3310cb9fe58a59319a7a61c4615d18718ecacf958ef5ef30647",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-570.json": "1ac02976ac663a99ca761f562de840879823100d72d038b08d000cbf3a625bb8",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-572.json": "909ab4af3988d9544201eda3e71c82861e651acc9f1c7895a43af1983b7c5379",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-580.json": "8da209575f8e93345e23449e144e7b966d099394c1a6f7e22512173be2a2bc5f",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-587.json": "e6c18b3a0d417c0b06a663545e790c8e60e5ab95f7a8a1d4e3cd54e38d49f796",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-588.json": "c135b2c14703803d1cdce746a958d26f4383dc01d162b8dde7d98f9f902c8953",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-589.json": "c064b62d9030d4c00cf0ee9748866fafccb847e932a133de7c9fe1ed472c0172",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-590.json": "7171213d00b32f7870d387e9046ec4029f0a2f52b046f69ce5476251aca742ca",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-591.json": "c01018aeb3436e90bdd73dd25b699ae1bb1ead1d798034b8eb50daaa5c6d2305",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-592.json": "06ae91053575e134acf08136436560ef0e27b9b2ce5727cdd7a4d6f6cc488ec3",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-594.json": "65683de7d5af1f648474c864fd7f989198ee5da398cbfa4997b2f80350c63586",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-596.json": "25fb661f31e18ac420b5ad838814fc70bcadd9d168a36d4237da068c69d47104",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-600.json": "3e88356bfc539c466e7a3a935da0eb5e4feb16cb4b8f76c40dbd5d0e4623cc45",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-601.json": "8ad0e89bdcb92e5eb69fd9a5e93af9305a8bfb55967965189b93504764351d2c",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-603.json": "69e86e790fa15a76c45a417d7e29c9f9ffbe638f474daee13eb1ee68f6868dc2",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-604.json": "86f622bdcb009f0b1912f769258af157497877855c664442cd78024b77e97963",
+    "tools/compact-rust-backend/recording_admission_inventory.transition-605.json": "c2f9444eba2e7de7da19e1f93a92debbd31a2b644e930f2443b790206f3ece28",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json": "b91bed20247bd0e513ebabaf845764bce43599c3f9c0d39c8e55584e5d0b26d9",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json": "f7e0d5bededbf7e2a57d30da2b5c3673d13242a5eabe4d62b9dfa74d7f2f6cd0",
+    "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json": "0bac8e290d255cf3ad503f6661048dd4ae09419ccafc0b3b312e8e1d328b8e59",
+    "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json": "fce9d30228aaf6cd70defe683c743a1eb2589dd67f4553bfa86962a1838da898",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json": "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4",
+    "tools/compact-rust-backend/recording_admission_inventory.target-edition-626.json": "2dc330f45cf2ee0a0c8cb841fc44740bda32a372da2ec8a03d296facbf293446",
+    "tools/compact-rust-backend/recording_admission_inventory.shared-coercion-627.json": "1bdb176f33272e8d6341a7a129a3f1e8496176fbced71bea868690bcf997932e",
+    "tools/compact-rust-backend/recording_admission_inventory.unit-fragments-622c.json": "30d3fdda74615e4ab0633c584b1c12d4407888c637d5231e5c96f77f424b5941",
+    "tools/compact-rust-backend/recording_admission_inventory.shared-leaf-622d1a.json": "39626136239d37fdbc6d8b9e921495aa7aba7578ddeebac3286a10c7dd99dad4"
+  },
+  "oracle_authorities": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json": "b2093ad98a8d8a3e4d087f52e05c15d9bb2780ccc329ea284cdaff63ac40fcd4",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json": "adfbe698a69f9a31e0bc36bdfc0260099cdfd6daf43d222d97a49811042ebfed",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-audited-local-614.json": "3e433671c8b8c9086350ccbbe2f9898385a258a6482b5c97ac378f28014c9bcf",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json": "4feeb870cede6548b17cc870c6d67f545274f9c98c73923e691acca665c45caf",
+    "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json": "a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json": "eda751f75344d765430226e2651201e947c1d1d584818c43fe024424df65df0c",
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json": "00445f0e9e4c42af6b8dda3a33912542ed46ad7c671f56daa55a160ce8f32b19"
+  },
+  "predecessor_options": {
+    "transition": "tools/compact-rust-backend/recording_admission_inventory.transition-511.json",
+    "instrumentation": "tools/compact-rust-backend/recording_admission_inventory.instrumentation-515.json",
+    "jubjub_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-517.json",
+    "call_extension": "tools/compact-rust-backend/recording_admission_inventory.calls-519.json",
+    "terminal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-521.json",
+    "unit_actions_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-525.json",
+    "context_query_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-526.json",
+    "kernel_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-527.json",
+    "composite_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-529.json",
+    "receive_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-536.json",
+    "unit_domain_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-domain-540.json",
+    "voting_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-547.json",
+    "phase_reset_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-549.json",
+    "immediate_send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-550.json",
+    "zswap_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-553.json",
+    "membership_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-560.json",
+    "send_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-561.json",
+    "observation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.observation-test-564.json",
+    "merge_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-565.json",
+    "guarded_deposit_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-566.json",
+    "routing_test_extension": "tools/compact-rust-backend/recording_admission_inventory.routing-test-568.json",
+    "reset_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-569.json",
+    "shielded_payout_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-570.json",
+    "inequality_test_extension": "tools/compact-rust-backend/recording_admission_inventory.inequality-test-571.json",
+    "funded_mint_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-572.json",
+    "keccak_test_extension": "tools/compact-rust-backend/recording_admission_inventory.keccak-test-581.json",
+    "aligned_test_extension": "tools/compact-rust-backend/recording_admission_inventory.aligned-test-582.json",
+    "encoding_extension": "tools/compact-rust-backend/recording_admission_inventory.encoding-583.json",
+    "negation_test_extension": "tools/compact-rust-backend/recording_admission_inventory.negation-test-585.json",
+    "value_test_extension": "tools/compact-rust-backend/recording_admission_inventory.value-test-586.json",
+    "unit_composition_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-580.json",
+    "optional_write_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-587.json",
+    "enum_advance_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-588.json",
+    "witness_merkle_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-589.json",
+    "organizer_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-590.json",
+    "unsigned_product_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-591.json",
+    "opaque_set_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-592.json",
+    "unit_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-interface-593.json",
+    "map_value_extension": "tools/compact-rust-backend/recording_admission_inventory.map-values-595.json",
+    "guarded_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-594.json",
+    "opaque_map_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-596.json",
+    "resource_diagnostics_extension": "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+    "empty_recording_extension": "tools/compact-rust-backend/recording_admission_inventory.empty-recording-598.json",
+    "guarded_pure_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-600.json",
+    "reachable_helpers_extension": "tools/compact-rust-backend/recording_admission_inventory.reachable-helpers-599.json",
+    "key_only_map_removal_extension": "tools/compact-rust-backend/recording_admission_inventory.key-only-map-removal-602.json",
+    "asset_removal_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-601.json",
+    "opaque_boolean_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-603.json",
+    "opaque_field_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-604.json",
+    "proved_set_sequence_transition": "tools/compact-rust-backend/recording_admission_inventory.transition-605.json",
+    "ordinary_interface_extension": "tools/compact-rust-backend/recording_admission_inventory.ordinary-interface-606.json",
+    "storage_codec_extension": "tools/compact-rust-backend/recording_admission_inventory.storage-codecs-607.json",
+    "list_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.list-effects-608.json",
+    "map_effects_extension": "tools/compact-rust-backend/recording_admission_inventory.map-effects-609.json",
+    "persistent_commit_extension": "tools/compact-rust-backend/recording_admission_inventory.persistent-commit-inputs-611.json",
+    "vector_map_extension": "tools/compact-rust-backend/recording_admission_inventory.vector-map-613.json",
+    "audited_local_transition": "tools/compact-rust-backend/recording_admission_inventory.audited-local-614.json",
+    "read_only_transition": "tools/compact-rust-backend/recording_admission_inventory.read-only-615.json",
+    "single_admission_transition": "tools/compact-rust-backend/recording_admission_inventory.single-admission-616.json",
+    "start_funding_transition": "tools/compact-rust-backend/recording_admission_inventory.start-funding-617.json",
+    "generic_qualification_extension": "tools/compact-rust-backend/recording_admission_inventory.generic-qualification-619.json",
+    "generic_retirement_transition": "tools/compact-rust-backend/recording_admission_inventory.generic-retirement-618.json",
+    "helper_discovery_transition": "tools/compact-rust-backend/recording_admission_inventory.helper-discovery-620.json",
+    "native_tuple_extension": "tools/compact-rust-backend/recording_admission_inventory.native-tuple-621.json",
+    "stateful_tuple_extension": "tools/compact-rust-backend/recording_admission_inventory.stateful-tuple-624.json",
+    "shared_pure_semantics_extension": "tools/compact-rust-backend/recording_admission_inventory.shared-pure-semantics-622a.json",
+    "target_edition_identifiers_extension": "tools/compact-rust-backend/recording_admission_inventory.target-edition-626.json",
+    "shared_coercion_extension": "tools/compact-rust-backend/recording_admission_inventory.shared-coercion-627.json",
+    "unit_fragment_extension": "tools/compact-rust-backend/recording_admission_inventory.unit-fragments-622c.json",
+    "shared_leaf_extension": "tools/compact-rust-backend/recording_admission_inventory.shared-leaf-622d1a.json"
+  },
+  "original_oracle_preservation": {
+    "authority": "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json",
+    "original_files": 49,
+    "stages": [
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-generic-retirement-618.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-start-funding-617.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-audited-local-614.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-commit-inputs-611.json",
+      "tools/compact-rust-backend/recording_admission_inventory.resource-diagnostics-597.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-retirement.json",
+      "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/legacy-authority.json"
+    ],
+    "new_owner_overlap": []
+  },
+  "source_freeze_sha256": "249fdc6215f7154aefaa35fc3d981affd66567058b4a34e0082353d8171158d7",
+  "signed_baseline_source_authority_sha256": "6d504d8acf24df1b2f64e98b944c96c3f71e3aebf41011d7be39b9d8ab5bd394",
+  "current_conversion_adapter_sha256": "b5fc81b03a3f987430ef361aefa9b603743cf3cf9854d0515ae34421960f416a",
+  "qualification_limits": [
+    "Complete conversion family only; no full production body CheckSink or new recording admission/runtime/dependency/schema/cohort change.",
+    "Native traversal remains transitional; no cumulative body budget guarantee; readonly DEFAULT/per-conversion627 limits unchanged.",
+    "Historical mutation cases use authenticated D1a source data before mutation; actual current conversion drift fails closed and is never inversed away."
+  ],
+  "production_closure": {
+    "preserved_functions": {
+      "pure_aggregate_expression": "92285e0b8d4565416a07b9af527dea5355095a527d05275149f2d973225b059c",
+      "pure_arithmetic_expression": "6fd19031d41986ab5d298805feea1e4e4b5219e3cb41720e45a97ec131d7fe9b",
+      "pure_crypto_expression": "395370e04b497de739aa2199db394af533aa0fccc39595f3120a90849fdcc463",
+      "pure_leaf_expression": "3df7cc11cc77152d92480f92cb2600319c6d854eabcbfc832fbfc6b3944c5d71",
+      "pure_control_fragment": "ffc8e0cc6edb3bc9e8fbda8f914d992609030bc2438e7709f6c7583e484a90b7",
+      "native_fragment_with_calls": "5e0c6fb74af0c5940903c02628eed2444b2af023fb146ceebd1f47f03111b479",
+      "expression_with_calls": "cff3cabf048a62e1bd12e9362faff40b4806934cd3789b6ab0b3f53415e8d494"
+    },
+    "conversion_source_operations": 4,
+    "conversion_owner": "one shared generic complete conversion family with checked facts",
+    "child_contract": "borrowed visitor outside semantic core; transitional native child environment",
+    "native_output": "existing LeafSink value domain and fact-only native interpreters; visibility-only helper changes",
+    "resource_policy": "unchanged public/selected-parameter bounds and per-conversion627 cap; no cumulative body guarantee",
+    "body_syntax_bridge": "still constructs syntax; complete syntax-free body/binding fold pending622",
+    "new_retired_routes": [],
+    "claim": "conversion-family groundwork; source inventory is not language coverage"
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "issue": 565,
+  "classification": "whole-shielded-merge-admission-retirement",
+  "reviewed_checkpoint": "4c2d8b481eda0189be2f1cb875507314b1371b2f",
+  "retired_route": "selector.shielded-merge",
+  "replacement_route": "algebra.composite-values",
+  "claim": "Fifteenth production admission retirement, subsumed by the existing earlier composite interface. Whole original merge admission is test-only; shared merge constants and received-coin bridge remain production. Source inventory is not semantic coverage.",
+  "baseline_file_sha256": "ef69a6ea6faa03d3bc5fd13a8176a4b1dcd5c1caf7ea602eed4b5aa5aac56e9e",
+  "prior_send_canonical_sha256": "660f74f8da0b8b2a35e9feba30966d2047e1094d045c00629aa049ffb09e02a6",
+  "prior_observation_canonical_sha256": "bd0286e994fcc65fd9153a4ba06ea116a4c3b0b4cc2bbf36bab3c709f8300f17",
+  "prior_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "4b583ff73a20b95ba340cef88afa24c065cbbff42f815e67965876b2799a9b6f",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "f6ee80c23043a60666da182c19508860412b872e9d88d85df4e8f3d968f11221",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs": "65a451b226b35a308575c10393a07313f73d4f28a18e3da0172807f96e5b4ffc",
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": "a0f695f2d9d4ed3bc3240e487e53affbb5b27c5a58fba6657f642766684bd03d"
+  },
+  "reviewed_source_fingerprints": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": "ed6ca69ba8247356eed809790bdbe084174018c393abf8c5a514e817305078f9",
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "13cc6c145b02901ed6032ff3e4b2308542ead1aae0c637131058773eb96fd1b7",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs": "6f0bf14cb1d3647c0ced6d10e4a7c8bc4f7cbcbc11054cb8a826f68c5599657d",
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": "51efa96c7008c25fba5abc295d96dd1def43bddd3541e2cb7f1881203c0965f2"
+  },
+  "predecessor_reconstruction": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": [
+      {
+        "current": "#[cfg(test)]\n#[path = \"profile_selection/terminal_migration_tests.rs\"]\nmod terminal_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/unit_migration_tests.rs\"]\nmod unit_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/voting_migration_tests.rs\"]\nmod voting_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/send_migration_tests.rs\"]\nmod send_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/merge_migration_tests.rs\"]\nmod merge_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\npub(super) struct ProfileSelection {\n    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n",
+        "previous": "#[cfg(test)]\n#[path = \"profile_selection/terminal_migration_tests.rs\"]\nmod terminal_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/unit_migration_tests.rs\"]\nmod unit_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/voting_migration_tests.rs\"]\nmod voting_migration_tests;\n#[cfg(test)]\n#[path = \"profile_selection/zswap_migration_tests.rs\"]\nmod zswap_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/membership_migration_tests.rs\"]\nmod membership_migration_tests;\n\n#[cfg(test)]\n#[path = \"profile_selection/send_migration_tests.rs\"]\nmod send_migration_tests;\n\n/// An admitted step sequence and the evidence retained from declined profiles.\n/// Legacy organizers have no typed result; absence of steps permits legacy\n/// action lowering. The caller owns whether a retained gap can refine a failure.\npub(super) struct ProfileSelection {\n    pub(super) organizer_steps: Option<Vec<syn::Stmt>>,\n    pub(super) typed_result: Option<syn::Expr>,\n    pub(super) shielded_send_rejection: Option<RecordingGap>,\n    pub(super) composition_rejection: Option<CompositionRejection>,\n}\n\n/// Membership interfaces enter at the old first typed priority, including helpers.\n/// Independent effect composition replaces whole-body and operation-count admission.\nfn checked_membership_domain(\n    circuit: &StatefulCircuit,\n    ledger: &HashMap<&str, &LedgerField>,\n    witnesses: &HashMap<&str, &WitnessDeclaration>,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> Result<Option<TypedPlan>, RenderError> {\n"
+      },
+      {
+        "current": "                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.guarded-deposit\",\n                    typed_plan::lower_guarded_deposit(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.reset-payout\",\n                    typed_plan::lower_reset_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-payout\",\n                    typed_plan::lower_shielded_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n",
+        "previous": "                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.guarded-deposit\",\n                    typed_plan::lower_guarded_deposit(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-merge\",\n                    typed_plan::lower_shielded_merge(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.reset-payout\",\n                    typed_plan::lower_reset_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n                )\n            })\n            .or_else(|| {\n                record_option!(\n                    \"selector.shielded-payout\",\n                    typed_plan::lower_shielded_payout(\n                        circuit,\n                        ledger_fields,\n                        witnesses,\n                        pure_circuits,\n                        circuits,\n                    )\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": [
+      {
+        "current": "        && plan.evidence.zswap_outputs > 0\n        && plan.evidence.intent_queries > 0\n        && plan.evidence.witness_calls == 0\n        && plan.evidence.cell_reads == 0\n        && plan.evidence.cell_writes == 0\n        && plan.evidence.counter_reads == 0\n        && plan.evidence.counter_comparisons == 0\n        && plan.evidence.counter_writes == 0\n        && plan.evidence.tree_writes == 0\n        && plan.evidence.set_writes == 0\n    {\n        ProfileAttempt::Admitted(TypedPlan {\n            steps,\n            result: result.value,\n        })\n    } else {\n        ProfileAttempt::Rejected(rejected_return())\n    }\n}\n\n#[cfg(test)]\npub(super) fn lower_shielded_merge<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    shielded_merge::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower_start_funding<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    start_funding::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n",
+        "previous": "        && plan.evidence.zswap_outputs > 0\n        && plan.evidence.intent_queries > 0\n        && plan.evidence.witness_calls == 0\n        && plan.evidence.cell_reads == 0\n        && plan.evidence.cell_writes == 0\n        && plan.evidence.counter_reads == 0\n        && plan.evidence.counter_comparisons == 0\n        && plan.evidence.counter_writes == 0\n        && plan.evidence.tree_writes == 0\n        && plan.evidence.set_writes == 0\n    {\n        ProfileAttempt::Admitted(TypedPlan {\n            steps,\n            result: result.value,\n        })\n    } else {\n        ProfileAttempt::Rejected(rejected_return())\n    }\n}\n\npub(super) fn lower_shielded_merge<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    shielded_merge::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\npub(super) fn lower_start_funding<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    start_funding::lower(circuit, ledger, witnesses, pure, circuits)\n}\n\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs": [
+      {
+        "current": "//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n//! Bounded two-input shielded merge policy. Evaluation and helper scope belong\n//! to the shared Plan; this module distinguishes historical and received input\n//! provenance and audits the complete reachable expression domain.\nuse super::immediate_send::{parameter, singleton_bridge, uncoerced};\nuse super::*;\nuse crate::coin_shapes::{qualified_coin_type, shielded_coin_type};\nuse crate::ir::Parameter;\n\npub(super) const INPUT: &str = \"340282366920938463463374607431768211455\";\npub(super) const WIDENED: &str = \"680564733841876926926749214863536422910\";\npub(super) const SUM: &str = \"680564733841876926926749214863536422911\";\n\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\npub(super) enum Inputs {\n    #[cfg_attr(\n        not(test),\n        allow(dead_code, reason = \"retained historical merge admission oracle\")\n    )]\n    HistoricalPair,\n    ReceivedRight,\n}\n\n// An immediate wrapper must forward its historical left input unchanged and\n// qualify exactly the received right coin using the audited singleton bridge.\nfn received_bridge(\n    value: &Expr,\n    left: &Parameter,\n    right: &Parameter,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> bool {\n    let Expr::Call { name, arguments } = value else {\n        return false;\n    };\n    if !matches!(arguments.as_slice(), [a,b] if parameter(a,&left.name) && parameter(b,&right.name))\n        || pure.contains_key(name.as_str())\n    {\n        return false;\n",
+        "previous": "//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n//! Bounded two-input shielded merge policy. Evaluation and helper scope belong\n//! to the shared Plan; this module distinguishes historical and received input\n//! provenance and audits the complete reachable expression domain.\nuse super::immediate_send::{parameter, singleton_bridge, uncoerced};\nuse super::*;\nuse crate::coin_shapes::{qualified_coin_type, shielded_coin_type};\nuse crate::ir::Parameter;\n\npub(super) const INPUT: &str = \"340282366920938463463374607431768211455\";\npub(super) const WIDENED: &str = \"680564733841876926926749214863536422910\";\npub(super) const SUM: &str = \"680564733841876926926749214863536422911\";\n\n#[derive(Clone, Copy, Debug, PartialEq, Eq)]\npub(super) enum Inputs {\n    HistoricalPair,\n    ReceivedRight,\n}\n\n// An immediate wrapper must forward its historical left input unchanged and\n// qualify exactly the received right coin using the audited singleton bridge.\nfn received_bridge(\n    value: &Expr,\n    left: &Parameter,\n    right: &Parameter,\n    pure: &HashMap<&str, &PureCircuit>,\n    circuits: &HashMap<&str, &StatefulCircuit>,\n) -> bool {\n    let Expr::Call { name, arguments } = value else {\n        return false;\n    };\n    if !matches!(arguments.as_slice(), [a,b] if parameter(a,&left.name) && parameter(b,&right.name))\n        || pure.contains_key(name.as_str())\n    {\n        return false;\n"
+      },
+      {
+        "current": "        && right.ty == shielded_coin_type()\n        && received_bridge(\n            &Expr::Call {\n                name: name.to_owned(),\n                arguments: vec![\n                    Expr::Parameter {\n                        name: left.name.clone(),\n                    },\n                    Expr::Parameter {\n                        name: right.name.clone(),\n                    },\n                ],\n            },\n            left,\n            right,\n            pure,\n            circuits,\n        )\n}\n\n#[cfg(test)]\npub(super) fn lower<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    let [left, right] = circuit.parameters.as_slice() else {\n        return None;\n    };\n    let StateReturn::Expression { value } = &circuit.return_value else {\n        return None;\n    };\n    if left.name == right.name\n        || left.ty != qualified_coin_type()\n        || circuit.result != shielded_coin_type()\n    {\n        return None;\n    }\n    let inputs = if right.ty == left.ty && circuit.actions.is_empty() {\n",
+        "previous": "        && right.ty == shielded_coin_type()\n        && received_bridge(\n            &Expr::Call {\n                name: name.to_owned(),\n                arguments: vec![\n                    Expr::Parameter {\n                        name: left.name.clone(),\n                    },\n                    Expr::Parameter {\n                        name: right.name.clone(),\n                    },\n                ],\n            },\n            left,\n            right,\n            pure,\n            circuits,\n        )\n}\n\npub(super) fn lower<'a>(\n    circuit: &StatefulCircuit,\n    ledger: &'a HashMap<&'a str, &'a LedgerField>,\n    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,\n    pure: &'a HashMap<&'a str, &'a PureCircuit>,\n    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,\n) -> Option<TypedPlan> {\n    let [left, right] = circuit.parameters.as_slice() else {\n        return None;\n    };\n    let StateReturn::Expression { value } = &circuit.return_value else {\n        return None;\n    };\n    if left.name == right.name\n        || left.ty != qualified_coin_type()\n        || circuit.result != shielded_coin_type()\n    {\n        return None;\n    }\n    let inputs = if right.ty == left.ty && circuit.actions.is_empty() {\n"
+      }
+    ],
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": [
+      {
+        "current": "    let r = root_mut(&mut c);\n    let coin = r.parameters[1].name.clone();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::PersistentHash {\n            value: Box::new(Expr::Parameter { name: coin }),\n        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let voting = a\n        .iter()\n        .position(|&s| s == \"algebra.voting-commit\")\n        .unwrap();\n    assert_eq!(\n        &a[voting..voting + 4],\n        [\n            \"algebra.voting-commit\",\n            \"selector.funded-mint\",\n            \"selector.guarded-deposit\",\n            \"selector.reset-payout\"\n        ]\n    );\n    assert!(!a.contains(&\"selector.voting-commit\"));\n}\n\n#[test]\nfn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {\n    let gap = RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.voting.operand\".into(),\n        detail: \"wrong output operand\".into(),\n    };\n    assert!(\n        resolve_checked_plan(Err(effect_plan::PlanError::Unsupported(gap.clone())))\n            .unwrap()\n            .is_none()\n    );\n    assert!(\n        matches!(resolve_checked_plan(Err(effect_plan::PlanError::Invalid(gap))),\n",
+        "previous": "    let r = root_mut(&mut c);\n    let coin = r.parameters[1].name.clone();\n    r.actions = vec![StateAction::Expression {\n        value: Expr::PersistentHash {\n            value: Box::new(Expr::Parameter { name: coin }),\n        },\n    }];\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_none());\n    let row = selected_trace(&c, root(&c));\n    let a = attempts(&row);\n    let voting = a\n        .iter()\n        .position(|&s| s == \"algebra.voting-commit\")\n        .unwrap();\n    assert_eq!(\n        &a[voting..voting + 4],\n        [\n            \"algebra.voting-commit\",\n            \"selector.funded-mint\",\n            \"selector.guarded-deposit\",\n            \"selector.shielded-merge\"\n        ]\n    );\n    assert!(!a.contains(&\"selector.voting-commit\"));\n}\n\n#[test]\nfn unsupported_refuses_but_invalid_plan_keeps_its_diagnostic() {\n    let gap = RecordingGap {\n        code: crate::recorded::RecordingGapCode::UnsupportedExpression,\n        ir_node: \"RecordedPlan\".into(),\n        path: \"forged.voting.operand\".into(),\n        detail: \"wrong output operand\".into(),\n    };\n    assert!(\n        resolve_checked_plan(Err(effect_plan::PlanError::Unsupported(gap.clone())))\n            .unwrap()\n            .is_none()\n    );\n    assert!(\n        matches!(resolve_checked_plan(Err(effect_plan::PlanError::Invalid(gap))),\n"
+      }
+    ]
+  },
+  "oracle_functions_sha256": {
+    "tools/compact-rust-backend/src/recorded/typed_plan.rs": "a625998da9682294054d75b7bc542ee0de2a83540b4f80149259a291d5de81c4",
+    "tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs": "891bb930129855b16cee3e63d01252781e63ee5e24baac5602c348d5ac297ac3"
+  },
+  "test_sources_sha256": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/merge_migration_tests.rs": "1e9254240b6c20601dc4b6edd0369624de006aab4b1e4333c9f331e517fc05c6",
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": "51efa96c7008c25fba5abc295d96dd1def43bddd3541e2cb7f1881203c0965f2"
+  },
+  "shared_sources_sha256": {
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions.rs": "52e64a5f3e98a29736c46c791ef72eb7a631893b4c2c095fd1d139045ff045dd",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs": "37d1b99fa1552487795e6581e28df64e283bfd1a02c2d89e2d8c3c187e06f49f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs": "4d22fa54377d567e7844311b18eb014a968b3991eefe66e08758113d7d1e0aed",
+    "tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs": "8cd4e5b297a0f0465771ba9e0a14505abc117ec35ae6f759b12c657c37129129",
+    "tools/compact-rust-backend/src/recorded/typed_plan/admission.rs": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+    "tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs": "263cd4903db55951e8cd85b7a6d77d132caf075b40d1a61c3b9a8cc7c813bbda",
+    "tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs": "e4e1a6f98263a2b5f663c601e28f18c4616e9116503259de23f381af9034be37",
+    "tools/compact-rust-backend/src/recorded/typed_plan/control.rs": "4f9e73e1ee0d070f0a3a2c0e115ec6d0a41d9ca10f39a83412ee815ad0ba4f0d",
+    "tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs": "38a5d00807d56717644b95cf4f6d389381fbab8a1ff321cdf901df9cfbdf0c2e",
+    "tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs": "986288e4b5f6fce6b620421fa2b9a089f3fa8ca36d23707e75b2723be1b902ef",
+    "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs": "72174159a525738409d05610e997c1b5757045638336a69e9c6e6f0e3bbd1429",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427",
+    "tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
+    "tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs": "645ed86c92a952de7454251469c38e8d46b4b3a18a3f4a3436093a471b30b59c",
+    "tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs": "3b1d8a336bfb66d17927a33bb85ea95bb79e5ad459af3a3632c35537614f4385",
+    "tools/compact-rust-backend/src/recorded/typed_plan/observations.rs": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243",
+    "tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs": "5dc883797f1288a9831d68466be184992f8b6fefa3b2fd5fbe00bd203e8e84c7",
+    "tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs": "02c5b5935b8cd9e141fea22abfd1ef72478107662f64e3481a0d61448ee8e7ae"
+  },
+  "prior_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_shielded_merge",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "5b105fc258b21484330dab8b4e75d9b59c410ecf6292c6228dd0b9a62adc2843"
+  },
+  "reviewed_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_funded_mint",
+      "typed_plan::lower_guarded_deposit",
+      "typed_plan::lower_reset_payout",
+      "typed_plan::lower_shielded_payout",
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "f325ea52d0f70b50f6d8fddfeafa2e48d78ef7912e1d56165d742576b9b12b90"
+  },
+  "instrumented_route_ids": [
+    "algebra.composite-values",
+    "algebra.context-query",
+    "algebra.jubjub-values",
+    "algebra.kernel",
+    "algebra.membership",
+    "algebra.shielded-receive",
+    "algebra.terminal-returns",
+    "algebra.unit-actions",
+    "algebra.voting-commit",
+    "algebra.zswap",
+    "early.audited-local",
+    "early.read-only-verification",
+    "effectful.checked-migration",
+    "effectful.start-funding",
+    "guard.closed-opaque-asset-removal",
+    "guard.closed-opaque-map-operation",
+    "guard.closed-opaque-set-operation",
+    "guard.guarded-map-read",
+    "guard.guarded-struct-pure",
+    "guard.guarded-unsigned-product",
+    "guard.opaque-map-write",
+    "guard.opaque-set-mutation",
+    "guard.proved-opaque-set-sequence",
+    "guard.root-let-snapshot",
+    "legacy.action-dispatch",
+    "organizer.enum-advance",
+    "organizer.optional-write",
+    "organizer.organizer",
+    "organizer.witness-merkle",
+    "return.dispatch",
+    "selector.funded-mint",
+    "selector.guarded-deposit",
+    "selector.reset-payout",
+    "selector.shielded-payout",
+    "selector.unit-composition"
+  ],
+  "retired_route_ids": [
+    "effectful.effectful",
+    "selector.jubjub-values",
+    "selector.terminal-returns",
+    "selector.unit-actions",
+    "selector.context-query",
+    "selector.kernel",
+    "selector.composite-values",
+    "selector.shielded-receive",
+    "selector.voting-commit",
+    "selector.phase-reset",
+    "selector.immediate-send",
+    "selector.zswap",
+    "selector.membership-optional",
+    "selector.shielded-send",
+    "selector.shielded-merge"
+  ],
+  "new_retired_routes": [
+    "selector.shielded-merge"
+  ]
+}

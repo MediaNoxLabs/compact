@@ -1,0 +1,998 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "lastDiff",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "unsigned",
+          "max": "4294967295"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 70,
+        "column": 1
+      }
+    },
+    {
+      "id": "mixedOps",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 71,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "assertProductLE",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_13",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "17179869180"
+                  },
+                  "value": {
+                    "kind": "unsigned_multiply",
+                    "max": "17179869180",
+                    "left": {
+                      "kind": "unsigned_cast",
+                      "max": "17179869180",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "q"
+                      }
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "4",
+                      "max": "17179869180"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "less_equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_13"
+                },
+                "right": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "y"
+                  }
+                }
+              }
+            },
+            "message": "product must not exceed the bound"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 85,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertProductLT",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_12",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "17179869180"
+                  },
+                  "value": {
+                    "kind": "unsigned_multiply",
+                    "max": "17179869180",
+                    "left": {
+                      "kind": "unsigned_cast",
+                      "max": "17179869180",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "q"
+                      }
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "4",
+                      "max": "17179869180"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "less",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_12"
+                },
+                "right": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "y"
+                  }
+                }
+              }
+            },
+            "message": "product must stay below the bound"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 89,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertProductGT",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_11",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "17179869180"
+                  },
+                  "value": {
+                    "kind": "unsigned_multiply",
+                    "max": "17179869180",
+                    "left": {
+                      "kind": "unsigned_cast",
+                      "max": "17179869180",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "q"
+                      }
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "4",
+                      "max": "17179869180"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "greater",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_11"
+                },
+                "right": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "y"
+                  }
+                }
+              }
+            },
+            "message": "product must exceed the bound"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 93,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertProductGE",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_10",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "17179869180"
+                  },
+                  "value": {
+                    "kind": "unsigned_multiply",
+                    "max": "17179869180",
+                    "left": {
+                      "kind": "unsigned_cast",
+                      "max": "17179869180",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "q"
+                      }
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "4",
+                      "max": "17179869180"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "compare",
+                "operator": "greater_equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "t_10"
+                },
+                "right": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "y"
+                  }
+                }
+              }
+            },
+            "message": "product must reach the bound"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 97,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertProductEQ",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "equal",
+              "left": {
+                "kind": "unsigned_multiply",
+                "max": "17179869180",
+                "left": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "q"
+                  }
+                },
+                "right": {
+                  "kind": "unsigned_literal",
+                  "value": "4",
+                  "max": "17179869180"
+                }
+              },
+              "right": {
+                "kind": "unsigned_cast",
+                "max": "17179869180",
+                "value": {
+                  "kind": "parameter",
+                  "name": "y"
+                }
+              }
+            },
+            "message": "product must equal the bound"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 101,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertProductNE",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "not_equal",
+              "left": {
+                "kind": "unsigned_multiply",
+                "max": "17179869180",
+                "left": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "q"
+                  }
+                },
+                "right": {
+                  "kind": "unsigned_literal",
+                  "value": "4",
+                  "max": "17179869180"
+                }
+              },
+              "right": {
+                "kind": "unsigned_cast",
+                "max": "17179869180",
+                "value": {
+                  "kind": "parameter",
+                  "name": "y"
+                }
+              }
+            },
+            "message": "product must differ from the bound"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 105,
+        "column": 1
+      }
+    },
+    {
+      "name": "sumMixed",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "n",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "18446744073709551615",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "4294967550",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "4294967550",
+            "value": {
+              "kind": "parameter",
+              "name": "q"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "4294967550",
+            "value": {
+              "kind": "parameter",
+              "name": "n"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 113,
+        "column": 1
+      }
+    },
+    {
+      "name": "productMixed",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "m",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "18446744073709551615",
+        "value": {
+          "kind": "unsigned_multiply",
+          "max": "1095216660225",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "1095216660225",
+            "value": {
+              "kind": "parameter",
+              "name": "q"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "1095216660225",
+            "value": {
+              "kind": "parameter",
+              "name": "m"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 118,
+        "column": 1
+      }
+    },
+    {
+      "name": "guardedDiff",
+      "parameters": [
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "4294967295"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "t_9",
+            "ty": {
+              "kind": "unsigned",
+              "max": "17179869180"
+            },
+            "value": {
+              "kind": "unsigned_multiply",
+              "max": "17179869180",
+              "left": {
+                "kind": "unsigned_cast",
+                "max": "17179869180",
+                "value": {
+                  "kind": "parameter",
+                  "name": "q"
+                }
+              },
+              "right": {
+                "kind": "unsigned_literal",
+                "value": "4",
+                "max": "17179869180"
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "sequence",
+          "steps": [
+            {
+              "kind": "assert",
+              "condition": {
+                "kind": "compare",
+                "operator": "greater_equal",
+                "left": {
+                  "kind": "unsigned_cast",
+                  "max": "17179869180",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "y"
+                  }
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "t_9"
+                }
+              },
+              "message": "result of subtraction would be negative"
+            }
+          ],
+          "value": {
+            "kind": "unsigned_subtract",
+            "max": "4294967295",
+            "left": {
+              "kind": "parameter",
+              "name": "y"
+            },
+            "right": {
+              "kind": "unsigned_cast",
+              "max": "4294967295",
+              "value": {
+                "kind": "parameter",
+                "name": "t_9"
+              }
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 125,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "recordPinned",
+      "parameters": [
+        {
+          "name": "q",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        {
+          "name": "y",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "pure_call",
+          "name": "assertProductLE",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "q"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "4294967295"
+              }
+            },
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "y"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "4294967295"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_15",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "mixedOps",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_15"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 133,
+        "column": 1
+      }
+    },
+    {
+      "name": "recordMatching",
+      "parameters": [
+        {
+          "name": "small",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "big",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "unsigned_cast",
+              "max": "4294967295",
+              "value": {
+                "kind": "parameter",
+                "name": "small"
+              }
+            },
+            "right": {
+              "kind": "parameter",
+              "name": "big"
+            }
+          },
+          "message": "values must match across widths"
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_14",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "mixedOps",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_14"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "mixed_width_operand_oracle.compact",
+        "line": 141,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "base",
+        "ty": {
+          "kind": "unsigned",
+          "max": "4294967295"
+        }
+      },
+      {
+        "name": "q",
+        "ty": {
+          "kind": "unsigned",
+          "max": "4294967295"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "diff",
+            "ty": {
+              "kind": "unsigned",
+              "max": "4294967295"
+            },
+            "value": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "t_8",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "17179869180"
+                  },
+                  "value": {
+                    "kind": "unsigned_multiply",
+                    "max": "17179869180",
+                    "left": {
+                      "kind": "unsigned_cast",
+                      "max": "17179869180",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "q"
+                      }
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "4",
+                      "max": "17179869180"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "sequence",
+                "steps": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "compare",
+                      "operator": "greater_equal",
+                      "left": {
+                        "kind": "unsigned_cast",
+                        "max": "17179869180",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "base"
+                        }
+                      },
+                      "right": {
+                        "kind": "parameter",
+                        "name": "t_8"
+                      }
+                    },
+                    "message": "result of subtraction would be negative"
+                  }
+                ],
+                "value": {
+                  "kind": "unsigned_subtract",
+                  "max": "4294967295",
+                  "left": {
+                    "kind": "parameter",
+                    "name": "base"
+                  },
+                  "right": {
+                    "kind": "unsigned_cast",
+                    "max": "4294967295",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "t_8"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "lastDiff",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "diff"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "mixed_width_operand_oracle.compact",
+      "line": 76,
+      "column": 1
+    }
+  }
+}

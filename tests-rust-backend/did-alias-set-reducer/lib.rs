@@ -28,6 +28,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum Mutation {
         Undefined,
@@ -38,7 +39,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn defined(m: crate::types::Mutation) -> Result<(), runtime::CompactError> {
         if !(if m == crate::types::Mutation::Insert {
             true
@@ -63,7 +64,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -253,22 +254,31 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_bump<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
-            Ok((frame, ()))
-        }
         pub fn insert_control<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::OpaqueString,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
-                crate::ledger_slots::aliases.record_insert(frame, (__compact_param_0).clone())?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::aliases.record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
+        }
+        pub fn remove_control<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let frame =
+                crate::ledger_slots::aliases.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_1: () = ();
+            let __compact_effect_2: () = ();
+            Ok(frame.finish(__compact_effect_2))
         }
         pub fn member_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -276,10 +286,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = (__compact_param_0).clone();
-            let (frame, __compact_recorded_member_1): (_, bool) =
-                crate::ledger_slots::aliases.record_member(frame, __compact_recorded_key_0)?;
-            Ok(frame.finish(__compact_recorded_member_1))
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::aliases.record_member(frame, (__compact_effect_0).clone())?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn mutate<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -288,62 +298,65 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_plan_1: crate::types::Mutation = __compact_param_1;
-            let __compact_plan_2: crate::types::Mutation = __compact_plan_1;
-            crate::pure_circuits::defined(__compact_plan_2)?;
-            let __compact_plan_3: crate::types::Mutation = crate::types::Mutation::Insert;
-            let __compact_plan_4: bool = __compact_plan_1 == __compact_plan_3;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_4 {
-                let (frame, __compact_plan_5): (_, bool) = crate::ledger_slots::aliases
-                    .record_member(frame, (__compact_plan_0).clone())?;
-                let (frame, __compact_plan_8): (_, bool) = if __compact_plan_5 {
-                    let __compact_plan_6: bool = false;
-                    (frame, __compact_plan_6)
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: crate::types::Mutation = __compact_param_1;
+            let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
+            let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Insert;
+            let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
+            let (frame, __compact_effect_21): (_, ()) = if __compact_effect_4 {
+                let (frame, __compact_effect_5): (_, bool) = crate::ledger_slots::aliases
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                let (frame, __compact_effect_8): (_, bool) = if __compact_effect_5 {
+                    let __compact_effect_6: bool = false;
+                    (frame, __compact_effect_6)
                 } else {
-                    let __compact_plan_7: bool = true;
-                    (frame, __compact_plan_7)
+                    let __compact_effect_7: bool = true;
+                    (frame, __compact_effect_7)
                 };
-                if !__compact_plan_8 {
+                if !__compact_effect_8 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "already present".to_owned(),
                     ));
                 }
+                let __compact_effect_9: () = ();
                 let frame = crate::ledger_slots::aliases
-                    .record_insert(frame, (__compact_plan_0).clone())?;
-                frame
+                    .record_insert(frame, (__compact_effect_0).clone())?;
+                let __compact_effect_10: () = ();
+                let __compact_effect_11: () = ();
+                (frame, __compact_effect_11)
             } else {
-                let __compact_plan_9: crate::types::Mutation = crate::types::Mutation::Remove;
-                let __compact_plan_10: bool = __compact_plan_1 == __compact_plan_9;
-                #[allow(
-                    clippy::let_and_return,
-                    reason = "uniform branch frames preserve ordered recording steps"
-                )]
-                let frame = if __compact_plan_10 {
-                    let (frame, __compact_plan_11): (_, bool) = crate::ledger_slots::aliases
-                        .record_member(frame, (__compact_plan_0).clone())?;
-                    if !__compact_plan_11 {
+                let __compact_effect_12: crate::types::Mutation = crate::types::Mutation::Remove;
+                let __compact_effect_13: bool = __compact_effect_1 == __compact_effect_12;
+                let (frame, __compact_effect_19): (_, ()) = if __compact_effect_13 {
+                    let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::aliases
+                        .record_member(frame, (__compact_effect_0).clone())?;
+                    if !__compact_effect_14 {
                         return Err(runtime::CompactError::AssertionFailed("absent".to_owned()));
                     }
+                    let __compact_effect_15: () = ();
                     let frame = crate::ledger_slots::aliases
-                        .record_remove(frame, (__compact_plan_0).clone())?;
-                    frame
+                        .record_remove(frame, (__compact_effect_0).clone())?;
+                    let __compact_effect_16: () = ();
+                    let __compact_effect_17: () = ();
+                    (frame, __compact_effect_17)
                 } else {
-                    frame
+                    let __compact_effect_18: () = ();
+                    (frame, __compact_effect_18)
                 };
-                frame
+                let __compact_effect_20: () = ();
+                (frame, __compact_effect_20)
             };
-            let __compact_plan_12: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_13: runtime::BoundedUint<65535> = __compact_plan_12;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_13).value() as u16)?;
-            Ok(frame.finish(()))
+            let (frame, __compact_effect_25): (_, ()) = {
+                let __compact_effect_22: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_22).value() as u16)?;
+                let __compact_effect_23: () = ();
+                let __compact_effect_24: () = ();
+                (frame, __compact_effect_24)
+            };
+            let __compact_effect_26: () = ();
+            Ok(frame.finish(__compact_effect_26))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -366,12 +379,41 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
                 let input = runtime::fab::AlignedValue::from((v).clone());
                 let recorded = self.insert_control(observed.circuit_context(private_state), v)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
                     "insert_control",
+                    input,
+                ))
+            }
+            pub fn remove_control<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::OpaqueString,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::remove_control(context, v)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn remove_control_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::OpaqueString,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
+                let input = runtime::fab::AlignedValue::from((v).clone());
+                let recorded = self.remove_control(observed.circuit_context(private_state), v)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "remove_control",
                     input,
                 ))
             }
@@ -395,6 +437,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
                 let input = runtime::fab::AlignedValue::from((v).clone());
                 let recorded = self.member_control(observed.circuit_context(private_state), v)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -424,6 +467,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&v)?;
                 let input = runtime::fab::AlignedValue::from(((v).clone(), m));
                 let recorded = self.mutate(observed.circuit_context(private_state), v, m)?;
                 Ok(runtime::transaction::RecordedCall::new(

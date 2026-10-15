@@ -1,0 +1,784 @@
+{
+  "schema_version": 1,
+  "issue": 613,
+  "new_route_ids": [],
+  "baseline_commit": "eac2e8dd6ac9f35fea1d214d6490d39b348c713b",
+  "claim": "Compose VectorMap as scoped typed blocks with canonical SSA, pure source/body evaluation, exact result/cardinality and existing resource authority; preserve runtime/native policies, selector priority and retirement accounting.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "owners": {
+    "Cargo.lock": {
+      "previous_sha256": "78991c1767b9b26af7c8645c656f3c31b68f7ece336c7a97500bb186068f2eb8",
+      "current_sha256": "f13848f5ce46bc477ee18cb0b99f372d34ec7ad49dd62183aaf29b0cbe2f15b2",
+      "predecessor_reconstruction": [
+        {
+          "current": "name = \"compact-rust-map-fn-oracle-fixture\"\nversion = \"0.1.0\"\ndependencies = [\n \"compact-rust-backend\",\n \"hex\",\n \"midnight-compact-runtime\",\n \"midnight-onchain-state\",\n",
+          "previous": "name = \"compact-rust-map-fn-oracle-fixture\"\nversion = \"0.1.0\"\ndependencies = [\n \"hex\",\n \"midnight-compact-runtime\",\n \"midnight-onchain-state\",\n"
+        }
+      ]
+    },
+    "tests-rust-backend/map-fn-oracle/Cargo.toml": {
+      "previous_sha256": "3916f6a7f80d59d3531518786b1b2d5cac439d4bb08598d3ebb65c1d9c30eae3",
+      "current_sha256": "00c59f0f9db73826729f20340e7a61dbe5d0f297f034a885ebd2d13eaf9fadb1",
+      "predecessor_reconstruction": [
+        {
+          "current": "midnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+          "previous": "midnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n"
+        }
+      ]
+    },
+    "tests-rust-backend/map-fn-oracle/lib.rs": {
+      "previous_sha256": "6964c81df0857a3c598ed5e2c9c512f21b2f7226a24482f335d5ed04b0b64980",
+      "current_sha256": "e66730459c9365e14849b34655187d8e5acc7bfc07ec85895e8991658de09496",
+      "predecessor_reconstruction": [
+        {
+          "current": "        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>\n        {\n            let frame = runtime::recording::RecordingFrame::new(context);\n            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =\n                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;\n            let __compact_effect_1: runtime::BoundedUint<0> =\n                <runtime::BoundedUint<0>>::new(0u128)?;\n            let __compact_effect_2: runtime::BoundedUint<0> =\n                <runtime::BoundedUint<0>>::new(0u128)?;\n            let __compact_effect_3: (\n                runtime::BoundedUint<18446744073709551615>,\n                runtime::BoundedUint<0>,\n                runtime::BoundedUint<0>,\n            ) = (__compact_effect_0, __compact_effect_1, __compact_effect_2);\n            let __compact_effect_4: runtime::FixedVector<\n                runtime::BoundedUint<18446744073709551615>,\n                3,\n            > = {\n                let __compact_cast_source_0 = __compact_effect_3;\n                let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =\n                    __compact_cast_source_0;\n                runtime::FixedVector::new([\n                    __compact_cast_item_0_0,\n                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,\n                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,\n                ])\n            };\n            let (frame, __compact_effect_6): (\n                _,\n                runtime::FixedVector<runtime::BoundedUint<18446744073709551615>, 3>,\n            ) = {\n                let __compact_map_source = (__compact_effect_4).clone();\n                let mut __compact_mapped = Vec::with_capacity(3);\n                let mut __compact_map_frame = frame;\n                for __compact_effect_5 in __compact_map_source.into_array() {\n                    let frame = __compact_map_frame;\n                    __compact_mapped.push(__compact_effect_5);\n                    __compact_map_frame = frame;\n                }\n                (\n                    __compact_map_frame,\n                    runtime::FixedVector::new(\n                        <[_; 3]>::try_from(__compact_mapped)\n                            .expect(\"Vector map preserves its length\"),\n                    ),\n                )\n            };\n            let frame = crate::ledger_slots::c.record_write(frame, (__compact_effect_6).clone())?;\n            let __compact_effect_7: () = ();\n            let __compact_effect_8: () = ();\n            Ok(frame.finish(__compact_effect_8))\n        }\n        /// Typed handle for circuits with a complete recorded trace.\n        pub struct Contract;\n",
+          "previous": "        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>\n        {\n            let frame = runtime::recording::RecordingFrame::new(context);\n            let __compact_recorded_static_0: runtime::FixedVector<\n                runtime::BoundedUint<18446744073709551615>,\n                3,\n            > = {\n                let __compact_map_source = {\n                    let __compact_cast_source_0 = (\n                        runtime::BoundedUint::<18446744073709551615>::new(0u128)\n                            .expect(\"Compact Uint literal fits its maximum\"),\n                        runtime::BoundedUint::<0>::new(0u128)\n                            .expect(\"Compact Uint literal fits its maximum\"),\n                        runtime::BoundedUint::<0>::new(0u128)\n                            .expect(\"Compact Uint literal fits its maximum\"),\n                    );\n                    let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =\n                        __compact_cast_source_0;\n                    runtime::FixedVector::new([\n                        __compact_cast_item_0_0,\n                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,\n                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,\n                    ])\n                };\n                let mut __compact_mapped = Vec::with_capacity(3);\n                for x in __compact_map_source.into_array() {\n                    __compact_mapped.push(x);\n                }\n                runtime::FixedVector::new(\n                    <[_; 3]>::try_from(__compact_mapped).expect(\"Vector map preserves its length\"),\n                )\n            };\n            let frame = crate::ledger_slots::c\n                .record_write(frame, (__compact_recorded_static_0).clone())?;\n            Ok(frame.finish(()))\n        }\n        /// Typed handle for circuits with a complete recorded trace.\n        pub struct Contract;\n"
+        }
+      ]
+    },
+    "tests-rust-backend/map-lambda-oracle/lib.rs": {
+      "previous_sha256": "a3a6e1d220479895e57cae35a45510fe9869af31ed0ca0e769e56c28ee437f45",
+      "current_sha256": "5402cbab34b95a0c7266debe985a2c7ce61383729ff030d3a47786cee508eecd",
+      "predecessor_reconstruction": [
+        {
+          "current": "        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>\n        {\n            let frame = runtime::recording::RecordingFrame::new(context);\n            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =\n                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;\n            let __compact_effect_1: runtime::BoundedUint<0> =\n                <runtime::BoundedUint<0>>::new(0u128)?;\n            let __compact_effect_2: runtime::BoundedUint<0> =\n                <runtime::BoundedUint<0>>::new(0u128)?;\n            let __compact_effect_3: (\n                runtime::BoundedUint<18446744073709551615>,\n                runtime::BoundedUint<0>,\n                runtime::BoundedUint<0>,\n            ) = (__compact_effect_0, __compact_effect_1, __compact_effect_2);\n            let __compact_effect_4: runtime::FixedVector<\n                runtime::BoundedUint<18446744073709551615>,\n                3,\n            > = {\n                let __compact_cast_source_0 = __compact_effect_3;\n                let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =\n                    __compact_cast_source_0;\n                runtime::FixedVector::new([\n                    __compact_cast_item_0_0,\n                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,\n                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,\n                ])\n            };\n            let (frame, __compact_effect_6): (\n                _,\n                runtime::FixedVector<runtime::BoundedUint<18446744073709551615>, 3>,\n            ) = {\n                let __compact_map_source = (__compact_effect_4).clone();\n                let mut __compact_mapped = Vec::with_capacity(3);\n                let mut __compact_map_frame = frame;\n                for __compact_effect_5 in __compact_map_source.into_array() {\n                    let frame = __compact_map_frame;\n                    __compact_mapped.push(__compact_effect_5);\n                    __compact_map_frame = frame;\n                }\n                (\n                    __compact_map_frame,\n                    runtime::FixedVector::new(\n                        <[_; 3]>::try_from(__compact_mapped)\n                            .expect(\"Vector map preserves its length\"),\n                    ),\n                )\n            };\n            let frame =\n                crate::ledger_slots::doubled.record_write(frame, (__compact_effect_6).clone())?;\n            let __compact_effect_7: () = ();\n            let __compact_effect_8: () = ();\n            Ok(frame.finish(__compact_effect_8))\n        }\n        /// Typed handle for circuits with a complete recorded trace.\n        pub struct Contract;\n",
+          "previous": "        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>\n        {\n            let frame = runtime::recording::RecordingFrame::new(context);\n            let __compact_recorded_static_0: runtime::FixedVector<\n                runtime::BoundedUint<18446744073709551615>,\n                3,\n            > = {\n                let __compact_map_source = {\n                    let __compact_cast_source_0 = (\n                        runtime::BoundedUint::<18446744073709551615>::new(0u128)\n                            .expect(\"Compact Uint literal fits its maximum\"),\n                        runtime::BoundedUint::<0>::new(0u128)\n                            .expect(\"Compact Uint literal fits its maximum\"),\n                        runtime::BoundedUint::<0>::new(0u128)\n                            .expect(\"Compact Uint literal fits its maximum\"),\n                    );\n                    let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =\n                        __compact_cast_source_0;\n                    runtime::FixedVector::new([\n                        __compact_cast_item_0_0,\n                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,\n                        runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,\n                    ])\n                };\n                let mut __compact_mapped = Vec::with_capacity(3);\n                for x in __compact_map_source.into_array() {\n                    __compact_mapped.push(x);\n                }\n                runtime::FixedVector::new(\n                    <[_; 3]>::try_from(__compact_mapped).expect(\"Vector map preserves its length\"),\n                )\n            };\n            let frame = crate::ledger_slots::doubled\n                .record_write(frame, (__compact_recorded_static_0).clone())?;\n            Ok(frame.finish(()))\n        }\n        /// Typed handle for circuits with a complete recorded trace.\n        pub struct Contract;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/capabilities/resource_diagnostic_tests.rs": {
+      "previous_sha256": "6a36bc5ba558e05ced61ea483683bbf477bbba5c35dd625b38d984e6224aa3bb",
+      "current_sha256": "62d2e00b7b7e5b1d32dd4e97e5b5622a89139f70f58fe91e13604df30cc5e119",
+      "predecessor_reconstruction": [
+        {
+          "current": "                .unwrap()\n                .insert(0, json!({\"kind\":\"expression\",\"value\":persistent_commit()}));\n        }\n        // The unsupported direct fold has a real pure declaration. Native\n        // UnknownCircuit is not evidence about recording resource precedence.\n        let mut contract: ir::Contract = serde_json::from_value(input).unwrap();\n        crate::recorded::test_support::register_unsupported_fold(&mut contract);\n        let output = render_with_capabilities(&contract).unwrap();\n        let row = capability(&output.capabilities);\n        assert!(!row.recorded && !row.observed_call);\n        for gap in [\n",
+          "previous": "                .unwrap()\n                .insert(0, json!({\"kind\":\"expression\",\"value\":persistent_commit()}));\n        }\n        let output = render(input);\n        let row = capability(&output.capabilities);\n        assert!(!row.recorded && !row.observed_call);\n        for gap in [\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/asset_removal_migration_tests/inclusion.rs": {
+      "previous_sha256": "76a772c29de66e04a644777268b3cd60078d9426073e3665882976a82e48b7a8",
+      "current_sha256": "7572bc3331e036d384b4dfafeaac93549cb41304e35492ff746ce350ed519ef8",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n    let mut v = isolated();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    let cx = Context::new(&c);\n    assert!(cx.prefix(), \"the permit alone ignores helper bodies\");\n    assert!(!cx.old_complete().unwrap());\n",
+          "previous": "    }\n    let mut v = isolated();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = contract(v);\n    let cx = Context::new(&c);\n    assert!(cx.prefix(), \"the permit alone ignores helper bodies\");\n    assert!(!cx.old_complete().unwrap());\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": {
+      "previous_sha256": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+      "current_sha256": "debbd3b153173b4c7f0ac94bb9f1c5fe7a4f5ba08e5f425df56ef966aa17f69c",
+      "predecessor_reconstruction": [
+        {
+          "current": "//! Checking promises this bounded fragment can render, not transaction readiness\n//! or proof validity. Replay, transcript partitioning and proof remain runtime gates.\n\nmod context_free;\nmod declarations;\nmod lower;\nmod model;\n",
+          "previous": "//! Checking promises this bounded fragment can render, not transaction readiness\n//! or proof validity. Replay, transcript partitioning and proof remain runtime gates.\n\nmod declarations;\nmod lower;\nmod model;\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": {
+      "previous_sha256": "8aca56f33658029b7402ea388a7a14bd8e6121c4d4dd98a47858f31eb55ae0d4",
+      "current_sha256": "15e39beaa5504e59deb329bdc05f90a93cfb1a6fa88990b18202a9337f5068df",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod qualified_coins;\nmod sets;\nmod transient;\nmod vector_map;\nmod zswap;\nuse super::pure_certification::{Certificates, Certifier};\nuse super::rejection::{ConcreteNode, FailurePhase, LoweringRejection, Precision};\n",
+          "previous": "mod qualified_coins;\nmod sets;\nmod transient;\nmod zswap;\nuse super::pure_certification::{Certificates, Certifier};\nuse super::rejection::{ConcreteNode, FailurePhase, LoweringRejection, Precision};\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/expressions.rs": {
+      "previous_sha256": "8fab605327baf5bb7520d6b6f117727399d7b7db35891615b2a1af9a935379a7",
+      "current_sha256": "7bedef22d44add6f262b590e9ed9476df995c50a52dacd668534b4a845b4f2a9",
+      "predecessor_reconstruction": [
+        {
+          "current": "            | Expr::TupleIndex { .. }\n            | Expr::Tuple { .. }\n            | Expr::Vector { .. } => self.aggregate(expression, scope, bindings, path)?,\n            Expr::VectorMap { .. } => self.vector_map(expression, scope, bindings, path)?,\n            Expr::CreateZswapInput { .. } | Expr::CreateZswapOutput { .. } => {\n                self.zswap(expression, scope, bindings, path)?\n            }\n",
+          "previous": "            | Expr::TupleIndex { .. }\n            | Expr::Tuple { .. }\n            | Expr::Vector { .. } => self.aggregate(expression, scope, bindings, path)?,\n            Expr::CreateZswapInput { .. } | Expr::CreateZswapOutput { .. } => {\n                self.zswap(expression, scope, bindings, path)?\n            }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/model.rs": {
+      "previous_sha256": "dda5a62fd4d5295942549e0e1e7e26a017ec3574ef558a7ddc1c17b8b31e7ccc",
+      "current_sha256": "9a6dc1a9ab4bdb7b399f01c5b9e0ad11551cf83939b78858f1670a29979e3c06",
+      "predecessor_reconstruction": [
+        {
+          "current": "    },\n    Vector {\n        elements: Vec<Value>,\n    },\n    /// A lexical, context-free mapping body with fresh formal and outer captures.\n    VectorMap {\n        source: Value,\n        parameter: Value,\n        body: Block,\n    },\n    /// Private intent operations delegate allocation and transcript policy to the frame.\n    CreateZswapInput {\n",
+          "previous": "    },\n    Vector {\n        elements: Vec<Value>,\n    },\n    /// Private intent operations delegate allocation and transcript policy to the frame.\n    CreateZswapInput {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/public_effects.rs": {
+      "previous_sha256": "f9a8e0ab4481718dcb60a069cb3f3432f3c6e07cb200cafe1932a4136f62dec6",
+      "current_sha256": "715774f8365168b1133697f560ee45fe0a3c4f484d40d36c16d647b926e7d7a4",
+      "predecessor_reconstruction": [
+        {
+          "current": "    while let Some(block) = blocks.pop() {\n        for binding in &block.bindings {\n            match &binding.operation {\n                Operation::Call { body, .. } | Operation::VectorMap { body, .. } => blocks.push(body),\n                Operation::If { then, otherwise, .. } => {\n                    blocks.push(otherwise);\n                    blocks.push(then);\n",
+          "previous": "    while let Some(block) = blocks.pop() {\n        for binding in &block.bindings {\n            match &binding.operation {\n                Operation::Call { body, .. } => blocks.push(body),\n                Operation::If { then, otherwise, .. } => {\n                    blocks.push(otherwise);\n                    blocks.push(then);\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render.rs": {
+      "previous_sha256": "18e6f629025855f74266b6d68a435e5a46596e0b927c5b31a7695c5b41c3d024",
+      "current_sha256": "defe38e67016dfc9145d943db189157d3974da74a4bbd94596706c53610f6624",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod maps;\nmod merkle;\nmod qualified_coins;\nmod vector_map;\nmod zswap;\n\nfn name(value: &Value) -> syn::Ident {\n",
+          "previous": "mod maps;\nmod merkle;\nmod qualified_coins;\nmod zswap;\n\nfn name(value: &Value) -> syn::Ident {\n"
+        },
+        {
+          "current": "        let output = name(&binding.value);\n        let ty = rust_type(&binding.value.ty).map_err(|e| invalid(path, e.to_string()))?;\n        match &binding.operation {\n            Operation::VectorMap { .. } => {\n                steps.push(vector_map::render(binding, declarations)?);\n            }\n            Operation::Call {\n                arguments,\n                parameters,\n",
+          "previous": "        let output = name(&binding.value);\n        let ty = rust_type(&binding.value.ty).map_err(|e| invalid(path, e.to_string()))?;\n        match &binding.operation {\n            Operation::Call {\n                arguments,\n                parameters,\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/leaf.rs": {
+      "previous_sha256": "33e2a9d45831d80a78434ac81dea2b7cf7deec2a0089fbf74e6e089d6ec3cf1b",
+      "current_sha256": "ffbff3879e5ce97cc03f84d2b93145e23f8884438710f3dc0c50ead71772a38b",
+      "predecessor_reconstruction": [
+        {
+          "current": "            let arguments: Vec<_> = arguments.iter().map(value).collect();\n            syn::parse_quote!(crate::pure_circuits::#method(#(#arguments),*)?)\n        }\n        Operation::Call { .. } | Operation::If { .. } | Operation::VectorMap { .. } => {\n            unreachable!(\"control operations are rendered by block traversal\")\n        }\n    };\n",
+          "previous": "            let arguments: Vec<_> = arguments.iter().map(value).collect();\n            syn::parse_quote!(crate::pure_circuits::#method(#(#arguments),*)?)\n        }\n        Operation::Call { .. } | Operation::If { .. } => {\n            unreachable!(\"control operations are rendered by block traversal\")\n        }\n    };\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests.rs": {
+      "previous_sha256": "abea1a5c065f13d3634f4a145d3b387da2da2fac096450520167f7a68c8369aa",
+      "current_sha256": "6b54374e8727227e5290095fff5e4dced026b9fbe177d71390e00f10d45897ec",
+      "predecessor_reconstruction": [
+        {
+          "current": "mod shielded_payout_inclusion;\n#[path = \"tests/tuple_equality.rs\"]\nmod tuple_equality;\n#[path = \"tests/vector_map.rs\"]\nmod vector_map;\n#[path = \"tests/wide_add.rs\"]\nmod wide_add;\n#[path = \"tests/wide_casts.rs\"]\n",
+          "previous": "mod shielded_payout_inclusion;\n#[path = \"tests/tuple_equality.rs\"]\nmod tuple_equality;\n#[path = \"tests/wide_add.rs\"]\nmod wide_add;\n#[path = \"tests/wide_casts.rs\"]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/rich_values.rs": {
+      "previous_sha256": "025666ae57a9c91e752192cf5957760b2ee2805a602c21cf3227e17eaaa693de",
+      "current_sha256": "3daafad04a17028eabbf48e84e9a2516a054e77443a5ac86b53f3580089c49bf",
+      "predecessor_reconstruction": [
+        {
+          "current": "        opening: Box::new(bytes(0)),\n    };\n    render(&checked(commitment, bytes_type())).unwrap();\n    let mapped_commitment = Expr::PersistentCommit {\n        value: Box::new(crate::recorded::test_support::fixed_map_input()),\n        opening: Box::new(bytes(0)),\n    };\n    render(&checked(mapped_commitment, bytes_type())).unwrap();\n}\n\n#[test]\n",
+          "previous": "        opening: Box::new(bytes(0)),\n    };\n    render(&checked(commitment, bytes_type())).unwrap();\n    let gap = refusal(\n        crate::recorded::test_support::unsupported_commit(),\n        bytes_type(),\n    );\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n}\n\n#[test]\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": {
+      "previous_sha256": "3762572d1eaaf9850077a775074be6d41eb5861e3a691767e708cdd802327412",
+      "current_sha256": "62afdcc3aba0083a79072878e0e7a835743b0ce741304f6fe860e6526264eff8",
+      "predecessor_reconstruction": [
+        {
+          "current": "pub(super) mod lists;\npub(super) mod maps;\nmod merkle;\nmod operations;\npub(super) use merkle::root_type;\nmod pure;\nmod sets;\nmod storage;\nmod vector_map;\npub(super) use storage::{list_element_type, map_key_type, merkle_leaf_type, set_element_type};\n\nstruct Validation {\n",
+          "previous": "pub(super) mod lists;\npub(super) mod maps;\nmod merkle;\npub(super) use merkle::root_type;\nmod pure;\nmod sets;\nmod storage;\npub(super) use storage::{list_element_type, map_key_type, merkle_leaf_type, set_element_type};\n\nstruct Validation {\n"
+        },
+        {
+          "current": "    for binding in &body.bindings {\n        let path = &binding.path;\n        let ty = &binding.value.ty;\n        declarations.types().validate_at(ty, path)?;\n        if !value_type(ty) {\n            return Err(invalid(path, \"unsupported plan value type\"));\n        }\n        let valid = match &binding.operation {\n            Operation::VectorMap { .. } => {\n                vector_map::validate(binding, declarations, &scope, state)?;\n                true\n            }\n            Operation::Call { .. } => {\n                calls::validate(binding, declarations, &scope, state)?;\n                true\n            }\n            Operation::If {\n                condition,\n                then,\n                otherwise,\n            } => {\n                used(condition, &scope, declarations, path)?;\n                block(then, declarations, &scope, state, path)?;\n                block(otherwise, declarations, &scope, state, path)?;\n                value_type(ty)\n",
+          "previous": "    for binding in &body.bindings {\n        let path = &binding.path;\n        let ty = &binding.value.ty;\n        let use_value = |v: &Value| used(v, &scope, declarations, path);\n        declarations.types().validate_at(ty, path)?;\n        if !value_type(ty) {\n            return Err(invalid(path, \"unsupported plan value type\"));\n        }\n        let valid = match &binding.operation {\n            Operation::Literal(literal) => match literal {\n                Literal::Unit => *ty == Type::Unit,\n                Literal::Boolean(_) => *ty == Type::Boolean,\n                Literal::Field(bytes) => {\n                    *ty == Type::Field\n                        && midnight_transient_crypto::curve::Fr::from_le_bytes(bytes).is_some()\n                }\n                Literal::Unsigned(n) => bound(ty).is_some_and(|max| *n <= max),\n                Literal::WideUnsigned(bytes) => wide_literal_fits(bytes, ty),\n                Literal::Bytes(bytes) => {\n                    *ty == (Type::Bytes {\n                        length: bytes.len(),\n                    })\n                }\n            },\n            Operation::EnumVariant { .. }\n            | Operation::Default\n            | Operation::StructConstruct { .. }\n            | Operation::StructProject { .. }\n            | Operation::TupleProject { .. }\n            | Operation::Tuple { .. }\n            | Operation::Vector { .. } => aggregates::validate(binding, declarations, &scope)?,\n            Operation::CreateZswapInput { coin } => {\n                use_value(coin)?;\n                coin.ty == crate::coin_shapes::qualified_coin_type() && *ty == Type::Unit\n            }\n            Operation::CreateZswapOutput { coin, recipient } => {\n                use_value(coin)?;\n                use_value(recipient)?;\n                coin.ty == crate::coin_shapes::shielded_coin_type()\n                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()\n                    && *ty == Type::Unit\n            }\n            Operation::OwnPublicKey => {\n                *ty == crate::ir::NativeWitnessBuiltin::OwnPublicKey.result_type()\n            }\n            Operation::KernelSelf => *ty == crate::ir::contract_address_type(),\n            Operation::KernelClaim { value, .. } => {\n                use_value(value)?;\n                value.ty == (Type::Bytes { length: 32 }) && *ty == Type::Unit\n            }\n            Operation::KernelMintShielded { domain, amount } => {\n                use_value(domain)?;\n                use_value(amount)?;\n                domain.ty == (Type::Bytes { length: 32 })\n                    && amount.ty == uint(\"18446744073709551615\")\n                    && *ty == Type::Unit\n            }\n            Operation::PersistentCommit { value, opening } => {\n                use_value(value)?;\n                use_value(opening)?;\n                fixed_aligned_fab_type(&value.ty)\n                    && opening.ty == (Type::Bytes { length: 32 })\n                    && *ty == (Type::Bytes { length: 32 })\n            }\n            Operation::FieldToBytes32(value) => {\n                use_value(value)?;\n                value.ty == Type::Field && *ty == (Type::Bytes { length: 32 })\n            }\n            Operation::DegradeToTransient(value) => {\n                use_value(value)?;\n                value.ty == (Type::Bytes { length: 32 }) && *ty == Type::Field\n            }\n            Operation::UpgradeFromTransient(value) => {\n                use_value(value)?;\n                value.ty == Type::Field && *ty == (Type::Bytes { length: 32 })\n            }\n            Operation::HashToCurve(value) => {\n                use_value(value)?;\n                aligned_fab_type(&value.ty) && *ty == Type::JubjubPoint\n            }\n            Operation::TransientHash(value) => {\n                use_value(value)?;\n                aligned_fab_type(&value.ty) && *ty == Type::Field\n            }\n            Operation::TransientCommit { value, opening } => {\n                use_value(value)?;\n                use_value(opening)?;\n                aligned_fab_type(&value.ty) && opening.ty == Type::Field && *ty == Type::Field\n            }\n            Operation::PersistentHash(value) => {\n                use_value(value)?;\n                fixed_aligned_fab_type(&value.ty) && *ty == (Type::Bytes { length: 32 })\n            }\n            Operation::Keccak256(value) => {\n                use_value(value)?;\n                keccak_input_type(&value.ty) && *ty == (Type::Bytes { length: 32 })\n            }\n            Operation::Add(a, b) | Operation::Subtract(a, b) | Operation::Multiply(a, b) => {\n                use_value(a)?;\n                use_value(b)?;\n                a.ty == Type::Field && b.ty == Type::Field && *ty == Type::Field\n            }\n            Operation::UnsignedAdd(a, b) => {\n                use_value(a)?;\n                use_value(b)?;\n                unsigned_add_type(&a.ty, &b.ty, ty)\n            }\n            Operation::UnsignedSubtract(a, b) | Operation::UnsignedMultiply(a, b) => {\n                use_value(a)?;\n                use_value(b)?;\n                bound(&a.ty).is_some() && bound(&b.ty).is_some() && bound(ty).is_some()\n            }\n            Operation::Compare { left, right, .. } => {\n                use_value(left)?;\n                use_value(right)?;\n                bound(&left.ty).is_some() && bound(&right.ty).is_some() && *ty == Type::Boolean\n            }\n            Operation::Equal(a, b) | Operation::NotEqual(a, b) => {\n                use_value(a)?;\n                use_value(b)?;\n                equality_type(&a.ty) && a.ty == b.ty && *ty == Type::Boolean\n            }\n            Operation::JubjubPointX(value) | Operation::JubjubPointY(value) => {\n                use_value(value)?;\n                value.ty == Type::JubjubPoint && *ty == Type::Field\n            }\n            Operation::JubjubScalarFromNative(value) => {\n                use_value(value)?;\n                value.ty == Type::Field && *ty == Type::Field\n            }\n            Operation::EcMulGenerator(scalar) => {\n                use_value(scalar)?;\n                scalar.ty == Type::Field && *ty == Type::JubjubPoint\n            }\n            Operation::EcNeg(value) => {\n                use_value(value)?;\n                value.ty == Type::JubjubPoint && *ty == Type::JubjubPoint\n            }\n            Operation::ConstructJubjubPoint { x, y } => {\n                use_value(x)?;\n                use_value(y)?;\n                x.ty == Type::Field && y.ty == Type::Field && *ty == Type::JubjubPoint\n            }\n            Operation::EcMul { point, scalar } => {\n                use_value(point)?;\n                use_value(scalar)?;\n                point.ty == Type::JubjubPoint\n                    && scalar.ty == Type::Field\n                    && *ty == Type::JubjubPoint\n            }\n            Operation::EcAdd { left, right } => {\n                use_value(left)?;\n                use_value(right)?;\n                left.ty == Type::JubjubPoint\n                    && right.ty == Type::JubjubPoint\n                    && *ty == Type::JubjubPoint\n            }\n            Operation::Convert { value, kind } => {\n                use_value(value)?;\n                match kind {\n                    Conversion::Coerce => coercible(&value.ty, ty),\n                    Conversion::UnsignedCast => {\n                        unsigned_bound(&value.ty).is_some() && unsigned_bound(ty).is_some()\n                    }\n                }\n            }\n            Operation::Merkle { slot, operation } => {\n                merkle::validate(*slot, operation, ty, declarations, &scope, path)?\n            }\n            Operation::List { slot, operation } => {\n                lists::validate(*slot, operation, ty, declarations, &scope, path)?\n            }\n            Operation::CellRead(slot) => {\n                cell(declarations, *slot, path)? == ty && *ty != Type::Unit\n            }\n            Operation::CellWrite { slot, value } => {\n                use_value(value)?;\n                let declared = cell(declarations, *slot, path)?;\n                *declared == value.ty && *declared != Type::Unit && *ty == Type::Unit\n            }\n            Operation::CellWriteCoin {\n                slot,\n                coin,\n                recipient,\n            } => {\n                use_value(coin)?;\n                use_value(recipient)?;\n                *cell(declarations, *slot, path)? == crate::coin_shapes::qualified_coin_type()\n                    && coin.ty == crate::coin_shapes::shielded_coin_type()\n                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()\n                    && *ty == Type::Unit\n            }\n            Operation::SetInsertCoin {\n                slot,\n                coin,\n                recipient,\n            } => {\n                use_value(coin)?;\n                use_value(recipient)?;\n                *sets::element(declarations, *slot, path)?\n                    == crate::coin_shapes::qualified_coin_type()\n                    && coin.ty == crate::coin_shapes::shielded_coin_type()\n                    && recipient.ty == crate::coin_shapes::shielded_recipient_type()\n                    && *ty == Type::Unit\n            }\n            Operation::MapMember { .. }\n            | Operation::MapLookup { .. }\n            | Operation::MapInsert { .. }\n            | Operation::MapRemove { .. }\n            | Operation::MapInsertDefault { .. }\n            | Operation::MapReset { .. }\n            | Operation::MapSize { .. }\n            | Operation::MapIsEmpty { .. } => {\n                maps::validate(&binding.operation, ty, declarations, &scope, path)?\n            }\n            Operation::SetMember { slot, value }\n            | Operation::SetInsert { slot, value }\n            | Operation::SetRemove { slot, value } => {\n                use_value(value)?;\n                let declared = sets::element(declarations, *slot, path)?;\n                *declared == value.ty\n                    && *ty\n                        == if matches!(binding.operation, Operation::SetMember { .. }) {\n                            Type::Boolean\n                        } else {\n                            Type::Unit\n                        }\n            }\n            Operation::SetReset { slot }\n            | Operation::SetSize { slot }\n            | Operation::SetIsEmpty { slot } => {\n                sets::element(declarations, *slot, path)?;\n                *ty == match binding.operation {\n                    Operation::SetSize { .. } => uint(\"18446744073709551615\"),\n                    Operation::SetIsEmpty { .. } => Type::Boolean,\n                    _ => Type::Unit,\n                }\n            }\n            Operation::CounterRead { slot } => {\n                counter(declarations, *slot, path)?;\n                *ty == uint(\"18446744073709551615\")\n            }\n            Operation::CounterIncrement { slot, amount }\n            | Operation::CounterDecrement { slot, amount } => {\n                counter(declarations, *slot, path)?;\n                use_value(amount)?;\n                amount.ty == uint(\"65535\") && *ty == Type::Unit\n            }\n            Operation::CounterReset { slot } => {\n                counter(declarations, *slot, path)?;\n                *ty == Type::Unit\n            }\n            Operation::CounterLessThan { slot, threshold } => {\n                counter(declarations, *slot, path)?;\n                use_value(threshold)?;\n                threshold.ty == uint(\"18446744073709551615\") && *ty == Type::Boolean\n            }\n            Operation::Witness {\n                declaration,\n                arguments,\n            } => {\n                let witness = declarations\n                    .witness(*declaration)\n                    .ok_or_else(|| invalid(path, \"unknown witness declaration\"))?;\n                declarations.types().validate_at(&witness.result, path)?;\n                for parameter in &witness.parameters {\n                    declarations.types().validate_at(&parameter.ty, path)?;\n                }\n                for value in arguments {\n                    use_value(value)?;\n                }\n                witness_result_type(&witness.result)\n                    && witness.result == *ty\n                    && witness.parameters.len() == arguments.len()\n                    && witness\n                        .parameters\n                        .iter()\n                        .zip(arguments)\n                        .all(|(p, a)| witness_parameter_type(&p.ty) && p.ty == a.ty)\n            }\n            Operation::Call { .. } => {\n                calls::validate(binding, declarations, &scope, state)?;\n                true\n            }\n            Operation::PureCall { .. } => {\n                pure::validate(binding, declarations, &scope, state)?;\n                true\n            }\n            Operation::Assert { condition, .. } => {\n                use_value(condition)?;\n                condition.ty == Type::Boolean && *ty == Type::Unit\n            }\n            Operation::If {\n                condition,\n                then,\n                otherwise,\n            } => {\n                use_value(condition)?;\n                block(then, declarations, &scope, state, path)?;\n                block(otherwise, declarations, &scope, state, path)?;\n                value_type(ty)\n"
+        },
+        {
+          "current": "                    && then.result.ty == *ty\n                    && otherwise.result.ty == *ty\n            }\n            _ => operations::validate(binding, declarations, &scope, state)?,\n        };\n        if !valid {\n            return Err(invalid(\n",
+          "previous": "                    && then.result.ty == *ty\n                    && otherwise.result.ty == *ty\n            }\n        };\n        if !valid {\n            return Err(invalid(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/guarded_pure_migration_tests/inclusion.rs": {
+      "previous_sha256": "9d339cc611f136cdae2ad5fb3ea9c5bdf1fb8424cd86c36f5131de6bbd6cede2",
+      "current_sha256": "da6fdb189519e2f55d5860daef09a69b93daa39619a60f02bdffe61b4059bd1c",
+      "predecessor_reconstruction": [
+        {
+          "current": "        json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]),\n    );\n    root(&mut v)[\"actions\"][1] = call(\"finish\");\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    assert!(old_prefix(&c, \"recordFreshEnough\").unwrap().is_some());\n    assert!(\n        !old_complete(&c, \"recordFreshEnough\").unwrap(),\n",
+          "previous": "        json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]),\n    );\n    root(&mut v)[\"actions\"][1] = call(\"finish\");\n    let c = contract(v);\n    assert!(old_prefix(&c, \"recordFreshEnough\").unwrap().is_some());\n    assert!(\n        !old_complete(&c, \"recordFreshEnough\").unwrap(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/helpers.rs": {
+      "previous_sha256": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+      "current_sha256": "c24048ebaff1a2563f02c63d418279a9a4214801a4d2be99f30eb97262ce2994",
+      "predecessor_reconstruction": [
+        {
+          "current": "//! Discovery, stable naming and emission planning for shared recorded helpers.\nuse super::*;\n\n#[cfg(test)]\nmod naming_tests;\nmod reachability;\npub(crate) use reachability::retain_reachable_helpers;\n\n",
+          "previous": "//! Discovery, stable naming and emission planning for shared recorded helpers.\nuse super::*;\n\nmod reachability;\npub(crate) use reachability::retain_reachable_helpers;\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_map_migration_tests/boundaries.rs": {
+      "previous_sha256": "744808120f8ec418164298a537b28a9bd42c689ea7d4f1944cadaa7c0cec0b81",
+      "current_sha256": "a370f5a5f5e5b03a7a825c2933532404539a7ad0dec6b304bfea1906532e4747",
+      "predecessor_reconstruction": [
+        {
+          "current": "fn unsupported_or_recursive_helpers_never_count_as_complete_old_admission() {\n    let mut v = fixture();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    for name in ROOTS {\n        let cx = Context::new(&c, name);\n        assert!(!cx.discovered().unwrap().contains(\"recordWrite\"));\n",
+          "previous": "fn unsupported_or_recursive_helpers_never_count_as_complete_old_admission() {\n    let mut v = fixture();\n    named(&mut v, \"recordWrite\")[\"actions\"] = json!([{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}]);\n    let c = contract(v);\n    for name in ROOTS {\n        let cx = Context::new(&c, name);\n        assert!(!cx.discovered().unwrap().contains(\"recordWrite\"));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/opaque_set_migration_tests/boundaries.rs": {
+      "previous_sha256": "7ab31dcf31138465f1ee9994d75c9bd697a6634fa2406484db2fc9d5b247f28f",
+      "current_sha256": "17f4931c779d0cf22d62d8877e532e53fd4dc8ed01f92f3b53d655a2c722fdc5",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    let cx = Context::new(&c);\n    let names = cx.discovered().unwrap();\n    assert!(!names.contains(\"assertWritable\"));\n",
+          "previous": "        \"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    let cx = Context::new(&c);\n    let names = cx.discovered().unwrap();\n    assert!(!names.contains(\"assertWritable\"));\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/context_migration_tests/routing.rs": {
+      "previous_sha256": "905898361c1c879707d7afb4e74083629301675dc1361fb81cf1e8560ec0a073",
+      "current_sha256": "f8d23a6fe2a0c38f91c23e07a75dc1c143b6c577a2bbc949f8951adf42997a7c",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "}\n#[test]\nfn unsupported_continues_independent_suffix_but_invariant_is_fatal() {\n    let mut contract = subject(Expr::FieldToBytes32 {\n        value: Box::new(Expr::JubjubPointX {\n            value: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n",
+          "previous": "}\n#[test]\nfn unsupported_continues_independent_suffix_but_invariant_is_fatal() {\n    let contract = subject(Expr::FieldToBytes32 {\n        value: Box::new(Expr::JubjubPointX {\n            value: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n"
+        },
+        {
+          "current": "            }),\n        }),\n    });\n    crate::recorded::test_support::register_unsupported_fold(&mut contract);\n    assert!(\n        Context::new(&contract)\n            .domain(&contract.stateful_circuits[0])\n",
+          "previous": "            }),\n        }),\n    });\n    assert!(\n        Context::new(&contract)\n            .domain(&contract.stateful_circuits[0])\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/enum_migration_tests/boundaries.rs": {
+      "previous_sha256": "7301b2fbafae74776629b519008d7208b23b540363cfd9685999253acc133383",
+      "current_sha256": "a1bb55a2188241a12b7eecee179edaffc79d5560ef59ab7556046a8af7cc0480",
+      "predecessor_reconstruction": [
+        {
+          "current": "            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    assert!(old(&c).unwrap().is_none());\n    assert!(\n        checked(&c).is_err(),\n",
+          "previous": "            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c).unwrap().is_none());\n    assert!(\n        checked(&c).is_err(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/funded_mint_migration_tests.rs": {
+      "previous_sha256": "7817f80112c877543ed9df47116972aa70122d832ef16f050e883d66d8c3ab22",
+      "current_sha256": "2c767fc8d49f7421da75e35731ba0952f3dd6dd2286de99b9b8150f24d3b0f9a",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Funded mint is subsumed by existing generic composition; no new route is added.\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Funded mint is subsumed by existing generic composition; no new route is added.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\n"
+        },
+        {
+          "current": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    // Keep the positive default above, then exercise the direct fold boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/guarded_deposit_migration_tests/routing.rs": {
+      "previous_sha256": "ef2e8ab96f2650eaac4c7c983c2433850f85c8b686ef2456e8dc93cec9151aa9",
+      "current_sha256": "303db220fda86c991bf69a8e52bc79bc444b846740341d196b6411755cdde1ba",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n"
+        },
+        {
+          "current": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    // Keep the positive default above, then exercise the direct fold boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/jubjub_migration_tests.rs": {
+      "previous_sha256": "2c16521120074d121a9e8d0f1ee8288a7172bae7273654bad581b3903ea3d7c0",
+      "current_sha256": "91e833a6de63bb9f49eb20ea9c91b7320a221f27a6b5e48184673ad4a5d8a658",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let rendered = crate::render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(rendered.source.contains(\"persistent_commit\"));\n    crate::recorded::test_support::register_unsupported_fold(&mut contract);\n    // A genuine unsupported fixed-value operation stays a separate boundary.\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::HashToCurve {\n",
+          "previous": "    let rendered = crate::render_with_capabilities(&contract).unwrap();\n    assert!(rendered.capabilities.circuits[0].recorded);\n    assert!(rendered.source.contains(\"persistent_commit\"));\n    // A genuine unsupported fixed-value operation stays a separate boundary.\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::HashToCurve {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/kernel_migration_tests/routing.rs": {
+      "previous_sha256": "ea69a4377cf0fc73a7abdd15496b1fd8b2878f6792419aa93e7643c6cc507465",
+      "current_sha256": "7b07131487f092c2043b62cbc5c0b34991daca838029fe257600bf80074fa92a",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "#[test]\nfn unsupported_body_continues_suffix_but_invariant_is_fatal() {\n    let mut contract = subject();\n    crate::recorded::test_support::register_unsupported_fold(&mut contract);\n    contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "#[test]\nfn unsupported_body_continues_suffix_but_invariant_is_fatal() {\n    let mut contract = subject();\n    contract.stateful_circuits[0].actions = vec![action(Expr::HashToCurve {\n        value: Box::new(Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/membership_migration_tests.rs": {
+      "previous_sha256": "775967b34a01e519fd2ea2e67fe6c375f1654f5cdef526ead98282626a756d43",
+      "current_sha256": "875bf083f9424ed6dad9337fdc68a0b5c9bb5cd96eeb214f44cbfe104148eae5",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n//! Declared membership interfaces, actual ownership and ordered refusal behavior.\n//! Finite whole-old inclusion is covered separately by membership_inclusion tests.\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, StateAction, StateReturn, StructField, Type};\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n//! Declared membership interfaces, actual ownership and ordered refusal behavior.\n//! Finite whole-old inclusion is covered separately by membership_inclusion tests.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, StateAction, StateReturn, StructField, Type};\n"
+        },
+        {
+          "current": "            .unwrap()\n            .is_some()\n    );\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    c.stateful_circuits[0].actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "            .unwrap()\n            .is_some()\n    );\n    c.stateful_circuits[0].actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/merge_migration_tests.rs": {
+      "previous_sha256": "791e67e721175c7665f20a0f0ad73c7b53277715133cc85b1932bf8ff4931c53",
+      "current_sha256": "914fd55932e8555c78d5a587b08848217f51faef77b2e348d566ee635433b8f7",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Merge is subsumed by earlier composition; ordinary fallback diagnostics stay intact.\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Merge is subsumed by earlier composition; ordinary fallback diagnostics stay intact.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, LocalBinding, StateAction, StateReturn, Type};\n"
+        },
+        {
+          "current": "fn rejected_merge_keeps_action_precedence_and_generic_return_diagnostic() {\n    for actionful in [false, true] {\n        let mut c = source();\n        crate::recorded::test_support::register_unsupported_fold(&mut c);\n        let root = root_mut(&mut c);\n        let StateReturn::Expression { value } = &mut root.return_value else {\n            unreachable!()\n",
+          "previous": "fn rejected_merge_keeps_action_precedence_and_generic_return_diagnostic() {\n    for actionful in [false, true] {\n        let mut c = source();\n        let root = root_mut(&mut c);\n        let StateReturn::Expression { value } = &mut root.return_value else {\n            unreachable!()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_boolean_migration_tests/boundaries.rs": {
+      "previous_sha256": "81cf152feb467b7bce9d3670502ed3b4bbe88f9dfa2d3d79ad5f6ec9b0c21d0e",
+      "current_sha256": "1a08831ebaa88b833dd4e20448813b6fcc21286a8ac064e57e25f9935a588eec",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n#[test]\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n#[test]\n"
+        },
+        {
+          "current": "        crate::render_with_capabilities(&c).unwrap();\n    }\n    let mut c = fixture();\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    root(&mut c, \"hasName\").actions = vec![StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "        crate::render_with_capabilities(&c).unwrap();\n    }\n    let mut c = fixture();\n    root(&mut c, \"hasName\").actions = vec![StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/opaque_field_migration_tests/boundaries.rs": {
+      "previous_sha256": "f11ad1cbdd05ba83daaf898f150f28948cb6950773e4dd662fbb15193aefb753",
+      "current_sha256": "8d5c8ac3a4bc0a44e5dbe0c39ff70f318d9937cce6c08bc2556db93aeed71570",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n#[test]\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n#[test]\n"
+        },
+        {
+          "current": "        crate::render_with_capabilities(&c).unwrap();\n    }\n    let mut c = contract(fixture());\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    let r = c\n        .stateful_circuits\n        .iter_mut()\n",
+          "previous": "        crate::render_with_capabilities(&c).unwrap();\n    }\n    let mut c = contract(fixture());\n    let r = c\n        .stateful_circuits\n        .iter_mut()\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/optional_write_migration_tests/boundaries.rs": {
+      "previous_sha256": "a3e7870f6adadae296e0d07b1e467b8d9d3b513d0dc68c26ab068ad796c46b81",
+      "current_sha256": "1b2548890e83b570ac95a679d1084274ec0450cd9c4188505aa00697dacfc1a7",
+      "predecessor_reconstruction": [
+        {
+          "current": "            .as_array_mut()\n            .unwrap()\n            .push(action);\n        let c = crate::recorded::test_support::with_unsupported_fold(contract(value));\n        assert!(old(&c).unwrap().is_none());\n        assert!(checked(&c).is_err());\n        let rendered = crate::render_with_capabilities(&c).unwrap();\n",
+          "previous": "            .as_array_mut()\n            .unwrap()\n            .push(action);\n        let c = contract(value);\n        assert!(old(&c).unwrap().is_none());\n        assert!(checked(&c).is_err());\n        let rendered = crate::render_with_capabilities(&c).unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests/priority.rs": {
+      "previous_sha256": "6b6944791a96d6e36192230d0e3e63b00c6460be0bb52a0a7ff98fe74bbc24e5",
+      "current_sha256": "4c70541c7d73596fe7eaacea98f85a36130d81715b3106dba7d959a1c239dfbd",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n"
+        },
+        {
+          "current": "#[test]\nfn ordinary_preserves_unsupported_operation_and_native_error_priority() {\n    let mut c = identity(Type::Bytes { length: 32 });\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    c.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "#[test]\nfn ordinary_preserves_unsupported_operation_and_native_error_priority() {\n    let mut c = identity(Type::Bytes { length: 32 });\n    c.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/organizer_migration_tests/boundaries.rs": {
+      "previous_sha256": "22bdcfeceedbb924b6458bd298cd79e5ba6b60a602ee7bf3d8df759d9ba7ff4a",
+      "current_sha256": "f656a7cdaecba1711592e98564e4c2e3619e66ab8752db3c4a0e36f7e868fa3f",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    assert!(old(&c, \"add_participant\").unwrap().is_none());\n    assert!(checked(&c, \"add_participant\").is_err());\n    let rendered = crate::render_with_capabilities(&c).unwrap();\n",
+          "previous": "        \"kind\":\"if\",\"condition\":{\"kind\":\"boolean\",\"value\":true},\"then\":{\"kind\":\"sequence\",\"actions\":[]},\n        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c, \"add_participant\").unwrap().is_none());\n    assert!(checked(&c, \"add_participant\").is_err());\n    let rendered = crate::render_with_capabilities(&c).unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/receive_migration_tests/routing.rs": {
+      "previous_sha256": "518d1f9c229c1aed009e1282a5113970b6977062532d1897a7d7edafae2750d1",
+      "current_sha256": "f23a37f06620eecfd350c84e502ea014dbc59c67c53487997a0a7ada57f8a0be",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nfn selected_trace(c: &Contract, r: &StatefulCircuit) -> serde_json::Value {\n"
+        },
+        {
+          "current": "#[test]\nfn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {\n    let mut c = source();\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    root_mut(&mut c).actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(Expr::PersistentCommit {\n",
+          "previous": "#[test]\nfn unsupported_body_continues_independent_suffix_and_invariant_stays_fatal() {\n    let mut c = source();\n    root_mut(&mut c).actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n            value: Box::new(Expr::PersistentCommit {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/reset_payout_migration_tests.rs": {
+      "previous_sha256": "a25a3638870cd2b1a848dcfd9bff1820a7229d3a708107eae7dc77ae10170aa8",
+      "current_sha256": "74db08601667567c2d6c26be77c5c7591e0025700e02659a27bfe03de9f8b6d4",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Reset payout is subsumed by existing generic composition; no new route is added.\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Reset payout is subsumed by existing generic composition; no new route is added.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\n"
+        },
+        {
+          "current": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    // Keep the positive default above, then exercise the direct fold boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/shielded_payout_migration_tests.rs": {
+      "previous_sha256": "8ee76bfd3c57455c2e82fe0e78286f8c7988ac2d8ea145dd619b63f15459d803",
+      "current_sha256": "2001e2046bc04b25b57e4eb20fa8048220a5f992f828242daf9baf52e11ba7bb",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Shielded payout is subsumed by existing generic composition; no new route is added.\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! Shielded payout is subsumed by existing generic composition; no new route is added.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, StateAction, StateReturn, Type};\n"
+        },
+        {
+          "current": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    // Keep the positive default above, then exercise the direct fold boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n",
+          "previous": "    );\n    assert!(Context::new(&c).old(root(&c)).is_none());\n    assert!(Context::new(&c).domain(root(&c)).unwrap().is_some());\n    // Keep the positive default above, then exercise the unchanged commitment boundary.\n    root_mut(&mut c).actions[0] = StateAction::Expression {\n        value: Expr::PersistentCommit {\n            value: Box::new(crate::recorded::test_support::unsupported_fixed_input()),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/terminal_migration_tests/routing.rs": {
+      "previous_sha256": "5fd927f91193b9ba8664afead7d0201b1c7c08c6fad56721dfdd5c4cf853d05c",
+      "current_sha256": "dc799b4f52bb5c3eaa1fb0ca862052b3d49afa6ac6de2ece0b4ee72cbf6c67d2",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::recorded::admission_probe::trace;\n"
+        },
+        {
+          "current": "            .algebra(&contract.stateful_circuits[0])\n            .is_ok()\n    );\n    crate::recorded::test_support::register_unsupported_fold(&mut contract);\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n",
+          "previous": "            .algebra(&contract.stateful_circuits[0])\n            .is_ok()\n    );\n    contract.stateful_circuits[0].return_value = StateReturn::Expression {\n        value: Expr::TransientHash {\n            value: Box::new(Expr::PersistentCommit {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/voting_migration_tests/routing.rs": {
+      "previous_sha256": "9442d95fdabef08090fd4140e3ec73db347ff089cce5e06650bfd9bb2a621707",
+      "current_sha256": "91406932c2e9235bd4f76b273f7fdd72c3d2fef1d997cffb7210480f39cdba7f",
+      "predecessor_reconstruction": [
+        {
+          "current": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n",
+          "previous": "// This file is part of Compact.\n// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\n\n"
+        },
+        {
+          "current": "#[test]\nfn unsupported_body_preserves_later_independent_attempt_order() {\n    let mut c = source();\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    let r = root_mut(&mut c);\n    r.actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n",
+          "previous": "#[test]\nfn unsupported_body_preserves_later_independent_attempt_order() {\n    let mut c = source();\n    let r = root_mut(&mut c);\n    r.actions = vec![StateAction::Expression {\n        value: Expr::HashToCurve {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/witness_merkle_migration_tests/boundaries.rs": {
+      "previous_sha256": "6927efe697c572cf76ab102823a325c72af19e18cf542efb3ed48f012587190b",
+      "current_sha256": "3ec766ebf1337a649e36d530b9cc6b6b5789117bcc6eeb9397943127df9501cb",
+      "predecessor_reconstruction": [
+        {
+          "current": "        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    assert!(old(&c).unwrap().is_none());\n    assert!(checked(&c).is_err());\n    let result = crate::render_with_capabilities(&c).unwrap();\n",
+          "previous": "        \"otherwise\":{\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\n            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c).unwrap().is_none());\n    assert!(checked(&c).is_err());\n    let result = crate::render_with_capabilities(&c).unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": {
+      "previous_sha256": "2400343aea70afddc8fd6f75df0d535152dc073483a804114bcf282f2fd1d683",
+      "current_sha256": "d3d8203c43ad4378e40c2bbca09fbb90f871cca3d3cc4643e12a28b3efa5ce42",
+      "predecessor_reconstruction": [
+        {
+          "current": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! The carrier domain is an interface boundary, not a whole-body recognizer.\n// The direct VectorFoldCall child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};\n",
+          "previous": "// Copyright (C) 2026 Midnight Foundation\n// SPDX-License-Identifier: Apache-2.0\n//! The carrier domain is an interface boundary, not a whole-body recognizer.\n// The direct VectorMap child is a native-valid recording refusal; fixed Field\n// commitments themselves are supported. Do not replace this with malformed types.\nuse super::*;\nuse crate::ir::{Contract, Expr, Parameter, ReturnPlan, StateAction, StateReturn, Type};\n"
+        },
+        {
+          "current": "#[test]\nfn unsupported_body_refuses_at_last_priority_without_old_fallback() {\n    let mut c = source();\n    crate::recorded::test_support::register_unsupported_fold(&mut c);\n    let r = c\n        .stateful_circuits\n        .iter_mut()\n        .find(|r| r.name == \"flow\")\n        .unwrap();\n    r.actions = vec![StateAction::Expression {\n        // The direct fold is unsupported; Field commitments remain supported.\n        value: Expr::Equal {\n            left: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n",
+          "previous": "#[test]\nfn unsupported_body_refuses_at_last_priority_without_old_fallback() {\n    let mut c = source();\n    let r = c\n        .stateful_circuits\n        .iter_mut()\n        .find(|r| r.name == \"flow\")\n        .unwrap();\n    r.actions = vec![StateAction::Expression {\n        // The checked persistent-commit input remains a Bytes32 pair, not Field.\n        value: Expr::Equal {\n            left: Box::new(Expr::HashToCurve {\n                value: Box::new(Expr::PersistentCommit {\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/proved_set_sequence_migration_tests/boundaries.rs": {
+      "previous_sha256": "8e9ecb5a330ed4c007e1c272145d3e2e5b2093deecba9b4b585acf430c61602b",
+      "current_sha256": "087770a0d35c15b00372b5477e885b032fdf58ac2c84bf59c9561c893adb2a83",
+      "predecessor_reconstruction": [
+        {
+          "current": "fn unsupported_first_effect_and_recursive_helper_do_not_skip_to_the_old_permit() {\n    let mut v = fixture();\n    root(&mut v)[\"actions\"].as_array_mut().unwrap().insert(0,json!({\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}));\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    let cx = Context::new(&c);\n    let Err(effect_plan::PlanError::Unsupported(gap)) = cx.checked(cx.circuits[\"check_in\"]) else {\n        panic!(\"unsupported first effect\")\n    };\n    assert_eq!(gap.path, \"actions[0].value.value\");\n    assert_eq!(gap.ir_node, \"Expr::VectorFoldCall\");\n    let output = crate::render_with_capabilities(&c).unwrap();\n    assert!(\n        output\n",
+          "previous": "fn unsupported_first_effect_and_recursive_helper_do_not_skip_to_the_old_permit() {\n    let mut v = fixture();\n    root(&mut v)[\"actions\"].as_array_mut().unwrap().insert(0,json!({\"kind\":\"expression\",\"value\":{\"kind\":\"persistent_commit\",\"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}));\n    let c = contract(v);\n    let cx = Context::new(&c);\n    let Err(effect_plan::PlanError::Unsupported(gap)) = cx.checked(cx.circuits[\"check_in\"]) else {\n        panic!(\"unsupported first effect\")\n    };\n    assert_eq!(gap.path, \"actions[0].value.value\");\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n    let output = crate::render_with_capabilities(&c).unwrap();\n    assert!(\n        output\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/test_support.rs": {
+      "previous_sha256": "65f0b59c40301b565a936657de38636d92ea8ae52b96c585692f2f480673ba5c",
+      "current_sha256": "67787b52f9aad2c6c2ae10b790ca8f963cd659f76bd5bf5c46632d9f5e2b1487",
+      "predecessor_reconstruction": [
+        {
+          "current": "// SPDX-License-Identifier: Apache-2.0\n\n//! Explicit refusal controls for compiler tests. Their domains are intentionally\n//! different: direct VectorFoldCall is source-valid but not yet recorded directly;\n//! opaque persistent commitments are native-IR-only source-policy controls.\nuse crate::ir::{Contract, Expr, Parameter, PureCircuit, Type};\n\npub(crate) fn fixed_map_input() -> Expr {\n    Expr::VectorMap {\n        parameter: Parameter {\n            name: \"sentinel_item\".into(),\n",
+          "previous": "// SPDX-License-Identifier: Apache-2.0\n\n//! Explicit refusal controls for compiler tests. Their domains are intentionally\n//! different: VectorMap is a valid source construct not yet recorded directly;\n//! opaque persistent commitments are native-IR-only source-policy controls.\nuse crate::ir::{Expr, Parameter, Type};\n\npub(crate) fn unsupported_fixed_input() -> Expr {\n    Expr::VectorMap {\n        parameter: Parameter {\n            name: \"sentinel_item\".into(),\n"
+        },
+        {
+          "current": "        result: Type::Field,\n        length: 1,\n    }\n}\n\n/// Genuine source-qualified direct fold. Each complete contract must include\n/// the exact declaration below; a missing callee is not a refusal control.\nconst FOLD_STEP: &str = \"recording_refusal_fold_step\";\npub(crate) fn unsupported_fixed_input() -> Expr {\n    Expr::VectorFoldCall {\n        name: FOLD_STEP.into(),\n        initial: Box::new(Expr::FieldLiteral { value: \"0\".into() }),\n        source: Box::new(Expr::Tuple {\n            elements: vec![Expr::FieldLiteral { value: \"1\".into() }],\n        }),\n        accumulator: Type::Field,\n        element: Type::Field,\n        length: 1,\n    }\n}\npub(crate) fn register_unsupported_fold(contract: &mut Contract) {\n    assert!(!contract.circuits.iter().any(|c| c.name == FOLD_STEP));\n    contract.circuits.push(PureCircuit {\n        source: None,\n        name: FOLD_STEP.into(),\n        internal: true,\n        parameters: [\"acc\", \"item\"]\n            .into_iter()\n            .map(|name| Parameter {\n                name: name.into(),\n                ty: Type::Field,\n            })\n            .collect(),\n        result: Type::Field,\n        body: Expr::Add {\n            left: Box::new(Expr::Parameter { name: \"acc\".into() }),\n            right: Box::new(Expr::Parameter {\n                name: \"item\".into(),\n            }),\n        },\n    });\n}\npub(crate) fn with_unsupported_fold(mut contract: Contract) -> Contract {\n    register_unsupported_fold(&mut contract);\n    contract\n}\n\npub(crate) fn unsupported_commit() -> Expr {\n",
+          "previous": "        result: Type::Field,\n        length: 1,\n    }\n}\n\npub(crate) fn unsupported_commit() -> Expr {\n"
+        },
+        {
+          "current": "        \"../../tests/opaque-string-map-schema20-ir.json\"\n    ))\n    .unwrap();\n    register_unsupported_fold(&mut contract);\n    let root = contract\n        .stateful_circuits\n        .iter_mut()\n",
+          "previous": "        \"../../tests/opaque-string-map-schema20-ir.json\"\n    ))\n    .unwrap();\n    let root = contract\n        .stateful_circuits\n        .iter_mut()\n"
+        },
+        {
+          "current": "        .iter()\n        .find(|c| c.name == \"ensure\")\n        .unwrap();\n    let Err(super::effect_plan::PlanError::Unsupported(gap)) = super::effect_plan::check_with_calls(\n        root,\n        &std::collections::HashMap::new(),\n        &std::collections::HashMap::new(),\n        &contract\n            .circuits\n            .iter()\n            .map(|c| (c.name.as_str(), c))\n            .collect(),\n        &std::collections::HashMap::new(),\n    ) else {\n        panic!(\"direct VectorFoldCall must remain explicitly unsupported\")\n    };\n    assert_eq!(gap.ir_node, \"Expr::VectorFoldCall\");\n    assert_eq!(gap.path, \"return_value.value.value\");\n}\n",
+          "previous": "        .iter()\n        .find(|c| c.name == \"ensure\")\n        .unwrap();\n    let Err(super::effect_plan::PlanError::Unsupported(gap)) = super::effect_plan::check(\n        root,\n        &std::collections::HashMap::new(),\n        &std::collections::HashMap::new(),\n    ) else {\n        panic!(\"direct VectorMap must remain explicitly unsupported\")\n    };\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n    assert_eq!(gap.path, \"return_value.value.value\");\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/unsigned_product_migration_tests/boundaries.rs": {
+      "previous_sha256": "3527addce89a608536b23fb991bb35badac2dc2604a7ee6b60e4eed367f82662",
+      "current_sha256": "c0e8298b9ece7e3c8f362f424d55aec66abeb3bb4eaac0e73db0a7a6c7908edc",
+      "predecessor_reconstruction": [
+        {
+          "current": "            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = crate::recorded::test_support::with_unsupported_fold(contract(v));\n    assert!(old(&c).unwrap().is_none());\n    assert!(\n        checked(&c).is_err(),\n",
+          "previous": "            \"value\":(serde_json::to_value(crate::recorded::test_support::unsupported_fixed_input()).unwrap()),\n            \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8;32]}}}\n    }));\n    let c = contract(v);\n    assert!(old(&c).unwrap().is_none());\n    assert!(\n        checked(&c).is_err(),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/point_composition.rs": {
+      "previous_sha256": "1126346e8786fd1893deb39017bd85533029fd5048a02dfb6938f04cc3fd9956",
+      "current_sha256": "62c07b8a3140a6f0ba9ad4cf1efdb0271574cc022ce5821258de1f930eb23d6b",
+      "predecessor_reconstruction": [
+        {
+          "current": "\nuse compact_rust_backend::{ir::Contract, render_with_capabilities};\nuse serde_json::{Value, json};\n#[path = \"support/recording_refusal.rs\"]\nmod recording_refusal;\nfn fixture(name: &str) -> Value {\n    serde_json::from_str(match name {\n        \"store\" => include_str!(\"point-composition/point_store.json\"),\n",
+          "previous": "\nuse compact_rust_backend::{ir::Contract, render_with_capabilities};\nuse serde_json::{Value, json};\nfn fixture(name: &str) -> Value {\n    serde_json::from_str(match name {\n        \"store\" => include_str!(\"point-composition/point_store.json\"),\n"
+        },
+        {
+          "current": "                \"source\":{\"kind\":\"tuple\",\"elements\":[{\"kind\":\"field_literal\",\"value\":\"1\"}]},\n                \"body\":{\"kind\":\"parameter\",\"name\":\"sentinel_item\"},\n                \"result\":{\"kind\":\"field\"},\"length\":1});\n            assert!(recorded(v.clone(), \"check\"));\n            let mut complete: Contract = serde_json::from_value(v).unwrap();\n            recording_refusal::register_unsupported_fold(&mut complete);\n            v = serde_json::to_value(complete).unwrap();\n            let actions = circuit(&mut v, \"changes\")[\"actions\"]\n                .as_array_mut()\n                .unwrap();\n            actions.last_mut().unwrap()[\"otherwise\"][\"value\"][\"value\"] =\n                serde_json::to_value(recording_refusal::unsupported_commit_input()).unwrap();\n            // This negative is native-valid, not a swallowed render error.\n            render_with_capabilities(&serde_json::from_value::<Contract>(v.clone()).unwrap())\n                .unwrap();\n        }\n        assert!(!recorded(v, \"check\"), \"{mutation}\");\n    }\n",
+          "previous": "                \"source\":{\"kind\":\"tuple\",\"elements\":[{\"kind\":\"field_literal\",\"value\":\"1\"}]},\n                \"body\":{\"kind\":\"parameter\",\"name\":\"sentinel_item\"},\n                \"result\":{\"kind\":\"field\"},\"length\":1});\n        }\n        assert!(!recorded(v, \"check\"), \"{mutation}\");\n    }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/recorded_helper_naming.rs": {
+      "previous_sha256": "9af483fbb1fe921a3d90ddd09ea1c7cb19889afb57588276a7bd476d8f617314",
+      "current_sha256": "2e97e46a8394bef0843560ca10481cef7d341d105ffe97bc8efa0d2fe3107faa",
+      "predecessor_reconstruction": [
+        {
+          "current": "};\nuse compact_rust_backend::{RenderError, render, render_with_capabilities};\n\n#[path = \"support/recorded_helper_contract.rs\"]\nmod helper_contract;\nuse helper_contract::contract;\n\n// Keep the former legacy identity-map caller as a checked composition positive.\n// Private name allocation is tested against the real planner before filtering.\nfn mapped_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {\n    let mut fixture = contract(helper_name, caller, collide);\n    let scalar = Type::Unsigned { max: \"255\".into() };\n    for circuit in &mut fixture.stateful_circuits {\n",
+          "previous": "};\nuse compact_rust_backend::{RenderError, render, render_with_capabilities};\n\nfn contract(helper_name: &str, caller: bool, collide: bool) -> Contract {\n    let seed = Expr::Parameter {\n        name: \"seed\".into(),\n    };\n    let helper = StatefulCircuit {\n        source: None,\n        internal: true,\n        name: helper_name.into(),\n        parameters: vec![Parameter {\n            name: \"seed\".into(),\n            ty: Type::Field,\n        }],\n        actions: vec![StateAction::Let {\n            bindings: vec![LocalBinding {\n                name: \"value\".into(),\n                ty: Type::Field,\n                value: Expr::WitnessCall {\n                    name: \"secret\".into(),\n                    arguments: vec![seed.clone()],\n                },\n            }],\n            action: Box::new(StateAction::CellWrite {\n                field: \"cell\".into(),\n                index: 0,\n                value: Expr::Parameter {\n                    name: \"value\".into(),\n                },\n            }),\n        }],\n        result: Type::Unit,\n        return_value: StateReturn::Unit,\n    };\n    let caller_circuit = StatefulCircuit {\n        source: None,\n        internal: false,\n        name: \"outer\".into(),\n        parameters: vec![Parameter {\n            name: \"seed\".into(),\n            ty: Type::Field,\n        }],\n        actions: vec![StateAction::CircuitCall {\n            name: helper_name.into(),\n            arguments: vec![seed],\n        }],\n        result: Type::Unsigned {\n            max: u64::MAX.to_string(),\n        },\n        return_value: StateReturn::CounterRead {\n            field: \"count\".into(),\n            index: 1,\n        },\n    };\n    let mut stateful_circuits = vec![helper];\n    if caller {\n        stateful_circuits.push(caller_circuit.clone());\n    }\n    if collide {\n        let mut collision = caller_circuit;\n        let normalized = helper_name.strip_prefix(\"r#\").unwrap_or(helper_name);\n        collision.name = format!(\"__compact_recorded_body_{normalized}\");\n        stateful_circuits.push(collision);\n    }\n    Contract {\n        schema_version: SCHEMA_VERSION,\n        type_aliases: vec![],\n        ledger_fields: vec![\n            LedgerField {\n                source: None,\n                id: \"cell\".into(),\n                index: 0,\n                path: vec![],\n                declaration: LedgerFieldKind::Cell { ty: Type::Field },\n            },\n            LedgerField {\n                source: None,\n                id: \"count\".into(),\n                index: 1,\n                path: vec![],\n                declaration: LedgerFieldKind::Counter,\n            },\n        ],\n        constructor: None,\n        witnesses: vec![WitnessDeclaration {\n            source: None,\n            name: \"secret\".into(),\n            parameters: vec![Parameter {\n                name: \"seed\".into(),\n                ty: Type::Field,\n            }],\n            result: Type::Field,\n        }],\n        circuits: vec![],\n        stateful_circuits,\n    }\n}\n\n// Ordinary checked returns now inline CounterRead callers. These naming laws\n// need a real legacy call: the existing unsigned identity VectorMap binding is\n// independently native-valid and legacy-supported, but not yet checked.\nfn legacy_contract(helper_name: &str, caller: bool, collide: bool) -> Contract {\n    let mut fixture = contract(helper_name, caller, collide);\n    let scalar = Type::Unsigned { max: \"255\".into() };\n    for circuit in &mut fixture.stateful_circuits {\n"
+        },
+        {
+          "current": "\n#[test]\nfn raw_spelled_helper_records_without_changing_native_name() {\n    let native = render(&mapped_contract(\"r#type\", false, false)).unwrap();\n    syn::parse_file(&native).unwrap();\n    assert!(native.contains(\"pub(crate) fn r#type<\"));\n\n    let recorded = render_with_capabilities(&mapped_contract(\"r#type\", true, false)).unwrap();\n    syn::parse_file(&recorded.source).unwrap();\n    assert!(recorded.source.contains(\"pub(crate) fn r#type<\"));\n    assert_no_private_helpers(&recorded.source);\n    assert_one_witness_then_write(\n        recorded_functions(&recorded.source)\n            .iter()\n            .find(|f| f.sig.ident == \"outer\")\n            .unwrap(),\n    );\n    assert!(\n        recorded\n            .capabilities\n",
+          "previous": "\n#[test]\nfn raw_spelled_helper_records_without_changing_native_name() {\n    let native = render(&legacy_contract(\"r#type\", false, false)).unwrap();\n    syn::parse_file(&native).unwrap();\n    assert!(native.contains(\"pub(crate) fn r#type<\"));\n\n    let recorded = render_with_capabilities(&legacy_contract(\"r#type\", true, false)).unwrap();\n    syn::parse_file(&recorded.source).unwrap();\n    assert!(recorded.source.contains(\"pub(crate) fn r#type<\"));\n    assert!(recorded.source.contains(\"fn __compact_recorded_body_type<\"));\n    assert!(\n        recorded\n            .capabilities\n"
+        },
+        {
+          "current": "\n#[test]\nfn compact_dollar_normalization_retains_existing_helper_spelling() {\n    let source = render(&mapped_contract(\"a$b\", true, false)).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert!(source.contains(\"pub(crate) fn a_b<\"));\n    assert_no_private_helpers(&source);\n}\n\n#[test]\nfn helper_collision_preserves_public_names_while_checked_callers_inline() {\n    for helper_name in [\"inner\", \"r#type\"] {\n        let fixture = mapped_contract(helper_name, true, true);\n        let source = render(&fixture).unwrap();\n        syn::parse_file(&source).unwrap();\n        assert_no_private_helpers(&source);\n        let functions = recorded_functions(&source);\n        let public_name = format!(\n            \"__compact_recorded_body_{}\",\n            helper_name.strip_prefix(\"r#\").unwrap_or(helper_name)\n        );\n        assert!(\n            functions\n                .iter()\n                .any(|function| function.sig.ident == public_name\n                    && matches!(function.vis, syn::Visibility::Public(_)))\n        );\n        assert_one_witness_then_write(\n            functions\n                .iter()\n                .find(|function| function.sig.ident == \"outer\")\n                .unwrap(),\n        );\n    }\n}\n\n#[test]\nfn raw_spelled_sibling_occupies_the_preferred_helper_name() {\n    let mut contract = mapped_contract(\"r#type\", true, true);\n    contract.stateful_circuits[2].name = \"r#__compact_recorded_body_type\".into();\n    let source = render(&contract).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert_no_private_helpers(&source);\n    assert!(\n        recorded_functions(&source)\n            .iter()\n            .any(\n                |function| function.sig.ident == \"r#__compact_recorded_body_type\"\n                    && matches!(function.vis, syn::Visibility::Public(_))\n            )\n    );\n}\n\n#[test]\nfn raw_spelled_sibling_also_occupies_the_fallback_name() {\n    let mut contract = mapped_contract(\"inner\", true, true);\n    let mut fallback_collision = contract.stateful_circuits[1].clone();\n    fallback_collision.name = \"r#__compact_recorded_body_1_x696e6e6572\".into();\n    contract.stateful_circuits.push(fallback_collision);\n    let source = render(&contract).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert_no_private_helpers(&source);\n    assert!(\n        recorded_functions(&source)\n            .iter()\n            .any(\n                |function| function.sig.ident == \"r#__compact_recorded_body_1_x696e6e6572\"\n                    && matches!(function.vis, syn::Visibility::Public(_))\n            )\n    );\n}\n\n#[test]\n",
+          "previous": "\n#[test]\nfn compact_dollar_normalization_retains_existing_helper_spelling() {\n    let source = render(&legacy_contract(\"a$b\", true, false)).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert!(source.contains(\"pub(crate) fn a_b<\"));\n    assert!(source.contains(\"fn __compact_recorded_body_a_b<\"));\n}\n\n#[test]\nfn helper_collision_uses_stable_fallback_for_normal_and_raw_spelling() {\n    for helper_name in [\"inner\", \"r#type\"] {\n        // The complete identity-map binding keeps a real legacy action call;\n        // CounterRead by itself is now covered by checked ordinary returns.\n        let fixture = legacy_contract(helper_name, true, true);\n        let source = render(&fixture).unwrap();\n        syn::parse_file(&source).unwrap();\n        let suffix = helper_name\n            .bytes()\n            .map(|byte| format!(\"{byte:02x}\"))\n            .collect::<String>();\n        let index = if helper_name.starts_with(\"r#\") { 2 } else { 1 };\n        let fallback = format!(\"__compact_recorded_body_{index}_x{suffix}\");\n        assert!(source.contains(&format!(\"fn {fallback}<\")), \"{helper_name}\");\n        assert!(\n            source.contains(&format!(\"let (frame, _) = {fallback}(\")),\n            \"{helper_name}\"\n        );\n    }\n}\n\n#[test]\nfn raw_spelled_sibling_occupies_the_preferred_helper_name() {\n    let mut contract = legacy_contract(\"r#type\", true, true);\n    contract.stateful_circuits[2].name = \"r#__compact_recorded_body_type\".into();\n    let source = render(&contract).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert!(source.contains(\"fn __compact_recorded_body_2_x722374797065<\"));\n    assert!(!source.contains(\"fn __compact_recorded_body_type<\"));\n}\n\n#[test]\nfn raw_spelled_sibling_also_occupies_the_fallback_name() {\n    let mut contract = legacy_contract(\"inner\", true, true);\n    let mut fallback_collision = contract.stateful_circuits[1].clone();\n    fallback_collision.name = \"r#__compact_recorded_body_1_x696e6e6572\".into();\n    contract.stateful_circuits.push(fallback_collision);\n    let source = render(&contract).unwrap();\n    syn::parse_file(&source).unwrap();\n    assert!(source.contains(\"fn __compact_recorded_body_1_x696e6e6572_<\"));\n    assert!(!source.contains(\"fn __compact_recorded_body_1_x696e6e6572<\"));\n}\n\n#[test]\n"
+        },
+        {
+          "current": "}\n\n#[test]\nfn mapped_and_plain_callers_inline_and_validate_their_transitive_body() {\n    let mut fixture = mapped_contract(\"inner\", true, false);\n    let mut leaf = fixture.stateful_circuits[0].clone();\n    leaf.name = \"leaf\".into();\n    fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {\n",
+          "previous": "}\n\n#[test]\nfn mixed_callers_keep_the_used_helper_and_validate_its_transitive_body() {\n    let mut fixture = legacy_contract(\"inner\", true, false);\n    let mut leaf = fixture.stateful_circuits[0].clone();\n    leaf.name = \"leaf\".into();\n    fixture.stateful_circuits[0].actions = vec![StateAction::CircuitCall {\n"
+        },
+        {
+          "current": "    checked.name = \"checked\".into();\n    checked.result = Type::Unit;\n    checked.return_value = StateReturn::Unit;\n    // Exercise both mapped and plain callers; both now compose checked effects.\n    // Preserve their original transitive helper call.\n    let StateAction::Let { action, .. } = checked.actions.remove(0) else {\n        unreachable!()\n    };\n",
+          "previous": "    checked.name = \"checked\".into();\n    checked.result = Type::Unit;\n    checked.return_value = StateReturn::Unit;\n    // Keep the second caller genuinely checked; only the first has the legacy\n    // identity-map binding. Preserve its original transitive helper call.\n    let StateAction::Let { action, .. } = checked.actions.remove(0) else {\n        unreachable!()\n    };\n"
+        },
+        {
+          "current": "            .all(|c| c.recorded && c.observed_call)\n    );\n    let functions = recorded_functions(&rendered.source);\n    assert_no_private_helpers(&rendered.source);\n    let outer = functions.iter().find(|f| f.sig.ident == \"outer\").unwrap();\n    let checked = functions.iter().find(|f| f.sig.ident == \"checked\").unwrap();\n    assert_one_witness_then_write(outer);\n    assert_one_witness_then_write(checked);\n    fixture.stateful_circuits[2].actions = vec![StateAction::CircuitCall {\n        name: \"inner\".into(),\n        arguments: vec![Expr::Parameter {\n",
+          "previous": "            .all(|c| c.recorded && c.observed_call)\n    );\n    let functions = recorded_functions(&rendered.source);\n    let inner = functions\n        .iter()\n        .find(|f| f.sig.ident == \"__compact_recorded_body_inner\")\n        .unwrap();\n    let outer = functions.iter().find(|f| f.sig.ident == \"outer\").unwrap();\n    let checked = functions.iter().find(|f| f.sig.ident == \"checked\").unwrap();\n    assert!(\n        quote::quote!(#outer)\n            .to_string()\n            .contains(\"__compact_recorded_body_inner\")\n    );\n    assert!(\n        !quote::quote!(#checked)\n            .to_string()\n            .contains(\"__compact_recorded_body_inner\")\n    );\n    assert_one_witness_then_write(inner);\n    assert_one_witness_then_write(checked);\n    // The retained helper itself inlines its checked child, so only its live\n    // out-of-line definition is necessary. The child is still fully validated.\n    assert!(\n        !functions\n            .iter()\n            .any(|f| f.sig.ident == \"__compact_recorded_body_leaf\")\n    );\n    fixture.stateful_circuits[2].actions = vec![StateAction::CircuitCall {\n        name: \"inner\".into(),\n        arguments: vec![Expr::Parameter {\n"
+        },
+        {
+          "current": "        function.sig.ident\n    );\n}\n\nfn assert_no_private_helpers(source: &str) {\n    assert!(recorded_functions(source).iter().all(|function| {\n        !function\n            .sig\n            .ident\n            .to_string()\n            .starts_with(\"__compact_recorded_body_\")\n            || !matches!(function.vis, syn::Visibility::Inherited)\n    }));\n}\n",
+          "previous": "        function.sig.ident\n    );\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_calls.rs": {
+      "previous_sha256": "bb86cbddaa35dc2613507316150be890078b6c9cbb905b0a763a688f9031890b",
+      "current_sha256": "d4774946e2d31c5a0f85532c0e544f41f99bb15f1ac247419cde5f2ac42399ff",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // A native-valid unsupported VectorFoldCall child refuses a later nested step.\n    contract.stateful_circuits[0]\n        .actions\n        .push(StateAction::Expression {\n",
+          "previous": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // A native-valid unsupported VectorMap child refuses a later nested step.\n    contract.stateful_circuits[0]\n        .actions\n        .push(StateAction::Expression {\n"
+        },
+        {
+          "current": "                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        });\n    super::support::register_unsupported_fold(&mut contract);\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(!rendered.capabilities.circuits[0].recorded);\n    assert!(!rendered.capabilities.circuits[0].observed_call);\n",
+          "previous": "                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n            },\n        });\n    let rendered = render_with_capabilities(&contract).unwrap();\n    assert!(!rendered.capabilities.circuits[0].recorded);\n    assert!(!rendered.capabilities.circuits[0].observed_call);\n"
+        },
+        {
+          "current": "            }),\n        },\n    };\n    super::support::register_unsupported_fold(&mut contract);\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert_eq!(\n",
+          "previous": "            }),\n        },\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert_eq!(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_guards.rs": {
+      "previous_sha256": "2017dee5c188f4fdedd6bfd4da94e2b11d792b2b297b2e1c41d13e0914cac875",
+      "current_sha256": "cd7a754670d5e1008abff77985d223a5852a461accaaa6d9f7d95b0788c7363d",
+      "predecessor_reconstruction": [
+        {
+          "current": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n    super::support::register_unsupported_fold(&mut contract);\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    assert!(!report.circuits[0].recorded);\n    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();\n",
+          "previous": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    assert!(!report.circuits[0].recorded);\n    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_hashes.rs": {
+      "previous_sha256": "a51eab4fac9117504240a22b85e5ec8ec93ded1cdef3195fcd886f5c8d3e0305",
+      "current_sha256": "9801ccd4d7c8a2ffbf6317069381bccba5d72d97ccdad855f8e9dd1bf061f462",
+      "predecessor_reconstruction": [
+        {
+          "current": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n    super::support::register_unsupported_fold(&mut contract);\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert!(\n",
+          "previous": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        }),\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    assert!(\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recorded_structs.rs": {
+      "previous_sha256": "c904e6e9eac8c694c3b2f46027c3e8def71b549e5d288f7019ffcc0a40524f0b",
+      "current_sha256": "2588e0a2a67ea141103ce580ce7e5bc4d87de853eda73bac3b75e6cdbb14c8ae",
+      "predecessor_reconstruction": [
+        {
+          "current": "}\n\n#[test]\nfn vector_map_recording_composes_nonidentity_bodies_and_keeps_exact_native_shape() {\n    let element = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n",
+          "previous": "}\n\n#[test]\nfn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {\n    let element = Type::Unsigned {\n        max: u64::MAX.to_string(),\n    };\n"
+        },
+        {
+          "current": "                    body: Box::new(Expr::Parameter {\n                        name: \"item\".into(),\n                    }),\n                    result: element.clone(),\n                    length: 3,\n                },\n            }],\n",
+          "previous": "                    body: Box::new(Expr::Parameter {\n                        name: \"item\".into(),\n                    }),\n                    result: element,\n                    length: 3,\n                },\n            }],\n"
+        },
+        {
+          "current": "        unreachable!()\n    };\n    **body = literal();\n    let mapped = render_with_capabilities(&nonidentity).unwrap();\n    assert!(mapped.capabilities.circuits[0].recorded);\n    assert!(mapped.capabilities.circuits[0].observed_call);\n    let body = super::lifecycle_recording::generated_body(&mapped.source, \"recorded\", \"write_map\");\n    assert!(body.find(\"into_array\").unwrap() < body.find(\"record_write\").unwrap());\n\n    // A supported nonidentity body still has to match the declared element type.\n    let mut wrong_result = nonidentity.clone();\n    let StateAction::Let { bindings, .. } = &mut wrong_result.stateful_circuits[0].actions[0]\n    else {\n        unreachable!()\n    };\n    let Expr::VectorMap { body, .. } = &mut bindings[0].value else {\n        unreachable!()\n    };\n    **body = Expr::Boolean { value: true };\n    assert_eq!(\n        render_with_capabilities(&wrong_result).err().unwrap(),\n        RenderError::TypeMismatch {\n            expected: element.clone(),\n            actual: Type::Boolean\n        }\n    );\n    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n",
+          "previous": "        unreachable!()\n    };\n    **body = literal();\n    assert!(\n        !render_with_capabilities(&nonidentity)\n            .unwrap()\n            .capabilities\n            .circuits[0]\n            .recorded\n    );\n    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {\n        unreachable!()\n"
+        },
+        {
+          "current": "        unreachable!()\n    };\n    *length = 2;\n    assert_eq!(\n        render_with_capabilities(&contract).err().unwrap(),\n        RenderError::TypeMismatch {\n            expected: Type::Vector {\n                element: Box::new(element.clone()),\n                length: 2\n            },\n            actual: Type::Tuple {\n                elements: vec![element; 3]\n            },\n        }\n    );\n}\n",
+          "previous": "        unreachable!()\n    };\n    *length = 2;\n    assert!(render_with_capabilities(&contract).is_err());\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/recording_capabilities.rs": {
+      "previous_sha256": "29048c34b82dde4f78afdfbe3c94b55aff4288fc1df0efeec98002778a7d9510",
+      "current_sha256": "fd48e4f1182dc6be67ac70eabf918210d53a2b12e755f11a6f954d35f79a8731",
+      "predecessor_reconstruction": [
+        {
+          "current": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n    super::support::register_unsupported_fold(&mut contract);\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();\n    assert_eq!(gap.code.as_str(), \"unsupported_action\");\n",
+          "previous": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();\n    assert_eq!(gap.code.as_str(), \"unsupported_action\");\n"
+        },
+        {
+          "current": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n    super::support::register_unsupported_fold(&mut contract);\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    let capability = &report.circuits[0];\n    assert!(!capability.recorded);\n",
+          "previous": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    };\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    let capability = &report.circuits[0];\n    assert!(!capability.recorded);\n"
+        },
+        {
+          "current": "    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n\n    // Preserve the newly supported nested scalar default, then exercise the\n    // same callee diagnostic with a native-valid unsupported VectorFoldCall child.\n    contract.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::Default { ty: Type::Boolean },\n    }];\n",
+          "previous": "    assert!(report.circuits[0].recorded && report.circuits[0].observed_call);\n\n    // Preserve the newly supported nested scalar default, then exercise the\n    // same callee diagnostic with a native-valid unsupported VectorMap child.\n    contract.stateful_circuits[0].actions = vec![StateAction::Expression {\n        value: Expr::Default { ty: Type::Boolean },\n    }];\n"
+        },
+        {
+          "current": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }];\n    super::support::register_unsupported_fold(&mut contract);\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();\n    assert_eq!(gap.code.as_str(), \"unsupported_action\");\n",
+          "previous": "            opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),\n        },\n    }];\n    let report = render_with_capabilities(&contract).unwrap().capabilities;\n    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();\n    assert_eq!(gap.code.as_str(), \"unsupported_action\");\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/set_recording.rs": {
+      "previous_sha256": "1a85bbb8463983f9bf4dac0b66cee2dfe181c8bda361e10c274d4090eeee60f7",
+      "current_sha256": "5c9340533c7533475e301e0bc1e0429569ded78e867a1f4460d7dc72dcdaa2e7",
+      "predecessor_reconstruction": [
+        {
+          "current": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // Keep the now-supported default callback value. A commitment with an unsupported VectorFoldCall child\n    // in its local prefix still refuses recording at that exact argument path.\n    let StateAction::Expression {\n        value: Expr::WitnessCall { arguments, .. },\n",
+          "previous": "    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(defaulted.capabilities.circuits[0].recorded);\n    assert!(defaulted.capabilities.circuits[0].observed_call);\n    // Keep the now-supported default callback value. A commitment with an unsupported VectorMap child\n    // in its local prefix still refuses recording at that exact argument path.\n    let StateAction::Expression {\n        value: Expr::WitnessCall { arguments, .. },\n"
+        },
+        {
+          "current": "        }],\n        body: Box::new(Expr::Default { ty: opaque.clone() }),\n    };\n    super::support::register_unsupported_fold(&mut contract);\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    // The checked domain refuses the VectorFoldCall child, then the retained witness\n    // fallback's cell_source rejects the enclosing Let argument atomically.\n    let gap = rejected.capabilities.circuits[0]\n        .recording_unavailable\n",
+          "previous": "        }],\n        body: Box::new(Expr::Default { ty: opaque.clone() }),\n    };\n    let rejected = render_with_capabilities(&contract).unwrap();\n    assert!(!rejected.capabilities.circuits[0].recorded);\n    // The checked domain refuses the VectorMap child, then the retained witness\n    // fallback's cell_source rejects the enclosing Let argument atomically.\n    let gap = rejected.capabilities.circuits[0]\n        .recording_unavailable\n"
+        },
+        {
+          "current": "            },\n        },\n    );\n    super::support::register_unsupported_fold(&mut contract);\n    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(!defaulted.capabilities.circuits[0].recorded);\n    // The retained commitment-binding fallback refuses the VectorFoldCall operand\n    // before opening evaluation or the later enum binding.\n    let gap = defaulted.capabilities.circuits[0]\n        .recording_unavailable\n        .as_ref()\n        .unwrap();\n    assert_eq!(gap.ir_node, \"Expr::VectorFoldCall\");\n    assert_eq!(gap.path, \"actions[0].bindings[0].value.value\");\n}\n\n",
+          "previous": "            },\n        },\n    );\n    let defaulted = render_with_capabilities(&contract).unwrap();\n    assert!(!defaulted.capabilities.circuits[0].recorded);\n    // The retained commitment-binding fallback refuses the VectorMap operand\n    // before opening evaluation or the later enum binding.\n    let gap = defaulted.capabilities.circuits[0]\n        .recording_unavailable\n        .as_ref()\n        .unwrap();\n    assert_eq!(gap.ir_node, \"Expr::VectorMap\");\n    assert_eq!(gap.path, \"actions[0].bindings[0].value.value\");\n}\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/render/support.rs": {
+      "previous_sha256": "688bbe2f9c187473b40c00bdb87e9338a8983f7611280b21050b6354e6ba7c1c",
+      "current_sha256": "708b22865e7a5f25053eb19c131cd191a473b652a8bfa9fd720918d089001a7d",
+      "predecessor_reconstruction": [
+        {
+          "current": "    }\n}\n\n// Real pure declaration is required in each complete refusal fixture.\n#[path = \"../support/recording_refusal.rs\"]\nmod recording_refusal;\npub(super) use recording_refusal::{register_unsupported_fold, unsupported_commit_input};\n",
+          "previous": "    }\n}\n\n/// Native-valid typed IR, still unsupported by the recording algebra. The full\n/// VectorMap sentinel was rendered with the frozen #609 compiler; this helper\n/// is an IR control and makes no additional Compact frontend claim.\npub fn unsupported_commit_input() -> compact_rust_backend::ir::Expr {\n    use compact_rust_backend::ir::{Expr, Parameter, Type};\n    Expr::VectorMap {\n        parameter: Parameter {\n            name: \"sentinel_item\".into(),\n            ty: Type::Field,\n        },\n        source: Box::new(Expr::Tuple {\n            elements: vec![Expr::FieldLiteral { value: \"1\".into() }],\n        }),\n        body: Box::new(Expr::Parameter {\n            name: \"sentinel_item\".into(),\n        }),\n        result: Type::Field,\n        length: 1,\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/tests/unit_composition.rs": {
+      "previous_sha256": "603a1ce7f8bba0077daf103e998258b30a2fc16a61f425776058ed59096a343a",
+      "current_sha256": "12fafcd3e1c0461fd6e32f0791a3b9b060920f3ddb564e183ec9089d1f22d4b4",
+      "predecessor_reconstruction": [
+        {
+          "current": "\nuse compact_rust_backend::{ir::Contract, render_with_capabilities};\nuse serde_json::{Value, json};\n#[path = \"support/recording_refusal.rs\"]\nmod recording_refusal;\nfn fixture(chunked: bool) -> Value {\n    serde_json::from_str(if chunked {\n        include_str!(\"unit-composition/chunked.json\")\n",
+          "previous": "\nuse compact_rust_backend::{ir::Contract, render_with_capabilities};\nuse serde_json::{Value, json};\nfn fixture(chunked: bool) -> Value {\n    serde_json::from_str(if chunked {\n        include_str!(\"unit-composition/chunked.json\")\n"
+        },
+        {
+          "current": "                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8; 32]}}\n        });\n        assert!(recorded(v.clone()));\n        // The former VectorMap refusal is now a positive. Then retain a\n        // source-qualified direct fold negative with its real pure declaration.\n        circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"][\"value\"] = json!({\"kind\":\"vector_map\",\n                \"parameter\":{\"name\":\"sentinel_item\",\"ty\":{\"kind\":\"field\"}},\n                \"source\":{\"kind\":\"tuple\",\"elements\":[{\"kind\":\"field_literal\",\"value\":\"1\"}]},\n                \"body\":{\"kind\":\"parameter\",\"name\":\"sentinel_item\"},\n                \"result\":{\"kind\":\"field\"},\"length\":1});\n        assert!(recorded(v.clone()));\n        let mut complete: Contract = serde_json::from_value(v).unwrap();\n        recording_refusal::register_unsupported_fold(&mut complete);\n        v = serde_json::to_value(complete).unwrap();\n        circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"][\"value\"] =\n            serde_json::to_value(recording_refusal::unsupported_commit_input()).unwrap();\n        let contract: Contract = serde_json::from_value(v).unwrap();\n        let output = render_with_capabilities(&contract).unwrap();\n        let capability = output\n",
+          "previous": "                \"opening\":{\"kind\":\"bytes_literal\",\"bytes\":vec![0u8; 32]}}\n        });\n        assert!(recorded(v.clone()));\n        // Keep whole-helper admission negative using a native-valid typed IR\n        // VectorMap child, not an obsolete commitment input restriction.\n        circuit(&mut v, \"guard\")[\"actions\"][index][\"otherwise\"][\"value\"][\"value\"] = json!({\"kind\":\"vector_map\",\n                \"parameter\":{\"name\":\"sentinel_item\",\"ty\":{\"kind\":\"field\"}},\n                \"source\":{\"kind\":\"tuple\",\"elements\":[{\"kind\":\"field_literal\",\"value\":\"1\"}]},\n                \"body\":{\"kind\":\"parameter\",\"name\":\"sentinel_item\"},\n                \"result\":{\"kind\":\"field\"},\"length\":1});\n        let contract: Contract = serde_json::from_value(v).unwrap();\n        let output = render_with_capabilities(&contract).unwrap();\n        let capability = output\n"
+        }
+      ]
+    },
+    "tools/compact-rust-proof-smoke/src/direct_dispatch.rs": {
+      "previous_sha256": "cfc9635f3a71b30f7801d7c178e8e8a9db1f661d345fa1f19b11000fe1549ad1",
+      "current_sha256": "c60eede2666ea77c6675f4be9ab8820fad56bff8bb42591960860a57f67c6700",
+      "predecessor_reconstruction": [
+        {
+          "current": "        (\"--merkle-verify\", _) => Some(merkle::merkle_verify(arguments)),\n        (\"--merkle-reset\", _) => Some(merkle::merkle_reset(arguments)),\n        (\"--vector-map\", _) => Some(collections::vector_map(arguments)),\n        (\"--vector-map-strict\", _) => Some(collections::vector_map_strict(arguments)),\n        (\"--merkle-root\", _) => Some(merkle::merkle_root(arguments)),\n        (\"--zerocash-spend\", _) => Some(contracts::zerocash_spend(arguments)),\n        (\"--bboard\", _) => Some(contracts::bboard(arguments)),\n",
+          "previous": "        (\"--merkle-verify\", _) => Some(merkle::merkle_verify(arguments)),\n        (\"--merkle-reset\", _) => Some(merkle::merkle_reset(arguments)),\n        (\"--vector-map\", _) => Some(collections::vector_map(arguments)),\n        (\"--merkle-root\", _) => Some(merkle::merkle_root(arguments)),\n        (\"--zerocash-spend\", _) => Some(contracts::zerocash_spend(arguments)),\n        (\"--bboard\", _) => Some(contracts::bboard(arguments)),\n"
+        }
+      ]
+    },
+    "tools/compact-rust-proof-smoke/src/direct_dispatch/collections.rs": {
+      "previous_sha256": "d7913681c76a58a30a80bc6311bb62d110a6c82880cdd263a88fe1be2f8c3fb6",
+      "current_sha256": "50b1ec13992cb22440f56057027bc9cd6e0092b291e35cf4cc4610f388377bae",
+      "predecessor_reconstruction": [
+        {
+          "current": "        Err(_) => Err(\"map-value-products proof thread panicked\".into()),\n    }\n}\n\n/// Exact original map source with proof verification and strict funded application.\npub(super) fn vector_map_strict(\n    arguments: &mut impl Iterator<Item = OsString>,\n) -> Result<(), Box<dyn Error>> {\n    let usage = \"usage: compact-rust-proof-smoke --vector-map-strict <proof-output>\";\n    let root = arguments.next().ok_or(usage)?;\n    if arguments.next().is_some() {\n        return Err(usage.into());\n    }\n    let proof = std::thread::Builder::new()\n        .name(\"vector-map-strict-proof\".into())\n        .stack_size(64 * 1024 * 1024)\n        .spawn(move || vector_map::strict::run(Path::new(&root)).map_err(|e| e.to_string()))?;\n    match proof.join() {\n        Ok(Ok(())) => Ok(()),\n        Ok(Err(error)) => Err(error.into()),\n        Err(_) => Err(\"vector map strict proof thread panicked\".into()),\n    }\n}\n",
+          "previous": "        Err(_) => Err(\"map-value-products proof thread panicked\".into()),\n    }\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-proof-smoke/src/vector_map.rs": {
+      "previous_sha256": "39050adde720606c905572fbbb20ae4546f0e7c6f6b396e0cdb374c46e81b897",
+      "current_sha256": "edac9d63b113496010f5c8a5a695d35bfd7c396bfed611dfef35fccb089d2e0a",
+      "predecessor_reconstruction": [
+        {
+          "current": "    println!(\"both original identity-map calls proved and applied through ledger-8\");\n    Ok(())\n}\n\npub(crate) mod strict;\n",
+          "previous": "    println!(\"both original identity-map calls proved and applied through ledger-8\");\n    Ok(())\n}\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tests-rust-backend/map-fn-oracle/build.rs": "b10ba9188fbfe4100fe3b08c9a971f88aa59b6e0fbee8217f7cde7962a1897ae",
+    "tests-rust-backend/map-fn-oracle/build/synthetic.rs": "fb8b7457f7635445f0390527cf137c7f15bb0ee56a6d3f1fd5a57c5d51c1ef9f",
+    "tests-rust-backend/map-fn-oracle/tests/observed.rs": "b0c7ae5ca099c1cf1e5e28930377adc96dd734de061a5fa9e5d15738ee5c67dd",
+    "tests-rust-backend/map-fn-oracle/tests/synthetic.rs": "8563e37bf61a348e64da690d8c9ed25cbce1540d7844a417141869619bf8b04a",
+    "tests-rust-backend/map-fn-oracle/tests/synthetic/README.md": "9f0bb961e2b7ad6d5de97f6bcfbc9630abfdc400da62625e833af90a15ba8204",
+    "tests-rust-backend/map-fn-oracle/tests/synthetic/common.rs": "699c4cafbcd5f015a926eb12cc1cfec630bdea121b913ddd730e42e0414e5ef6",
+    "tests-rust-backend/map-fn-oracle/tests/synthetic/order.rs": "05f088ef599488dff897be28ab19206f4ace8eba83f55da9cc45ba29b8bdb8dd",
+    "tests-rust-backend/map-fn-oracle/tests/synthetic/original-ir.json": "f6166f0a26a129860b86109f25dbd96ff8812dee47480db03d8a1835d418df56",
+    "tests-rust-backend/map-fn-oracle/tests/synthetic/values.rs": "69cf26de7aec91dc194e250c71a19b9eadff50e4f7d6cab93689b118057d2abe",
+    "tests-rust-backend/map-lambda-oracle/tests/observed.rs": "25ecaaa4fdde852d32c18bb7a851ff3afa791e3e3315b29bd43430f40e4c659e",
+    "tools/compact-rust-backend/src/recorded/effect_plan/context_free.rs": "4a0281bb4ee89c26d6a14d0f591bf77be273add4094ffd846495f892ab758fd1",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/vector_map.rs": "2eef77b4dbeb9623fa62c9d5d8acad0499fa01c24c3def8032cf0932b70fee5e",
+    "tools/compact-rust-backend/src/recorded/effect_plan/render/vector_map.rs": "113657d05ec45a4789e9d76d6ec96584b97ba1e25b844fa00c448d7d20b892a4",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/vector_map.rs": "9d6c20cfa2dc9674b9f4e3d5593f178502926731898aa3c279952e9d756d4446",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/vector_map/resources.rs": "be7cc86decdd15e5690fe80a330d5ae1b7eb041d23873d550f897c0d8c574363",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/vector_map/scopes.rs": "750443b4643d880bb28afa68308485364f06bd3722a86643342d35e1062c7feb",
+    "tools/compact-rust-backend/src/recorded/effect_plan/tests/vector_map/validation.rs": "8494ff58f5209d8f2eba60472a68b3d604caef91d7030934f542dd5c5b0526cd",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/operations.rs": "badedc78e563d380f500edb12e9d32dd4648a191cd70393e7602226e361026d9",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/vector_map.rs": "2ff999363dac68b922d2cae3ebfa4163457596e54b90f53dff529c8747cd7d48",
+    "tools/compact-rust-backend/src/recorded/helpers/naming_tests.rs": "fa2e28460d0f7cf8d8b8b7189a4685fcfc2481bae7a43427457388b87e58376c",
+    "tools/compact-rust-backend/tests/support/recorded_helper_contract.rs": "ca75c25caee06c1484ac4c0a1521534ca521166e490ea561dd6233019f46fb7e",
+    "tools/compact-rust-backend/tests/support/recording_refusal.rs": "b73244c2b775d457407aaad492e81cdc29c40088442077ed8ab14e6c1853054d",
+    "tools/compact-rust-proof-smoke/src/vector_map/strict.rs": "5029d843224431f8489b1cddffed41296083528738508daedea426cd3c823ff2",
+    "tools/compact-rust-proof-smoke/src/vector_map/strict_tests.rs": "a0c164efadccfe332de9bbcdef6bed2d29ed69e9eb18db9dcc92a860e6cea4cd",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/fab.rs": "97881c6df7c5069eade09db9e3667c0e7e1df5ced197b12c1fba415b11b315c4",
+    "runtime-rs/src/natives.rs": "20b97e8e385121c5e0f0c66ed0fe4acfd7fd137dc6b93da17f82c6cc055febc1",
+    "compiler/analysis-passes.ss": "1e1beb4be9ca74cc229e533b65493874f7ab024b675892160faeca91fe5efc75",
+    "tools/compact-rust-backend/src/lib.rs": "b5e1abc6d5f9d8cff753c302b2650fa7a845e6560015a3a9f97329ee61359493",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/storage.rs": "7baba1007d829e4f396a1e80fc00f1b1fafdbcaeebc931845d3b0110f992c0f1",
+    "tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs": "46d7015357ea3d57becb9849e77cbb86d8b500a8c8fd2440dcf9497f9d9c9cdd",
+    "runtime-rs/src/context/map.rs": "e6acc1e7aaceda69a8517ea2c25b3ac728d2472743c406ca4a0670113de03c0b",
+    "runtime-rs/src/ledger/collections.rs": "3c3e36056578589d336d9a2dbbd8739c0b1e78c09abf1780cebbb7afaa54081d",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "c7f3762db72f2f012e6c085ee2ab425042f5f6af9283cf1e03d87f93e2a3328c",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": "3b2536023286adfbc028305c9afcf8402a87f71d62373c420eccc240e4ff3cd6",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/tests/welcome-schema20-ir.json": "8963572627b26394b74d550ec94e87b7b4848ba7edf8c3b2ffd509e54129d6ea"
+  },
+  "anchor_adaptations": [],
+  "baseline_retired_routes": 34,
+  "baseline_boundaries": 84
+}

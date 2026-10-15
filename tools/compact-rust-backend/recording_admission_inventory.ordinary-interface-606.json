@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "issue": 606,
+  "new_route_ids": [
+    "algebra.ordinary"
+  ],
+  "baseline_commit": "c9558521f6ed573b5f7a4a2d7d080e51e1c9015d",
+  "claim": "Add a final general checked ordinary interface with explicit Unsupported fallback and fatal Invalid; preserve baseline retirement accounting and existing qualified priorities.",
+  "previous_selector": {
+    "ordered_calls": [],
+    "function_sha256": "39edd1256e89f088a942088f357a48bd920afd3a413d932a8296c36fb8894085"
+  },
+  "current_selector": {
+    "ordered_calls": [],
+    "function_sha256": "3960fe663af28139e7e4f584311cf173335d298575a65948a2d2f7009216e33b"
+  },
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/profile_selection.rs": {
+      "previous_sha256": "7f2e2f49805c8b680e99e9b24ca6603d0fc37f5aabea670bbf1bc89a228f910e",
+      "current_sha256": "5033ed630b7ffdbe16403d47a3cf2e87a101d61aeeb63d5c159eafb3cfa38f2f",
+      "predecessor_reconstruction": [
+        {
+          "current": "use super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[path = \"profile_selection/ordinary_domain.rs\"]\nmod ordinary_domain;\n#[cfg(test)]\n#[path = \"profile_selection/ordinary_migration_tests.rs\"]\nmod ordinary_migration_tests;\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n",
+          "previous": "use super::typed_plan;\nuse super::typed_plan::TypedPlan;\n\n#[path = \"profile_selection/unit_domain.rs\"]\nmod unit_domain;\n\n"
+        },
+        {
+          "current": "                checked_zswap_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        // The general checked interface comes last so existing qualified owners\n        // keep their priority. Unsupported retains explicit legacy dispatch.\n        let through_ordinary = match through_zswap {\n            Some(plan) => Some(plan),\n            None => record_option!(\n                \"algebra.ordinary\",\n                ordinary_domain::attempt(\n                    circuit,\n                    ledger_fields,\n                    witnesses,\n                    pure_circuits,\n                    circuits\n                )?\n            ),\n        };\n        if let Some(plan) = through_ordinary {\n            organizer_steps = Some(plan.steps);\n            typed_result = Some(plan.result);\n        }\n",
+          "previous": "                checked_zswap_domain(circuit, ledger_fields, witnesses, pure_circuits, circuits)?\n            ),\n        };\n        if let Some(plan) = through_zswap {\n            organizer_steps = Some(plan.steps);\n            typed_result = Some(plan.result);\n        }\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded.rs": {
+      "previous_sha256": "f67ec6d4580e6ef0d5786ebc23a5e7825ed84bc1c37ccc60115a7ee096b99ea4",
+      "current_sha256": "dd119bd979eacf64a65fe3fefae44e59c113a70ed0f47a26fc712bd9bcb29e37",
+      "predecessor_reconstruction": [
+        {
+          "current": "            return Ok(RecordingOutcome::Unsupported(gap));\n        }\n    };\n    if !organizer_gate && steps.is_empty() && return_steps.is_empty() {\n        return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));\n    }\n    if circuit\n",
+          "previous": "            return Ok(RecordingOutcome::Unsupported(gap));\n        }\n    };\n    if steps.is_empty() && return_steps.is_empty() {\n        return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));\n    }\n    if circuit\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/admission_probe/trace_tests.rs": {
+      "previous_sha256": "1a3d3abc716effeb267362a7e5e784e3235fb1265a3aed1b9beba2cc0e35e8bc",
+      "current_sha256": "a22cdfd13897f11b8f4e7cacc1ee1dca9284efaf9d671ae75f86cfd74d718559",
+      "predecessor_reconstruction": [
+        {
+          "current": "        .iter()\n        .find(|row| row.phase == Phase::PublicEmission && !row.helper)\n        .unwrap();\n    assert_eq!(row.body_owner, Some(\"algebra.ordinary\"));\n    assert_eq!(row.return_dispatch, None);\n    assert!(matches!(row.outcome, Outcome::Supported));\n    let candidates: Vec<_> = row\n        .attempts\n        .iter()\n        .map(|attempt| serde_json::to_value(attempt).unwrap())\n        .filter(|value| value[\"produced_candidate\"] == true)\n        .map(|value| value[\"route\"].clone())\n        .collect();\n    assert_eq!(candidates, vec![serde_json::json!(\"algebra.ordinary\")]);\n}\n\n#[test]\n",
+          "previous": "        .iter()\n        .find(|row| row.phase == Phase::PublicEmission && !row.helper)\n        .unwrap();\n    assert_eq!(row.body_owner, Some(\"return.dispatch\"));\n    assert_eq!(row.return_dispatch, Some(\"return.dispatch\"));\n    assert!(matches!(row.outcome, Outcome::Supported));\n    assert!(row.attempts.iter().all(|attempt| {\n        // An actually supported return need not have any admitted named profile.\n        let value = serde_json::to_value(attempt).unwrap();\n        value[\"produced_candidate\"] == false\n    }));\n}\n\n#[test]\n"
+        },
+        {
+          "current": "        ty: Type::OpaqueString,\n    });\n    let (rendered, rows) = capture(&contract);\n    assert!(rendered.capabilities.circuits[0].recorded);\n    assert_eq!(rows[0].body_owner, Some(\"algebra.ordinary\"));\n    assert!(matches!(rows[0].outcome, Outcome::Supported));\n\n    // Existing checked layout policy can still decline an otherwise native\n    // interface. This preserves a real final-guard refusal after a selected\n    // generic return, rather than pretending the now-qualified opaque key fails.\n    contract.stateful_circuits[0].parameters.push(Parameter {\n        name: \"oversized\".into(),\n        ty: Type::Vector {\n            element: Box::new(Type::Field),\n            length: crate::resource_limits::recording_fixed_layout_limit() + 1,\n        },\n    });\n    let (rendered, rows) = capture(&contract);\n    assert!(!rendered.capabilities.circuits[0].recorded);\n    assert_eq!(rows[0].body_owner, Some(\"return.dispatch\"));\n    assert_eq!(rows[0].return_dispatch, Some(\"return.dispatch\"));\n    assert!(matches!(rows[0].outcome, Outcome::Unsupported { .. }));\n}\n\n",
+          "previous": "        ty: Type::OpaqueString,\n    });\n    let (rendered, rows) = capture(&contract);\n    assert!(!rendered.capabilities.circuits[0].recorded);\n    assert_eq!(rows[0].body_owner, Some(\"return.dispatch\"));\n    assert!(matches!(rows[0].outcome, Outcome::Unsupported { .. }));\n}\n\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/zswap_migration_tests.rs": {
+      "previous_sha256": "682f182ade95222874c5f65dd97dda7204e925458bc4a43ed49b019630cef22b",
+      "current_sha256": "7c6febb1d1704a6f32c37bade8f3b894e7629dba4bdc494cdcdeba2c48245987",
+      "predecessor_reconstruction": [
+        {
+          "current": "    assert!(selected.typed_result.is_none());\n    let attempted = attempts(&row);\n    assert_eq!(\n        &attempted[attempted.len() - 3..],\n        &[\n            \"algebra.unit-composition\",\n            \"algebra.zswap\",\n            \"algebra.ordinary\"\n        ]\n    );\n    assert!(!attempted.contains(&\"selector.zswap\"));\n    crate::render_with_capabilities(&c).unwrap();\n}\n\n#[test]\nfn former_boolean_inequality_refusal_preserves_earlier_checked_unit_owner() {\n    let mut c = source();\n    c.stateful_circuits\n        .iter_mut()\n",
+          "previous": "    assert!(selected.typed_result.is_none());\n    let attempted = attempts(&row);\n    assert_eq!(\n        &attempted[attempted.len() - 2..],\n        &[\"algebra.unit-composition\", \"algebra.zswap\"]\n    );\n    assert!(!attempted.contains(&\"selector.zswap\"));\n    crate::render_with_capabilities(&c).unwrap();\n}\n\n#[test]\nfn former_boolean_inequality_refusal_now_uses_checked_last_domain() {\n    let mut c = source();\n    c.stateful_circuits\n        .iter_mut()\n"
+        },
+        {
+          "current": "    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_some());\n    let (selected, row) = maps.selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.unit-composition\");\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n    let output = output.unwrap();\n    let capability = output\n",
+          "previous": "    assert!(maps.domain(root(&c, \"flow\")).unwrap().is_some());\n    let (selected, row) = maps.selected(root(&c, \"flow\"));\n    assert!(selected.typed_result.is_some());\n    assert_eq!(row[\"body_owner\"], \"algebra.zswap\");\n    let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));\n    let output = output.unwrap();\n    let capability = output\n"
+        },
+        {
+          "current": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.unit-composition\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&r| r == \"algebra.zswap\")\n            .count(),\n        0\n    );\n    assert!(!attempts(rows[0]).contains(&\"algebra.ordinary\"));\n    assert!(!attempts(rows[0]).contains(&\"selector.zswap\"));\n}\n",
+          "previous": "        })\n        .collect::<Vec<_>>();\n    assert_eq!(rows.len(), 1);\n    assert_eq!(rows[0][\"body_owner\"], \"algebra.zswap\");\n    assert_eq!(\n        attempts(rows[0])\n            .iter()\n            .filter(|&&r| r == \"algebra.zswap\")\n            .count(),\n        1\n    );\n    assert!(!attempts(rows[0]).contains(&\"selector.zswap\"));\n}\n"
+        }
+      ]
+    },
+    "tools/compact-rust-backend/src/recorded/profile_selection/broad_unit_inclusion_tests/inputs.rs": {
+      "previous_sha256": "d7fde17bdf9fd64d1f8533ecc0a0548c657b9cd9e18dd054d538507e8fe50e2d",
+      "current_sha256": "4038124b06b0ba8b68cc3324ba9fb43f792612bc1dc23ce475be608be76a714f",
+      "predecessor_reconstruction": [
+        {
+          "current": "    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\n// #597 added only optional resource metadata to this retained oracle owner.\n// Authenticate its immutable checkpoint before the original retirement projection.\nconst RESOURCE_METADATA_SHA256: &str =\n    \"a4d3559923d732989a8245bb1984f131479feba07554a2e5006dec16b89f8145\";\nconst RESOURCE_METADATA: &[u8] =\n    include_bytes!(\"../../../../recording_admission_inventory.resource-diagnostics-597.json\");\n\nfn resource_metadata_manifest(bytes: &[u8]) -> Result<Value, String> {\n    if digest(bytes) != RESOURCE_METADATA_SHA256 {\n        return Err(\"unreviewed resource metadata checkpoint\".into());\n    }\n    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\nfn projected_legacy_source(\n    path: &str,\n    current: &str,\n    retirement: &Value,\n    resource_metadata: &Value,\n) -> Result<String, String> {\n    let before_metadata = legacy_source(path, current, resource_metadata)?;\n    legacy_source(path, &before_metadata, retirement)\n}\n\nfn legacy_source(path: &str, current: &str, retirement: &Value) -> Result<String, String> {\n    let Some(owner) = retirement[\"owners\"].get(path) else {\n        return Ok(current.to_owned());\n",
+          "previous": "    serde_json::from_slice(bytes).map_err(|error| error.to_string())\n}\n\nfn legacy_source(path: &str, current: &str, retirement: &Value) -> Result<String, String> {\n    let Some(owner) = retirement[\"owners\"].get(path) else {\n        return Ok(current.to_owned());\n"
+        },
+        {
+          "current": "pub(super) fn legacy_authority() -> Value {\n    let mut authority: Value = serde_json::from_str(include_str!(\"legacy-authority.json\")).unwrap();\n    let retirement = retirement_manifest(include_bytes!(\"legacy-retirement.json\")).unwrap();\n    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();\n    let repository = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for row in authority[\"files\"].as_array().unwrap() {\n        let path = row[\"path\"].as_str().unwrap();\n        assert!(relative_path(path));\n        let current = std::fs::read_to_string(repository.join(path)).unwrap();\n        let previous =\n            projected_legacy_source(path, &current, &retirement, &resource_metadata).unwrap();\n        assert_eq!(\n            digest(previous.as_bytes()),\n            row[\"sha256\"],\n",
+          "previous": "pub(super) fn legacy_authority() -> Value {\n    let mut authority: Value = serde_json::from_str(include_str!(\"legacy-authority.json\")).unwrap();\n    let retirement = retirement_manifest(include_bytes!(\"legacy-retirement.json\")).unwrap();\n    let repository = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for row in authority[\"files\"].as_array().unwrap() {\n        let path = row[\"path\"].as_str().unwrap();\n        assert!(relative_path(path));\n        let current = std::fs::read_to_string(repository.join(path)).unwrap();\n        let previous = legacy_source(path, &current, &retirement).unwrap();\n        assert_eq!(\n            digest(previous.as_bytes()),\n            row[\"sha256\"],\n"
+        },
+        {
+          "current": "        );\n    }\n    authority[\"retirement_projection\"] = retirement;\n    authority[\"resource_metadata_projection\"] = resource_metadata;\n    authority\n}\n\n",
+          "previous": "        );\n    }\n    authority[\"retirement_projection\"] = retirement;\n    authority\n}\n\n"
+        },
+        {
+          "current": "fn retired_oracle_projection_rejects_drift_and_forged_authority() {\n    let bytes = include_bytes!(\"legacy-retirement.json\");\n    let retirement = retirement_manifest(bytes).unwrap();\n    let resource_metadata = resource_metadata_manifest(RESOURCE_METADATA).unwrap();\n    assert!(resource_metadata_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    assert!(retirement_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for (path, row) in retirement[\"owners\"].as_object().unwrap() {\n        let current = std::fs::read_to_string(root.join(path)).unwrap();\n        assert_eq!(\n            digest(\n                projected_legacy_source(path, &current, &retirement, &resource_metadata)\n                    .unwrap()\n                    .as_bytes()\n            ),\n            row[\"previous_sha256\"]\n        );\n        assert!(\n            projected_legacy_source(\n                path,\n                &(current.clone() + \"\\n// drift\\n\"),\n                &retirement,\n                &resource_metadata,\n            )\n            .is_err()\n        );\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let before_metadata = legacy_source(path, &current, &resource_metadata).unwrap();\n        let partial = before_metadata.replacen(\n            edit[\"current\"].as_str().unwrap(),\n            edit[\"previous\"].as_str().unwrap(),\n            1,\n        );\n        assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());\n    }\n    // Every original source digest remains mandatory after both exact stages.\n    let authority = legacy_authority();\n    assert_eq!(authority[\"files\"].as_array().unwrap().len(), 49);\n    let path = \"tools/compact-rust-backend/src/recorded/typed_plan/composition.rs\";\n    let current = std::fs::read_to_string(root.join(path)).unwrap();\n    let edit = &resource_metadata[\"owners\"][path][\"predecessor_reconstruction\"][0];\n    let partial = current.replacen(\n        edit[\"current\"].as_str().unwrap(),\n        edit[\"previous\"].as_str().unwrap(),\n        1,\n    );\n    assert_ne!(partial, current);\n    assert!(projected_legacy_source(path, &partial, &retirement, &resource_metadata).is_err());\n}\n\n#[test]\n",
+          "previous": "fn retired_oracle_projection_rejects_drift_and_forged_authority() {\n    let bytes = include_bytes!(\"legacy-retirement.json\");\n    let retirement = retirement_manifest(bytes).unwrap();\n    assert!(retirement_manifest(br#\"{\"owners\":{}}\"#).is_err());\n    let root = Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"../..\");\n    for (path, row) in retirement[\"owners\"].as_object().unwrap() {\n        let current = std::fs::read_to_string(root.join(path)).unwrap();\n        assert_eq!(\n            digest(\n                legacy_source(path, &current, &retirement)\n                    .unwrap()\n                    .as_bytes()\n            ),\n            row[\"previous_sha256\"]\n        );\n        assert!(legacy_source(path, &(current.clone() + \"\\n// drift\\n\"), &retirement).is_err());\n        let edit = &row[\"predecessor_reconstruction\"][0];\n        let partial = current.replacen(\n            edit[\"current\"].as_str().unwrap(),\n            edit[\"previous\"].as_str().unwrap(),\n            1,\n        );\n        assert!(legacy_source(path, &partial, &retirement).is_err());\n    }\n}\n\n#[test]\n"
+        }
+      ]
+    }
+  },
+  "new_and_shared_sources": {
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_domain.rs": "8e1356d5e725d94edfbc51e2e572db19ea5751147c77159e7f6e48372618d8ea",
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests.rs": "7ecc8c59dff03de847779b402b485c59457a112af89696df3a46b36dccf83a45",
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_domain/tests.rs": "7da5cf29791b3a838997ef900ce2dc662898d7a11d123966579b276ce6436573",
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests/priority.rs": "4728b934c9c168af6af4061239749529bb2e59e1064756cb460f26c731bf390a",
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests/execution.rs": "15e1d980aa023246fa7c06edf9172fa6180f7587665bb41d04d046a0c27157bf",
+    "tools/compact-rust-backend/src/recorded/profile_selection/ordinary_migration_tests/interfaces.rs": "75e94d4a827eac001e0a1616478d95b58c6e1fb592ee3d7650d22c520172aaaf",
+    "tools/compact-rust-backend/src/recorded/effect_plan.rs": "fcd70eccbf7f9b133a2a6527a20b631303f129378d4869ec77e58a93c1c480e2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower.rs": "e7c92a1335f332310c15677c05012dd2ae9a02b271d46d53f00f2ed6e2584e02",
+    "tools/compact-rust-backend/src/recorded/effect_plan/rejection.rs": "3d41cb4ab13956ee0326ca0e1d2337c71feb16ced42576cc79bfe4564cb8767b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/domain.rs": "e7aa6a80f5e17b1728d7e694b8032d95b6b5d4fa079416a9ab8807180b90e41f",
+    "tools/compact-rust-backend/src/recorded/legacy/actions.rs": "39c576e3e93cc9d098808d9e7303f8e8c64df1d98c1834cbb71e5e70baf93f14",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+    "tools/compact-rust-backend/src/recorded/helpers.rs": "39ab813c3e0c88bdc7955cd3d16f07feee8abc65c711173e24a79ceb7d5517a6",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate/maps.rs": "107e2d37884c3c9417e31ebd0f2237d5c927c94394e22f449261d95ae0556c01",
+    "tools/compact-rust-backend/src/recorded/profile_selection/unit_domain.rs": "c00c5f9602d0ef1b5ffa1981be2707996e817be43c7896f4361b710cfa61fde5",
+    "tools/compact-rust-backend/src/resource_limits/policy.rs": "8d1e091410d3f802b1f54654314146ba1615f6c45222645b586099528ed5294f",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/maps.rs": "98c476dbbd666aecd6caf0b681a6dc86518efbd9c5ceab0874cb1defe5159355",
+    "tools/compact-rust-backend/src/recorded/effect_plan/validate.rs": "7729b2cc66fa3597d8573dfeac783af60cedf5b46b8e1ee3e75cbc1300f48a1c",
+    "runtime-rs/src/slots/map.rs": "a90f19b5603acaacc13b46b93e4b86ef37a39f1292fd00f7e516f9406d58520b",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/sets.rs": "bc492e473efdf8abab77f67f3f24310ab0ec6c5a8aedb920f7518ae9efa568a2",
+    "tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs": "97a9bac2f54a8d3d808b51fe0a796839b6d4db559af71cce47629d3d8a1fea44",
+    "tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+    "tools/compact-rust-backend/tests/welcome-schema20-ir.json": "8963572627b26394b74d550ec94e87b7b4848ba7edf8c3b2ffd509e54129d6ea"
+  },
+  "anchor_adaptations": [],
+  "baseline_retired_routes": 34,
+  "baseline_boundaries": 84
+}

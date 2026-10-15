@@ -29,6 +29,12 @@ fn compact_coin(coin: runtime::ledger::CoinInfo) -> types::ShieldedCoinInfo {
     }
 }
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the complete circuit input before key loading or deployment.
+    // Input identity alone does not authenticate proving-key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_canonical_output_order_oracle_fixture::RETAINED_IR,
+    )?;
     for reversed in [false, true] {
         run_order(root, reversed)?;
     }

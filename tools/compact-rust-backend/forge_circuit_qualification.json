@@ -1,0 +1,19 @@
+{
+  "let_return": {
+    "compact_source": "examples/rust_backend/let_return_oracle.compact",
+    "rust_fixture": "tests-rust-backend/let-return-oracle/lib.rs",
+    "circuit": "replace",
+    "selector": "--let-return",
+    "success_marker": "root-Let replace proved and applied through ledger-8",
+    "k": 6,
+    "parameter_digest": "cf2ad6be7d0fedf5bec2aaa35f6be4aca33053d74268fdf5aa54fcb2891ea6df"
+  },
+  "counter": {
+    "compact_source": "examples/rust_backend/effect_plan_counter_only.compact",
+    "circuit": "adjust",
+    "selector": "--effect-plan-counter-only",
+    "success_marker": "Counter-only frontend branch 1 proved, verified, and ledger-applied",
+    "k": 8,
+    "parameter_digest": "909b707551eaaea79828e883cde6fc46ab15986c3b1d791bed462c9e2805c933"
+  }
+}

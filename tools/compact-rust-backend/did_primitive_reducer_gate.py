@@ -22,6 +22,7 @@ from pathlib import Path
 import re
 import shutil
 import sys
+import forge_circuits
 import local_parity_gate as common
 import resolve_ledger_test_static as ledger_static
 import reviewed_rust_capture as reviewed
@@ -82,7 +83,7 @@ def validate_summary(value, row):
 
 
 def source_inventory(rows):
-    files = [REGISTRY, Path(__file__), Path(common.__file__), Path(ledger_static.__file__),
+    files = [REGISTRY, Path(__file__), Path(common.__file__), Path(forge_circuits.__file__), Path(ledger_static.__file__),
              Path(reviewed.__file__), Path(__file__).with_name('test_reviewed_rust_capture.py'),
              Path(capture_inputs.__file__), Path(__file__).with_name('test_reducer_capture_source.py'),
              ROOT/reviewed.SUPPORT,
@@ -116,7 +117,7 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
         for key in ('MIDNIGHT_PP','MIDNIGHT_LEDGER_TEST_STATIC_DIR'):
             require(bool(env.get(key)) and Path(env[key]).is_absolute() and Path(env[key]).is_dir(),
                     f'{key} must select an absolute existing directory')
-        zkir = shutil.which('zkir', path=env.get('PATH'))
+        zkir = forge_circuits.zkir_executable(env)
         require(zkir is not None, 'zkir missing')
         dust_files=[]
         for name,digest in ledger_static.FIXTURE_HASHES.items():
@@ -135,8 +136,11 @@ def run_gate(directory, compiler, scheme, target, selected, environment=None):
         env.update({'COMPACTC_SCHEME':components['compactc-scheme']['snapshot'],
                     'COMPACT_RUST_RUNTIME_DIR':str(ROOT),'CARGO_TARGET_DIR':str(target.resolve()),
                     'CARGO_INCREMENTAL':'0','RUSTUP_TOOLCHAIN':'1.99.0','PYTHONDONTWRITEBYTECODE':'1'})
+        env = forge_circuits.configure_environment(env, directory / "forge",
+                                                   real_zkir=components["zkir"]["snapshot"])
+        receipt["key_generation"] = forge_circuits.provenance(env)
         def execute(argv,label,stdout_path=None):
-            common.run([str(a) for a in argv],label,directory,receipt,env=env,stdout_path=stdout_path)
+            common.run(forge_circuits.command([str(a) for a in argv], env),label,directory,receipt,env=env,stdout_path=stdout_path)
         packages=[arg for row in rows for arg in ('-p',row['package'])]
         execute(['cargo','+1.99.0','test','--locked','--offline',*packages], 'test-reducer-behavior')
         execute(['cargo','+1.99.0','build','--locked','--offline','-p','compact-rust-proof-smoke'],'build-proof-runner')

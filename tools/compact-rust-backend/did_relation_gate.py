@@ -23,6 +23,7 @@ import shutil
 import sys
 
 import did_proof_gate as did
+import forge_circuits
 import local_parity_gate as common
 import resolve_ledger_test_static as ledger_static
 
@@ -125,7 +126,7 @@ def source_inventory():
     # The original source is an imported closure, not just did.compact.
     original_closure = did.source_inventory()
     paths = [ROOT / "Cargo.toml", ROOT / "Cargo.lock", Path(__file__),
-             Path(common.__file__), Path(did.__file__), Path(ledger_static.__file__),
+             Path(common.__file__), Path(forge_circuits.__file__), Path(did.__file__), Path(ledger_static.__file__),
              ROOT / did.SOURCE, ROOT / did.FIXTURE,
              ROOT / "examples/rust_backend/did_adoption/source-manifest.json",
              ROOT / "tools/compact-rust-backend/did_relation_capture.mjs",
@@ -182,8 +183,11 @@ def run_gate(directory, compiler, scheme, target, *, reuse_material=None, reuse_
             receipt["public_interchange_directory"] = str(public_dir)
         else:
             env.pop("COMPACT_DID_PUBLIC_INTERCHANGE", None)
+        env = forge_circuits.configure_environment(env, directory / "forge",
+                                                   real_zkir=components["zkir"]["snapshot"])
+        receipt["key_generation"] = forge_circuits.provenance(env)
         def execute(argv, label, stdout=None):
-            command([str(arg) for arg in argv], label, directory, receipt, env=env, stdout_path=stdout)
+            command(forge_circuits.command([str(arg) for arg in argv], env), label, directory, receipt, env=env, stdout_path=stdout)
         original = directory / "did"
         execute([components["compactc"]["snapshot"], "--target", "rust", "--skip-zk",
                  "--rust-runtime-root", ROOT, ROOT / did.SOURCE, original], "compile-original-did")

@@ -6,7 +6,7 @@ The Rust backend uses the ledger8 Compact frontend, a private typed IR and struc
 
 ## Current recording-effect branch
 
-The tutorial receipts below belong to milestone 0.3.0. For the current compiler architecture, primitive extension workflow, typed refusals and source diagnostics, read [Checked recording and source diagnostics](checked-recording.md). Use the [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for separate execution, proof and application evidence.
+The tutorial receipts below belong to milestone 0.3.0. Current source uses ABI52 / ledger8.1.3 and requires Rust1.89; see [versions and targets](versions-and-targets.md) and [local artifact/proof checks](forge-circuit-cache.md). For the current compiler architecture, primitive extension workflow, typed refusals and source diagnostics, read [Checked recording and source diagnostics](checked-recording.md). Use the [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for separate execution, proof and application evidence.
 
 ## Pick a task
 
@@ -43,7 +43,7 @@ Compilation establishes type compatibility for the selected graph. Native execut
 
 ## Adopted applications
 
-- **DID:** pinned unchanged v0.7.0 source closure; twelve original stateful recorded APIs locally accepted, with separate finite lifecycle/proof and ledger8.1 wire-profile receipts. Native runtime remains8.0.3.
+- **DID:** pinned unchanged v0.7.0 source closure; twelve original stateful recorded APIs locally accepted, with separate finite lifecycle/proof and ledger8.1 wire-profile receipts. The retained application receipts use native8.0.3; current8.1.3 qualification is recorded separately.
 - **Digital passport:** the selected `midnight-vc-passport` reference resolves to the pinned credential source closure. Its75 exports are pure. Existing acceptance includes202 finite sampled cases; this does not supply ledger transactions or ZK proofs for the pure closure.
 - **Passport ACC:** removed from the initiative after construct review. No ACC migration or future adoption is scheduled. Generic Jubjub support and its scoped tests remain; ledger8 time lowering is separately tracked in #442.
 

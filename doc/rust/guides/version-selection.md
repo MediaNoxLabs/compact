@@ -1,10 +1,10 @@
 # Select a compatible compiler, runtime and target
 
-Current policy, 2026-10-07. Version values match the accepted5efa91c2 compatibility checkpoint. Retained migration and target receipts identify their own sources, features and locks; installation guidance alone is not an executed check.
+Retained policy checkpoint, 2026-10-07. Version values below describe the accepted5efa91c2 checkpoint; use [current versions and targets](versions-and-targets.md) for ABI52, ledger8.1.3, compatibility schema2 and the declared Rust1.89 minimum. Retained migration and target receipts identify their own sources, features and locks; installation guidance alone is not an executed check.
 
 ## Keep these version domains separate
 
-| Boundary | Current value | Meaning |
+| Boundary | Retained 0.3.0 value | Meaning |
 |---|---|---|
 | Initiative milestone/artifact label | 0.3.0 / `rust-backend-v0.3.0` | Engineering milestone; no tag or published package is implied here |
 | Compact compiler | 0.31.133 | Frontend/toolchain version |
@@ -18,7 +18,7 @@ Current policy, 2026-10-07. Version values match the accepted5efa91c2 compatibil
 | Native ledger | 8.0.3 | Pinned ledger graph |
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
-Generated Rust asserts `runtime::RUST_RUNTIME_ABI == 51`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 52`; the table above retains its older checkpoint. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
 
 ## Obtain a matching source distribution
 
@@ -51,7 +51,7 @@ The tutorial commands target native Rust. They are not Node/browser build instru
 
 ## Migrate consumers
 
-1. Preserve old generated code with its original matching runtime, or regenerate source with the ABI50 compiler/runtime/macros pair. Do not edit the ABI assertion.
+1. Preserve old generated code with its original matching runtime, or regenerate source with the current matching ABI52 compiler/runtime/macros pair. Do not edit the ABI assertion.
 2. Prefer the generated crate's `runtime` re-export for value types, avoiding duplicate crate identities.
 3. Backend0.2 exposes non-exhaustive `RenderError`. External matches need a fallback; resource diagnostics expose `{resource, limit, observed}`. Display text/resource labels are human diagnostics, not a stable machine protocol.
 4. Keep the qualified Cargo.lock. A successful build of one workspace lock does not qualify a different standalone or target-specific resolution.
@@ -59,15 +59,15 @@ The tutorial commands target native Rust. They are not Node/browser build instru
 
 The ADR0293/0304 migration receipts already contain old ABI49 refusal, working ABI50 controls, non-exhaustive compile failures, migrated callers and standalone Rust1.88 lock qualification. Those are historical qualified executions, not reruns by this documentation reconciliation. See [Static constraints and migration evidence](static-constraints.md) for exact controls and limitations.
 
-## Accepted compatibility checkpoint
+## Retained compatibility checkpoint
 
-The authoritative local policy is the [feature/source policy](feature-source-policy.json), accepted at `5efa91c2`. Its current MSRV receipt covers actual Rust1.88 workspace backend/Jubjub all-feature and isolated standalone compilation at49898aed; the only later source changes before5efa91c2 are two test files. The accepted feature profiles are default native, exact-evidence `ledger-transaction`, source-only ContractLab, experimental bounded WASM and registry **manifest emission only**. Default native includes crypto/proof dependencies.
+The historical policy was accepted at `5efa91c2`; the [feature/source policy](feature-source-policy.json) now records the current ledger8.1.3 pairing separately. Its historical MSRV receipt covers actual Rust1.88 workspace backend/Jubjub all-feature and isolated standalone compilation at49898aed; the only later source changes before5efa91c2 are two test files. The accepted feature profiles are default native, exact-evidence `ledger-transaction`, source-only ContractLab, experimental bounded WASM and registry **manifest emission only**. Default native includes crypto/proof dependencies.
 
 DID's original compiler profile (ledger8.0.2/compiler0.31.1/runtime0.16.0), its npm ledger-v8@8.1.0 wire profile and the isolated coherent Rust8.1 receiver are separate from native8.0.3. No native promotion follows from those receipts. See [candidate qualification](candidate-qualification.md) for current source, validation and documentation dispositions. The resumed ADR0285/#409 consumer-safety controls passed at4c8aebc3; independent audit fixes are delivered through231559f1. The owner accepted encoded-byte admission for 0.3.0; ADR0359 delivered the opt-in 64 MiB preset with overrides, while aggregate decoded heap/object/CPU containment is deferred in CoPS-001/#495. Historical policy metadata retains its original checkpoint status and is not a current blocker register.
 
 ## Historical labels
 
-ADR0261 originally described the0.1.0 source-package line. ADR0293 introduced backend/runtime/macros0.2.0 with exact pairing. Earlier ABI49 and capability-schema1 documents describe their original releases; the current generated source uses ABI50 and finalized capability schema3. Preserve those records rather than rewriting their measurements. `--runtime-version` continues to report the TypeScript runtime version.
+ADR0261 originally described the0.1.0 source-package line. ADR0293 introduced backend/runtime/macros0.2.0 with exact pairing. Earlier ABI49 and capability-schema1 documents describe their original releases; that checkpoint used ABI50 and finalized capability schema3; current generated source uses ABI52. Preserve those records rather than rewriting their measurements. `--runtime-version` continues to report the TypeScript runtime version.
 
 ## Source build instructions
 

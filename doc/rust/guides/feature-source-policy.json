@@ -68,10 +68,10 @@
     "deprecation": "no low-level removal; positional generated APIs retained"
   },
   "explicit_exclusions": {
-    "ADR0285_issue409": "Existing automatic-review stop remains unresolved; consumer-safety/cross-instance investigation is not resumed, qualified or closed by this policy or MSRV commands.",
+    "ADR0285_issue409": "The retained checkpoint records its original automatic-review stop. Subsequent scoped controls passed at4c8aebc3, as documented in candidate-qualification.md; this policy does not extend that acceptance to arbitrary consumers, network use or human security certification.",
     "security_acceptance": "No new consumer-safety, transaction ownership or cross-instance assurance claim; audits and explicitly stopped work retain their separate dispositions."
   },
-  "automatic_review_stop": "ADR0285/#409 remains stopped and unaccepted; this parent does not close consumer safety or security audit.",
+  "automatic_review_stop": "Historical ADR0285/#409 stop metadata is retained in the 0.3.0 checkpoint; subsequent scoped controls passed at4c8aebc3 as recorded in candidate-qualification.md. Current #508 overall closure is pending; independent coding-agent review does not establish human security certification.",
   "retained_0_3_0_checkpoint": {
     "status": "accepted local compatibility checkpoint; final release qualification pending",
     "source_commit": "5efa91c280c059e375dcde0998c64dd88f615fb6",
@@ -161,9 +161,13 @@
       "final frozen-candidate source/locks/toolchain manifest",
       "read-only recheck of immutable DID/passport source refs and upstream drift before RC",
       "repository publication of vault planning at closeout"
-    ]
+    ],
+    "historical_review_stop": {
+      "automatic_review_stop": "ADR0285/#409 remains stopped and unaccepted; this parent does not close consumer safety or security audit.",
+      "ADR0285_issue409": "Existing automatic-review stop remains unresolved; consumer-safety/cross-instance investigation is not resumed, qualified or closed by this policy or MSRV commands."
+    }
   },
-  "status": "ledger 8.1.3 working-tree upgrade; current local qualification pending; retained 0.3.0 evidence is historical",
+  "status": "ledger 8.1.3 core integration qualified locally; #508 final historical, affected consumer and closure gates pending; retained 0.3.0 evidence is historical",
   "runtime_compatibility": {
     "schema_version": 2,
     "runtime_abi": 52,
@@ -251,10 +255,10 @@
     "live_status": "unqualified; refused by default",
     "historical_pairing": "node-0.22.3/indexer-4.0.1/ledger-8.0.2/codec-8.0.3; no promotion to current codec"
   },
-  "acceptance_scope": "Current ledger/source selection and local offline test configuration only. Retained 0.3.0 receipts, MSRV and application wire identities retain their original epoch; no new live network, performance, proof or release acceptance is asserted.",
+  "acceptance_scope": "Current source-pinned compiler/runtime and selected local proof/application checks are qualified at 535e4470/df7367fc; see forge-circuit-cache.md for exact scope. Retained 0.3.0 MSRV, consumer and application wire receipts keep their original epoch. No general network, platform, performance or publication acceptance.",
   "remaining_release_gate": [
-    "coherent source/lock/Nix/npm upgrade qualification",
-    "current local proof/application and artifact qualification",
+    "current archive-only consumer qualification and affected ledger8.1.3 proof/application paths for #508 closure",
+    "complete historical qualification, final source/evidence joins and independent #508 acceptance",
     "live node/indexer profile validation before any wallet live acceptance"
   ]
 }

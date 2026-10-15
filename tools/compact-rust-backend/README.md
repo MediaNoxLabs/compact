@@ -19,7 +19,7 @@ witness-only VM queries; the Rust result sums the observed query costs.
 
 The default recorder lowers supported typed operations and composition into a checked plan. Ordinary roots use the checked route; Effectful roots retain their earlier checked boundary. Unsupported operations return checked refusals; invalid plans are fatal. The former StartFunding and generic/profile fallback paths are test history. They do not accept rejected production plans. Profile names describe retained examples and tests, not formal algebraic theorems or production admission authority.
 
-Pure expressions use one shared semantic fold. `NativeSink` produces Rust syntax; `BodyCheckSink` checks the same body rules without constructing native syntax. Current runtime ABI is **52**, private IR **20**, finalized capability schema **3** and private origin transport **3**. Native ledger remains **8.0.3**.
+Pure expressions use one shared semantic fold. `NativeSink` produces Rust syntax; `BodyCheckSink` checks the same body rules without constructing native syntax. Current runtime ABI is **52**, private IR **20**, finalized capability schema **3** and private origin transport **3**. Native ledger is **8.1.3**, pinned to official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`; generated consumers require Rust 1.89. See [current versions and retained receipts](../../doc/rust/guides/versions-and-targets.md).
 
 Read the [current extension and diagnostics guide](../../doc/rust/guides/checked-recording.md) and [capability and retirement book](../../doc/rust/recording-effect-algebra/capability-and-retirement-book.md). The following development checkpoints preserve their original support and ABI claims; their earlier fallback/profile descriptions are historical.
 

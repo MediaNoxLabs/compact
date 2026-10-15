@@ -18,17 +18,17 @@
 use super::{
     CellValue, CompactError, LedgerArray, LedgerHashMap, LedgerPath, MerklePath, QueryContext,
     QueryResults, StateValue, TranscriptRejected, aligned_cell_value, constructor_cell,
-    constructor_map, decode_last_read, field_at_path, path_keys, read_cell,
+    decode_last_read, field_at_path, path_keys, read_cell,
 };
 use crate::context::WitnessReadMeter;
 use crate::{BoundedUint, FixedBytes};
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_base_crypto::repr::BinaryHashRepr;
+use midnight_onchain_state::state::AlignedValueChecked;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{ResultMode, ResultModeGather, ResultModeVerify};
-use midnight_storage::arena::Sp;
 use midnight_storage::db::DB;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash::HashOutput;
@@ -488,7 +488,7 @@ fn merkle_insert_index_hashed_program<D: DB>(
         u8::from(matches!(history, MerkleHistory::Historic)),
     )?;
     let keys = path_keys(path.as_slice());
-    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let index_key = |index| vec![Key::Value(AlignedValueChecked::from(index))].into();
     let mut program = vec![
         Op::Idx {
             cached: false,
@@ -502,11 +502,11 @@ fn merkle_insert_index_hashed_program<D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(position),
+            value: super::vm::literal(position),
         },
         Op::Push {
             storage: true,
-            value: StateValue::Cell(Sp::new(hash)),
+            value: super::vm::aligned(hash).map_err(super::input_rejected)?,
         },
         Op::Ins {
             cached: false,
@@ -519,7 +519,7 @@ fn merkle_insert_index_hashed_program<D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(position),
+            value: super::vm::literal(position),
         },
         Op::Addi { immediate: 1 },
         Op::Dup { n: 1 },
@@ -681,7 +681,7 @@ fn merkle_insert_hashed_program<D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let insert_depth = super::checked_path_operand::<D>(path.as_slice().len(), 1)?;
     let keys = path_keys(path.as_slice());
-    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let index_key = |index| vec![Key::Value(AlignedValueChecked::from(index))].into();
     let mut program = vec![
         Op::Idx {
             cached: false,
@@ -701,7 +701,7 @@ fn merkle_insert_hashed_program<D: DB>(
         },
         Op::Push {
             storage: true,
-            value: StateValue::Cell(Sp::new(hash)),
+            value: super::vm::aligned(hash).map_err(super::input_rejected)?,
         },
         Op::Ins {
             cached: false,
@@ -817,7 +817,7 @@ pub(crate) fn historic_reset_history_program<D: DB>(
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     let insert_depth = super::checked_path_operand::<D>(path.as_slice().len(), 2)?;
     let keys = path_keys(path.as_slice());
-    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let index_key = |index| vec![Key::Value(AlignedValueChecked::from(index))].into();
     Ok(vec![
         Op::Idx {
             cached: false,
@@ -826,11 +826,11 @@ pub(crate) fn historic_reset_history_program<D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(2_u8),
+            value: super::vm::literal(2_u8),
         },
         Op::Push {
             storage: true,
-            value: constructor_map(),
+            value: StateValue::Map(LedgerHashMap::new()),
         },
         Op::Dup { n: 2 },
         Op::Idx {
@@ -874,7 +874,7 @@ pub(crate) fn historic_reset_to_default_program<D: DB>(
     let parts = path.as_slice();
     let (&field_index, parent) = super::checked_field_path::<D>(parts)?;
     let parent_depth = super::checked_path_operand::<D>(parent.len(), 0)?;
-    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let index_key = |index| vec![Key::Value(AlignedValueChecked::from(index))].into();
     let mut program = Vec::new();
     if !parent.is_empty() {
         program.push(Op::Idx {
@@ -886,11 +886,12 @@ pub(crate) fn historic_reset_to_default_program<D: DB>(
     program.extend([
         Op::Push {
             storage: false,
-            value: constructor_cell(field_index),
+            value: super::vm::literal(field_index),
         },
         Op::Push {
             storage: true,
-            value: blank_historic_merkle_tree(depth),
+            value: super::vm::state(blank_historic_merkle_tree(depth))
+                .map_err(super::input_rejected)?,
         },
         Op::Idx {
             cached: false,
@@ -953,11 +954,12 @@ pub(crate) fn merkle_reset_program<D: DB>(
     program.extend([
         Op::Push {
             storage: false,
-            value: constructor_cell(field_index),
+            value: super::vm::literal(field_index),
         },
         Op::Push {
             storage: true,
-            value: constructor_merkle_tree(depth),
+            value: super::vm::state(constructor_merkle_tree(depth))
+                .map_err(super::input_rejected)?,
         },
         Op::Ins {
             cached: false,
@@ -998,7 +1000,7 @@ pub(crate) fn is_full_program<M: ResultMode<D>, D: DB>(
     let capacity = 1_u64.checked_shl(depth as u32).ok_or_else(|| {
         CompactError::InvalidLedgerCell(format!("invalid HistoricMerkleTree depth {depth}"))
     })?;
-    let index_key = vec![Key::Value(AlignedValue::from(1_u8))].into();
+    let index_key = vec![Key::Value(AlignedValueChecked::from(1_u8))].into();
     Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
@@ -1013,7 +1015,7 @@ pub(crate) fn is_full_program<M: ResultMode<D>, D: DB>(
         },
         Op::Push {
             storage: false,
-            value: constructor_cell(capacity),
+            value: super::vm::literal(capacity),
         },
         Op::Lt,
         Op::Neg,
@@ -1062,10 +1064,10 @@ fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
     read_result: M::ReadResult,
 ) -> Result<Vec<Op<M, D>>, CompactError> {
     super::checked_index_path::<D>(path.as_slice()).map_err(super::query_rejected)?;
-    let root = super::try_constructor_cell(root)?;
+    let root = super::vm::cell(root)?;
     let historic = matches!(history, MerkleHistory::Historic);
     let index = if historic { 2_u8 } else { 0_u8 };
-    let index_key = vec![Key::Value(AlignedValue::from(index))].into();
+    let index_key = vec![Key::Value(AlignedValueChecked::from(index))].into();
     let mut program = vec![
         Op::Dup { n: 0 },
         Op::Idx {

@@ -105,9 +105,24 @@ class ReleaseInspectionTests(unittest.TestCase):
 
     def test_mixed_manifest_graph_refused(self):
         path = self.root / "runtime-rs/Cargo.toml"
-        path.write_text(path.read_text().replace('midnight-onchain-vm = "=3.0.0"', 'midnight-onchain-vm = "=4.0.0"'))
+        path.write_text(path.read_text().replace('midnight-onchain-vm = { version = "=3.1.2"', 'midnight-onchain-vm = { version = "=4.0.0"'))
         with self.assertRaisesRegex(RuntimeError, "midnight-onchain-vm"):
             release.compatibility_record()
+
+    def test_alternate_git_source_cannot_hide_behind_equal_versions(self):
+        path = self.root / "runtime-rs/Cargo.toml"
+        original = path.read_text()
+        for before, after in (
+            ('b5d3e965a18e4cac17fac4f38446fc55c524439a', '0' * 40),
+            ('https://github.com/midnightntwrk/midnight-ledger', 'https://invalid.example/ledger'),
+            ('rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a"', 'branch = "ledger-8"'),
+        ):
+            with self.subTest(after=after):
+                self.assertIn(before, original)
+                path.write_text(original.replace(before, after))
+                with self.assertRaisesRegex(RuntimeError, "dependency mismatch"):
+                    release.compatibility_record()
+        path.write_text(original)
 
     def test_missing_packaged_record_refused(self):
         self.archive(record=False)

@@ -21,6 +21,7 @@ use super::{
 };
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
+use midnight_onchain_state::state::AlignedValueChecked;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{
@@ -131,7 +132,7 @@ pub(crate) fn cell_read_program<M: ResultMode<D>, D: DB>(
             push_path: false,
             path: path
                 .iter()
-                .map(|index| Key::Value(AlignedValue::from(*index)))
+                .map(|index| Key::Value(AlignedValueChecked::from(*index)))
                 .collect::<Vec<_>>()
                 .into(),
         },
@@ -185,7 +186,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
     value: T,
 ) -> Result<Vec<Op<ResultModeVerify, D>>, TranscriptRejected<D>> {
     super::checked_index_path::<D>(path)?;
-    let cell = try_constructor_cell(value).map_err(super::input_rejected::<D>)?;
+    let cell = super::vm::cell(value).map_err(super::input_rejected::<D>)?;
     if path.len() == 1 {
         // Compact emits a root Cell replacement as an insertion keyed by a
         // temporary Cell containing the ledger index. Preserve that program
@@ -193,7 +194,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
         return Ok(vec![
             Op::Push {
                 storage: false,
-                value: constructor_cell(path[0]),
+                value: super::vm::literal(path[0]),
             },
             Op::Push {
                 storage: true,
@@ -212,11 +213,11 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
             Op::Idx {
                 cached: false,
                 push_path: true,
-                path: vec![Key::Value(AlignedValue::from(path[0]))].into(),
+                path: vec![Key::Value(AlignedValueChecked::from(path[0]))].into(),
             },
             Op::Push {
                 storage: false,
-                value: constructor_cell(path[1]),
+                value: super::vm::literal(path[1]),
             },
             Op::Push {
                 storage: true,
@@ -235,7 +236,7 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
             push_path: true,
             path: path
                 .iter()
-                .map(|index| Key::Value(AlignedValue::from(*index)))
+                .map(|index| Key::Value(AlignedValueChecked::from(*index)))
                 .collect::<Vec<_>>()
                 .into(),
         },
@@ -308,21 +309,21 @@ fn qualified_coin_cell_write_program<D: DB>(
     program.extend([
         Op::Push {
             storage: false,
-            value: constructor_cell(last),
+            value: super::vm::literal(last),
         },
         Op::Dup { n: depth as u8 },
         Op::Push {
             storage: false,
-            value: StateValue::from(AlignedValue::from(commitment)),
+            value: super::vm::literal(commitment),
         },
         Op::Idx {
             cached: true,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(1u8)), Key::Stack].into(),
+            path: vec![Key::Value(AlignedValueChecked::from(1u8)), Key::Stack].into(),
         },
         Op::Push {
             storage: false,
-            value: StateValue::from(AlignedValue::from(coin)),
+            value: super::vm::literal(coin),
         },
         Op::Swap { n: 0 },
         Op::Concat {

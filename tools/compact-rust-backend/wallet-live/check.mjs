@@ -36,6 +36,7 @@ import {
 import { firstValueFrom, filter, timeout } from 'rxjs';
 import { WebSocket } from 'ws';
 import { hasFinalizedCanonicalBlock, isExpectedAction, normalizeHash } from './provenance.mjs';
+import { assertNodeProfile } from './checkpoint.mjs';
 
 const [deployPath, callPath] = process.argv.slice(2);
 const seedHex = process.env.COMPACT_RUST_WALLET_SEED_HEX;
@@ -54,6 +55,10 @@ if (!deployPath || !callPath || !seedHex || !networkId || !indexer || !node || !
 if (!/^[0-9a-f]{64}$/i.test(seedHex)) {
   throw new Error('COMPACT_RUST_WALLET_SEED_HEX must be 32 bytes of hex');
 }
+
+// Ledger 8.1.3 has no qualified live pairing yet. Refuse before wallet
+// construction, transaction decoding, funding or submission.
+await assertNodeProfile(nodeRpc, { indexerVersion: '4.0.1' });
 
 setNetworkId(networkId);
 globalThis.WebSocket = WebSocket;

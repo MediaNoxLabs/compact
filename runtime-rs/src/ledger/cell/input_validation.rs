@@ -44,6 +44,7 @@ fn canonical_cell_write_keeps_existing_official_state_encoding() {
             })
             .collect();
         assert_eq!(stored.len(), 1);
-        assert_eq!(stored[0], &expected);
+        let stored: StateValue<DefaultDB> = (*stored[0]).clone().into();
+        assert_eq!(stored, expected);
     }
 }

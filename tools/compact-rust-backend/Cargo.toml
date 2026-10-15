@@ -17,7 +17,7 @@
 name = "compact-rust-backend"
 version = "0.2.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.89"
 license = "Apache-2.0"
 description = "Typed Rust syntax backend for Compact"
 repository = "https://github.com/MediaNoxLabs/compact"
@@ -40,7 +40,7 @@ serde_json = "1"
 sha2 = "0.10"
 syn = { version = "2", features = ["full", "parsing", "printing", "visit-mut"] }
 toml_edit = "0.22"
-midnight-transient-crypto = "=2.0.1"
+midnight-transient-crypto = { version = "=2.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
 
 # Use the exact identifier tables already present in the locked syntax stack.
 unicode-ident = "=1.0.24"

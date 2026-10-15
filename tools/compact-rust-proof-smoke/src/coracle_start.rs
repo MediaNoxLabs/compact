@@ -183,7 +183,7 @@ fn run_case(root: &Path, blue: bool) -> Result<(), Box<dyn Error>> {
             wallet_indices.push(index);
         }
         zswap = next;
-        wallet = wallet.apply(&keys, offer);
+        wallet = wallet.apply(&keys, offer)?;
     }
     fees.ledger.zswap = midnight_storage_core::arena::Sp::new(zswap.post_block_update(fees.time));
     let mut prior = deploy.initial_state.clone();

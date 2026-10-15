@@ -70,7 +70,7 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let ledger = fees.ledger.clone();
     let start = ledger.zswap.first_free;
     assert!(start > 1);
-    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed)?;
     assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
     let seed_coin = *wallet
         .coins

@@ -111,8 +111,8 @@ fn run_case(root: &Path, ballot: bool, round: u64) -> Result<(), Box<dyn Error>>
     let ledger = fees.ledger.clone();
     assert_eq!(ledger.zswap.first_free, 2);
     let wallet = midnight_zswap::local::State::<DefaultDB>::new()
-        .apply(&keys, &padding_offer)
-        .apply(&keys, &wallet_offer);
+        .apply(&keys, &padding_offer)?
+        .apply(&keys, &wallet_offer)?;
     assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
     let (_, wallet_input) = wallet.spend(&mut rng, &keys, &coin.qualify(1), Some(1))?;
     assert_eq!(

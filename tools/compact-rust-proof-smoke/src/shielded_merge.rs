@@ -119,7 +119,7 @@ fn run_case(root: &Path, immediate: bool) -> Result<(), Box<dyn Error>> {
     let mut options = OfferBindingOptions::default()
         .with_output_allocation(PersistentOutputAllocation::CanonicalOfferIndices);
     if immediate {
-        let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+        let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed)?;
         assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
         let (_, wallet_input) = wallet.spend(&mut rng, &keys, &b_qualified, None)?;
         expected_nullifiers.push(wallet_input.nullifier);

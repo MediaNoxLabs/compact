@@ -32,7 +32,9 @@ const BLOCK_QUERY = `query ($offset: BlockOffset) {
   }
 }`;
 const CONTRACT_ADDRESS_TAG = Buffer.from('midnight:contract-address[v2]:', 'utf8');
-export const CANDIDATE_COMPATIBILITY_PROFILE = Object.freeze({
+export const LEDGER_CODEC_VERSION = '8.1.3';
+// Retained identity only: this pairing has not been qualified for the new codec.
+export const HISTORICAL_COMPATIBILITY_PROFILE = Object.freeze({
   compatibilityProfile: 'node-0.22.3/indexer-4.0.1/ledger-8.0.2/codec-8.0.3',
   compatibilityStatus: 'candidate-live-validation-pending',
   nodeSoftwareVersion: '0.22.3-6f0ef437',
@@ -86,9 +88,9 @@ async function nodeCall(rpc, method, input, blockHash) {
   return scaleBytes(result, `${method} response`);
 }
 
-/** A pinned candidate pairing, not a claim of tested live compatibility. */
+/** No live node/indexer pairing is qualified for the current decoder yet. */
 export async function assertNodeProfile(rpc, {
-  indexerVersion, ledgerVersion = CANDIDATE_COMPATIBILITY_PROFILE.ledgerVersion,
+  indexerVersion, ledgerVersion = LEDGER_CODEC_VERSION,
   blockHash,
 } = {}) {
   if (typeof rpc !== 'function') throw new Error('node RPC is required');
@@ -98,14 +100,7 @@ export async function assertNodeProfile(rpc, {
     nodeCall(rpc, 'MidnightRuntimeApi_get_ledger_version', new Uint8Array(), at),
   ]);
   const nodeLedgerConstraint = decodeScaleString(versionRaw);
-  const approved = CANDIDATE_COMPATIBILITY_PROFILE;
-  if (software !== approved.nodeSoftwareVersion ||
-      indexerVersion !== approved.indexerVersion ||
-      nodeLedgerConstraint !== approved.nodeLedgerConstraint ||
-      ledgerVersion !== approved.ledgerVersion) {
-    throw new Error(`node/indexer/codec pairing is not approved: ${software}, ${indexerVersion}, ${nodeLedgerConstraint}, ${ledgerVersion}`);
-  }
-  return { ...approved, blockHash: at };
+  throw new Error(`node/indexer/codec pairing is not approved for decoder ${LEDGER_CODEC_VERSION}: ${software}, ${indexerVersion}, ${nodeLedgerConstraint}, ${ledgerVersion}; live validation required`);
 }
 
 async function previousFact(indexer, firstBlock, select, label) {
@@ -178,7 +173,8 @@ function parseWalletEnvelope(envelope, walletBytes, appliedEventId, networkId) {
 export async function acquireVerifiedCheckpoint({
   rpc, indexer, ledger, expectedAction, addressHex, addressTaggedBytes,
   walletEnvelope, walletSnapshotBytes, walletAppliedEventId, networkId,
-  ledgerVersion = '8.0.3', indexerVersion,
+  ledgerVersion = LEDGER_CODEC_VERSION, indexerVersion,
+  nodeProfileVerifier = assertNodeProfile,
 }) {
   if (typeof rpc !== 'function' || typeof indexer?.getBlock !== 'function') {
     throw new Error('node RPC and indexed block reader are required');
@@ -195,7 +191,10 @@ export async function acquireVerifiedCheckpoint({
   if (!await hasFinalizedCanonicalBlock(action.transaction.block, rpc)) {
     throw new Error('action block is not finalized');
   }
-  const nodeProfile = await assertNodeProfile(rpc, { indexerVersion, ledgerVersion, blockHash });
+  // Explicit policy injection supports offline fixtures. The live runner uses
+  // the refusing default; a supplied verifier is a caller-owned trust boundary.
+  if (typeof nodeProfileVerifier !== 'function') throw new Error('node profile verifier is required');
+  const nodeProfile = await nodeProfileVerifier(rpc, { indexerVersion, ledgerVersion, blockHash });
   const block = await indexer.getBlock(blockHash);
   if (normalizeHash(block.hash) !== blockHash || decimal(block.height, 'indexed block height') !== blockHeight) {
     throw new Error('indexed action and block identity differ');

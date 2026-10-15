@@ -28,6 +28,7 @@ pub use midnight_coin_structure::transfer::Recipient as CoinRecipient;
 pub use midnight_onchain_runtime::context::QueryContext;
 pub use midnight_onchain_runtime::context::QueryResults;
 pub use midnight_onchain_runtime::error::TranscriptRejected;
+use midnight_onchain_state::state::AlignedValueChecked;
 pub use midnight_onchain_state::state::{ChargedState, ContractState, StateValue};
 pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
@@ -37,7 +38,9 @@ pub use midnight_transient_crypto::merkle_tree::{MerklePath, MerklePathEntry, Me
 
 use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector, JubjubPoint};
 use midnight_base_crypto::cost_model::RunningCost;
-use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
+#[cfg(test)]
+use midnight_base_crypto::fab::AlignedValue;
+use midnight_base_crypto::fab::{Aligned, Value, ValueSlice};
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::Key;
 use midnight_onchain_vm::ops::Op;
@@ -73,7 +76,7 @@ impl<const N: usize> From<&[u8; N]> for LedgerPath {
 
 fn path_keys(path: &[u8]) -> Vec<Key> {
     path.iter()
-        .map(|index| Key::Value(AlignedValue::from(*index)))
+        .map(|index| Key::Value(AlignedValueChecked::from(*index)))
         .collect()
 }
 
@@ -150,7 +153,7 @@ pub(crate) fn kernel_self_program<M: ResultMode<D>, D: DB>(
         Op::Idx {
             cached: true,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(0u8))].into(),
+            path: vec![Key::Value(AlignedValueChecked::from(0u8))].into(),
         },
         Op::Popeq {
             cached: true,
@@ -370,6 +373,7 @@ mod cell;
 mod collections;
 mod counter;
 mod merkle;
+mod vm;
 
 pub(crate) use cell::{
     aligned_cell_value, cell_read_program, cell_write_program, decode_last_read,

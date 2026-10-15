@@ -17,7 +17,7 @@
 name = "midnight-compact-runtime"
 version = "0.2.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.89"
 license = "Apache-2.0"
 description = "Native Compact semantics on Midnight ledger primitives"
 repository = "https://github.com/MediaNoxLabs/compact"
@@ -30,30 +30,30 @@ ledger-transaction = ["dep:midnight-ledger", "dep:rand"]
 
 [dependencies]
 midnight-compact-runtime-macros = { version = "=0.2.0", path = "../runtime-rs-macros" }
-# Exact crates published with midnight-ledger's ledger-8.0.3 tag. They share
-# representation and VM APIs; minor-version mixing has already broken the VM.
-midnight-base-crypto = "=1.0.0"
-midnight-coin-structure = "=2.0.1"
-midnight-onchain-runtime = "=3.0.0"
-midnight-onchain-state = "=3.0.0"
-midnight-onchain-vm = "=3.0.0"
-midnight-serialize = "=1.0.0"
-midnight-storage = "=2.0.1"
-midnight-storage-core = "=1.1.0"
-midnight-transient-crypto = "=2.0.1"
+# One official ledger8 8.1.3 revision, matching the installed Forge source.
+# Keep all ledger-repository crates on this source to preserve Rust type identity.
+midnight-base-crypto = { version = "=1.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-coin-structure = { version = "=2.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-runtime = { version = "=3.1.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-state = { version = "=3.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-vm = { version = "=3.1.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-serialize = { version = "=1.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-storage = { version = "=2.0.3", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-storage-core = { version = "=1.2.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-transient-crypto = { version = "=2.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
 
-# The matching midnight-zk graph from ledger-8.0.3's Cargo.lock.
-midnight-circuits = "=6.0.0"
+# The matching midnight-zk registry graph used by the installed Forge.
+midnight-circuits = "=6.1.0"
 midnight-curves = "=0.2.0"
-midnight-proofs = "=0.7.0"
-midnight-zk-stdlib = "=1.0.0"
-midnight-zswap = "=8.0.3"
-midnight-ledger = { version = "=8.0.3", optional = true }
+midnight-proofs = "=0.7.1"
+midnight-zk-stdlib = "=1.1.0"
+midnight-zswap = { version = "=8.1.3", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-ledger = { version = "=8.1.3", optional = true, git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
 rand = { version = "=0.8.6", optional = true }
 sha3 = "=0.10.8"
 
 [dev-dependencies]
 hex = "0.4"
-midnight-ledger = "=8.0.3"
+midnight-ledger = { version = "=8.1.3", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
 serde = "1"
 serde_json = "1"

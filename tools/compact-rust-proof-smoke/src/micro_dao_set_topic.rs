@@ -122,8 +122,8 @@ fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
     let ledger = fees.ledger.clone();
     assert_eq!(ledger.zswap.first_free, 2);
     let wallet = midnight_zswap::local::State::<DefaultDB>::new()
-        .apply(&keys, &seed_h)
-        .apply(&keys, &seed_w);
+        .apply(&keys, &seed_h)?
+        .apply(&keys, &seed_w)?;
     assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
     let segment = occupied.then_some(1);
     let placement = if occupied {

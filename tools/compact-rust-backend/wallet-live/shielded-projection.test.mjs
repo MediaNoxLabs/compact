@@ -14,11 +14,16 @@
 // limitations under the License.
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
 import { requireOfferReconciliation } from './shielded-handoff.mjs';
 
 // An explicit module path permits reuse of an installed, pinned acceptance
 // dependency directory without writing through a shared node_modules symlink.
-const ledger = await import(process.env.COMPACT_LEDGER_V8_MODULE ?? '@midnight-ntwrk/ledger-v8');
+const moduleUrl = import.meta.resolve(process.env.COMPACT_LEDGER_V8_MODULE ?? '@midnight-ntwrk/ledger-v8');
+const manifest = JSON.parse(await readFile(new URL('package.json', moduleUrl), 'utf8'));
+assert.equal(manifest.name, '@midnight-ntwrk/ledger-v8');
+assert.equal(manifest.version, '8.1.3', 'projection controls require the current pinned decoder');
+const ledger = await import(moduleUrl);
 
 test('a real filtered coin witness does not supply full-ledger allocation/history authority', () => {
   const address = '03'.repeat(32);

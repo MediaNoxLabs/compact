@@ -61,7 +61,7 @@ pub mod fab {
 /// Increment when generated Rust and the runtime's public contract change.
 pub const RUST_RUNTIME_ABI: u32 = 52;
 /// The ledger line selected by this Compact branch's `flake.nix`.
-pub const LEDGER_VERSION: &str = "ledger-8.0.3";
+pub const LEDGER_VERSION: &str = "ledger-8.1.3";
 
 /// Compact `Field` is the scalar field used by the ledger-8 circuit runtime.
 pub use midnight_transient_crypto::curve::Fr;

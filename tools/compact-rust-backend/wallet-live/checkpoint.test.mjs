@@ -19,7 +19,7 @@ import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import test from 'node:test';
-import { acquireVerifiedCheckpoint, assertNodeProfile, CANDIDATE_COMPATIBILITY_PROFILE, createIndexerClient, writeCheckpoint } from './checkpoint.mjs';
+import { acquireVerifiedCheckpoint, assertNodeProfile, HISTORICAL_COMPATIBILITY_PROFILE, createIndexerClient, writeCheckpoint } from './checkpoint.mjs';
 import { decodeScaleResultBytes, decodeScaleString, decodeScaleVec, scaleBytes, scaleCompact, scaleVec } from './checkpoint-scale.mjs';
 
 const address = '11'.repeat(32);
@@ -33,7 +33,7 @@ const hex = bytes => Buffer.from(bytes).toString('hex');
 const ok = bytes => `0x${hex(Uint8Array.of(0, ...scaleVec(bytes)))}`;
 const fields = () => ({
   addressHex: address, addressTaggedBytes: taggedAddress, walletSnapshotBytes: walletBytes,
-  walletAppliedEventId: '12', networkId: 'undeployed', ledgerVersion: '8.0.3',
+  walletAppliedEventId: '12', networkId: 'undeployed', ledgerVersion: '8.1.3',
   indexerVersion: '4.0.1',
   walletEnvelope: JSON.stringify({ state: hex(walletBytes), offset: 12, networkId: 'undeployed' }),
 });
@@ -57,7 +57,7 @@ function harness() {
   const calls = [];
   const rpc = async (method, args) => {
     calls.push([method, args]);
-    if (method === 'system_version') return '0.22.3-6f0ef437';
+    if (method === 'system_version') return 'offline-fixture';
     if (method === 'chain_getFinalizedHead') return `0x${blockHash}`;
     if (method === 'chain_getHeader') return {
       number: '0x5', parentHash: `0x${parentHash}`,
@@ -73,7 +73,7 @@ function harness() {
       if (name.endsWith('_get_zswap_chain_state')) return ok(Uint8Array.of(1, 2));
       if (name.endsWith('_get_zswap_state_root')) return ok(root);
       if (name.endsWith('_get_network_id')) return `0x${hex(scaleVec(Buffer.from('undeployed')))}`;
-      if (name.endsWith('_get_ledger_version')) return `0x${hex(scaleVec(Buffer.from('=8.0.2')))}`;
+      if (name.endsWith('_get_ledger_version')) return `0x${hex(scaleVec(Buffer.from('=8.1.3')))}`;
     }
     throw new Error(`unexpected node call ${method}`);
   };
@@ -88,8 +88,23 @@ function harness() {
   };
   return { indexed, calls, rpc, indexer, ledger, expectedAction: action() };
 }
+// This verifier is test data, not an approved live pairing. The production
+// runner never supplies it and assertNodeProfile never selects it implicitly.
+const offlineProfile = async (rpc, { indexerVersion, ledgerVersion, blockHash: selected }) => {
+  const at = selected ?? (await rpc('chain_getFinalizedHead', [])).replace(/^0x/, '');
+  const software = await rpc('system_version', []);
+  const raw = await rpc('state_call', ['MidnightRuntimeApi_get_ledger_version', '0x', `0x${at}`]);
+  const constraint = decodeScaleString(scaleBytes(raw));
+  if (software !== 'offline-fixture' || indexerVersion !== '4.0.1' ||
+      ledgerVersion !== '8.1.3' || constraint !== '=8.1.3') {
+    throw new Error('offline node/indexer/codec pairing is not approved');
+  }
+  return { compatibilityProfile: 'offline-ledger-8.1.3-fixture',
+    compatibilityStatus: 'offline-not-live', nodeSoftwareVersion: software,
+    indexerVersion, nodeLedgerConstraint: constraint, ledgerVersion, blockHash: at };
+};
 const acquire = (overrides = {}, setup = harness()) =>
-  acquireVerifiedCheckpoint({ ...fields(), ...setup, ...overrides });
+  acquireVerifiedCheckpoint({ ...fields(), ...setup, nodeProfileVerifier: offlineProfile, ...overrides });
 
 test('pinned SCALE Vec and Result golden bytes reject malformed frames', () => {
   assert.equal(hex(scaleCompact(0)), '00');
@@ -139,10 +154,10 @@ test('checkpoint binds full block frontier, actual last event and exact wallet b
   assert.equal(acquired.manifest.metadata.firstFree, '5');
   assert.equal(acquired.manifest.metadata.finalZswapEventId, '12');
   assert.equal(acquired.manifest.metadata.nodeZswapRootHex, hex(root));
-  assert.equal(acquired.manifest.metadata.nodeLedgerConstraint, '=8.0.2');
-  assert.equal(acquired.manifest.metadata.compatibilityProfile, CANDIDATE_COMPATIBILITY_PROFILE.compatibilityProfile);
-  assert.equal(acquired.manifest.metadata.compatibilityStatus, 'candidate-live-validation-pending');
-  assert.equal(acquired.manifest.metadata.nodeSoftwareVersion, '0.22.3-6f0ef437');
+  assert.equal(acquired.manifest.metadata.nodeLedgerConstraint, '=8.1.3');
+  assert.equal(acquired.manifest.metadata.compatibilityProfile, 'offline-ledger-8.1.3-fixture');
+  assert.equal(acquired.manifest.metadata.compatibilityStatus, 'offline-not-live');
+  assert.equal(acquired.manifest.metadata.nodeSoftwareVersion, 'offline-fixture');
   assert.equal(acquired.manifest.metadata.indexerVersion, '4.0.1');
   assert.equal(acquired.manifest.wallet.walletStateSha256.length, 64);
   assert.deepEqual(acquired.binaries.walletState, walletBytes);
@@ -164,18 +179,26 @@ test('checkpoint binds full block frontier, actual last event and exact wallet b
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('preflight pins raw node, indexer and decoder identities before wallet startup', async () => {
+test('current decoder refuses unqualified live and historical pairings without fixture injection', async () => {
   const h = harness();
-  const profile = await assertNodeProfile(h.rpc, { indexerVersion: '4.0.1' });
-  assert.equal(profile.blockHash, blockHash);
-  assert.equal(profile.nodeLedgerConstraint, '=8.0.2');
+  await assert.rejects(assertNodeProfile(h.rpc, { indexerVersion: '4.0.1' }), /pairing is not approved.*8\.1\.3/);
   assert.deepEqual(h.calls.map(([method]) => method), [
     'chain_getFinalizedHead', 'system_version', 'state_call',
   ]);
-  await assert.rejects(assertNodeProfile(h.rpc, { indexerVersion: '4.0.2' }), /pairing is not approved/);
-  await assert.rejects(assertNodeProfile(h.rpc, { indexerVersion: '4.0.1', ledgerVersion: '8.0.2' }), /pairing is not approved/);
-  const changedNode = async (method, args) => method === 'system_version' ? '0.22.5' : h.rpc(method, args);
-  await assert.rejects(assertNodeProfile(changedNode, { indexerVersion: '4.0.1' }), /pairing is not approved/);
+  assert.equal(HISTORICAL_COMPATIBILITY_PROFILE.ledgerVersion, '8.0.3');
+  const historical = async (method, args) => {
+    if (method === 'system_version') return HISTORICAL_COMPATIBILITY_PROFILE.nodeSoftwareVersion;
+    if (method === 'state_call' && args[0].endsWith('_get_ledger_version')) {
+      return `0x${hex(scaleVec(Buffer.from('=8.0.2')))}`;
+    }
+    return h.rpc(method, args);
+  };
+  for (const ledgerVersion of ['8.0.3', '8.1.3']) {
+    await assert.rejects(assertNodeProfile(historical, { indexerVersion: '4.0.1', ledgerVersion }), /pairing is not approved/);
+  }
+  await assert.rejects(acquireVerifiedCheckpoint({ ...fields(), ...h }), /pairing is not approved/);
+  // Explicit undefined also selects the refusing default, never the fixture.
+  await assert.rejects(acquire({ nodeProfileVerifier: undefined }, h), /pairing is not approved/);
 });
 
 test('later same-block transaction must determine final frontier/root/event', async () => {

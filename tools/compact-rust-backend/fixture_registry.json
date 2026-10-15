@@ -64,7 +64,7 @@
       "consumer": "tests-rust-backend/adt-set-enum/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/adt-set-enum/Cargo.toml": "5dcf697ee4ca5aec9274f77c48c38e309996f8636c9c82b8cbf82d6163325ea4",
+        "tests-rust-backend/adt-set-enum/Cargo.toml": "2325fc0f09375f9d967a84e8dd0f538da3a017348259d748347188edfde402e3",
         "tests-rust-backend/adt-set-enum/lib.rs": "15a21a16a48e1e1fede51c6617355e7985406cde7b7aef024f396bb25f3ad100",
         "tests-rust-backend/adt-set-enum/build.rs": "3ebfe1923f636fbe69e34e53e62a82f80c8f04e28c7b0d7a0b0b1d990202648c"
       }
@@ -85,7 +85,7 @@
       "consumer": "tests-rust-backend/adt-set-qualified-coin-info/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/adt-set-qualified-coin-info/Cargo.toml": "d92581c63e6bdd6509f19bfa218928e1cc45c2615b3189352882f54acf41b38d",
+        "tests-rust-backend/adt-set-qualified-coin-info/Cargo.toml": "7da7f1cafa74b18ca7d10f6bc6e050224aa6a428ba79ad41e59e841e6e6debbd",
         "tests-rust-backend/adt-set-qualified-coin-info/lib.rs": "0509ab6552aa08b003c671cc09133d51d2a38604e326efd7b9625d4207242a70",
         "tests-rust-backend/adt-set-qualified-coin-info/build.rs": "b1549cc34ac86197cc591cc7155e3b7a931b207897de137219d6a3dda60efd6c"
       }
@@ -263,7 +263,7 @@
         "tests-rust-backend/call-arg-declared-type/build/product.rs"
       ],
       "consumer_input_sha256": {
-        "tests-rust-backend/call-arg-declared-type/Cargo.toml": "3e83295ff1429b386b64c6641db1ff42f16946cad8d783d0d197b5b9983047ab",
+        "tests-rust-backend/call-arg-declared-type/Cargo.toml": "35c785666576d7ef608e94e0466fd7aef641488128ae9b8c7d0e008122f1d077",
         "tests-rust-backend/call-arg-declared-type/lib.rs": "52ebe5bd9854d6c6edbc73a0765a00b923325e3c692dc95757d511577262e6f8",
         "tests-rust-backend/call-arg-declared-type/build.rs": "f412fb25f1d0d75ecb88bca2d8bcc509ec1c9af263c8d6de60416e884d60b415",
         "tests-rust-backend/call-arg-declared-type/build/product.rs": "507f1a6903535ab6a2d6a5c7cac54bf3446ac30dd8d5ff1b0edd4574ffa47596"
@@ -285,7 +285,7 @@
       "consumer": "tests-rust-backend/canonical-output-order-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/canonical-output-order-oracle/Cargo.toml": "e1492fc7c50dc19103229338f1df7cb0debe6b4373e99d054b7bbac1bc346179",
+        "tests-rust-backend/canonical-output-order-oracle/Cargo.toml": "0c980d4124e7d46cc394bb0130639c7a3df295c090c9051cf8b6a62661b9d74c",
         "tests-rust-backend/canonical-output-order-oracle/lib.rs": "1c8cd9c65e23d8f3c72dd4e46629020022061238c6bb1e33fefc453d2fe3ef5d",
         "tests-rust-backend/canonical-output-order-oracle/build.rs": "4bbf865c16b5654672d9a2da9e951dd42ef2fab5e47c6e812d4e7603142b8e53"
       }
@@ -438,7 +438,7 @@
       "consumer": "tests-rust-backend/composite-zswap-transfer-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/composite-zswap-transfer-oracle/Cargo.toml": "5f4dc04e4d2dae75abf914625ba8b7da2aecdd0c63d21a1e2a0116139b205340",
+        "tests-rust-backend/composite-zswap-transfer-oracle/Cargo.toml": "a8e7eec370e98b5e9b84892a06f1fe2158f07674710b953e94b1df03d1746066",
         "tests-rust-backend/composite-zswap-transfer-oracle/lib.rs": "183399ba8dc113493318fb7ce88439a1ae0f67464fe706442d3b73e5d85b4b07",
         "tests-rust-backend/composite-zswap-transfer-oracle/build.rs": "00aef51efe0837b173071689ce0af24a468a87efab032772c8d0a4d6e1e64344"
       }
@@ -711,7 +711,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-aligned-hashes-source/Cargo.toml": "ba79c6a7519e1e160ba36e871b12b9f21b43893832fc8918e7678d9fad8e8a03",
+        "tests-rust-backend/effect-plan-aligned-hashes-source/Cargo.toml": "98e87e6d139b380b0433266a5e550798cfd0df253b051f8996bd639007bb45f4",
         "tests-rust-backend/effect-plan-aligned-hashes-source/fixture.rs": "b3b3ed83e0a379b261787732c77ddc0398e5f703bc2af44f76fae5b80110565a",
         "tests-rust-backend/effect-plan-aligned-hashes-source/build.rs": "44eda4d83a43fa201058686e8613515c9dc4a4d5154287215bd4648fac536e02"
       },
@@ -732,7 +732,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-aligned-witness-results-source/Cargo.toml": "9ac4b8f2277d00bb7062f102c5c660aa2641ac470570499847be31f875971b44",
+        "tests-rust-backend/effect-plan-aligned-witness-results-source/Cargo.toml": "a22a30e5730983968a48ca24a5168a74bd3f4df994ca4e8c9935f1ab59bab5ef",
         "tests-rust-backend/effect-plan-aligned-witness-results-source/fixture.rs": "cbbb53515eaf0883702641f80f732da38854f2d56e2eb84b8e6f52b0dc61ff87",
         "tests-rust-backend/effect-plan-aligned-witness-results-source/build.rs": "0cd65a98c030fda2245a19afb12b1067d382cbe524d0210c47dc610db42ed2ab"
       },
@@ -753,7 +753,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-composite-source/Cargo.toml": "fda0ec059a21d2e77c5205503334b44306f1a6e9821ec769e1091a6d93dfb611",
+        "tests-rust-backend/effect-plan-composite-source/Cargo.toml": "9e8ac872efb9f4f56c9f9f41584a5dd8ac7b959e2998e9eea171d644d7fb8f10",
         "tests-rust-backend/effect-plan-composite-source/fixture.rs": "d6d9eb558046aabf7e3d61685202d58c7ad543d1a42d552cc529cc05414b69e6",
         "tests-rust-backend/effect-plan-composite-source/build.rs": "ba3f980272c7de40a3cb9f260739f5e6c846776aef77d187692de028d5a9ed6b"
       },
@@ -774,7 +774,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-context-query-source/Cargo.toml": "f96183a726c87a19452a4596da394eb245223f265b6db230820bd49d801c64e8",
+        "tests-rust-backend/effect-plan-context-query-source/Cargo.toml": "69a2ec6d518a9773b895e00a2fc26511840fbc940e9245d4173e28b085ef9d63",
         "tests-rust-backend/effect-plan-context-query-source/fixture.rs": "2951efa77e27efa5e15ade6c89370c46f3809a14aeb0d10053089b1b13ef5b21",
         "tests-rust-backend/effect-plan-context-query-source/build.rs": "037b7ad29eb21f9839754a7028f5b9eb5f9fbdcad8dd5b90d00a7182d567baf2"
       },
@@ -795,7 +795,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-counter-source/Cargo.toml": "4a626199e7f4862edb2db3ad1a7bd4bc4aa9b2e334f54cf031396a77e767b9aa",
+        "tests-rust-backend/effect-plan-counter-source/Cargo.toml": "48bcc5d6541a2db4af5856a87653c4c8c05aa54845fd416a65b8ed4dac38f999",
         "tests-rust-backend/effect-plan-counter-source/fixture.rs": "37593832f9ac555fe0c517a1c6abc90f33f08e0ecd25f4db92805c585dee0adb",
         "tests-rust-backend/effect-plan-counter-source/build.rs": "ee085487936368f035bf15942b35265b5ea9730c1070d05960a5958500f697e9"
       },
@@ -837,7 +837,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-counter-only-source/Cargo.toml": "313ce1616cdd44575a9c2b828dc632eae81212392633ea16bcba6a1e27cc4770",
+        "tests-rust-backend/effect-plan-counter-only-source/Cargo.toml": "e33cc5f9c61ea66e229ef067c6e163e71b2d971e20b17bc67f0fac4f7c681d7d",
         "tests-rust-backend/effect-plan-counter-only-source/fixture.rs": "f9f79c809060ba75c4d6d898edb477637fc14c171f775c3930882745e09f8e4c",
         "tests-rust-backend/effect-plan-counter-only-source/build.rs": "54ee01d775e5cff9a72d3ce7569137b53dad363accb60463cfb5d5da46ad3b4a"
       },
@@ -858,7 +858,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-exact-hash-input-source/Cargo.toml": "924e4b4daf19b429f7d5c9444ef2b0544a332a058588e7c47b33edc4cdc67b90",
+        "tests-rust-backend/effect-plan-exact-hash-input-source/Cargo.toml": "41100d792cfd22a2eee7790b228343b095fac0d91951cf90d508779e5fa32cf0",
         "tests-rust-backend/effect-plan-exact-hash-input-source/fixture.rs": "fe5eec4ec7fd43f6aa25a7d7d827f353f21a09c06effdaee05c25f2e22a618c0",
         "tests-rust-backend/effect-plan-exact-hash-input-source/build.rs": "876a5fcb038004b7967d0ea6e7beffbdf61fbe7a2d4dc4192ae571ee60d8cc89"
       },
@@ -879,7 +879,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-field-multiply-source/Cargo.toml": "f5644aed8040ea6f16869ae082e50dd1a0efb4ba7df42f97f414d2004cf6825c",
+        "tests-rust-backend/effect-plan-field-multiply-source/Cargo.toml": "1150bbaccef4e5e9ebc316367d5c0a9759fe43dcea6c8ae72083d61af8c4dada",
         "tests-rust-backend/effect-plan-field-multiply-source/fixture.rs": "00e46946add699a4346f61de5be7ebbc8b3793902e432b84c691efa97a4b04f0",
         "tests-rust-backend/effect-plan-field-multiply-source/build.rs": "5360922a63d3048ba02c5d824cc3e329f5300973f59b95ab42943bfc618e1670"
       },
@@ -900,7 +900,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-inequality-source/Cargo.toml": "33c1d29ffdbd4ef406a6531e0c3c6aed2d9d5855dd567342d48835908b5025bf",
+        "tests-rust-backend/effect-plan-inequality-source/Cargo.toml": "6a03a1da704db1e7433288abf1c61c1d1f869eda987a51f9031dba3933d7ec5b",
         "tests-rust-backend/effect-plan-inequality-source/fixture.rs": "712cb15313d114c0a268a7e07ecc551bea8f1a562c0201d1474984327c24968a",
         "tests-rust-backend/effect-plan-inequality-source/build.rs": "d5532f6c65403ed0069d26ed891e6189d800bf5132c3cef748509176efbb4a0d"
       },
@@ -921,7 +921,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-internal-interfaces-source/Cargo.toml": "b17a5f75ecb58e0888202097ddd9aabe883d0a9e6155711c637e0fbf722d7963",
+        "tests-rust-backend/effect-plan-internal-interfaces-source/Cargo.toml": "d1a52922a8df2ba20c68ba4e4064c7a22e821e0bb57857b822609a32b019387e",
         "tests-rust-backend/effect-plan-internal-interfaces-source/fixture.rs": "c8a64af23919ac0db9a48555586d322597383f75d6fb6e8f2d8ffd81404a78c5",
         "tests-rust-backend/effect-plan-internal-interfaces-source/build.rs": "522f840d751eb851a62b4ff51584ff41363339b6384999424f53429ea1f3539e"
       },
@@ -942,7 +942,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-jubjub-source/Cargo.toml": "3db7ca7150d8848167ab432c502cd87e34031ae9a056aebf76451c347a7283ea",
+        "tests-rust-backend/effect-plan-jubjub-source/Cargo.toml": "b0ab5852c0f3edcb29358521070df3cc8aa1ccbe65adfc242b4758d554ca6a67",
         "tests-rust-backend/effect-plan-jubjub-source/fixture.rs": "c9ce5e5421196fc2f0b60293072494bddacc599e2286632cbe33831c2954d81a",
         "tests-rust-backend/effect-plan-jubjub-source/build.rs": "eb8e31c12cf831ad862942a7cac6de1ec062dcdd9a804539f57f4db9787b02c0"
       },
@@ -963,7 +963,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-jubjub-negation-source/Cargo.toml": "09bdb1022536da1c7e8972b1ed6841a3ef80bcecdde179fa34623df5e449aa35",
+        "tests-rust-backend/effect-plan-jubjub-negation-source/Cargo.toml": "34526cdbbcf87bcd0bccc813210ef52a67544d04fffd9141155a7e744dc8f060",
         "tests-rust-backend/effect-plan-jubjub-negation-source/fixture.rs": "2f898f5f7f1876bbe0ee0b3163029a233b2ab21de15f78331cbea71adb876686",
         "tests-rust-backend/effect-plan-jubjub-negation-source/build.rs": "5c1858f99df09e97cc57122c43b90bdb98eeb2dfda3f98984d7aaf68b1e428c4"
       },
@@ -984,7 +984,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-jubjub-projections-source/Cargo.toml": "eda8026bd0bc2744a62b6819c4e37037b69721b0283a2575b00f3e61a91fa117",
+        "tests-rust-backend/effect-plan-jubjub-projections-source/Cargo.toml": "7e5397701d9d0282e89ddec9bf408417c01284aebd43f279dcbb4b66481acbc1",
         "tests-rust-backend/effect-plan-jubjub-projections-source/fixture.rs": "b15e24327526d57ea16df0f7a74f591973780109ae142ab166b4e3912deef975",
         "tests-rust-backend/effect-plan-jubjub-projections-source/build.rs": "d20ac0d169b9dfe9f480f3bb26b072ef70a0619b0256c2b2286b1e26981651f6"
       },
@@ -1005,7 +1005,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-kernel-source/Cargo.toml": "4e3d0c99d0222e961505141c72487c36978565afa02984626b0837cdd0227a6c",
+        "tests-rust-backend/effect-plan-kernel-source/Cargo.toml": "f28695a11336a01c0ee1c2e9978c3184ceeb6d34a07d4280a3caec6086cd2609",
         "tests-rust-backend/effect-plan-kernel-source/fixture.rs": "34f3c4224e5e648ca6f127f0dcd695f765b24bb042f55b6e59e4bdfb9758f643",
         "tests-rust-backend/effect-plan-kernel-source/build.rs": "1192f6762cdf912fdb05756b1dfa0d7ccb216db4463bfede18efd1c80933eace"
       },
@@ -1026,7 +1026,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-map-value-products-source/Cargo.toml": "e84d213ae58413223a777c30d0543c359f083b1675c7b80f2e48d000fcbbdf67",
+        "tests-rust-backend/effect-plan-map-value-products-source/Cargo.toml": "f4449dec56e99a08628c3b1d89d5f38f7f449545a7a49b0d8d756f4cbaedb7f5",
         "tests-rust-backend/effect-plan-map-value-products-source/fixture.rs": "fb6e4a9dbb085948bbbde750935664e408e9811fcbdd92e8dfe8ef16308f3036",
         "tests-rust-backend/effect-plan-map-value-products-source/build.rs": "319fd9fc4cb6ef0347615ddd5c794690d36cf56130d023a78e3f0498d0130c67"
       },
@@ -1047,7 +1047,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-maps-source/Cargo.toml": "1f56a4fba65b911e4018a429d65566287ef2e4ebdd002c39bc055be196336e1c",
+        "tests-rust-backend/effect-plan-maps-source/Cargo.toml": "b09a533caebb067fd1d8d22487438bd58f764e401f8a6300cab8d7d9de2dcea8",
         "tests-rust-backend/effect-plan-maps-source/fixture.rs": "de90ec1841c6616c17279f53afe83af1ac7c321e8378cc445f507c327005903b",
         "tests-rust-backend/effect-plan-maps-source/build.rs": "05a170aa0da432e4069a16f72f497995407581c24a4c9af5faee75f38dcb4bdf"
       },
@@ -1110,7 +1110,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-nested-map-member-source/Cargo.toml": "caaa6fb41a1253170ed6bdebc61077c5fbe58b13df34913ebfc083e0ed35b433",
+        "tests-rust-backend/effect-plan-nested-map-member-source/Cargo.toml": "3a51380f5c7fbf8fc5e2e863e366de475cc3db485edd33baf8fdd5e6cb82de83",
         "tests-rust-backend/effect-plan-nested-map-member-source/fixture.rs": "2e5a6aac4cb55a7df1853286f9ca83ffae2ed5ccdae1220dff9f711bd294f752",
         "tests-rust-backend/effect-plan-nested-map-member-source/build.rs": "de3a5e5cdb74c21bb053e73204778097dfc7995a9ede2f37ef458a9998ab27ed"
       },
@@ -1131,7 +1131,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-nested-map-remove-source/Cargo.toml": "03661c02d09a75bf84644c9a759a12ff38b7efb7c25053e8dd9059e56afaca59",
+        "tests-rust-backend/effect-plan-nested-map-remove-source/Cargo.toml": "f3c6e9852ef89788e9876cadbcaef567a0db5232c0731674fab872a7eef7af3b",
         "tests-rust-backend/effect-plan-nested-map-remove-source/fixture.rs": "e45b62996bac71a681004434f125549906652c6ab776ba608028b4735ff429a2",
         "tests-rust-backend/effect-plan-nested-map-remove-source/build.rs": "6c902138909e75d1b71fc5d5582f7b5d65ed72784d37f31262f6df34a4695095"
       },
@@ -1152,7 +1152,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/Cargo.toml": "02698f1f21b443ef7ad8ca606151f890dc96a16b5dda6a8aa801deaf83478c89",
+        "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/Cargo.toml": "88b103928fea966368387c28452c01299396ab3b03ad5ea046bd13c3db251a60",
         "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/fixture.rs": "d2802f845a28af15ef1692d57022116ebe0a10b7e4154aabe66fc5e7cae74898",
         "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/build.rs": "1549b05a8f926631ec542c71031646c4a546d741bb3bf9c0ad2a5f37f1aa8f3f"
       },
@@ -1173,7 +1173,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-opaque-public-source/Cargo.toml": "8853f90055ab167bc1daccd95ad0ab03c016f1fe37a0934f462c8dda64e09d0f",
+        "tests-rust-backend/effect-plan-opaque-public-source/Cargo.toml": "7c45086332d62f63133973e2f4d6a5281fe67a78e5edff6a338f05ceedaf2ee3",
         "tests-rust-backend/effect-plan-opaque-public-source/fixture.rs": "63dd17e165a22a56c2826621e6ff00f7e3b362370eaf091be706f3ae05fc4dee",
         "tests-rust-backend/effect-plan-opaque-public-source/build.rs": "41b000eb113869df32f658b6c6fe0d23809b71bdf8d1d9912cef5feb37aabc2d"
       },
@@ -1194,7 +1194,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-optional-send-source/Cargo.toml": "291b3764857089d44f99b3363554dbaa3fea5cdb7ab86c98d79aa0ffe7e4e853",
+        "tests-rust-backend/effect-plan-optional-send-source/Cargo.toml": "eb19db527ba1f4946330bd6f466cbe137df602983c13b1d8bbc5e2d60c340076",
         "tests-rust-backend/effect-plan-optional-send-source/fixture.rs": "09eb8b628d7773cf38192d67a010f818adc6ae9855fe3fb190848baa4aa8b9b5",
         "tests-rust-backend/effect-plan-optional-send-source/build.rs": "19859553cd6050f3c7975c53ea47322663a26d2cbb3ebc8279462151a5ffe24d"
       },
@@ -1215,7 +1215,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-ordered-comparisons-source/Cargo.toml": "3e7331c4550d08184eb151e78780dd3b8cad7bb640e35ef5cafe56df6606e263",
+        "tests-rust-backend/effect-plan-ordered-comparisons-source/Cargo.toml": "dbc6a49037331dfd8b9af4e1b17bc30ddc54dcb9f96ff4e32d966b9c82017407",
         "tests-rust-backend/effect-plan-ordered-comparisons-source/fixture.rs": "868a9bff483f7eea90f624078241dc73164d4d15e8e49ba3bfd219b7b460b3d3",
         "tests-rust-backend/effect-plan-ordered-comparisons-source/build.rs": "37cb3e3dfaa7a4ff52f97d7802a70aa668466362b9ac96c02b1c873fddb31b22"
       },
@@ -1236,7 +1236,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-own-public-key-source/Cargo.toml": "3032f761b0523b968e18de36dffd65323b1a494c06d13b2e65a915c47054e312",
+        "tests-rust-backend/effect-plan-own-public-key-source/Cargo.toml": "4869f9d178c94a643a7004817700431a4bd17fc98769a0ac377d09d6e91fe4fd",
         "tests-rust-backend/effect-plan-own-public-key-source/fixture.rs": "8a1f6e68b2c0f6b9d23f67c514a3deb3bd753b9e594a22d691d3a7b3d990b325",
         "tests-rust-backend/effect-plan-own-public-key-source/build.rs": "f76a6062f5b275f957f1908d9cc5e7eb1a3c4ac634193d81e4f2a341171f9657"
       },
@@ -1320,7 +1320,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-public-products-source/Cargo.toml": "481c5bf8c717d9203c19217862c7770b9bb624e39916f500a4524e3eed579d70",
+        "tests-rust-backend/effect-plan-public-products-source/Cargo.toml": "70046f7609030c9a1c105168205ffbfe2100414602fe6df89cf4888eb74ee2a5",
         "tests-rust-backend/effect-plan-public-products-source/fixture.rs": "8f80c503b8cc6989b63676c33a7efc60bc69ac0cdffd6eb4922d43784d0051c2",
         "tests-rust-backend/effect-plan-public-products-source/build.rs": "77396e0253e97fd8eb590ef8d2adafde2c99caafe3599da5d33423034261bc46"
       },
@@ -1341,7 +1341,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-pure-calls-source/Cargo.toml": "e5831882d781d2568e9771844f740e0209ee2f0a47038924d020f4050af81e6a",
+        "tests-rust-backend/effect-plan-pure-calls-source/Cargo.toml": "99dfe2f83b20b0634697aadf4691314a1d5040d957b0ea2ee44af40f4d3ac2eb",
         "tests-rust-backend/effect-plan-pure-calls-source/fixture.rs": "28722dd1ce9dc9ef7c83d02d8fa10e4ebde0c8143bee4738713499a279535b4f",
         "tests-rust-backend/effect-plan-pure-calls-source/build.rs": "50b545e489c095c5d773344aae18980879493cc036830e7405755e4dc92f738a"
       },
@@ -1362,7 +1362,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-pure-unit-statements-source/Cargo.toml": "0932427ee02a1be1a1c2bc5ef72714f0f15430fea8429b5ac806aa48607f312f",
+        "tests-rust-backend/effect-plan-pure-unit-statements-source/Cargo.toml": "82c4b22db1dd415bb6ff37697b147b304fb771d8489747c4c4e9c0d450141e68",
         "tests-rust-backend/effect-plan-pure-unit-statements-source/fixture.rs": "7827227f693e97fb782145d82bf0167f494dda008519af5d3550eed015dae07f",
         "tests-rust-backend/effect-plan-pure-unit-statements-source/build.rs": "27c10611c1e5d3ae4602831fe6742a8673e52dd72a14df1ac6f766b5054325e6"
       },
@@ -1383,7 +1383,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-qualified-coin-source/Cargo.toml": "05fe1b09117b71f0c4053f4fe0718bafac67b05ad2d449e29dea524f8f5f773d",
+        "tests-rust-backend/effect-plan-qualified-coin-source/Cargo.toml": "490e3115587693dca6db024205e0bae08d3b98fad528ba0dc12f09a3317ce53c",
         "tests-rust-backend/effect-plan-qualified-coin-source/fixture.rs": "574cd375fdefa11f8e4c33ed692243c3e21dbe147d73ba1cd7b52290c6593691",
         "tests-rust-backend/effect-plan-qualified-coin-source/build.rs": "9facffba45f21a9e4fa477c2c8ad5537c814019d32f75a33451ffc45dcc15c61"
       },
@@ -1404,7 +1404,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-qualified-set-source/Cargo.toml": "87b2d588ade63d1f5f73b5a0cc3b84f4c24ab5c1647526f21458ff26be0136b9",
+        "tests-rust-backend/effect-plan-qualified-set-source/Cargo.toml": "3cb6fa56a5f4742d051d038fdc5aff2d1179dbe835e77629939f6318d6d9cd4a",
         "tests-rust-backend/effect-plan-qualified-set-source/fixture.rs": "6fa3e2000fa133bdeef09255b58979a164f6aefca05c144f924bbcdd63597ea5",
         "tests-rust-backend/effect-plan-qualified-set-source/build.rs": "38918f746f1718c8d995b54c4d6d5ccebb399db258be8b88f796a546e8207f56"
       },
@@ -1467,7 +1467,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-rich-values-source/Cargo.toml": "c99585213ac47ce71e123bbc5896f37ff304b46f3fd6c5020651c49fd56e38f8",
+        "tests-rust-backend/effect-plan-rich-values-source/Cargo.toml": "25048f1203defc521c4a4e9d67987d9f78aab53f0e1b786cccc1fd9d3f10c386",
         "tests-rust-backend/effect-plan-rich-values-source/fixture.rs": "afbc993f53b029e055012f67e2feb849633894383c2b79fa5ee76945ad34f875",
         "tests-rust-backend/effect-plan-rich-values-source/build.rs": "dd18fa46e2bea6d5adc9ff953bbfe5978eb08a6c6975b06116b3feb7a693f3c2"
       },
@@ -1509,7 +1509,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-stateful-calls-source/Cargo.toml": "fdd39a3f74e12a3bc47c8d7a4cb178776ce7e0f1ffd8b5d15353ff0cd7f19aa2",
+        "tests-rust-backend/effect-plan-stateful-calls-source/Cargo.toml": "a7c6706f4427898baa42fe23d0edd852ef19b5ead1b79a84f4cb4082124e3b34",
         "tests-rust-backend/effect-plan-stateful-calls-source/fixture.rs": "2b29e287cb2a896c96ff77c5f5923b5f708bac27235f4da426a6b64eb73ff84f",
         "tests-rust-backend/effect-plan-stateful-calls-source/build.rs": "ee3057aa9de306e20c6e176e2aa7fdc0ca4335bc5db0e1fd576099cf66c694cd"
       },
@@ -1530,7 +1530,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-terminal-composition-source/Cargo.toml": "c0bb886023837a82de20e844cb098bbc16da18b2b6113444dac63e0d4e1dbff0",
+        "tests-rust-backend/effect-plan-terminal-composition-source/Cargo.toml": "7b8f83af2b0f19460c29c4063ca3ce70e54f99bbf35aea9bcb6e0f5db43d4c01",
         "tests-rust-backend/effect-plan-terminal-composition-source/fixture.rs": "e3d4e00a28314086b56b44a8320d1537dd8db50c81b147639b02d936fce1ed5e",
         "tests-rust-backend/effect-plan-terminal-composition-source/build.rs": "d1fa66ea4ae72b425111295fd21d0f7381daf5660f03e9ed6dde7d4baa0c8bb6"
       },
@@ -1572,7 +1572,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-unit-actions-source/Cargo.toml": "aa026b62feeb80cb0ab41290b13bf642c373d67ed32737c6d45a6de1ae94aa0a",
+        "tests-rust-backend/effect-plan-unit-actions-source/Cargo.toml": "d42435b0a37875e3a3c56e47d12e716988445338ab8a9f720fb8eaf64b979409",
         "tests-rust-backend/effect-plan-unit-actions-source/fixture.rs": "fdfc9ee24d9ee8ee20212f9ecfcdbc4ba397df7c4d5a7e4d440a167bee08b3f3",
         "tests-rust-backend/effect-plan-unit-actions-source/build.rs": "1298fb9778d1fd41a91ff18ecedc0130ca377e52ac285c50c88a0072724931a3"
       },
@@ -1593,7 +1593,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-unit-composition-source/Cargo.toml": "1f3bab8fcb2ad02b3ee7eb1c24ebaa9fbb74b9a55415f340784c13914c2b6277",
+        "tests-rust-backend/effect-plan-unit-composition-source/Cargo.toml": "9c9ff3bd15091e8617f8e244840d3117efeb144cb98e3e8340162595cfee5071",
         "tests-rust-backend/effect-plan-unit-composition-source/fixture.rs": "c7659e9625bddbf3be90da358ed48b1bc62a688094248571305387a8355730c1",
         "tests-rust-backend/effect-plan-unit-composition-source/build.rs": "65579bee9c640966e45f3ca30eeb89c815ca7a2412c92887bcbf0dacd6148f16"
       },
@@ -1616,7 +1616,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-unit-keccak-source/Cargo.toml": "3d9275561b8ff381742d4ad3debe0ba13ac6b997db4dd9c7357e5783c61852f6",
+        "tests-rust-backend/effect-plan-unit-keccak-source/Cargo.toml": "1c050f19b07474b148eee621016a2337936c80f2cc958c036f2987a23dee1506",
         "tests-rust-backend/effect-plan-unit-keccak-source/fixture.rs": "cd7dd480eff224fd2815514c47c045f46627936d1161dc482bb3cfa26dd1c635",
         "tests-rust-backend/effect-plan-unit-keccak-source/build.rs": "fe0052dc417c688ef5d6e55dad282de26797ad42c737cd1aba3efab90f31ff8d"
       },
@@ -1637,7 +1637,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-unit-value-operations-source/Cargo.toml": "53a360acdce06356159d304608b1f3602456fb6c7154e3fd34b854778b37c232",
+        "tests-rust-backend/effect-plan-unit-value-operations-source/Cargo.toml": "a7e1ac52bc2bcdd83fba18a2db7d88f5c61f8513c9eaef49d672c139d1a2d3f3",
         "tests-rust-backend/effect-plan-unit-value-operations-source/fixture.rs": "9490460f2691cacd5cc053c3e5c22dfd78ea2af4b5cf70b086745a3843c33a47",
         "tests-rust-backend/effect-plan-unit-value-operations-source/build.rs": "be8cbf876e1e696a146dd7b376398b42534083f822ea59d6cad2b90a35668d2c"
       },
@@ -1679,7 +1679,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-wide-source/Cargo.toml": "ba0b6bcea1d06cd8b820ee9cef9452b6a8563efda9e4eb713267136d706b212c",
+        "tests-rust-backend/effect-plan-wide-source/Cargo.toml": "7caba0f66cd6b4c7843deb12b4354bc08d8d32d04f198137d7409b99a09fab65",
         "tests-rust-backend/effect-plan-wide-source/fixture.rs": "3ee33633ad8b56a14191ee20e0435671da43708438ee7a7aed5c7885779fd277",
         "tests-rust-backend/effect-plan-wide-source/build.rs": "624fbbabd4bd2e6119b63b29019dce29cd6fb4e8a7aca49bf5d45d7109b2997c"
       },
@@ -1700,7 +1700,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-wide-add-source/Cargo.toml": "d69f0a0cf79034ae6f673f290ce18e7889a33cfa438733f87bb809ce9e9bfc44",
+        "tests-rust-backend/effect-plan-wide-add-source/Cargo.toml": "5438fe5586dcaae85b7ee42b54d6656f69169ded307cd23f42bb9790e1399d9f",
         "tests-rust-backend/effect-plan-wide-add-source/fixture.rs": "3422b2f25b78b2bedc55d5e58698c0bc43844dd1e442fa93861d659e555a4de0",
         "tests-rust-backend/effect-plan-wide-add-source/build.rs": "49352b50cbfd457b202a6742d6ebc55fb99e9aa656636941b8f1c0430d8561f4"
       },
@@ -1721,7 +1721,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-wide-casts-source/Cargo.toml": "205f920814cee255a4b383910665762ec2bfd945eab02bfd960b5ce1ec8e5287",
+        "tests-rust-backend/effect-plan-wide-casts-source/Cargo.toml": "ad803a51ac8ecc620418553e0d6ad4468125ba9044b771cd22d3447b00c55a73",
         "tests-rust-backend/effect-plan-wide-casts-source/fixture.rs": "238d5154c7d23b10f2bac50193e2430a23b8854a3e57866d04c9da69599bca38",
         "tests-rust-backend/effect-plan-wide-casts-source/build.rs": "98b2dbdd1e53a94ce91525b7db775c7d4bd10c6c24cd80c7b01154088e343791"
       },
@@ -1742,7 +1742,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-wide-field-cast-source/Cargo.toml": "5d0b823a6b1f92fb211e099834cd1303ba915f5e24f43a017e3453958885a865",
+        "tests-rust-backend/effect-plan-wide-field-cast-source/Cargo.toml": "214c9418e2c5b4f97e7e9edab869f109d381349248288b20368a7a58d899c4e5",
         "tests-rust-backend/effect-plan-wide-field-cast-source/fixture.rs": "2fb0831c12b69f4dbb1e7b3bebf596361a27f4395484c890a7397ccda2afeb94",
         "tests-rust-backend/effect-plan-wide-field-cast-source/build.rs": "69e3336c34615f520cb1ad0baa9cb5af08721b220571a884638c670abfd198d5"
       },
@@ -1784,7 +1784,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/effect-plan-witness-inputs-source/Cargo.toml": "ad76e3a08c25d0fa4fca835d8e602e5418ff7caa72fa34755ffe058dadcd45b5",
+        "tests-rust-backend/effect-plan-witness-inputs-source/Cargo.toml": "6e2872b7168b0e7579e536a70cf32a4a09fef9074a9cdab07729a781a019bf7e",
         "tests-rust-backend/effect-plan-witness-inputs-source/fixture.rs": "d424ca442dd4e8b7d04ccd89c42973241b3f07547a3b324e22b41ebdfa84c941",
         "tests-rust-backend/effect-plan-witness-inputs-source/build.rs": "41621295487192224e10c0a8ef1f3e7c0d1b67e75243513d932acce892e46153"
       },
@@ -1808,7 +1808,7 @@
         "consumer": "tests-rust-backend/effectful-return-oracle/fixture.rs",
         "namespace": null,
         "consumer_input_sha256": {
-          "tests-rust-backend/effectful-return-oracle/Cargo.toml": "f4df3f1ba731a63f041553d460c5e2bcfbca455bd0fd279cd0a052c87c8d0e5a",
+          "tests-rust-backend/effectful-return-oracle/Cargo.toml": "782926d6127aec38346165b38c487bd01f112a71cbc5ed89a088b57a9a73c9fd",
           "tests-rust-backend/effectful-return-oracle/fixture.rs": "63381cea7ce5b07dbb9937198b79bdb493b78a9fad4e23302559c6ea6f82a1ea",
           "tests-rust-backend/effectful-return-oracle/build.rs": "6147c99878f76b30a7f612f6a5bc0625cd3f13bbedeef97d87f7b78a9cdbce0e"
         }
@@ -1840,7 +1840,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/empty-recording-witness-source/Cargo.toml": "f1e60ad967175d13a77dee28ca5c653ee6b2102c6bc5a482ec30fe1d77c637df",
+        "tests-rust-backend/empty-recording-witness-source/Cargo.toml": "032ab007a31162b734ea60e914d264e4cea9c079a1f9b03bf524cd1c272a0ac3",
         "tests-rust-backend/empty-recording-witness-source/fixture.rs": "3ca2b007dbf5ae516b0343482f84e2a873f0cbee9b4c6fa2c900e78eb9febc45",
         "tests-rust-backend/empty-recording-witness-source/build.rs": "a0bb890a225da7da9f3ad10369881a23bad612cf3196f06edb274ed2af40250b"
       },
@@ -1917,7 +1917,7 @@
       "consumer": "tests-rust-backend/field-observation-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/field-observation-oracle/Cargo.toml": "bbe081c82f3e90631291ef708e65161f4e785737b0588b514777d52d4b378bc8",
+        "tests-rust-backend/field-observation-oracle/Cargo.toml": "06662c4b510000f58c5c11981237d0cbf57415a5ff70cb01ceeb32d1579fd3a0",
         "tests-rust-backend/field-observation-oracle/lib.rs": "917a8186ea1c7d3b5fc31c084c4010f64e5bb40bb8e5bc7718a1660815881543",
         "tests-rust-backend/field-observation-oracle/build.rs": "57f611e6a1c6f084d4549c22dd44ff34553aa793eed99c87626defc1c7777a0d"
       }
@@ -1938,7 +1938,7 @@
       "consumer": "tests-rust-backend/field-to-bytes32-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/field-to-bytes32-oracle/Cargo.toml": "9b2811bd7d5cc41ea3bd94ba7f3915940b468c2cac532a01333662aff4f8c930",
+        "tests-rust-backend/field-to-bytes32-oracle/Cargo.toml": "5743d50ce48f121162761a9cded7aa8d7419e0d3684f914e72d841a7d8fdb8a7",
         "tests-rust-backend/field-to-bytes32-oracle/lib.rs": "f339ec0910b796695fdebd0bc48bdfda9604ad41af8e33113af4e2b9a681474a",
         "tests-rust-backend/field-to-bytes32-oracle/build.rs": "5074a903bf066e47bac2378208618a774e4660b18d3e2c12f0552af7c92b4891"
       }
@@ -2014,7 +2014,7 @@
       "consumer": "tests-rust-backend/hmt-default-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/hmt-default-oracle/Cargo.toml": "227b15d8e1139d57ccee4a967ee5748ec8cc9abb198c2f6971bf5a45f81460ec",
+        "tests-rust-backend/hmt-default-oracle/Cargo.toml": "7eadce396faee0da77714b73a65ab83fee9d81683e824e44a8b6edd27e467dc2",
         "tests-rust-backend/hmt-default-oracle/lib.rs": "ffcb01b52dcca697e25c90af6597642d5c8c0aa2093df1ee5c93985a03b42e38",
         "tests-rust-backend/hmt-default-oracle/build.rs": "0bf42991e68da7b5ffed4debe745250da27efd1a47342214fb95d6d081e87913"
       }
@@ -2035,7 +2035,7 @@
       "consumer": "tests-rust-backend/hmt-insert-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/hmt-insert-oracle/Cargo.toml": "efa8f90c728c97a38c03b5c95d58605ce80a74bfaf115cde51cfea796c499078",
+        "tests-rust-backend/hmt-insert-oracle/Cargo.toml": "ee8af6c6cd65fca89dcbbbb883ff56714ac54dae87ee6286f5ee649bbec143e9",
         "tests-rust-backend/hmt-insert-oracle/lib.rs": "3a1e67f38ad067534a81fee5ba49025e76787cd9058ae2c57ec5d87cfb7e77c9",
         "tests-rust-backend/hmt-insert-oracle/build.rs": "62978447794ad710b9cb10627d5194f21ae39bf7fb7a424fc15bbb4e993494f5"
       }
@@ -2179,7 +2179,7 @@
       "consumer": "tests-rust-backend/kernel-shielded-effects-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/kernel-shielded-effects-oracle/Cargo.toml": "70ed0fd757944538f610b73eda31a866c63328f0ff61c2dac624fcf22fc5a251",
+        "tests-rust-backend/kernel-shielded-effects-oracle/Cargo.toml": "0009667b27674170f472aad8de1a350e91be71381dfd4d77e44350a2b75ab317",
         "tests-rust-backend/kernel-shielded-effects-oracle/lib.rs": "00b163fbd15a26c6288cdadb9c6424c38829cb452bb9cc950bb979dcec109054",
         "tests-rust-backend/kernel-shielded-effects-oracle/build.rs": "e6c9274b6d9b156773a3ac31c8a8e06ce7bc42d90356fc22ff687c2af05d7afb"
       }
@@ -2386,7 +2386,7 @@
       "consumer": "tests-rust-backend/merkle-tree-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/merkle-tree-oracle/Cargo.toml": "d035ddf76d288eb9625c69e000547ce149ea4b24ac54d09fdabe458aa804cb41",
+        "tests-rust-backend/merkle-tree-oracle/Cargo.toml": "3c32d9cfa05af5d20ec4b7df167447293bff77a01d73d68193ff6ca7b991c4ad",
         "tests-rust-backend/merkle-tree-oracle/lib.rs": "250aeb9e4147111a572f45c974723c52019efbd4ca69ffc4bd22515c593d70a1",
         "tests-rust-backend/merkle-tree-oracle/build.rs": "b8e6a8d3ac1ae75f353239a8f7213f577514b3eb27cf74ca887a58d9a79aeacb"
       }
@@ -2451,7 +2451,7 @@
       "consumer": "tests-rust-backend/native-zswap-intents-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/native-zswap-intents-oracle/Cargo.toml": "1c72dacba737fd22bb7a490de4389a1823c7f419177e254c46306cb15d31f2cb",
+        "tests-rust-backend/native-zswap-intents-oracle/Cargo.toml": "67bbf7437cdb2f7bd75dd1f575449d5d884bd1206fbfb4e394558257cd204cda",
         "tests-rust-backend/native-zswap-intents-oracle/lib.rs": "26a100e8a79be6b2694fa216eef93c5175554949c9ce485652c19a8b060eabf4",
         "tests-rust-backend/native-zswap-intents-oracle/build.rs": "7c1b49f2536b734fe6dc170c97b1e21b13fa5718baf4491b4f00a49b2ec59ca2"
       }
@@ -2559,7 +2559,7 @@
       "generated_artifact": "contract.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/opaque-cell-inputs-source/Cargo.toml": "d3c108ef609273b8d20b27d10af87f483cc195277d5ad0a0248e5dec5a3d6c2f",
+        "tests-rust-backend/opaque-cell-inputs-source/Cargo.toml": "a3ad677fc8acbcfe92e024c61c4b491f498d5d7325ce320690f36244c0fc8325",
         "tests-rust-backend/opaque-cell-inputs-source/fixture.rs": "b2e4ff26505e2963d93a15e29726ffc99df43e2b6a33179859742b1b46c3bdd2",
         "tests-rust-backend/opaque-cell-inputs-source/build.rs": "4524a7e9daee8ddfdc6dd2e05a9db4a3218cf287850df7b46bee3232acaec6ce"
       },
@@ -2602,7 +2602,7 @@
       "generated_artifact": "nested.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/opaque-observed-boundary-source/Cargo.toml": "5bf1981a9eb85e0b8fd34991b08c860e6f6beec523839e08127a01d85d65679c",
+        "tests-rust-backend/opaque-observed-boundary-source/Cargo.toml": "b8a237fef5665e1d5eab508b299ea7bb237fc41a3079a7f8d275539560105aa6",
         "tests-rust-backend/opaque-observed-boundary-source/fixture.rs": "7a439eb78ebf416d042bc75c77121a2a6d686028e26ab4e08d43583d3d86bae0",
         "tests-rust-backend/opaque-observed-boundary-source/build.rs": "7dc900ab25ff1fce19fcb83f924b366c4f8b67fd98f0c659a1c4377116bfa799",
         "tests-rust-backend/opaque-observed-boundary-source/tests/nested.rs": "07e8e7f10e3f2a2dcb04f124edf3955794dbe866fa3e796682a418427b383428"
@@ -2680,7 +2680,7 @@
       "consumer": "tests-rust-backend/qualified-coin-cell-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/qualified-coin-cell-oracle/Cargo.toml": "7890f6afecb73d898f761b105ab2c1933a0e4b66722d0d780a16e6275020a2b2",
+        "tests-rust-backend/qualified-coin-cell-oracle/Cargo.toml": "3584d9d8974ab3a86fa3c8c3c047635f507f77419b940419edd987b34d03f672",
         "tests-rust-backend/qualified-coin-cell-oracle/lib.rs": "fed7889883751ee0ddf3d1acc026e792051df20eff1aed6276a9b96c33b1a5aa",
         "tests-rust-backend/qualified-coin-cell-oracle/build.rs": "0f2ae0af49afa639e65362a0585002fe6c84a572df94395adad7b5332bde453f"
       }
@@ -2701,7 +2701,7 @@
       "consumer": "tests-rust-backend/qualified-coin-set-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/qualified-coin-set-oracle/Cargo.toml": "2e73e92cd31f3801b4ebb71b4abf7c37547697c5f05ec0592ef81e9569c0e941",
+        "tests-rust-backend/qualified-coin-set-oracle/Cargo.toml": "29b6e9f67cef61508c8191fc0b86c2b38511088c080f12ca6ae9bde5bca3cbfc",
         "tests-rust-backend/qualified-coin-set-oracle/lib.rs": "b9f01ea8ee986b81face98006dd241de079d7d21862b9d6f01295c4f05553b4d",
         "tests-rust-backend/qualified-coin-set-oracle/build.rs": "606704787a94f083932d00a42843936cb7546510c263061d930e6819c8c770ee"
       }
@@ -2780,7 +2780,7 @@
       "consumer": "tests-rust-backend/root-let-action-return-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/root-let-action-return-oracle/Cargo.toml": "d84f96fdcbb7bbd78ef69b8ba9d8143e4948275404d7ce178d2ed345860055db",
+        "tests-rust-backend/root-let-action-return-oracle/Cargo.toml": "c692f66668be16cdde973c2372a58471608d5995830ed0e27ec19a6f9648d854",
         "tests-rust-backend/root-let-action-return-oracle/lib.rs": "6f26b5466f99058bddb41df64080c53acca1b4db612ad369a3e401335d96336f",
         "tests-rust-backend/root-let-action-return-oracle/build.rs": "3ee7a2ee16e4896160bdaf7993e3c8114a2151efd14c84ef58733fc6a1f53686"
       }
@@ -2856,7 +2856,7 @@
       "consumer": "tests-rust-backend/shielded-merge-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/shielded-merge-oracle/Cargo.toml": "3f901e6d69fa54ee6f934027f878e57a23c369513e997091fc9d67d3eb70c1e9",
+        "tests-rust-backend/shielded-merge-oracle/Cargo.toml": "14ac1080c7a83f11faa0df2bdd70ed8643b1958309fa4d77b99218060719b468",
         "tests-rust-backend/shielded-merge-oracle/lib.rs": "976af324c4b3d079dfa85730f82f51c53058fcc7a3dded445fffc657960072d1",
         "tests-rust-backend/shielded-merge-oracle/build.rs": "056f35cafa5c7658faa2e9968194e1cae8375fc3ce01564dcb2555a1138e96c8"
       }
@@ -2877,7 +2877,7 @@
       "consumer": "tests-rust-backend/shielded-receive-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/shielded-receive-oracle/Cargo.toml": "5772dd0e9713bd880045a6d60a138a9ffea58331a6244d7da5311b626472729c",
+        "tests-rust-backend/shielded-receive-oracle/Cargo.toml": "b37065acf62e07be8ca6c1a1499c3fb6edf2d1a5e0b783c249839ae6793e2954",
         "tests-rust-backend/shielded-receive-oracle/lib.rs": "8bbd50d1a158a41b19b8b57dec8a8a38b57a10e9218911f9ed26da91b8cea349",
         "tests-rust-backend/shielded-receive-oracle/build.rs": "5fc7a5f6277a9b8981c137f9c1050dc89c7d1f2a145256b79d361c99a3d09262"
       }
@@ -2898,7 +2898,7 @@
       "consumer": "tests-rust-backend/shielded-send-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/shielded-send-oracle/Cargo.toml": "5620139faeef723e8df3261ed03843216b381e3042138affa8543e1bad4ba4d5",
+        "tests-rust-backend/shielded-send-oracle/Cargo.toml": "38de9771ccbae035da89563530255c972c8e7217c59237c2d589f7a93cd781a7",
         "tests-rust-backend/shielded-send-oracle/lib.rs": "179ed438058ab1450985de9ee80d907e85fc4126c0375b94891e8c0963be6344",
         "tests-rust-backend/shielded-send-oracle/build.rs": "4bb9870b17e2e449c6ef8b94d995e8f629132328ae5c7d28d7d135d8d6d461c7"
       }
@@ -2963,7 +2963,7 @@
       "consumer": "tests-rust-backend/stateful-struct-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/stateful-struct-oracle/Cargo.toml": "a1edaec82bb559d3682f5b6a462d79a30cf50cc3a59d564bffeecb75f06cfc9f",
+        "tests-rust-backend/stateful-struct-oracle/Cargo.toml": "6f21c3518675240eb9d0ffb25f10bf20090254b5ba3739366fa4a1e9b1cd6cb0",
         "tests-rust-backend/stateful-struct-oracle/lib.rs": "9ba5db1907c38a250eda87fc8f9d9df22e235c93006579b06ef16dbed12e8062",
         "tests-rust-backend/stateful-struct-oracle/build.rs": "86832b53dcf1e0c623ad479d858d221c34fc694fca0afdd5377adbab64f000dd"
       }
@@ -3017,7 +3017,7 @@
       "consumer": "tests-rust-backend/terminal-lexical-return-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/terminal-lexical-return-oracle/Cargo.toml": "679a22a1fc42aa7b73fb997d602816b681c734b45cf76ff963160e74b9cd0360",
+        "tests-rust-backend/terminal-lexical-return-oracle/Cargo.toml": "8066d79e2ca1b460ec7c58da483944bb78b7f06627ea3be55aa838b3d31ba32e",
         "tests-rust-backend/terminal-lexical-return-oracle/lib.rs": "55245877a39b2151cdd46eea29f5c9c3ef1c4057d4d3b90f5f7a36a83e9e2afa",
         "tests-rust-backend/terminal-lexical-return-oracle/build.rs": "2cde7b86eb3f71a29d921eb4766e1b56956a62580f7a0279c958e1d81279fe89"
       }
@@ -3038,7 +3038,7 @@
       "consumer": "tests-rust-backend/ternary-cond-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/ternary-cond-oracle/Cargo.toml": "9df55d23b95ac32c16323deb7b06b30c328e4f9a8452ca89ea87cc586f29cf12",
+        "tests-rust-backend/ternary-cond-oracle/Cargo.toml": "519c0f9777079198a8c0114a707cb03157b78c0ba9232dc01ef74bf8d181b80b",
         "tests-rust-backend/ternary-cond-oracle/lib.rs": "a495e6a67fbc5f8f11e364db939d2b1560eeb15188178d90bb8c64b98211865f",
         "tests-rust-backend/ternary-cond-oracle/build.rs": "0331322280cf4c29ef9408b82f2f336ee072fb02768e4d5e13abcf3f8d4da8f2"
       }
@@ -3081,7 +3081,7 @@
       "consumer": "tests-rust-backend/transient-receive-send-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/transient-receive-send-oracle/Cargo.toml": "cb8505f23832a4b99eed399d2a19840e4ee2de890a9a7fc1b2e029b38cf9bd9a",
+        "tests-rust-backend/transient-receive-send-oracle/Cargo.toml": "94bbaf136d7ae710eb1d09a18ed6c898536b697be622e876aab485bd6022020b",
         "tests-rust-backend/transient-receive-send-oracle/lib.rs": "db1819af25fb933996cd936b25d240998b4d61383d9a26277a29083765b2dbb4",
         "tests-rust-backend/transient-receive-send-oracle/build.rs": "e1300ab5b46efceb10ef4f47df16c1b994bf45f7a00a6a38bf52941501820dc7"
       }
@@ -3366,7 +3366,7 @@
       "consumer": "tests-rust-backend/witness-hash/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/witness-hash/Cargo.toml": "4575716afcad072bf89cb6b5435ca45c729145c2ebb58da163e16f4df4ee1e50",
+        "tests-rust-backend/witness-hash/Cargo.toml": "f95a89854d7246e1bcf2f93833ac4a8c906a53527b3180b666466d073a1f8bb5",
         "tests-rust-backend/witness-hash/lib.rs": "687c96f3956bcab52a388807d6bda53bc99626aa437f1f12839843651515845e",
         "tests-rust-backend/witness-hash/build.rs": "03ee8a21259a08b318e267a7da87543b6cb464b37efae68d0890f10cbb047fb3"
       }
@@ -3387,7 +3387,7 @@
       "consumer": "tests-rust-backend/witness-jubjub/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/witness-jubjub/Cargo.toml": "ae0594cd3116833b7cb7eaf8741ff1951c0d6a244e8538253fe8e7fc9d3fec6c",
+        "tests-rust-backend/witness-jubjub/Cargo.toml": "9019e2b6e945fc933708c1d4bab64b404fd317e1696dfd621c4f458733567998",
         "tests-rust-backend/witness-jubjub/lib.rs": "b932d74c638f780df743b548ce584691f091cf31bd68512b98f54f7016487d81",
         "tests-rust-backend/witness-jubjub/build.rs": "608f8a46bf4fff384d146befc3bc3458641dbb30462fcc082c21c2fcc96bca9a"
       }
@@ -3518,7 +3518,7 @@
       "consumer": "tests-rust-backend/zerocash-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/zerocash-oracle/Cargo.toml": "92318379afcc41b87c03ad65a42dec58b51ba8e225cc9f3b840eb9fb93944771",
+        "tests-rust-backend/zerocash-oracle/Cargo.toml": "59e95ed054ea6a9f1c39bde230bb5120c0cb7e5b9f852d84ddcc6edff45c4752",
         "tests-rust-backend/zerocash-oracle/lib.rs": "17a7434504d2570fbaa402059b888a40759e3b280a5b03d57e0b1c788c463ccb",
         "tests-rust-backend/zerocash-oracle/build.rs": "724e7db2a39d9452da3148d4c0d30909267e7de49be3f5e2e2454751a980979c"
       }
@@ -3539,7 +3539,7 @@
       "consumer": "tests-rust-backend/zswap-transfer-oracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/zswap-transfer-oracle/Cargo.toml": "3f7b7329a28fbbf023e8c82e53de198a57e277274a9cdf5586ea845dde6eb64a",
+        "tests-rust-backend/zswap-transfer-oracle/Cargo.toml": "6d372281a8ce78e510a1906d24066649ba91c062326d95c98e4b7349b93f37f8",
         "tests-rust-backend/zswap-transfer-oracle/lib.rs": "9630cfb1f6847a59e2a60cca0ed70079eeaebeb8d5a3c2f21e9e82b7f6d74222",
         "tests-rust-backend/zswap-transfer-oracle/build.rs": "a37c59bf75ab150292b66a3279a1888e07eb24c22580ca5bcb32c5f5c3e47377"
       }
@@ -3560,7 +3560,7 @@
       "consumer": "tests-rust-backend/test-center-bboard/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/test-center-bboard/Cargo.toml": "bc98aae613f5a75d56dbe0979ca15a5cdc8171ebe08ff90f846143db0b4d1081",
+        "tests-rust-backend/test-center-bboard/Cargo.toml": "8a374284927fe34d4bad2d7fd7b85558942140f317f308181bb970b54c4f5147",
         "tests-rust-backend/test-center-bboard/lib.rs": "fbc83ee21413a50c9b2eb5bbdfe94053e3cc4d5854c72509c70b4534912f610a",
         "tests-rust-backend/test-center-bboard/build.rs": "56311345f9b047ef1a5c29545559142e1643eb4af1b503bceaeb0d0c3676499a"
       }
@@ -3581,7 +3581,7 @@
       "consumer": "tests-rust-backend/test-center-coracle/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/test-center-coracle/Cargo.toml": "e1b8a63aa87c56df2038b82ac0206d7e69e8811273061d9afcecabb3cde6a326",
+        "tests-rust-backend/test-center-coracle/Cargo.toml": "9d90cbfd067cf77a23f19af3fc3c8c8a117d8e3669dc980c7c608d4c55069322",
         "tests-rust-backend/test-center-coracle/lib.rs": "c335896c792eae2b25eb92f617e4d23c8f8e17faba4a687ddd38c6dabaaffc78",
         "tests-rust-backend/test-center-coracle/build.rs": "dc0001969155e9064f70cab3b90204da3504f27571093d9750cbcb623037fd53"
       }
@@ -3613,7 +3613,7 @@
       "consumer": "tests-rust-backend/test-center-micro-dao/lib.rs",
       "namespace": null,
       "consumer_input_sha256": {
-        "tests-rust-backend/test-center-micro-dao/Cargo.toml": "8f2ea4ab9b308b9dd45c2369b92932eb10371f5b0de1003ba041b69303bb4022",
+        "tests-rust-backend/test-center-micro-dao/Cargo.toml": "83401d5bd5205ab370cab977b245c2309b81bb72e9869b53744afa902aefc894",
         "tests-rust-backend/test-center-micro-dao/lib.rs": "a5a754cad6ec77e95b1a7e53d55c45c95a2d3d52c1ff29965be11d8719c2e98e",
         "tests-rust-backend/test-center-micro-dao/build.rs": "9828c9b680d0e1fcdb49bd24e33062f94f489263883dbd4eadccf571acaff2b1"
       }

@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import tomllib
 import unittest
 from unittest import mock
 
@@ -92,6 +93,107 @@ class CurrentSourceRegistryTests(unittest.TestCase):
         self.assertEqual(constructor.consumer.parts[-2:], ('tests', 'constructor_order.rs'))
 
 
+class Ledger813RegistryTransitionTests(unittest.TestCase):
+    """The finite reviewed manifest migration cannot authorize other inputs."""
+
+    def setUp(self):
+        directory = inventory.ROOT / 'tools/compact-rust-backend'
+        previous = directory / 'fixture_registry.ledger-8.0.3.json'
+        current = directory / 'fixture_registry.json'
+        transition = directory / 'fixture_registry.ledger-8.1.3-transition.json'
+        self.assertEqual(fingerprint(previous),
+                         '690e370bc4729f5d39918a1086e956e3fd5663a76f443f7fc7282d8385409c08')
+        self.assertEqual(fingerprint(current),
+                         '912b0ec66f313869b0df061233974316ee4b4069682a1be805ff5e6b6e194e35')
+        self.assertEqual(fingerprint(transition),
+                         '32b985bffdfaade21f57dfd36d5ba688e8a4a0fa8d0f0afb845f97fcb922791e')
+        self.previous = json.loads(previous.read_text())
+        self.current = json.loads(current.read_text())
+        self.transition = json.loads(transition.read_text())
+        self.assertEqual(self.transition['predecessor']['sha256'], fingerprint(previous))
+        self.assertEqual(self.transition['successor']['sha256'], fingerprint(current))
+        self.assertEqual(self.transition['reviewed_upgrade_commit'],
+                         '535e4470e44cbed57e0cfe8db27a665d12c2093f')
+        self.assertEqual(self.transition['pre_upgrade_commit'],
+                         'f8450e32b4eabd462df42cbae024b12d690f0eea')
+
+    def test_only_the_exact_73_manifest_pins_change(self):
+        changes = {row['path']: row for row in self.transition['manifest_changes']}
+        self.assertEqual(len(changes), 73)
+        self.assertEqual(len(self.transition['manifest_changes']), len(changes))
+        self.assertEqual(list(changes), sorted(changes))
+        expected = copy.deepcopy(self.previous)
+        affected = []
+        for row in expected['sources']:
+            binding = row.get('build_binding', row)
+            for path, pin in binding.get('consumer_input_sha256', {}).items():
+                if path not in changes:
+                    continue
+                change = changes[path]
+                self.assertEqual(pin, change['before_sha256'])
+                self.assertTrue(path.startswith('tests-rust-backend/'))
+                self.assertEqual(Path(path).name, 'Cargo.toml')
+                self.assertEqual(fingerprint(inventory.ROOT / path), change['after_sha256'])
+                binding['consumer_input_sha256'][path] = change['after_sha256']
+                affected.append(path)
+        self.assertEqual(len(affected), 73)
+        self.assertEqual(set(affected), set(changes))
+        # Every source/IR pin, role, position and unrelated input stays exact.
+        self.assertEqual(expected, self.current)
+        self.assertEqual(len(self.current['sources']), 257)
+
+    def test_historical_registry_cannot_authorize_the_current_manifest_cohort(self):
+        historical = inventory.ROOT / 'tools/compact-rust-backend/fixture_registry.ledger-8.0.3.json'
+        with self.assertRaisesRegex(ValueError, 'registry source binding changed'):
+            inventory.source_registry(registry_path=historical)
+
+    def test_each_manifest_has_only_the_official_ledger_and_msrv_delta(self):
+        versions = {
+            'midnight-onchain-state': ('=3.0.0', '=3.0.2'),
+            'midnight-serialize': ('=1.0.0', '=1.1.1'),
+            'midnight-storage': ('=2.0.1', '=2.0.3'),
+            'midnight-base-crypto': ('=1.0.0', '=1.0.2'),
+            'midnight-coin-structure': ('=2.0.1', '=2.0.2'),
+            'midnight-transient-crypto': ('=2.0.1', '=2.1.1'),
+            'midnight-zswap': ('=8.0.3', '=8.1.3'),
+        }
+        official = {'git': 'https://github.com/midnightntwrk/midnight-ledger',
+                    'rev': 'b5d3e965a18e4cac17fac4f38446fc55c524439a'}
+        self.assertEqual(self.transition['official_ledger'], official)
+        counts = Counter()
+        for change in self.transition['manifest_changes']:
+            with self.subTest(manifest=change['path']):
+                before = change['before_toml'].encode()
+                self.assertEqual(hashlib.sha256(before).hexdigest(), change['before_sha256'])
+                expected = tomllib.loads(before.decode())
+                touched = []
+                if expected['package'].get('rust-version') == '1.88':
+                    expected['package']['rust-version'] = '1.89'
+                    touched.append('minimum-rust-version')
+                    counts['minimum_rust_version_manifests'] += 1
+                dependencies = expected.get('dev-dependencies', {})
+                for package, (old, new) in versions.items():
+                    if package in dependencies:
+                        self.assertEqual(dependencies[package], old)
+                        dependencies[package] = {'version': new, **official}
+                        touched.append(package)
+                        counts[package] += 1
+                self.assertTrue(touched)
+                self.assertCountEqual(touched, change['reviewed_changes'])
+                if any(package in versions for package in touched):
+                    counts['dependency_manifests'] += 1
+                current = inventory.ROOT / change['path']
+                self.assertEqual(fingerprint(current), change['after_sha256'])
+                # Whole-document equality excludes unrelated dependency,
+                # feature, package, source, path or workspace changes.
+                self.assertEqual(tomllib.loads(current.read_text()), expected)
+        self.assertEqual(counts['minimum_rust_version_manifests'], 12)
+        self.assertEqual(counts['dependency_manifests'], 66)
+        self.assertEqual(sum(counts[name] for name in versions), 210)
+        self.assertEqual(self.transition['counts']['dependency_entries_by_package'],
+                         {name: counts[name] for name in versions})
+
+
 class SourceRegistryRefusalTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -139,6 +241,15 @@ class SourceRegistryRefusalTests(unittest.TestCase):
         self.assertFalse((self.root / 'tests-rust-backend/example/lib.rs').exists())
         self.assertEqual({path for path, _ in row.input_fingerprints}, {
             self.source, self.ir, self.manifest, self.library, self.build})
+
+    def test_manifest_bytes_remain_live_even_when_toml_semantics_are_unchanged(self):
+        self.registrations()
+        original = self.manifest.read_bytes()
+        self.manifest.write_bytes(original + b'\n# unreviewed manifest change\n')
+        with self.assertRaisesRegex(ValueError, 'registry source binding changed'):
+            self.registrations()
+        self.manifest.write_bytes(original)
+        self.assertEqual(len(self.registrations()), 1)
 
     def test_flat_golden_cannot_hide_a_different_cargo_entry(self):
         golden = self.write('consumer/lib.rs', '// generated flat golden\n')

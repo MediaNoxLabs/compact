@@ -112,15 +112,15 @@ mod tests {
             ContractAddress::default(),
         );
         let before = query.state.clone();
-        let error = ledger::write_cell_at_path(
+        let Err(error) = ledger::write_cell_at_path(
             &query,
             &[0],
             NoncanonicalField,
             None,
             &midnight_onchain_vm::cost_model::INITIAL_COST_MODEL,
-        )
-        .err()
-        .expect("noncanonical immediate must not reach the VM");
+        ) else {
+            panic!("noncanonical immediate must not reach the VM");
+        };
         assert!(format!("{error:?}").contains("noncanonical Field"));
         assert_eq!(query.state, before);
     }

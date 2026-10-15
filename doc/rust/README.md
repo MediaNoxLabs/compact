@@ -2,6 +2,8 @@
 
 [Milestone 0.3.0 closure report](0.3.0-closure.md) · [Acceptance crosswalk](evidence/0.3.0/closure/crosswalk.md)
 
+[Proposed 0.4.0 Ledger 8 functional scope](0.4.0-ledger8-functional-scope.md) defines a reviewable Aiken-inspired generated Rust direction and the target-capability seams required for later Ledger 9 work. It is a proposal, not an accepted milestone or a Ledger 9 support claim.
+
 The Rust target uses the ledger-8 Compact frontend, a typed private IR, a Rust AST emitter (`syn`, `quote`, `proc-macro2`, `prettyplease`) and a native runtime built on Midnight ledger/zk primitives.
 
 ## Checked recording checkpoint

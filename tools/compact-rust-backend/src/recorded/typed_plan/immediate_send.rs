@@ -201,25 +201,25 @@ pub(super) fn lower<'a>(
     let mut steps = Vec::new();
     plan.action(prefix, &scope, &mut steps)?;
     // Check the prefix before adding send's branch counts to this same Plan.
-    if plan.kernel_self_reads != 1
-        || plan.zswap_inputs != 0
-        || plan.zswap_outputs != 1
-        || plan.intent_queries != 1
-        || plan.witness_calls != 0
+    if plan.evidence.kernel_self_reads != 1
+        || plan.evidence.zswap_inputs != 0
+        || plan.evidence.zswap_outputs != 1
+        || plan.evidence.intent_queries != 1
+        || plan.evidence.witness_calls != 0
     {
         return None;
     }
     let result = plan.expression(tail, &scope, &mut steps)?;
     (result.ty == circuit.result
-        && plan.witness_calls == 0
-        && plan.cell_reads == 0
-        && plan.cell_writes == 0
-        && plan.counter_reads == 0
-        && plan.counter_writes == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
-        && plan.zswap_inputs == 1
-        && plan.zswap_outputs >= 2)
+        && plan.evidence.witness_calls == 0
+        && plan.evidence.cell_reads == 0
+        && plan.evidence.cell_writes == 0
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.zswap_inputs == 1
+        && plan.evidence.zswap_outputs >= 2)
         .then_some(TypedPlan {
             steps,
             result: result.value,

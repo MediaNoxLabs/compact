@@ -624,21 +624,21 @@ pub(super) fn lower<'a>(
     let result = plan.return_plan(return_body, &scope, &mut steps);
     let result = result?;
     (result.ty == circuit.result
-        && plan.zswap_inputs == 2
-        && plan.zswap_outputs == 3
-        && plan.qualified_cell_writes == 4
-        && plan.cell_writes == 6
-        && plan.witness_calls == 4
-        && plan.counter_reads == 0
-        && plan.counter_comparisons == 0
-        && plan.counter_writes == 0
-        && plan.root_observations == 0
-        && plan.tree_writes == 0
-        && plan.set_writes == 0
-        && plan.qualified_set_reads == 0
-        && plan.qualified_set_writes == 0
-        && plan.historic_roots == 0
-        && plan.historic_writes == 0)
+        && plan.evidence.zswap_inputs == 2
+        && plan.evidence.zswap_outputs == 3
+        && plan.evidence.qualified_cell_writes == 4
+        && plan.evidence.cell_writes == 6
+        && plan.evidence.witness_calls == 4
+        && plan.evidence.counter_reads == 0
+        && plan.evidence.counter_comparisons == 0
+        && plan.evidence.counter_writes == 0
+        && plan.evidence.root_observations == 0
+        && plan.evidence.tree_writes == 0
+        && plan.evidence.set_writes == 0
+        && plan.evidence.qualified_set_reads == 0
+        && plan.evidence.qualified_set_writes == 0
+        && plan.evidence.historic_roots == 0
+        && plan.evidence.historic_writes == 0)
         .then_some(TypedPlan {
             steps,
             result: result.value,

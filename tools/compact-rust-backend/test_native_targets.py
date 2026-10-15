@@ -69,17 +69,22 @@ class FakeCompiler:
             ir = {"witnesses": [], "stateful_circuits": [{"name": "test1", "actions": [
                 {"kind": "native_witness_call", "builtin": "own_public_key"}]}]}
             capabilities = {"circuits": [{"name": "test1", "proof_required": False,
-                "recorded": False, "observed_call": False, "recording_status": "not_applicable",
-                "recording_unavailable": {"ir_node": "StateAction::NativeWitnessCall"}}]}
+                "recorded": True, "observed_call": True, "recording_status": "not_applicable"}]}
             (contract / "lib.rs").write_text("pub fn test1<Private>( context.own_coin_public_key()?")
-            if self.fault == "native-recorded":
-                capabilities["circuits"][0]["recorded"] = True
+            if self.fault == "native-unrecorded":
+                capabilities["circuits"][0]["recorded"] = False
+            if self.fault == "native-unobserved":
+                capabilities["circuits"][0]["observed_call"] = False
+            if self.fault == "native-unavailable":
+                capabilities["circuits"][0]["recording_unavailable"] = {
+                    "ir_node": "StateAction::NativeWitnessCall"}
         if label == "native-own-public-key-value":
             witness = {"kind": "native_witness_call", "builtin": "own_public_key"}
             ir = {"schema_version": 20, "witnesses": [], "stateful_circuits": [
                 {"name": "key", "return_value": {"value": witness}},
                 {"name": "key_bytes", "return_value": {"value": {"kind": "struct_field", "value": witness}}}]}
             capabilities = {"circuits": [{"name": name, "proof_required": False,
+                "recorded": True, "observed_call": True,
                 "recording_status": "not_applicable"} for name in ("key", "key_bytes")]}
             (contract / "lib.rs").write_text("context.own_coin_public_key()? " * 2)
         source_kinds = {"source-pure": ("circuits", 18), "source-witness": ("witnesses", 20),
@@ -162,7 +167,9 @@ class NativeTargetChecks(unittest.TestCase):
                 self.assertEqual(len(fake.events), stop)
 
     def test_native_metadata_source_ranges_cleanup_and_legacy_bytes_are_enforced(self):
-        for fault, last in [("native-recorded", "native-own-public-key"), ("source-range", "source-pure"),
+        for fault, last in [("native-unrecorded", "native-own-public-key"),
+                            ("native-unobserved", "native-own-public-key"),
+                            ("native-unavailable", "native-own-public-key"), ("source-range", "source-pure"),
                             ("follow-symlink", "rust"), ("leave-symlink", "rust"), ("legacy-bytes", "legacy-rust")]:
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as tmp:
                 fake = FakeCompiler(Path(tmp), fault=fault)

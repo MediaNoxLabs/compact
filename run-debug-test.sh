@@ -15,11 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -eu
+
 echo "Run debug tests"
 nix build .#runtime.forPublish
 
 cd debug-test
 nix develop .#compiler --command yarn install
-nix develop .#compiler --command compactc src/contract.compact gen
+nix develop .#compiler --command python3 ../tools/compact-rust-backend/forge_circuits.py -- compactc src/contract.compact gen
 nix develop .#compiler --command yarn build
-nix develop .#compiler --command yarn test
+nix develop .#compiler --command python3 ../tools/compact-rust-backend/forge_circuits.py -- yarn test

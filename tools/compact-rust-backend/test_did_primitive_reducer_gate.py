@@ -69,6 +69,8 @@ class EvidenceTests(unittest.TestCase):
     def test_failed_command_retains_failed_receipt_and_no_completed_rows(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);out=root/'gate'
+            frozen_tool = root / 'frozen'
+            frozen_tool.write_text('stub tool snapshot')
             row={**self.row,'package':'fixture'}
             def failed(*args,**kwargs):raise gate.common.GateError('simulated failed consumer compile')
             with patch.object(gate,'reviewed_rows',return_value=[row]), \
@@ -76,7 +78,7 @@ class EvidenceTests(unittest.TestCase):
                  patch.object(gate.ledger_static,'FIXTURE_HASHES',{}), \
                  patch.object(gate.shutil,'which',return_value='/usr/bin/true'), \
                  patch.object(gate.common,'git_head',return_value='frozen'), \
-                 patch.object(gate.common,'stable_copy',return_value={'snapshot':'frozen','sha256':'hash'}), \
+                 patch.object(gate.common,'stable_copy',return_value={'snapshot':str(frozen_tool),'sha256':'hash'}), \
                  patch.object(gate.common,'run',side_effect=failed):
                 result=gate.run_gate(out,root,root,root,[],
                                     {'MIDNIGHT_PP':str(root),'MIDNIGHT_LEDGER_TEST_STATIC_DIR':str(root)})

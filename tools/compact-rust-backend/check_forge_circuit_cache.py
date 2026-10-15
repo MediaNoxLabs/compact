@@ -3,10 +3,10 @@
 # Copyright (C) 2026 contributors to Minokawa Compact
 # SPDX-License-Identifier: Apache-2.0
 
-"""Opt-in sequential Forge trial; ordinary proof gates remain uncached.
+"""Sequential real proof smoke controls for the matching ledger8.1.3 Forge profile.
 
-Only two exact circuits have cross-version artifact qualification. A new input,
-profile, parameter set or serialization must be qualified, never guessed.
+These two fixtures are examples, not a cache whitelist. All matching current
+circuits may use Forge; --uncached-zkir retains fresh key-generation qualification.
 """
 
 import argparse
@@ -25,78 +25,12 @@ import unittest
 
 from check_compactc_target import check_manifest
 
+import forge_circuits
+from forge_circuits import (BUILD, CONSUMER, FORGE, PROFILE, CompatibilityError,
+                            digest, require, validate_export, prepare)
+
 ROOT = Path(__file__).resolve().parents[2]
-FORGE = Path.home() / ".local/bin/midnight-zkir-forge"
-PROFILE = ("ledger8-8.1.3/zkir-2.1.1/transient-2.1.1/base-1.0.2/"
-           "serialize-1.1.1/proofs-0.7.1/circuits-6.1.0/stdlib-1.1.0/"
-           "curves-0.2.0/tagged-v1/forge-recipe-v1")
-BUILD = "340e0b3bd94394d987c1b2a073bb411afb755e7164934ca15e8d8cb02b77b879"
-CONSUMER = {"midnight-ledger": "8.0.3", "midnight-zkir": "2.1.0",
-            "midnight-transient-crypto": "2.0.1", "midnight-base-crypto": "1.0.0",
-            "midnight-serialize": "1.0.0", "midnight-proofs": "0.7.0",
-            "midnight-circuits": "6.0.0", "midnight-zk-stdlib": "1.0.0"}
 QUALIFICATIONS = Path(__file__).with_name("forge_circuit_qualification.json")
-
-
-class CompatibilityError(ValueError):
-    """The selected artifacts have no matching consumer qualification."""
-
-
-def digest(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def require(condition, message):
-    if not condition:
-        raise CompatibilityError(message)
-
-
-def validate_export(value, source, qualification, params):
-    require(value.get("schema") == 1 and value.get("profile") == PROFILE
-            and value.get("build_fingerprint") == BUILD, "unqualified Forge profile/build")
-    require(digest(source) == qualification["source"], "current ZKIR is not qualified")
-    base = Path(value["export"]["base"])
-    require(base.is_absolute(), "Forge export base must be absolute")
-    manifest = json.loads((base / "manifest.json").read_text())
-    require(manifest["profile"] == PROFILE and manifest["build_fingerprint"] == BUILD
-            and manifest["artifact_set_id"] == value["artifact_set_id"],
-            "Forge export manifest identity differs")
-    require(manifest["source"]["digest"] == qualification["source"]
-            and manifest["k"] == qualification["k"]
-            and manifest["parameter_digest"] == qualification["parameter_digest"]
-            and digest(params / f"bls_midnight_2p{qualification['k']}")
-            == qualification["parameter_digest"], "unqualified source/parameters")
-    paths = {}
-    for item in value["export"]["files"]:
-        kind, path = item["kind"], Path(item["path"])
-        require(kind not in paths, "duplicate Forge artifact kind")
-        require(path.is_absolute() and path.resolve().is_relative_to(base.resolve()),
-                "Forge artifact must be inside its persistent export")
-        require(path.stat().st_size == item["bytes"] and digest(path) == item["sha256"]
-                == qualification[kind], f"unqualified or corrupt {kind}")
-        paths[kind] = path
-    require(set(paths) == {"source", "binary_ir", "prover", "verifier"},
-            "incomplete Forge export")
-    require(paths["source"].read_bytes() == source.read_bytes(), "source changed during prepare")
-    return paths
-
-
-def prepare(source, qualification, params, *, forge=FORGE, cache_dir=None):
-    source = source.resolve(strict=True)
-    # Fresh input check on every invocation, before asking Forge to do any work.
-    require(digest(source) == qualification["source"], "current ZKIR is not qualified")
-    argv = [str(forge)]
-    if cache_dir is not None:
-        argv += ["--cache-dir", str(cache_dir)]
-    argv += ["--params-dir", str(params), "prepare", str(source)]
-    start = time.perf_counter()
-    result = subprocess.run(argv, check=True, capture_output=True, text=True)
-    wall = time.perf_counter() - start
-    value = json.loads(result.stdout)
-    paths = validate_export(value, source, qualification, params)
-    return paths, {"prepare_wall_seconds": wall, "cache": value["cache"],
-                   "artifact_set_id": value["artifact_set_id"],
-                   "persistent_export": value["export"]["base"]}
 
 
 def main():
@@ -114,13 +48,12 @@ def main():
     if not args.uncached_zkir:
         args.forge = args.forge.resolve(strict=True)
     start = time.perf_counter()
-    child_env = dict(os.environ, MIDNIGHT_PP=str(args.params_dir))
-    packages = tomllib.loads((ROOT / "Cargo.lock").read_text())["package"]
-    for name, version in CONSUMER.items():
-        require({p["version"] for p in packages if p["name"] == name} == {version},
-                f"unqualified consumer dependency: {name}")
+    child_env = dict(os.environ, MIDNIGHT_PP=str(args.params_dir), COMPACT_ZKIR_FORGE_BIN=str(args.forge))
+    if args.cache_dir is not None:
+        child_env["MIDNIGHT_ZKIR_FORGE_DIR"] = str(args.cache_dir.resolve())
+    forge_circuits.validate_consumer()
     qualifications = json.loads(QUALIFICATIONS.read_text())
-    report = {"scope": "two exact circuits; one sequential Python unittest controller",
+    report = {"scope": "two proof smoke examples of the matching profile; not a circuit whitelist",
               "mode": "uncached" if args.uncached_zkir else "forge", "cases": [],
               "consumer": CONSUMER, "forge_profile": PROFILE,
               "proof_runner_sha256": digest(args.proof_runner),
@@ -177,25 +110,27 @@ def main():
                     paths = {"source": source, "binary_ir": source.with_suffix(".bzkir"),
                              "prover": output / "keys" / f"{circuit}.prover",
                              "verifier": output / "keys" / f"{circuit}.verifier"}
-                    for kind, path in paths.items():
-                        self.assertEqual(digest(path), q[kind], kind)
                 else:
-                    paths, row["forge"] = prepare(source, q, args.params_dir,
-                                                  forge=args.forge, cache_dir=args.cache_dir)
-                    (output / "keys").mkdir(exist_ok=True)
-                    for kind, directory in (("binary_ir", "zkir"), ("prover", "keys"),
-                                            ("verifier", "keys")):
-                        (output / directory / paths[kind].name).symlink_to(paths[kind])
+                    actual_zkir = forge_circuits.zkir_executable(child_env)
+                    require(actual_zkir is not None, "matching actual zkir CLI required for fresh model/serialization checks")
+                    row["forge"] = forge_circuits.compile_circuit(source,
+                        output / "keys" / f"{circuit}.prover", output / "keys" / f"{circuit}.verifier",
+                        actual_zkir, child_env)
+                    paths = {"source": source, "binary_ir": source.with_suffix(".bzkir"),
+                             "prover": output / "keys" / f"{circuit}.prover",
+                             "verifier": output / "keys" / f"{circuit}.verifier"}
+                artifact_hashes = {kind: digest(path) for kind, path in paths.items()}
+                row["artifact_hashes"] = artifact_hashes
                 proof = run([args.proof_runner, q["selector"], output], "proof_and_assertions")
                 self.assertIn(q["success_marker"], proof.stdout)
-                # Dereference export links into PRIVATE files before mutation.
+                # Keep negative mutation private; never alter persistent Forge exports.
                 negative = Path(temp) / "negative"
                 shutil.copytree(output, negative, symlinks=False)
                 (negative / "keys" / f"{circuit}.verifier").write_bytes(b"invalid verifier")
                 run([args.proof_runner, q["selector"], negative], "corrupt_verifier_control",
                     expected_success=False)
                 for kind, path in paths.items():
-                    self.assertEqual(digest(path), q[kind], "artifact mutated by consumer")
+                    self.assertEqual(digest(path), artifact_hashes[kind], "artifact mutated by consumer")
             row["complete_case_wall_seconds"] = time.perf_counter() - case_start
 
         def test_counter_two_branches(self):

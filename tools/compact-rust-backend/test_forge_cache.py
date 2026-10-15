@@ -5,20 +5,21 @@
 """Fail-closed glue tests; actual compatibility is exercised by the opt-in runner."""
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
 
-import check_forge_circuit_cache as cache
+import forge_circuits as cache
 
 
 class ForgeCacheBoundaryTests(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        self.root = Path(temp.name)
+        self.root = Path(temp.name).resolve()
         self.source = self.root / "current input.zkir"
         self.source.write_bytes(b"current input")
         self.params = self.root / "params"
@@ -27,6 +28,10 @@ class ForgeCacheBoundaryTests(unittest.TestCase):
         self.base = self.root / "persistent export"
         self.base.mkdir()
         self.q = {"k": 6, "parameter_digest": cache.digest(self.params / "bls_midnight_2p6")}
+        self.consumer_validator = cache.validate_consumer
+        guard = patch.object(cache, "validate_consumer")
+        guard.start()
+        self.addCleanup(guard.stop)
         files = []
         for kind in ("source", "binary_ir", "prover", "verifier"):
             path = self.base / kind
@@ -35,55 +40,61 @@ class ForgeCacheBoundaryTests(unittest.TestCase):
             files.append({"kind": kind, "path": str(path), "sha256": self.q[kind],
                           "bytes": path.stat().st_size})
         self.value = {"schema": 1, "profile": cache.PROFILE, "build_fingerprint": cache.BUILD,
-                      "artifact_set_id": "fixture-set", "cache": {"hit": True},
-                      "export": {"base": str(self.base), "files": files}}
-        self.manifest = {"profile": cache.PROFILE, "build_fingerprint": cache.BUILD,
-                         "artifact_set_id": "fixture-set", "source": {"digest": self.q["source"]},
-                         "k": 6, "parameter_digest": self.q["parameter_digest"]}
+                      "ledger_revision": cache.REVISION, "bundle_id": "fixture-bundle",
+                      "derivation_id": "fixture-recipe", "artifact_set_id": "fixture-set", "cache": {"hit": True},
+                      "export": {"base": str(self.base), "lifetime": "persistent_until_owner_removal", "files": files}}
+        self.manifest = {key: self.value[key] for key in ("profile", "build_fingerprint", "ledger_revision",
+                         "bundle_id", "derivation_id", "artifact_set_id")}
+        self.manifest["schema"] = 1
+        self.manifest.update(source={"kind": "source", "digest": self.q["source"], "size": self.source.stat().st_size},
+                             k=6, parameter_digest=self.q["parameter_digest"],
+                             artifacts=[{"kind": row["kind"], "digest": row["sha256"], "size": row["bytes"]}
+                                        for row in files if row["kind"] != "source"])
         (self.base / "manifest.json").write_text(json.dumps(self.manifest))
 
     def validate(self):
-        return cache.validate_export(self.value, self.source, self.q, self.params)
+        return cache.validate_export(self.value, self.source, self.params)
 
     def test_absolute_argument_array_and_persistent_paths(self):
         result = subprocess.CompletedProcess([], 0, json.dumps(self.value), "")
         with patch.object(cache.subprocess, "run", return_value=result) as run:
-            paths, receipt = cache.prepare(self.source, self.q, self.params,
+            paths, receipt = cache.prepare(self.source, self.params,
                                             forge=Path("/configured/forge"),
                                             cache_dir=self.root / "private cache")
         self.assertEqual(run.call_args.args[0], ["/configured/forge", "--cache-dir",
                          str(self.root / "private cache"), "--params-dir", str(self.params),
-                         "prepare", str(self.source.resolve())])
+                         "prepare", str(self.source.resolve()), "--name", "compact-" + self.q["source"][:24]])
         self.assertTrue(run.call_args.kwargs["check"])
         self.assertNotIn("shell", run.call_args.kwargs)
         self.assertEqual(paths["prover"], self.base / "prover")
         self.assertTrue(receipt["cache"]["hit"])
 
-    def test_current_input_change_refuses_before_prepare(self):
+    def test_changed_current_input_refuses_stale_export_without_fallback(self):
         self.source.write_bytes(b"changed input")
-        with patch.object(cache.subprocess, "run") as run:
+        response = subprocess.CompletedProcess([], 0, json.dumps(self.value), "")
+        with patch.object(cache.subprocess, "run", return_value=response) as run:
             with self.assertRaises(cache.CompatibilityError):
-                cache.prepare(self.source, self.q, self.params)
-        run.assert_not_called()
+                cache.prepare(self.source, self.params)
+        run.assert_called_once()
 
     def test_default_store_is_delegated_to_forge(self):
         result = subprocess.CompletedProcess([], 0, json.dumps(self.value), "")
         with patch.object(cache.subprocess, "run", return_value=result) as run:
-            cache.prepare(self.source, self.q, self.params)
+            cache.prepare(self.source, self.params)
         self.assertNotIn("--cache-dir", run.call_args.args[0])
 
     def test_nonzero_failure_propagates_without_fallback(self):
         failure = subprocess.CalledProcessError(2, ["forge"], stderr="corrupt cache")
         with patch.object(cache.subprocess, "run", side_effect=failure):
             with self.assertRaises(subprocess.CalledProcessError) as caught:
-                cache.prepare(self.source, self.q, self.params)
+                cache.prepare(self.source, self.params)
         self.assertIs(caught.exception, failure)
 
     def test_malformed_response_is_not_a_hit(self):
         result = subprocess.CompletedProcess([], 0, "not JSON", "")
         with patch.object(cache.subprocess, "run", return_value=result):
             with self.assertRaises(json.JSONDecodeError):
-                cache.prepare(self.source, self.q, self.params)
+                cache.prepare(self.source, self.params)
 
     def test_export_corruption_and_missing_file_refuse(self):
         (self.base / "verifier").write_bytes(b"corrupt")
@@ -124,7 +135,7 @@ class ForgeCacheBoundaryTests(unittest.TestCase):
             return subprocess.CompletedProcess([], 0, json.dumps(self.value), "")
         with patch.object(cache.subprocess, "run", side_effect=mutate):
             with self.assertRaises(cache.CompatibilityError):
-                cache.prepare(self.source, self.q, self.params)
+                cache.prepare(self.source, self.params)
 
 
 if __name__ == "__main__":

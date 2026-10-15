@@ -1,148 +1,142 @@
-# Local circuit artifact caching with Midnight ZKIR Forge
+# Local circuit artifacts with Midnight ZKIR Forge
 
-This is an **opt-in two-circuit experiment**, not a dependency upgrade or a
-replacement for the maintained uncached proof gates. It adds no runtime or
-compiler dependency on Forge. Run one sequential Python controller; the Rust
-proof consumer retains its own existing stack/thread policy.
+Local circuit tests reuse binary ZKIR, prover keys and verifier keys through
+[Midnight ZKIR Forge](https://github.com/input-output-hk/midnight-zkir-forge).
+Proof generation, verification, assertions, negative controls and fixture checks
+still execute on every run. Test outcomes and proofs are never cached.
 
-## Contract and compatibility
+## Matching tools
 
-The consumer remains pinned to ledger8 **8.0.3**, ZKIR 2.1.0, transient-crypto 2.0.1,
-serialize 1.0.0, proofs 0.7.0, circuits 6.0.0 and stdlib 1.0.0. The installed Forge
-profile is ledger8 **8.1.3**, ZKIR 2.1.1 and its newer pinned dependencies. Those
-graphs are different; parsing old ZKIR is insufficient evidence of compatibility.
+The active consumer uses the official ledger **8.1.3** revision
+`b5d3e965a18e4cac17fac4f38446fc55c524439a`: ZKIR/transient-crypto 2.1.1,
+base-crypto 1.0.2 and serialization 1.1.1. The matching registry ZK graph is
+proofs 0.7.1, circuits 6.1.0, stdlib 1.1.0 and curves 0.2.0.
+Generated consumers and the paired runtime require Rust 1.89 or newer.
 
-For **only** `let_return_oracle.compact::replace` and
-`effect_plan_counter_only.compact::adjust`, local qualification demonstrated:
+The adapter checks the exact installed Forge profile/build, consumer lock,
+actual public parameters and current source bytes. It also runs the actual
+ZKIR 2.1.1 CLI's `mock-compile` on every preparation to check binary serialization
+and obtain fresh k/rows measurements. This performs no key generation. Receipts
+identify Forge preparation separately from these actual CLI measurements.
+Another Forge build needs explicit qualification; a matching version string
+alone is insufficient. Failures propagate without stale-artifact fallback.
 
-1. Fresh official ZKIR 2.1.0 generation and installed Forge generate byte-identical
-   binary IR, prover keys and verifier keys.
-2. Both use the same actual public-parameter bytes (k=6 and k=8 respectively).
-3. The existing 8.0.3 proof consumer deserializes these artifacts and proves,
-   verifies and ledger-applies the original scenarios.
+## Local commands
 
-`forge_circuit_qualification.json` pins the exact current inputs, parameters and
-outputs. The adapter also checks the installed Forge profile/build fingerprint
-and consumer Cargo.lock versions. Unknown inputs or version changes fail closed;
-do not refresh these pins automatically. Qualify a changed circuit with uncached
-generation and real consumer execution before reviewing new pins. No general
-cross-version ABI guarantee or complete ledger8.1.3 adoption is claimed. This
-qualification pins the installed ARM macOS build; another Forge build must be
-explicitly qualified rather than bypassing the fingerprint check.
+Install Forge following its README. Default CLI: `~/.local/bin/midnight-zkir-forge`.
+Default store: `~/.midnight-zkir-forge`; override with
+`MIDNIGHT_ZKIR_FORGE_DIR` or the launcher's `--cache-dir`.
+Set `MIDNIGHT_PP` to the same verified public parameters used by the proof runner.
+The current actual `zkir` executable must be on PATH.
 
-## Run the two real tests
-
-Build the current consumer with the repository's existing pinned toolchain:
-
-```sh
-cargo +1.99.0 build --locked --offline -p compact-rust-proof-smoke
-```
-
-Set `COMPACTC` to a current Rust-target compiler and `COMPACTC_SCHEME` as required
-by that compiler. Set `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to the authenticated
-ledger8.0.3 static directory, following the ordinary local proof setup.
-The compiler still needs its standard library/tool environment. Use the same
-`MIDNIGHT_PP` directory as the ordinary proof runner, containing verified public
-parameters. All paths below are explicitly configured, not repository-private
-runtime dependencies.
+The maintained Python circuit gates configure the shared adapter automatically.
+`compiler/go`, `run-e2e-tests.sh` and `run-debug-test.sh` use it for local tests.
+To wrap another local command, enter the matching development environment and run:
 
 ```sh
-python3 -B tools/compact-rust-backend/check_forge_circuit_cache.py \
-  --compiler "$COMPACTC" \
-  --proof-runner "$CARGO_TARGET_DIR/debug/compact-rust-proof-smoke" \
-  --params-dir "$MIDNIGHT_PP" \
-  --report /absolute/evidence/forge-tests.json
+python3 -B tools/compact-rust-backend/forge_circuits.py \
+  --receipt-dir /absolute/evidence/forge-events -- YOUR_TEST_COMMAND ARGUMENTS
 ```
 
-Default executable: `~/.local/bin/midnight-zkir-forge` (override `--forge`).
-Default store: Forge's normal `~/.midnight-zkir-forge`, respecting
-`MIDNIGHT_ZKIR_FORGE_DIR`. Use `--cache-dir /absolute/private/cache` for controlled
-cold/warm measurements or lifecycle experiments. The test runner never evicts or
-cleans the shared store. Private test fixture directories are automatically removed.
+The wrapper supplies a temporary `zkir` launcher for `compile` and `compile-many`.
+Each request reads the newly generated input, invokes `prepare` with its absolute
+path through an argument array, parses JSON and checks every returned artifact.
+Forge returns persistent export paths. Private copies populate the normal compiler
+output layout before manifests are generated. Tests can safely mutate their own
+copies without changing exports or pinned verifier identities.
 
-Repeat the identical command with a different report path and the same private
-cache directory to measure warm behavior. The report captures before/after Forge
-statistics, full in-process wall time, per-case phase wall time, prepare process
-wall time, Forge's separate ensure/generation timing and child process memory
-highwater. Time the complete Python command externally for startup-inclusive
-wall time. Memory is the cumulative largest-child-process highwater, **not**
-aggregate concurrent memory. Avoid interpreting warm/cold host noise as a general
-speedup guarantee.
+For ordinary Python delivery, use affected tests first. Run the relevant real proof
+gate for changes to code generation or runtime behavior. Complete historical
+qualification is required when historical machinery changes and at final candidate
+freeze; a Forge hit never replaces that qualification.
 
-## What runs on every hit
+## Fresh key-generation qualification
 
-- Compile the current Compact source with `--skip-zk`: regenerate/read current
-  ZKIR; check the original compiler manifest and the selected generated fixture.
-- Invoke `prepare` with an absolute input path using a subprocess argument array;
-  parse JSON and verify the persistent exported files and parameter identities.
-- Give the original consumer the returned persistent artifact paths through
-  temporary links used only for reads, with post-use artifact hash checks.
-  These links do not enforce filesystem write protection. Retain the consumer's
-  Counter IR-pairing check.
-- Execute the original proof generation, verification, replay/parity checks,
-  ledger application and state assertions. Counter exercises two branches;
-  `replace` exercises one call. These are existing unbalanced ledger smoke
-  scenarios, not a claim of funded production transaction policy.
-- Copy the consumer fixture into private files, corrupt its verifier and require
-  rejection. Never write through a link into Forge's persistent export.
-- Check the original artifacts remain unchanged, then remove temporary fixtures.
+Keep an explicit uncached lap:
 
-Nonzero Forge exits, invalid JSON, profile/input/parameter drift, missing or
-corrupt exports propagate. There is no stale-file or uncached fallback. No proof,
-test result, assertion or pass/fail decision is cached.
+```sh
+COMPACT_ZKIR_MODE=uncached python3 -B tools/compact-rust-backend/check_compactc_target.py --counter-less-than --proof
+COMPACT_ZKIR_MODE=uncached ./compiler/go
+python3 -B tools/compact-rust-backend/forge_circuits.py --uncached -- YOUR_TEST_COMMAND
+```
 
-## Keep uncached key-generation qualification
+These paths call the actual tool and generate keys afresh. Hermetic Nix builders
+also retain uncached generation and do not depend on a user's Forge installation.
+Production compiler use outside the local test wrapper retains its original tool
+behavior. The optional bundle launcher hook preserves a configured test shim;
+ordinary installations have no Forge dependency.
 
-The same two scenarios can bypass Forge and freshly regenerate their keys with
-the pinned legacy ZKIR executable:
+ZKIR v3 uses its separate actual CLI and is **uncached** by this v2 integration.
+TS WASM checks with intentionally empty keys keep executing as checks; they are
+not key generation. Gates explicitly given retained material continue checking
+and consuming that material, preserving corrupt-key controls rather than replacing
+it with a cache copy.
+
+## Cold/warm real proof sample
+
+Build the current proof runner:
+
+```sh
+cargo build --locked -p compact-rust-proof-smoke
+```
+
+Configure `COMPACTC`, `COMPACTC_SCHEME`, `COMPACT_PATH` and the authenticated
+`MIDNIGHT_LEDGER_TEST_STATIC_DIR` as for the ordinary proof gates. Resolve the
+latter with `resolve_ledger_test_static.py` against current Cargo metadata/lock.
 
 ```sh
 python3 -B tools/compact-rust-backend/check_forge_circuit_cache.py \
   --compiler "$COMPACTC" \
   --proof-runner "$CARGO_TARGET_DIR/debug/compact-rust-proof-smoke" \
   --params-dir "$MIDNIGHT_PP" \
-  --uncached-zkir /absolute/legacy-2.1.0/bin/zkir \
-  --report /absolute/evidence/uncached-tests.json
+  --cache-dir /absolute/private/forge-store \
+  --report /absolute/evidence/cold.json
 ```
 
-This path does not require Forge to be installed. It compares regenerated output
-digests and still runs proofs and controls. The existing `check_compactc_target.py
---consumer --proof` recipe also remains unchanged and uncached. Forge's own
-`qualify` is useful additional evidence, not a replacement for this consumer's
-qualification.
+Repeat with the same private store and a different report path for the warm lap.
+Use `--uncached-zkir /absolute/path/to/zkir` for the fresh qualification lap.
+The two circuits in `forge_circuit_qualification.json` are smoke examples, not a
+whitelist limiting other matching circuits. Their original proof/ledger assertions
+and private corrupt-verifier controls execute in all modes.
 
-Fast adapter checks:
+Reports separate complete test wall time, Forge process/ensure timing, key
+generation timing, actual proof/assertion phases and before/after cache statistics.
+Measure Python startup-inclusive wall time externally when benchmarking. Child
+memory highwater describes the largest child process, not simultaneous aggregate
+memory. Report only measured savings for the tested cases.
 
-```sh
-cd tools/compact-rust-backend
-python3 -B -m unittest -v test_forge_cache
-```
+## Cache integrity and scope
 
-## Where this helps
+Use private stores for deletion, eviction and corruption experiments. Never delete
+the shared default cache to manufacture a cold run. Returned persistent exports
+must match their manifest, current source, profile and actual parameter digest;
+the adapter verifies all bytes before use and checks source stability during
+preparation. Non-ASCII or long compiler filenames retain their output names; only
+Forge's cosmetic bundle name is replaced with a deterministic content-derived name.
 
-The cache removes repeated circuit artifact generation when input and recipe
-match. Circuit compilation and actual proofs still cost time. For these small
-fixtures key generation is only tens of milliseconds, so complete-loop savings
-are modest. Larger key-generation workloads need their own measurements.
+The earlier 8.0.3 two-circuit experiment is retained in its historical evidence.
+It does not qualify new circuits or the upgraded runtime. Artifact caching also
+does not address the historical Python suite's reconstruction/authentication cost.
 
-The multi-hour historical admission suite instead reconstructs/authenticates
-source snapshots; these circuit files are not its dominant cost. This integration
-does not change its assertions, guards, worker assignment or execution machinery.
-A ledger8.1.3 upgrade remains a separate compiler/runtime/application parity slice.
+## Observed local result
 
-### Measured local pilot
+A sequential controller tested the current 8.1.3 consumer with a private store:
 
-Three repetitions of each mode on ARM macOS, two sequential tests per invocation:
+| Complete case | Cold Forge | Warm Forge | Fresh uncached |
+|---|---:|---:|---:|
+| Counter + Let | 1.955s | 1.725s | 1.736s |
+| Jubjub | 5.567s | 3.743s | 4.939s |
 
-| Mode | Median complete process wall | Median combined Forge ensure time |
-| --- | ---: | ---: |
-| Cold Forge, private empty store | 2.800s | 220.46ms |
-| Warm Forge, same store | 2.508s | 12.46ms |
-| Uncached legacy ZKIR | 2.567s | not applicable |
+The tiny cases showed no meaningful saving. Jubjub was 24% shorter warm in this
+single comparison; its compiler/artifact phase was 1.263s warm versus 2.298s
+uncached. These are local observations, not a universal speedup or an uncontended
+host benchmark. Largest-process RSS was approximately 84–86 MiB.
 
-Observed warm median: 10.4% below cold Forge and 2.3% below the uncached legacy
-test. These are three local samples of tiny circuits, not a broad performance
-guarantee. Warm requests report zero generation time. Each invocation still
-executes three proof/ledger applications and two private corrupt-verifier
-refusals. Both modes' largest-child-process memory highwater is approximately
-233MiB; no meaningful memory saving is demonstrated.
+Those six laps executed 18 proof/verification/ledger-application scenarios and
+nine private corrupt-verifier refusals. All source, binary-IR and key hashes
+matched uncached generation; internal compiler manifests were also checked.
+Jubjub's third circuit, `raw_after_write`, was generated and compared but was not
+proof-executed by that selector. A later compiler rebuild was checked separately:
+its complete generated tree matched, then three fresh Jubjub scenarios and one
+corrupt-verifier control passed. The historical Python qualification was not rerun
+or measured as part of this sample.

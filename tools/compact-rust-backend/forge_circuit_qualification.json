@@ -6,11 +6,7 @@
     "selector": "--let-return",
     "success_marker": "root-Let replace proved and applied through ledger-8",
     "k": 6,
-    "parameter_digest": "cf2ad6be7d0fedf5bec2aaa35f6be4aca33053d74268fdf5aa54fcb2891ea6df",
-    "source": "76071891a277337807860d37a771423cc1a5e54feefd9420833de5ca180bdc67",
-    "binary_ir": "f50d0a4430353f1d6a0244d65851fff125c23f9165cd1bda1bf5a5790fbf7b33",
-    "prover": "84f395fba3fad7e5e5b39264fb131207840fa043ce5a278c119ba2e4f8a07eb8",
-    "verifier": "1163ab7ac4eec11183e20de506cbc8d696d6e5e616757ead1c6a13a0aec3b891"
+    "parameter_digest": "cf2ad6be7d0fedf5bec2aaa35f6be4aca33053d74268fdf5aa54fcb2891ea6df"
   },
   "counter": {
     "compact_source": "examples/rust_backend/effect_plan_counter_only.compact",
@@ -18,10 +14,6 @@
     "selector": "--effect-plan-counter-only",
     "success_marker": "Counter-only frontend branch 1 proved, verified, and ledger-applied",
     "k": 8,
-    "parameter_digest": "909b707551eaaea79828e883cde6fc46ab15986c3b1d791bed462c9e2805c933",
-    "source": "5977190aa3240ea0af37d81f7c8ac880835b206d8230ea6bbda192f267d16204",
-    "binary_ir": "4232f2ace21a17dd8f7a9f2194711b4f7da832b20a908a0dfdefa9471e430b21",
-    "prover": "cecf12962330afff3dde60eb2fd39c48798877856d2cf98b7f26cc5b1249c934",
-    "verifier": "d6f91f0828312b56aea5f352dcdabf7bb5a77405f6dc452e36736a8f49072b64"
+    "parameter_digest": "909b707551eaaea79828e883cde6fc46ab15986c3b1d791bed462c9e2805c933"
   }
 }

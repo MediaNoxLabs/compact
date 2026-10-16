@@ -5318,11 +5318,11 @@
     "tests-rust-backend/asset-registry-oracle/tests/asset_registry_oracle.rs": "b3312cfa89277b3ce045f6682479edac6bc530757d586cf29e3e6cdf086f152d",
     "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs": "93e313c4ecbb2f007ab0d8f5f9eaf9c3e17650963b24952dc420d6419249a72b",
     "tests-rust-backend/asset-registry-oracle/tests/registration_gap.rs": "089074eaf2224b8a33f7798ae15ac0913fed26f1b9de6331acec23af10d5b6ea",
-    "tests-rust-backend/asset-registry-oracle/tests/writable_recording.rs": "8114427b8574eeb192c9644ec48652740abf3338eb2b9da3609d5f6ece22fc3d",
+    "tests-rust-backend/asset-registry-oracle/tests/writable_recording.rs": "af2dadb7f904619573abd524700420144fec82da14e52fafeb5cd85ecce88c69",
     "tests-rust-backend/boolean_observation_assertions.rs": "1a43568a48d6cd61f9db2b37e9e73d9c380b9518d14772a24e73f3eb800f9853",
     "tests-rust-backend/bounded-uint-oracle/tests/bounded_uint_oracle.rs": "d0e779b2c02d742b62290fd6a45df610ea5028a287a4d105e29d044f77f787c3",
     "tests-rust-backend/bug11-oracle/tests/bug11_oracle.rs": "03bb76b5d9f89e0472d0b66243e0fb1544c9caa666ee4c18e1acf74851004802",
-    "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs": "657db51bed353d29838a360b52051920cfcbcc07ec5749228275cc93dd89c16c",
+    "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs": "b994f2d1ca32150da97ad72b14881f6a234856f12ac4fe93be0bcece17626bd6",
     "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs": "ae013a6b596794be0acd58e354129b9535e301ce0b3bff10af021f8ad7e0f675",
     "tests-rust-backend/chunked-ledger-oracle/tests/chunked_ledger_oracle.rs": "bf208688f0ccf64bbc91065bebb492cd897c096f5a58eceb5bd7a0003e042365",
     "tests-rust-backend/cross-circuit-oracle/tests/cross_circuit_oracle.rs": "eafe3ec0cc33561b909d3c10a9fa3ad13048f69086c1401614a55b39ddc9645c",
@@ -5345,7 +5345,7 @@
     "tests-rust-backend/multi-pl-call-oracle/tests/multi_pl_call_oracle.rs": "c6234bf2ef94e1f25314a6376fadd471071b482ba23fa7f9ff4eb11487280839",
     "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs": "b9fc9c09deb173d7d2894b6cd2a6d8797443ed51caadbda04f2192d450e93c3d",
     "tests-rust-backend/pure-circuit-oracle/tests/pure_circuit_oracle.rs": "6bd4c63f35588ed4b336431cfb77d91381d19f24b862e1fb076746d5b69e27af",
-    "tests-rust-backend/schnorr-attest-oracle/tests/schnorr_attest_oracle.rs": "d93c201b9dff9740951e64c6f0b452d8e7ae8e6c1a13260438ef99522f091487",
+    "tests-rust-backend/schnorr-attest-oracle/tests/schnorr_attest_oracle.rs": "ee8f0a03371d40a0e0f99d3e3ab4f12d8d2d20c1a10f1e9b866746fe46d51ee9",
     "tests-rust-backend/sealed-ledger-constructor/tests/sealed_ledger_constructor.rs": "4ff74b14d72fa94cf4d642119f6958c8bd4c056b08c6976787472bf77ad9e3a1",
     "tests-rust-backend/set-oracle/tests/set_oracle.rs": "f7384ac12f17e5ad6747348c56d6e8ab23851281668c89f52506afda84643b84",
     "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs": "876b581b75e600639e552b27a05edc13c125840f39b468a5b4a96298f10256d1",
@@ -5380,5 +5380,5 @@
     "per-export proof and ledger acceptance audit remains separate",
     "other recorded VM comparisons still vary as described"
   ],
-  "integration_review": "The combined ternary test is exactly signed ADR221 plus its full-program correction and the unchanged ADR216 assert_direct_trace/walkerVectorElement appended block; its integrated hash is pinned."
+  "integration_review": "The combined ternary test is exactly signed ADR221 plus its full-program correction and the unchanged ADR216 assert_direct_trace/walkerVectorElement appended block; its integrated hash is pinned. 2026-10-17 current-file identity reconciliation: the asset-registry writable, call-argument and Schnorr test bodies retain the exact previously pinned bytes from 658a4a74, fb11d006 and 668aeb17 respectively, followed only by appended test-module declarations. The updated three file hashes authenticate that integration; original inventory rows, captures, case matrices, limits and incomplete-coverage flags are unchanged. No added-module behavior or new execution/proof coverage is certified by this reconciliation."
 }

@@ -8,7 +8,7 @@ The dated DID examples below preserve their original source checkpoint. On the c
 
 For example, current native Zswap `produce`, `consume` and `witness_order` expose both APIs while remaining nonproof. `flow` and `read_coin` remain proof-required. The exact three-row change was independently reviewed and qualified by the unchanged transfer proof commands; it is not a proof claim for the three nonproof exports.
 
-Choose the Boolean APIs your application needs independently of proof applicability. The checker later in this page deliberately requires **proof-applicable observed APIs**; it is not a general check for every recordable circuit. See the [checked recording guide](checked-recording.md) for stage evidence and the [source diagnostic guide](checked-recording.md).
+Choose the Boolean APIs your application needs independently of proof applicability. The checker later in this page deliberately requires **proof-applicable observed APIs**; it is not a general check for every recordable circuit. See the [current book](../recording-effect-algebra/capability-and-retirement-book.md) for stage evidence and the [source diagnostic guide](checked-recording.md).
 
 ## Start with the generated report
 

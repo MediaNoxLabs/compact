@@ -37,6 +37,6 @@ native Rust emission with `expected tuple value, got Vector`. Nesting a witness
 call directly in vector construction failed with `stateful expression requires
 stateful evaluation`. The successful source uses a tuple projection and explicitly
 binds/discloses the witness result inside a helper. Public interface admission does
-not fix these expression-lowering gaps. Scratch inputs/logs and a reproduction
-note are retained under `/tmp/rust040-public-products`; no TypeScript execution
-comparison is claimed for either failure.
+not fix these expression-lowering gaps. Scratch inputs, logs and a reproduction note are historical external evidence
+and are not distributed with this fixture; no TypeScript execution comparison
+is claimed for either failure.

@@ -24,7 +24,7 @@ The authenticator itself still refuses a missing argument and current-root drift
 Do not regenerate the historical baseline or modify the bundle to hide drift.
 The extra fixture files are inert historical data, never current compiler sources.
 
-## Ten artifact-dependent graph controls
+## Artifact-dependent graph controls
 
 `test_guarded_point_zkir.py` is a sidecar for actual baseline/candidate graphs.
 When ordinary discovery has neither an explicit `ARTIFACTS` selection nor
@@ -47,6 +47,15 @@ loading and on cleanup. Original producer identities remain historical. No raw
 private graph receipt is distributed here, and replay is not fresh emission,
 proof generation or full historical qualification.
 
+The accepted contribution train also retains ten archive-fixture controls and ten
+graph-input controls. Archive controls use the bundled default through scoped
+environment selection and restore the prior environment after each case. Nine
+graph-input controls require the private graph data and skip at fixture copying
+when its environment variable is unset; their pure missing/relative/wrong-input
+control always runs. Explicit bad selections still fail. Thus ordinary no-env
+discovery reports nineteen manual-artifact skips; selecting authenticated graph
+inputs executes all twenty graph controls without these skips.
+
 ## Full qualification remains explicit
 
 The full local gate may select the bundled conformance root, but it still
@@ -61,6 +70,7 @@ python3 -B tools/compact-rust-backend/local_parity_gate.py --full \
 It authenticates historical data before tool lookup/builds, passes the canonical
 roots into discovery and authenticates them again after qualification. Missing
 graphs or changed archive/authority/source bytes fail closed. This full mode must
-execute the original ten graph controls with no artifact-dependent skips. Default
+execute the original ten graph controls and ten retained graph-input controls
+with no artifact-dependent skips. Default
 unit discovery with skips is not a successful full gate, a rerun of the accepted
 974 historical laws or a proof result. Test outcomes and proofs are never cached.

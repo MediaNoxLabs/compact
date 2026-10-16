@@ -132,7 +132,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::round
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
             let (frame, __compact_effect_2): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_increment(context.witness_context_with(super::LedgerView {
@@ -140,8 +139,7 @@ pub mod ledger_contract {
                         meter,
                     }))
                 })?;
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

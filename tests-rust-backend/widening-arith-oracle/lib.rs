@@ -164,9 +164,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::lastArea
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

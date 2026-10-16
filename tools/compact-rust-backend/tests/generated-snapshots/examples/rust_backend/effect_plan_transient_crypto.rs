@@ -261,7 +261,6 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::Field = __compact_param_1;
             let __compact_effect_2: bool = __compact_param_2;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::stored.record_read(frame)?;
             let __compact_effect_5: runtime::Field =
@@ -287,7 +286,6 @@ pub mod ledger_contract {
                 (frame, __compact_effect_7)
             };
             let frame = crate::ledger_slots::result.record_write(frame, __compact_effect_10)?;
-            let __compact_effect_11: () = ();
             let (frame, __compact_effect_12): (_, runtime::Field) =
                 crate::ledger_slots::result.record_read(frame)?;
             let __compact_effect_13: runtime::FixedBytes<32> =
@@ -311,7 +309,6 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
             let frame = crate::ledger_slots::result.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
             let __compact_effect_2: runtime::Field = runtime::Field::from_le_bytes(&[
                 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,

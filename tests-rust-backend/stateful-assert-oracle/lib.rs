@@ -379,7 +379,6 @@ pub mod ledger_contract {
                     "nested stateful guard".to_owned(),
                 ));
             }
-            let __compact_effect_20: () = ();
             let (frame, __compact_effect_raw_21) = crate::ledger_slots::high.record_read(frame)?;
             let __compact_effect_21: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(__compact_effect_raw_21 as u128)?;
@@ -424,9 +423,7 @@ pub mod ledger_contract {
                     "nested unit guard".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

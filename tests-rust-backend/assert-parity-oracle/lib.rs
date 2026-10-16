@@ -139,9 +139,7 @@ pub mod ledger_contract {
             let __compact_effect_0: bool = true;
             let __compact_effect_1: bool = crate::pure_circuits::require_true(__compact_effect_0)?;
             let frame = crate::ledger_slots::flag.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn trigger_fail<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -151,9 +149,7 @@ pub mod ledger_contract {
             let __compact_effect_0: bool = false;
             let __compact_effect_1: bool = crate::pure_circuits::require_true(__compact_effect_0)?;
             let frame = crate::ledger_slots::flag.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn ping<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -162,9 +158,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = true;
             let frame = crate::ledger_slots::flag.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

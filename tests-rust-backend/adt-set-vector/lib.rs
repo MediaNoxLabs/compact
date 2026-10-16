@@ -261,7 +261,6 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_set_size_6) = crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -275,10 +274,8 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_9: () = ();
             let frame =
                 crate::ledger_slots::c.record_insert(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_10: () = ();
             let (frame, __compact_effect_set_size_11) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_11: runtime::BoundedUint<18446744073709551615> =
@@ -293,7 +290,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_14: () = ();
             let (frame, __compact_effect_15): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_0).clone())?;
             let __compact_effect_16: bool = true;
@@ -303,10 +299,8 @@ pub mod ledger_contract {
                     "Key 0 should have value 1".to_owned(),
                 ));
             }
-            let __compact_effect_18: () = ();
             let frame =
                 crate::ledger_slots::c.record_insert(frame, (__compact_effect_1).clone())?;
-            let __compact_effect_19: () = ();
             let (frame, __compact_effect_set_size_20) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_20: runtime::BoundedUint<18446744073709551615> =
@@ -321,7 +315,6 @@ pub mod ledger_contract {
                     "Size should be 2".to_owned(),
                 ));
             }
-            let __compact_effect_23: () = ();
             let (frame, __compact_effect_24): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_1).clone())?;
             let __compact_effect_25: bool = true;
@@ -331,10 +324,8 @@ pub mod ledger_contract {
                     "Key 1 should be member".to_owned(),
                 ));
             }
-            let __compact_effect_27: () = ();
             let frame =
                 crate::ledger_slots::c.record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_28: () = ();
             let (frame, __compact_effect_set_size_29) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_29: runtime::BoundedUint<18446744073709551615> =
@@ -349,7 +340,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_32: () = ();
             let (frame, __compact_effect_33): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_1).clone())?;
             let __compact_effect_34: bool = true;
@@ -359,9 +349,7 @@ pub mod ledger_contract {
                     "Key 1 should be member".to_owned(),
                 ));
             }
-            let __compact_effect_36: () = ();
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let __compact_effect_37: () = ();
             let (frame, __compact_effect_set_size_38) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_38: runtime::BoundedUint<18446744073709551615> =
@@ -376,7 +364,6 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_41: () = ();
             let (frame, __compact_effect_42): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
             let __compact_effect_43: bool = true;
@@ -386,9 +373,7 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_45: () = ();
-            let __compact_effect_46: () = ();
-            Ok(frame.finish(__compact_effect_46))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -229,7 +229,6 @@ pub mod ledger_contract {
             if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed("curve".to_owned()));
             }
-            let __compact_effect_5: () = ();
             let __compact_effect_6: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::entries.record_insert(
                 frame,
@@ -242,12 +241,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_8).value() as u16)?;
-                let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                (frame, ())
             };
-            let __compact_effect_12: () = ();
-            Ok(frame.finish(__compact_effect_12))
+            Ok(frame.finish(()))
         }
         pub fn drop<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -261,7 +257,6 @@ pub mod ledger_contract {
             if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
-            let __compact_effect_2: () = ();
             let frame =
                 crate::ledger_slots::entries.record_remove(frame, (__compact_effect_0).clone())?;
             let __compact_effect_3: () = ();
@@ -270,12 +265,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

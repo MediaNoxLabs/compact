@@ -184,9 +184,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
             let frame = crate::ledger_slots::point.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn read_point<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -208,9 +206,7 @@ pub mod ledger_contract {
             let __compact_effect_0: crate::types::PointBox = __compact_param_0;
             let frame =
                 crate::ledger_slots::boxed.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn read_box<Private>(
             context: runtime::context::CircuitContext<Private>,

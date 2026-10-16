@@ -268,9 +268,7 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_1).value() as u16)?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                (frame, ())
             };
             let (frame, __compact_effect_10): (_, ()) = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, bool) =
@@ -289,11 +287,9 @@ pub mod ledger_contract {
                     })?;
                 let __compact_effect_7: () =
                     crate::pure_circuits::nested(__compact_effect_5, __compact_effect_6)?;
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                (frame, ())
             } else {
-                let __compact_effect_9: () = ();
-                (frame, __compact_effect_9)
+                (frame, ())
             };
             let (frame, __compact_effect_11): (_, runtime::Field) =
                 frame.try_witness_metered(|context, meter| {
@@ -303,18 +299,14 @@ pub mod ledger_contract {
                     }))
                 })?;
             let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_11)?;
-            let __compact_effect_12: () = ();
             let (frame, __compact_effect_16): (_, ()) = {
                 let __compact_effect_13: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_13).value() as u16)?;
-                let __compact_effect_14: () = ();
-                let __compact_effect_15: () = ();
-                (frame, __compact_effect_15)
+                (frame, ())
             };
-            let __compact_effect_17: () = ();
-            Ok(frame.finish(__compact_effect_17))
+            Ok(frame.finish(()))
         }
         pub fn argument_order<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -330,9 +322,7 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_2).value() as u16)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                (frame, ())
             };
             let __compact_effect_6: bool = crate::pure_circuits::first_value(__compact_effect_0)?;
             let __compact_effect_7: bool = crate::pure_circuits::second_value(__compact_effect_1)?;
@@ -343,12 +333,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_9).value() as u16)?;
-                let __compact_effect_10: () = ();
-                let __compact_effect_11: () = ();
-                (frame, __compact_effect_11)
+                (frame, ())
             };
-            let __compact_effect_13: () = ();
-            Ok(frame.finish(__compact_effect_13))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

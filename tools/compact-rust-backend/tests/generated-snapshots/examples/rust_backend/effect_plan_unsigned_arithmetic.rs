@@ -418,7 +418,6 @@ pub mod ledger_contract {
                     __compact_effect_6,
                 )?;
             let frame = crate::ledger_slots::difference.record_write(frame, __compact_effect_7)?;
-            let __compact_effect_8: () = ();
             let (frame, __compact_effect_23): (_, runtime::BoundedUint<65535>) =
                 if __compact_effect_2 {
                     let __compact_effect_9: runtime::Field = runtime::Field::from_le_bytes(&[
@@ -481,7 +480,6 @@ pub mod ledger_contract {
                     (frame, __compact_effect_22)
                 };
             let frame = crate::ledger_slots::product.record_write(frame, __compact_effect_23)?;
-            let __compact_effect_24: () = ();
             let (frame, __compact_effect_25): (_, runtime::BoundedUint<255>) =
                 crate::ledger_slots::difference.record_read(frame)?;
             let (frame, __compact_effect_26): (_, runtime::BoundedUint<65535>) =
@@ -569,7 +567,6 @@ pub mod ledger_contract {
                 (frame, __compact_effect_17)
             };
             let frame = crate::ledger_slots::narrowed.record_write(frame, __compact_effect_18)?;
-            let __compact_effect_19: () = ();
             let (frame, __compact_effect_20): (_, runtime::BoundedUint<255>) =
                 crate::ledger_slots::narrowed.record_read(frame)?;
             let __compact_effect_21: crate::types::NarrowReceipt = crate::types::NarrowReceipt {

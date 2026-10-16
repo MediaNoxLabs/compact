@@ -349,11 +349,9 @@ pub mod ledger_contract {
                         "stored value differs".to_owned(),
                     ));
                 }
-                let __compact_effect_4: () = ();
-                let __compact_effect_5: () = ();
-                (frame, __compact_effect_5)
+                (frame, ())
             };
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn no_helper<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -368,7 +366,7 @@ pub mod ledger_contract {
                         meter,
                     }))
                 })?;
-            Ok(frame.finish(__compact_effect_0))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

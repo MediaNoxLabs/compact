@@ -147,8 +147,7 @@ pub mod ledger_contract {
                 __compact_effect_1,
             )?;
             let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn ensure<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -166,7 +165,6 @@ pub mod ledger_contract {
                     "missing key".to_owned(),
                 ));
             }
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_3): (_, runtime::Field) =
                 crate::ledger_slots::entries.record_lookup(frame, (__compact_effect_0).clone())?;
             Ok(frame.finish(__compact_effect_3))

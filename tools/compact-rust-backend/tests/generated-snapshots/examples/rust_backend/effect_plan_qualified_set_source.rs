@@ -554,9 +554,7 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn insert_selected<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -583,7 +581,6 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_14): (_, ()) = if __compact_effect_2 {
                 let (frame, __compact_effect_4): (_, crate::types::ShieldedCoinInfo) = frame
                     .try_witness_metered(|context, meter| {
@@ -616,7 +613,6 @@ pub mod ledger_contract {
                             __compact_effect_7.right.bytes,
                         ),
                     )?;
-                    let __compact_effect_8: () = ();
                     let frame = crate::ledger_slots::coins.record_insert_coin(
                         frame,
                         runtime::ledger::coin_info_from_compact(
@@ -630,15 +626,11 @@ pub mod ledger_contract {
                             __compact_effect_7.right.bytes,
                         ),
                     )?;
-                    let __compact_effect_9: () = ();
-                    let __compact_effect_10: () = ();
-                    (frame, __compact_effect_10)
+                    (frame, ())
                 };
-                let __compact_effect_12: () = ();
-                (frame, __compact_effect_12)
+                (frame, ())
             } else {
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                (frame, ())
             };
             let frame = crate::ledger_slots::coins.record_insert_coin(
                 frame,
@@ -653,9 +645,7 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_15: () = ();
-            let __compact_effect_16: () = ();
-            Ok(frame.finish(__compact_effect_16))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -497,9 +497,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn get_active<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -525,9 +523,7 @@ pub mod ledger_contract {
                     "active mismatch".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn set_amount<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -537,9 +533,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
             let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn get_amount<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -563,9 +557,7 @@ pub mod ledger_contract {
                 crate::ledger_slots::amount.record_read(frame)?;
             let __compact_effect_2: runtime::Field = __compact_effect_1 + __compact_effect_0;
             let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn active_equals<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -604,9 +596,7 @@ pub mod ledger_contract {
                 crate::ledger_slots::amount.record_read(frame)?;
             let __compact_effect_2: runtime::Field = __compact_effect_1 - __compact_effect_0;
             let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn multiply_amount<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -619,9 +609,7 @@ pub mod ledger_contract {
                 crate::ledger_slots::amount.record_read(frame)?;
             let __compact_effect_2: runtime::Field = __compact_effect_1 * __compact_effect_0;
             let frame = crate::ledger_slots::amount.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

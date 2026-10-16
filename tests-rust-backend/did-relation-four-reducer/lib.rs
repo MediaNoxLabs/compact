@@ -424,7 +424,6 @@ pub mod ledger_contract {
                     "undefined relation".to_owned(),
                 ));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_25): (_, bool) = {
                 let __compact_effect_6: crate::types::Relation = __compact_effect_0;
                 let __compact_effect_7: runtime::OpaqueString = (__compact_effect_1).clone();
@@ -489,7 +488,6 @@ pub mod ledger_contract {
                         "already present".to_owned(),
                     ));
                 }
-                let __compact_effect_29: () = ();
                 let (frame, __compact_effect_57): (_, ()) = {
                     let __compact_effect_30: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_31: runtime::OpaqueString = (__compact_effect_1).clone();
@@ -499,9 +497,7 @@ pub mod ledger_contract {
                     let (frame, __compact_effect_55): (_, ()) = if __compact_effect_33 {
                         let frame = crate::ledger_slots::authentication
                             .record_insert(frame, (__compact_effect_31).clone())?;
-                        let __compact_effect_34: () = ();
-                        let __compact_effect_35: () = ();
-                        (frame, __compact_effect_35)
+                        (frame, ())
                     } else {
                         let __compact_effect_36: crate::types::Relation =
                             crate::types::Relation::Agreement;
@@ -509,9 +505,7 @@ pub mod ledger_contract {
                         let (frame, __compact_effect_53): (_, ()) = if __compact_effect_37 {
                             let frame = crate::ledger_slots::agreement
                                 .record_insert(frame, (__compact_effect_31).clone())?;
-                            let __compact_effect_38: () = ();
-                            let __compact_effect_39: () = ();
-                            (frame, __compact_effect_39)
+                            (frame, ())
                         } else {
                             let __compact_effect_40: crate::types::Relation =
                                 crate::types::Relation::Invocation;
@@ -520,9 +514,7 @@ pub mod ledger_contract {
                             let (frame, __compact_effect_51): (_, ()) = if __compact_effect_41 {
                                 let frame = crate::ledger_slots::invocation
                                     .record_insert(frame, (__compact_effect_31).clone())?;
-                                let __compact_effect_42: () = ();
-                                let __compact_effect_43: () = ();
-                                (frame, __compact_effect_43)
+                                (frame, ())
                             } else {
                                 let __compact_effect_44: crate::types::Relation =
                                     crate::types::Relation::Delegation;
@@ -531,34 +523,25 @@ pub mod ledger_contract {
                                 let (frame, __compact_effect_49): (_, ()) = if __compact_effect_45 {
                                     let frame = crate::ledger_slots::delegation
                                         .record_insert(frame, (__compact_effect_31).clone())?;
-                                    let __compact_effect_46: () = ();
-                                    let __compact_effect_47: () = ();
-                                    (frame, __compact_effect_47)
+                                    (frame, ())
                                 } else {
-                                    let __compact_effect_48: () = ();
-                                    (frame, __compact_effect_48)
+                                    (frame, ())
                                 };
-                                let __compact_effect_50: () = ();
-                                (frame, __compact_effect_50)
+                                (frame, ())
                             };
-                            let __compact_effect_52: () = ();
-                            (frame, __compact_effect_52)
+                            (frame, ())
                         };
-                        let __compact_effect_54: () = ();
-                        (frame, __compact_effect_54)
+                        (frame, ())
                     };
-                    let __compact_effect_56: () = ();
-                    (frame, __compact_effect_56)
+                    (frame, ())
                 };
-                let __compact_effect_58: () = ();
-                (frame, __compact_effect_58)
+                (frame, ())
             } else {
                 if !__compact_effect_25 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "missing relation".to_owned(),
                     ));
                 }
-                let __compact_effect_59: () = ();
                 let (frame, __compact_effect_87): (_, ()) = {
                     let __compact_effect_60: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_61: runtime::OpaqueString = (__compact_effect_1).clone();
@@ -568,9 +551,7 @@ pub mod ledger_contract {
                     let (frame, __compact_effect_85): (_, ()) = if __compact_effect_63 {
                         let frame = crate::ledger_slots::authentication
                             .record_remove(frame, (__compact_effect_61).clone())?;
-                        let __compact_effect_64: () = ();
-                        let __compact_effect_65: () = ();
-                        (frame, __compact_effect_65)
+                        (frame, ())
                     } else {
                         let __compact_effect_66: crate::types::Relation =
                             crate::types::Relation::Agreement;
@@ -578,9 +559,7 @@ pub mod ledger_contract {
                         let (frame, __compact_effect_83): (_, ()) = if __compact_effect_67 {
                             let frame = crate::ledger_slots::agreement
                                 .record_remove(frame, (__compact_effect_61).clone())?;
-                            let __compact_effect_68: () = ();
-                            let __compact_effect_69: () = ();
-                            (frame, __compact_effect_69)
+                            (frame, ())
                         } else {
                             let __compact_effect_70: crate::types::Relation =
                                 crate::types::Relation::Invocation;
@@ -589,9 +568,7 @@ pub mod ledger_contract {
                             let (frame, __compact_effect_81): (_, ()) = if __compact_effect_71 {
                                 let frame = crate::ledger_slots::invocation
                                     .record_remove(frame, (__compact_effect_61).clone())?;
-                                let __compact_effect_72: () = ();
-                                let __compact_effect_73: () = ();
-                                (frame, __compact_effect_73)
+                                (frame, ())
                             } else {
                                 let __compact_effect_74: crate::types::Relation =
                                     crate::types::Relation::Delegation;
@@ -600,30 +577,21 @@ pub mod ledger_contract {
                                 let (frame, __compact_effect_79): (_, ()) = if __compact_effect_75 {
                                     let frame = crate::ledger_slots::delegation
                                         .record_remove(frame, (__compact_effect_61).clone())?;
-                                    let __compact_effect_76: () = ();
-                                    let __compact_effect_77: () = ();
-                                    (frame, __compact_effect_77)
+                                    (frame, ())
                                 } else {
-                                    let __compact_effect_78: () = ();
-                                    (frame, __compact_effect_78)
+                                    (frame, ())
                                 };
-                                let __compact_effect_80: () = ();
-                                (frame, __compact_effect_80)
+                                (frame, ())
                             };
-                            let __compact_effect_82: () = ();
-                            (frame, __compact_effect_82)
+                            (frame, ())
                         };
-                        let __compact_effect_84: () = ();
-                        (frame, __compact_effect_84)
+                        (frame, ())
                     };
-                    let __compact_effect_86: () = ();
-                    (frame, __compact_effect_86)
+                    (frame, ())
                 };
-                let __compact_effect_88: () = ();
-                (frame, __compact_effect_88)
+                (frame, ())
             };
-            let __compact_effect_90: () = ();
-            Ok(frame.finish(__compact_effect_90))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

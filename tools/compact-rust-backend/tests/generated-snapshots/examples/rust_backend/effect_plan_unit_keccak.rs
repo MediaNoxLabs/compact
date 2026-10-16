@@ -296,7 +296,6 @@ pub mod ledger_contract {
                         "hash mismatch".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
                 let (frame, __compact_effect_6): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.authorized(context.witness_context_with(super::LedgerView {
@@ -309,15 +308,11 @@ pub mod ledger_contract {
                         "not authorized".to_owned(),
                     ));
                 }
-                let __compact_effect_7: () = ();
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                (frame, ())
             };
             let __compact_effect_10: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_10)?;
-            let __compact_effect_11: () = ();
-            let __compact_effect_12: () = ();
-            Ok(frame.finish(__compact_effect_12))
+            Ok(frame.finish(()))
         }
         pub fn lazy_close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -349,7 +344,6 @@ pub mod ledger_contract {
                             "hash mismatch".to_owned(),
                         ));
                     }
-                    let __compact_effect_6: () = ();
                     let (frame, __compact_effect_7): (_, bool) =
                         frame.try_witness_metered(|context, meter| {
                             witnesses.authorized(context.witness_context_with(super::LedgerView {
@@ -362,21 +356,15 @@ pub mod ledger_contract {
                             "not authorized".to_owned(),
                         ));
                     }
-                    let __compact_effect_8: () = ();
-                    let __compact_effect_9: () = ();
-                    (frame, __compact_effect_9)
+                    (frame, ())
                 };
                 let __compact_effect_11: bool = false;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_11)?;
-                let __compact_effect_12: () = ();
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                (frame, ())
             } else {
-                let __compact_effect_14: () = ();
-                (frame, __compact_effect_14)
+                (frame, ())
             };
-            let __compact_effect_16: () = ();
-            Ok(frame.finish(__compact_effect_16))
+            Ok(frame.finish(()))
         }
         pub fn digest<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -425,10 +413,8 @@ pub mod ledger_contract {
                     "not authorized".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let __compact_effect_8: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;
-            let __compact_effect_9: () = ();
             let __compact_effect_10: crate::types::Digest = crate::types::Digest {
                 value: __compact_effect_5,
             };

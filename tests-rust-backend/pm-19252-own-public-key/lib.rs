@@ -90,8 +90,7 @@ pub mod ledger_contract {
                 crate::types::ZswapCoinPublicKey {
                     bytes: runtime::FixedBytes::new(__compact_effect_own_key_0),
                 };
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -325,15 +325,11 @@ pub mod ledger_contract {
                         __compact_effect_3 + __compact_effect_2;
                     let frame =
                         crate::ledger_slots::value.record_write(frame, __compact_effect_4)?;
-                    let __compact_effect_5: () = ();
-                    let __compact_effect_6: () = ();
-                    (frame, __compact_effect_6)
+                    (frame, ())
                 };
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                (frame, ())
             };
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn outerValue<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -352,9 +348,7 @@ pub mod ledger_contract {
                 (frame, __compact_effect_0)
             };
             let frame = crate::ledger_slots::value.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn outerValue2<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -391,9 +385,7 @@ pub mod ledger_contract {
                 (frame, __compact_effect_6)
             };
             let frame = crate::ledger_slots::value.record_write(frame, __compact_effect_7)?;
-            let __compact_effect_8: () = ();
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         pub fn outerValueExpr<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -420,9 +412,7 @@ pub mod ledger_contract {
                 })?;
             let __compact_effect_3: runtime::Field = __compact_effect_1 + __compact_effect_2;
             let frame = crate::ledger_slots::value.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

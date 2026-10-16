@@ -284,7 +284,6 @@ pub mod ledger_contract {
                         "inactive".to_owned(),
                     ));
                 }
-                let __compact_effect_4: () = ();
                 let (frame, __compact_effect_5): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.authorize(
@@ -300,14 +299,10 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                (frame, ())
             };
             let frame = crate::ledger_slots::key.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn scalar_control<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -329,7 +324,6 @@ pub mod ledger_contract {
                         "inactive".to_owned(),
                     ));
                 }
-                let __compact_effect_3: () = ();
                 let (frame, __compact_effect_4): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.authorize(
@@ -345,15 +339,11 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
             let __compact_effect_8: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn point_write_only<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -377,7 +367,6 @@ pub mod ledger_contract {
                         "inactive".to_owned(),
                     ));
                 }
-                let __compact_effect_4: () = ();
                 let (frame, __compact_effect_5): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.authorize(
@@ -393,14 +382,10 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                (frame, ())
             };
             let frame = crate::ledger_slots::key.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn pure_projection_only<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -421,7 +406,6 @@ pub mod ledger_contract {
                         "inactive".to_owned(),
                     ));
                 }
-                let __compact_effect_4: () = ();
                 let (frame, __compact_effect_5): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.authorize(
@@ -437,15 +421,11 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                (frame, ())
             };
             let __compact_effect_9: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

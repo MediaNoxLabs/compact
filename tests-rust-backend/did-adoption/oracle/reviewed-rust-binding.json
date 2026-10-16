@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Early read-only shape route retired to independently checked composition (#615/ADR0466). Original TS captures and original test files unchanged. Current exact generated Rust and new standalone observed/manual/private/witness qualification reviewed separately; no fresh TS execution claim.",
+  "scope": "Early read-only shape route retired to independently checked composition (#615/ADR0466). Original TS captures and original test files unchanged. Current exact generated Rust and new standalone observed/manual/private/witness qualification reviewed separately; no fresh TS execution claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged.",
   "captures": [
     {
       "file": "lifecycle.json",
@@ -35,7 +35,7 @@
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
       "captured_sha256": "c3ae6d09f37cf421a2fd2bbe7209894b395edd4a03052e5cd912573f115a5d8e",
-      "current_sha256": "7798cbd9f377a51f0581104229a571e335d6bfc5dece1a7c2f6eb4a7e20d9967"
+      "current_sha256": "78db6deff3f70fad0b31dced97b05bfe306cef8a35e7d5ec02f38de9e12abcf4"
     }
   ],
   "reviewed_artifacts": [

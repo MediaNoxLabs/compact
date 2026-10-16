@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim.",
+  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-enum-map-reducer/lib.rs",
       "captured_sha256": "df5651cc8d834118e208c6b45c427bd7b8deab308348733e5b53b788292813e6",
-      "current_sha256": "f6a4854ed6774a093343ade36fb26bc1528a24b1a7745fca4bcd60f3ee05f6af"
+      "current_sha256": "3b7681ab5f01f8882c9e5431d390922ff40913603cf0e9e6b1a09135893db494"
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/tests/provenance.rs",

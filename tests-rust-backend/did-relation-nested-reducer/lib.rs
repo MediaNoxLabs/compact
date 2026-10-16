@@ -246,8 +246,7 @@ pub mod ledger_contract {
                 (__compact_effect_0).clone(),
             )?;
             let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn check<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -266,7 +265,6 @@ pub mod ledger_contract {
                         "missing method".to_owned(),
                     ));
                 }
-                let __compact_effect_3: () = ();
                 let (frame, __compact_effect_4): (_, crate::types::Method) =
                     crate::ledger_slots::methods
                         .record_lookup(frame, (__compact_effect_0).clone())?;
@@ -280,9 +278,7 @@ pub mod ledger_contract {
                         "wrong curve".to_owned(),
                     ));
                 }
-                let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                (frame, ())
             } else {
                 let (frame, __compact_effect_11): (_, bool) = crate::ledger_slots::methods
                     .record_member(frame, (__compact_effect_0).clone())?;
@@ -312,12 +308,9 @@ pub mod ledger_contract {
                         "wrong signing curve".to_owned(),
                     ));
                 }
-                let __compact_effect_22: () = ();
-                let __compact_effect_23: () = ();
-                (frame, __compact_effect_23)
+                (frame, ())
             };
-            let __compact_effect_25: () = ();
-            Ok(frame.finish(__compact_effect_25))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

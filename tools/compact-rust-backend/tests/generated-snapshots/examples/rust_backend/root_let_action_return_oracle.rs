@@ -121,7 +121,6 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_3: runtime::Field = __compact_effect_1 + __compact_effect_2;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
             Ok(frame.finish(__compact_effect_0))
         }
         /// Typed handle for circuits with a complete recorded trace.

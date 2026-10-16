@@ -376,7 +376,6 @@ pub mod ledger_contract {
                         "No secret key found".to_owned(),
                     ));
                 }
-                let __compact_effect_3: () = ();
                 let __compact_effect_4: runtime::FixedBytes<32> = __compact_effect_1.value;
                 (frame, __compact_effect_4)
             };
@@ -389,12 +388,9 @@ pub mod ledger_contract {
                     "Not an organizer".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let frame = crate::ledger_slots::eligible_participants
                 .record_insert(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn add_organizer<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -418,7 +414,6 @@ pub mod ledger_contract {
                         "No secret key found".to_owned(),
                     ));
                 }
-                let __compact_effect_3: () = ();
                 let __compact_effect_4: runtime::FixedBytes<32> = __compact_effect_1.value;
                 (frame, __compact_effect_4)
             };
@@ -431,12 +426,9 @@ pub mod ledger_contract {
                     "Not an organizer".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let frame =
                 crate::ledger_slots::organizer_pks.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn check_in<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -453,10 +445,8 @@ pub mod ledger_contract {
                     "Not eligible participant".to_owned(),
                 ));
             }
-            let __compact_effect_2: () = ();
             let frame = crate::ledger_slots::checked_in_participants
                 .record_insert(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.set_local_id(
@@ -467,8 +457,7 @@ pub mod ledger_contract {
                         (__compact_effect_0).clone(),
                     )
                 })?;
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -364,13 +364,11 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_13)?;
-                let __compact_effect_14: () = ();
                 if !__compact_effect_9 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "helper failed after write".to_owned(),
                     ));
                 }
-                let __compact_effect_15: () = ();
                 let (frame, __compact_effect_16): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 (frame, __compact_effect_16)
@@ -395,13 +393,11 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_25)?;
-                let __compact_effect_26: () = ();
                 if !__compact_effect_21 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "helper failed after write".to_owned(),
                     ));
                 }
-                let __compact_effect_27: () = ();
                 let (frame, __compact_effect_28): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 (frame, __compact_effect_28)
@@ -426,13 +422,11 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_37)?;
-                let __compact_effect_38: () = ();
                 if !__compact_effect_33 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "helper failed after write".to_owned(),
                     ));
                 }
-                let __compact_effect_39: () = ();
                 let (frame, __compact_effect_40): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 (frame, __compact_effect_40)
@@ -460,20 +454,17 @@ pub mod ledger_contract {
                         })?;
                     let frame =
                         crate::ledger_slots::stored.record_write(frame, __compact_effect_48)?;
-                    let __compact_effect_49: () = ();
                     if !__compact_effect_44 {
                         return Err(runtime::CompactError::AssertionFailed(
                             "helper failed after write".to_owned(),
                         ));
                     }
-                    let __compact_effect_50: () = ();
                     let (frame, __compact_effect_51): (_, runtime::Field) =
                         crate::ledger_slots::stored.record_read(frame)?;
                     (frame, __compact_effect_51)
                 };
                 let frame =
                     crate::ledger_slots::receipt.record_write(frame, __compact_effect_52)?;
-                let __compact_effect_53: () = ();
                 let (frame, __compact_effect_54): (_, runtime::Field) =
                     crate::ledger_slots::receipt.record_read(frame)?;
                 let __compact_effect_55: runtime::Field = __compact_effect_54 + __compact_effect_1;
@@ -501,20 +492,17 @@ pub mod ledger_contract {
                         })?;
                     let frame =
                         crate::ledger_slots::stored.record_write(frame, __compact_effect_62)?;
-                    let __compact_effect_63: () = ();
                     if !__compact_effect_58 {
                         return Err(runtime::CompactError::AssertionFailed(
                             "helper failed after write".to_owned(),
                         ));
                     }
-                    let __compact_effect_64: () = ();
                     let (frame, __compact_effect_65): (_, runtime::Field) =
                         crate::ledger_slots::stored.record_read(frame)?;
                     (frame, __compact_effect_65)
                 };
                 let frame =
                     crate::ledger_slots::receipt.record_write(frame, __compact_effect_66)?;
-                let __compact_effect_67: () = ();
                 let (frame, __compact_effect_68): (_, runtime::Field) =
                     crate::ledger_slots::receipt.record_read(frame)?;
                 let __compact_effect_69: runtime::Field = __compact_effect_68 + __compact_effect_1;

@@ -271,7 +271,6 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_2: runtime::Field = __compact_effect_0 + __compact_effect_1;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             Ok(frame.finish(__compact_effect_2))
         }
         pub fn three<Private>(
@@ -296,7 +295,6 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_4: runtime::Field = __compact_effect_2 + __compact_effect_3;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
-            let __compact_effect_5: () = ();
             Ok(frame.finish(__compact_effect_4))
         }
         pub fn echo<Private>(
@@ -317,7 +315,6 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_3: runtime::Field = __compact_effect_1 + __compact_effect_2;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
             Ok(frame.finish(__compact_effect_0))
         }
         pub fn observed<Private, W: super::TryWitnesses<Private>>(
@@ -354,10 +351,8 @@ pub mod ledger_contract {
                     "rejected after witness".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             let __compact_effect_7: runtime::Field = __compact_effect_1 + __compact_effect_2;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_7)?;
-            let __compact_effect_8: () = ();
             Ok(frame.finish(__compact_effect_7))
         }
         pub fn nested<Private>(
@@ -377,7 +372,6 @@ pub mod ledger_contract {
                 .expect("validated Compact Field literal");
                 let __compact_effect_2: runtime::Field = __compact_effect_0 + __compact_effect_1;
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
                 (frame, __compact_effect_2)
             };
             Ok(frame.finish(__compact_effect_4))

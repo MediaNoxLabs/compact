@@ -108,8 +108,7 @@ pub mod ledger_contract {
             let (frame, __compact_effect_1): (_, runtime::Field) =
                 crate::ledger_slots::vara.record_read(frame)?;
             let __compact_effect_2: runtime::Field = __compact_effect_1 + __compact_effect_0;
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

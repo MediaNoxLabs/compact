@@ -83,8 +83,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::Field = __compact_param_0;
             let frame = crate::ledger_slots::outer.record_remove(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

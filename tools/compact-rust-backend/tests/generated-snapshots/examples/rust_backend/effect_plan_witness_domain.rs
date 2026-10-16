@@ -296,7 +296,6 @@ pub mod ledger_contract {
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::marker.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_3): (_, runtime::OpaqueBytes) = frame
                 .try_witness_metered_exact(|context, meter| {
                     witnesses.bytes(context.witness_context_with(super::LedgerView {
@@ -306,7 +305,6 @@ pub mod ledger_contract {
                 })?;
             let frame =
                 crate::ledger_slots::blob.record_write(frame, (__compact_effect_3).clone())?;
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_27): (_, bool) = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, runtime::FixedVector<runtime::Field, 2>) =
                     frame.try_witness_metered(|context, meter| {
@@ -341,7 +339,6 @@ pub mod ledger_contract {
                 let __compact_effect_9: runtime::Field =
                     runtime::transient_hash((__compact_effect_5).clone());
                 let frame = crate::ledger_slots::marker.record_write(frame, __compact_effect_9)?;
-                let __compact_effect_10: () = ();
                 let __compact_effect_11: bool =
                     (__compact_effect_3).clone() == (__compact_effect_3).clone();
                 let (frame, __compact_effect_14): (_, bool) = if __compact_effect_11 {

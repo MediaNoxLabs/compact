@@ -462,9 +462,7 @@ pub mod ledger_contract {
                 if !__compact_effect_3 {
                     return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                 }
-                let __compact_effect_4: () = ();
-                let __compact_effect_5: () = ();
-                (frame, __compact_effect_5)
+                (frame, ())
             };
             let (frame, __compact_effect_7): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -473,16 +471,13 @@ pub mod ledger_contract {
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let __compact_effect_9: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
             let (frame, __compact_effect_16): (_, ()) = {
                 let __compact_effect_11: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_11).value() as u16)?;
-                let __compact_effect_12: () = ();
                 let (frame, __compact_effect_13): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.now(context.witness_context_with(super::LedgerView {
@@ -492,12 +487,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_13)?;
-                let __compact_effect_14: () = ();
-                let __compact_effect_15: () = ();
-                (frame, __compact_effect_15)
+                (frame, ())
             };
-            let __compact_effect_17: () = ();
-            Ok((frame, __compact_effect_17))
+            Ok((frame, ()))
         }
         pub fn close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -537,9 +529,7 @@ pub mod ledger_contract {
                         if !__compact_effect_5 {
                             return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                         }
-                        let __compact_effect_6: () = ();
-                        let __compact_effect_7: () = ();
-                        (frame, __compact_effect_7)
+                        (frame, ())
                     };
                     let (frame, __compact_effect_9): (_, bool) =
                         crate::ledger_slots::active.record_read(frame)?;
@@ -548,17 +538,14 @@ pub mod ledger_contract {
                             "inactive".to_owned(),
                         ));
                     }
-                    let __compact_effect_10: () = ();
                     let __compact_effect_11: bool = false;
                     let frame =
                         crate::ledger_slots::active.record_write(frame, __compact_effect_11)?;
-                    let __compact_effect_12: () = ();
                     let (frame, __compact_effect_18): (_, ()) = {
                         let __compact_effect_13: runtime::BoundedUint<65535> =
                             <runtime::BoundedUint<65535>>::new(1u128)?;
                         let frame = crate::ledger_slots::version
                             .record_increment(frame, (__compact_effect_13).value() as u16)?;
-                        let __compact_effect_14: () = ();
                         let (frame, __compact_effect_15): (
                             _,
                             runtime::BoundedUint<18446744073709551615>,
@@ -570,21 +557,15 @@ pub mod ledger_contract {
                         })?;
                         let frame = crate::ledger_slots::updated
                             .record_write(frame, __compact_effect_15)?;
-                        let __compact_effect_16: () = ();
-                        let __compact_effect_17: () = ();
-                        (frame, __compact_effect_17)
+                        (frame, ())
                     };
-                    let __compact_effect_19: () = ();
-                    (frame, __compact_effect_19)
+                    (frame, ())
                 };
-                let __compact_effect_21: () = ();
-                (frame, __compact_effect_21)
+                (frame, ())
             } else {
-                let __compact_effect_22: () = ();
-                (frame, __compact_effect_22)
+                (frame, ())
             };
-            let __compact_effect_24: () = ();
-            Ok(frame.finish(__compact_effect_24))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

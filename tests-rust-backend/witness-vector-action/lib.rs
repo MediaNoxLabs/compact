@@ -245,9 +245,7 @@ pub mod ledger_contract {
                     )
                 })?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
-            let __compact_effect_5: () = ();
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn discardResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -288,9 +286,7 @@ pub mod ledger_contract {
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn reuseResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -326,7 +322,6 @@ pub mod ledger_contract {
                     )
                 })?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
-            let __compact_effect_5: () = ();
             let __compact_effect_6: runtime::Field = runtime::Field::from_le_bytes(&[
                 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -334,9 +329,7 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_7: runtime::Field = __compact_effect_4 + __compact_effect_6;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_7)?;
-            let __compact_effect_8: () = ();
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

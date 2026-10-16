@@ -172,9 +172,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::FixedVector<runtime::Field, 3> = __compact_param_0;
             let frame =
                 crate::ledger_slots::values.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn read_values<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -198,9 +196,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: (runtime::Field, bool) = __compact_param_0;
             let frame = crate::ledger_slots::pair.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn read_pair<Private>(
             context: runtime::context::CircuitContext<Private>,

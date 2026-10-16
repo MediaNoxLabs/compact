@@ -1,6 +1,17 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 //! Rust syntax is created only after semantic plan validation.
 use super::super::recording_plan::TypedPlan;
@@ -12,6 +23,8 @@ mod lists;
 mod maps;
 mod merkle;
 mod qualified_coins;
+#[cfg(test)]
+mod tests;
 mod vector_map;
 mod zswap;
 
@@ -19,6 +32,11 @@ fn name(value: &Value) -> syn::Ident {
     syn::Ident::new(&format!("__compact_effect_{}", value.id), Span::call_site())
 }
 fn value(value: &Value) -> syn::Expr {
+    // A checked Unit value has no payload. Its producer remains an ordered
+    // operation; reading the result need not name a synthetic temporary.
+    if value.ty == crate::ir::Type::Unit {
+        return syn::parse_quote!(());
+    }
     let name = name(value);
     crate::retained_value(syn::parse_quote!(#name), &value.ty)
 }

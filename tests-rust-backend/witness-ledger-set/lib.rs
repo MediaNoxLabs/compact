@@ -134,9 +134,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = true;
             let frame = crate::ledger_slots::seen.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn private_contains<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

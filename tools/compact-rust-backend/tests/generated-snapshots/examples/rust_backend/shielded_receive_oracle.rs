@@ -270,7 +270,6 @@ pub mod ledger_contract {
                         __compact_effect_3.right.bytes,
                     ),
                 )?;
-                let __compact_effect_4: () = ();
                 let __compact_effect_5: runtime::FixedBytes<32> =
                     crate::pure_circuits::coinCommitment(
                         (__compact_effect_1).clone(),
@@ -281,12 +280,9 @@ pub mod ledger_contract {
                         (__compact_effect_5).into_array(),
                     )),
                 ))?;
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                (frame, ())
             };
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         pub fn accept_renamed<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -317,7 +313,6 @@ pub mod ledger_contract {
                         __compact_effect_3.right.bytes,
                     ),
                 )?;
-                let __compact_effect_4: () = ();
                 let __compact_effect_5: runtime::FixedBytes<32> =
                     crate::pure_circuits::coinCommitment(
                         (__compact_effect_1).clone(),
@@ -328,12 +323,9 @@ pub mod ledger_contract {
                         (__compact_effect_5).into_array(),
                     )),
                 ))?;
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                (frame, ())
             };
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

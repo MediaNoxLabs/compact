@@ -181,14 +181,11 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<4, 18446744073709551615>(__compact_effect_8)?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
             let __compact_effect_11: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_11).value() as u16)?;
-            let __compact_effect_12: () = ();
-            let __compact_effect_13: () = ();
-            Ok(frame.finish(__compact_effect_13))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

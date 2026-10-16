@@ -500,8 +500,7 @@ pub mod ledger_contract {
             let __compact_effect_0: bool = __compact_param_0;
             let frame = crate::ledger_slots::flags.record_push_front(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn push_count<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -512,8 +511,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::counts.record_push_front(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn push_tag<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -524,8 +522,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::FixedBytes<3> = __compact_param_0;
             let frame = crate::ledger_slots::tags.record_push_front(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn push_choice<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -537,8 +534,7 @@ pub mod ledger_contract {
             let frame =
                 crate::ledger_slots::choices.record_push_front(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn push_packet<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -550,8 +546,7 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::packets
                 .record_push_front(frame, (__compact_effect_0).clone())?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn first_packet<Private>(
             context: runtime::context::CircuitContext<Private>,

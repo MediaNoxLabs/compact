@@ -307,12 +307,9 @@ pub mod ledger_contract {
                         "witness continuation refused".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

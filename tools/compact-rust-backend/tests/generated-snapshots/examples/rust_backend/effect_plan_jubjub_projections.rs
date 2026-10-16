@@ -221,7 +221,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::Field = runtime::jubjub_point_x(__compact_effect_0);
             let __compact_effect_4: runtime::Field = runtime::jubjub_point_y(__compact_effect_0);
             let __compact_effect_5: runtime::Field = runtime::jubjub_point_x(__compact_effect_0);
@@ -246,7 +245,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_6): (_, runtime::JubjubPoint) = if __compact_effect_0 {
                 let (frame, __compact_effect_3): (_, runtime::JubjubPoint) = frame
                     .try_witness_metered(|context, meter| {

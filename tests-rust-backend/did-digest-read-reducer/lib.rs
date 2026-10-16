@@ -261,13 +261,11 @@ pub mod ledger_contract {
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, bool) =
                 crate::ledger_slots::methods.record_member(frame, (__compact_effect_0).clone())?;
             if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_6): (_, crate::types::Method) =
                 crate::ledger_slots::methods.record_lookup(frame, (__compact_effect_0).clone())?;
             let __compact_effect_7: runtime::JubjubPoint = __compact_effect_6.verificationPoint;
@@ -286,7 +284,6 @@ pub mod ledger_contract {
                         "witness denied".to_owned(),
                     ));
                 }
-                let __compact_effect_11: () = ();
                 let __compact_effect_12: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_8);
                 let __compact_effect_13: runtime::Field =
@@ -297,7 +294,6 @@ pub mod ledger_contract {
                         "wrong point".to_owned(),
                     ));
                 }
-                let __compact_effect_15: () = ();
                 let __compact_effect_16: runtime::Field =
                     runtime::jubjub_point_y(__compact_effect_8);
                 let __compact_effect_17: runtime::Field =
@@ -308,12 +304,9 @@ pub mod ledger_contract {
                         "wrong point".to_owned(),
                     ));
                 }
-                let __compact_effect_19: () = ();
-                let __compact_effect_20: () = ();
-                (frame, __compact_effect_20)
+                (frame, ())
             };
-            let __compact_effect_22: () = ();
-            Ok(frame.finish(__compact_effect_22))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

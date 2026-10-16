@@ -225,9 +225,7 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn contains<Private>(
             context: runtime::context::CircuitContext<Private>,

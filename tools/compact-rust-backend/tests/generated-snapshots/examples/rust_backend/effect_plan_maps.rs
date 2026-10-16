@@ -455,7 +455,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, runtime::Field) =
                 crate::ledger_slots::table.record_lookup(frame, (__compact_effect_0).clone())?;
             let __compact_effect_6: crate::types::Found = crate::types::Found {
@@ -479,7 +478,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, bool) =
                 crate::ledger_slots::table.record_member(frame, (__compact_effect_0).clone())?;
             let __compact_effect_5: crate::types::Present = crate::types::Present {
@@ -541,12 +539,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_10).value() as u16)?;
-                let __compact_effect_11: () = ();
-                let __compact_effect_12: () = ();
-                (frame, __compact_effect_12)
+                (frame, ())
             } else {
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                (frame, ())
             };
             let (frame, __compact_effect_15): (_, bool) =
                 crate::ledger_slots::table.record_member(frame, (__compact_effect_1).clone())?;

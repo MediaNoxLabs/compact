@@ -134,9 +134,7 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::Field =
                 crate::pure_circuits::increment(__compact_effect_0)?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn read_stored<Private>(
             context: runtime::context::CircuitContext<Private>,

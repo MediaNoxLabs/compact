@@ -108,8 +108,7 @@ pub mod ledger_contract {
             let frame =
                 crate::ledger_slots::t.record_insert_index_default(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

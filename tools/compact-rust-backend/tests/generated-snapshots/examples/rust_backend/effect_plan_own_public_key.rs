@@ -238,7 +238,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::BoundedUint<255> =
                 <runtime::BoundedUint<255>>::new(1u128)?;
             let (frame, __compact_effect_4): (_, runtime::Field) =

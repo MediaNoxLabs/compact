@@ -670,10 +670,8 @@ pub mod ledger_contract {
                     "spend: Coin already spent".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let frame = crate::ledger_slots::nullifiers
                 .record_insert(frame, (__compact_effect_3).clone())?;
-            let __compact_effect_9: () = ();
             let __compact_effect_10: crate::types::zk_public_key =
                 crate::pure_circuits::derive_zk_public_key((__compact_effect_2).clone())?;
             let __compact_effect_11: crate::types::commitment =
@@ -710,7 +708,6 @@ pub mod ledger_contract {
                     "spend: Illegal state: merkle path not recognized by public state".to_owned(),
                 ));
             }
-            let __compact_effect_19: () = ();
             let (frame, __compact_effect_20): (_, crate::types::coin_info) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.context_new_coin_info(context.witness_context_with(
@@ -743,7 +740,6 @@ pub mod ledger_contract {
                 })?;
             let frame = crate::ledger_slots::ciphertexts
                 .record_write(frame, (__compact_effect_25).clone())?;
-            let __compact_effect_26: () = ();
             let (frame, __compact_effect_27): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_remove_coin(
@@ -754,8 +750,7 @@ pub mod ledger_contract {
                         (__compact_effect_1).clone(),
                     )
                 })?;
-            let __compact_effect_28: () = ();
-            Ok(frame.finish(__compact_effect_28))
+            Ok(frame.finish(()))
         }
         pub fn zerocash_mint<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -799,8 +794,7 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::commitments
                 .record_insert(frame, (__compact_effect_3).clone())?;
             let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

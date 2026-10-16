@@ -742,7 +742,6 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_address_6) = frame.kernel_self()?;
             let __compact_effect_6: crate::types::ContractAddress = crate::types::ContractAddress {
                 bytes: runtime::ledger::contract_address_bytes(&__compact_effect_address_6),
@@ -766,7 +765,7 @@ pub mod ledger_contract {
                 >(__compact_effect_8)?;
             let __compact_effect_10: crate::types::Planned = crate::types::Planned {
                 first: __compact_effect_4,
-                emitted: __compact_effect_5,
+                emitted: (),
                 address: (__compact_effect_6).clone(),
                 after: __compact_effect_9,
             };

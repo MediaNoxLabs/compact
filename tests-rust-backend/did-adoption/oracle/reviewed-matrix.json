@@ -3572,7 +3572,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/reviewed-rust-binding.json",
-      "sha256": "d6df649998d71901cdb7b473399e972d7553e85c6eb0340469a1cde5e10fceae"
+      "sha256": "a58b2469b7117232db9d4c4baf960c33c0881e7df9a3847ba1883254e02d6fce"
     }
   ],
   "amendment_0259": {

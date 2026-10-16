@@ -260,7 +260,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_15): (_, ()) = {
                 let __compact_effect_3: runtime::JubjubPoint = __compact_effect_0;
                 let (frame, __compact_effect_4): (_, runtime::JubjubPoint) = frame
@@ -279,7 +278,6 @@ pub mod ledger_contract {
                 if !__compact_effect_8 {
                     return Err(runtime::CompactError::AssertionFailed("wrong x".to_owned()));
                 }
-                let __compact_effect_9: () = ();
                 let __compact_effect_10: runtime::Field =
                     runtime::jubjub_point_y(__compact_effect_5);
                 let __compact_effect_11: runtime::Field =
@@ -288,9 +286,7 @@ pub mod ledger_contract {
                 if !__compact_effect_12 {
                     return Err(runtime::CompactError::AssertionFailed("wrong y".to_owned()));
                 }
-                let __compact_effect_13: () = ();
-                let __compact_effect_14: () = ();
-                (frame, __compact_effect_14)
+                (frame, ())
             };
             let (frame, __compact_effect_16): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
@@ -302,9 +298,7 @@ pub mod ledger_contract {
             if !__compact_effect_16 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_17: () = ();
-            let __compact_effect_18: () = ();
-            Ok(frame.finish(__compact_effect_18))
+            Ok(frame.finish(()))
         }
         pub fn coordinates<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -322,7 +316,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_5): (_, runtime::JubjubPoint) = if __compact_effect_1 {
                 let (frame, __compact_effect_4): (_, runtime::JubjubPoint) = frame
                     .try_witness_metered(|context, meter| {
@@ -346,7 +339,6 @@ pub mod ledger_contract {
             if !__compact_effect_7 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_8: () = ();
             let __compact_effect_9: runtime::Field = runtime::jubjub_point_x(__compact_effect_6);
             let __compact_effect_10: runtime::Field = runtime::jubjub_point_y(__compact_effect_6);
             let __compact_effect_11: crate::types::Coordinates = crate::types::Coordinates {

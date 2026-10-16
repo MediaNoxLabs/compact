@@ -181,13 +181,11 @@ pub mod ledger_contract {
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::marker.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
                 runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
                     (__compact_effect_1).into_array(),
                 )),
             ))?;
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_11): (_, ()) = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, runtime::FixedBytes<32>) = frame
                     .try_witness_metered(|context, meter| {
@@ -207,21 +205,16 @@ pub mod ledger_contract {
                     runtime::ledger::HashOutput((__compact_effect_5).into_array()),
                     (__compact_effect_6).value() as u64,
                 )?;
-                let __compact_effect_7: () = ();
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                (frame, ())
             } else {
                 let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
                     runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                         (__compact_effect_1).into_array(),
                     )),
                 ))?;
-                let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                (frame, ())
             };
-            let __compact_effect_12: () = ();
-            Ok(frame.finish(__compact_effect_12))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -344,8 +344,7 @@ pub mod ledger_contract {
                 runtime::ledger::HashOutput((__compact_effect_0).into_array()),
                 (__compact_effect_1).value() as u64,
             )?;
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn nullifier<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -359,8 +358,7 @@ pub mod ledger_contract {
                     (__compact_effect_0).into_array(),
                 )),
             ))?;
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn spend<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -374,8 +372,7 @@ pub mod ledger_contract {
                     (__compact_effect_0).into_array(),
                 )),
             ))?;
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn claim_receive<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -389,8 +386,7 @@ pub mod ledger_contract {
                     (__compact_effect_0).into_array(),
                 )),
             ))?;
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn batch<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -409,38 +405,31 @@ pub mod ledger_contract {
                 runtime::ledger::HashOutput((__compact_effect_0).into_array()),
                 (__compact_effect_2).value() as u64,
             )?;
-            let __compact_effect_4: () = ();
             let frame = frame.kernel_mint_shielded(
                 runtime::ledger::HashOutput((__compact_effect_1).into_array()),
                 (__compact_effect_3).value() as u64,
             )?;
-            let __compact_effect_5: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
                 runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
                     (__compact_effect_0).into_array(),
                 )),
             ))?;
-            let __compact_effect_6: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
                 runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
                     (__compact_effect_0).into_array(),
                 )),
             ))?;
-            let __compact_effect_7: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
                 runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                     (__compact_effect_0).into_array(),
                 )),
             ))?;
-            let __compact_effect_8: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
                 runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                     (__compact_effect_1).into_array(),
                 )),
             ))?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn selected<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -457,15 +446,11 @@ pub mod ledger_contract {
                         (__compact_effect_1).into_array(),
                     )),
                 ))?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                (frame, ())
             } else {
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                (frame, ())
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn witness_order<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -491,9 +476,7 @@ pub mod ledger_contract {
                 runtime::ledger::HashOutput((__compact_effect_0).into_array()),
                 (__compact_effect_1).value() as u64,
             )?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn read_state<Private>(
             context: runtime::context::CircuitContext<Private>,

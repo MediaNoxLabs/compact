@@ -3268,7 +3268,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_58): (_, ()) = {
@@ -3344,7 +3343,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -3360,7 +3358,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -3392,15 +3389,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            (frame, ())
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        (frame, ())
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -3409,9 +3402,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                (frame, ())
             };
             let (frame, __compact_effect_78): (_, ()) = {
                 let __compact_effect_65: runtime::JubjubPoint = __compact_effect_0;
@@ -3440,9 +3431,7 @@ pub mod ledger_contract {
                         "New controller key matches current controller key".to_owned(),
                     ));
                 }
-                let __compact_effect_76: () = ();
-                let __compact_effect_77: () = ();
-                (frame, __compact_effect_77)
+                (frame, ())
             };
             let (frame, __compact_effect_92): (_, ()) = {
                 let __compact_effect_79: runtime::JubjubPoint = __compact_effect_0;
@@ -3471,24 +3460,19 @@ pub mod ledger_contract {
                         "New controller key matches recovery authority key".to_owned(),
                     ));
                 }
-                let __compact_effect_90: () = ();
-                let __compact_effect_91: () = ();
-                (frame, __compact_effect_91)
+                (frame, ())
             };
             let frame =
                 crate::ledger_slots::controllerPublicKey.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_93: () = ();
             let (frame, __compact_effect_101): (_, ()) = {
                 let __compact_effect_94: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_94).value() as u16)?;
-                let __compact_effect_95: () = ();
                 let __compact_effect_96: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_96).value() as u16)?;
-                let __compact_effect_97: () = ();
                 let (frame, __compact_effect_98): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -3500,12 +3484,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_98)?;
-                let __compact_effect_99: () = ();
-                let __compact_effect_100: () = ();
-                (frame, __compact_effect_100)
+                (frame, ())
             };
-            let __compact_effect_102: () = ();
-            Ok(frame.finish(__compact_effect_102))
+            Ok(frame.finish(()))
         }
         pub fn recoverControllerKey<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -3546,7 +3527,6 @@ pub mod ledger_contract {
                         "Recovery authorization version is stale".to_owned(),
                     ));
                 }
-                let __compact_effect_10: () = ();
                 let (frame, __compact_effect_11): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
                 let (frame, __compact_effect_55): (_, ()) = {
@@ -3620,7 +3600,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_32: () = ();
                         let __compact_effect_33: runtime::Field =
                             runtime::Field::from((__compact_effect_28).value());
                         let __compact_effect_34: runtime::Field =
@@ -3634,7 +3613,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_38: () = ();
                         let __compact_effect_39: runtime::Field = (__compact_effect_29).as_field();
                         let __compact_effect_40: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_19)?;
@@ -3664,12 +3642,9 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_51: () = ();
-                        let __compact_effect_52: () = ();
-                        (frame, __compact_effect_52)
+                        (frame, ())
                     };
-                    let __compact_effect_54: () = ();
-                    (frame, __compact_effect_54)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_56): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -3678,9 +3653,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_57: () = ();
-                let __compact_effect_58: () = ();
-                (frame, __compact_effect_58)
+                (frame, ())
             };
             let (frame, __compact_effect_73): (_, ()) = {
                 let __compact_effect_60: runtime::JubjubPoint = __compact_effect_0;
@@ -3709,9 +3682,7 @@ pub mod ledger_contract {
                         "New controller key matches current controller key".to_owned(),
                     ));
                 }
-                let __compact_effect_71: () = ();
-                let __compact_effect_72: () = ();
-                (frame, __compact_effect_72)
+                (frame, ())
             };
             let (frame, __compact_effect_87): (_, ()) = {
                 let __compact_effect_74: runtime::JubjubPoint = __compact_effect_0;
@@ -3740,24 +3711,19 @@ pub mod ledger_contract {
                         "New controller key matches recovery authority key".to_owned(),
                     ));
                 }
-                let __compact_effect_85: () = ();
-                let __compact_effect_86: () = ();
-                (frame, __compact_effect_86)
+                (frame, ())
             };
             let frame =
                 crate::ledger_slots::controllerPublicKey.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_88: () = ();
             let (frame, __compact_effect_96): (_, ()) = {
                 let __compact_effect_89: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_89).value() as u16)?;
-                let __compact_effect_90: () = ();
                 let __compact_effect_91: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_91).value() as u16)?;
-                let __compact_effect_92: () = ();
                 let (frame, __compact_effect_93): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -3769,12 +3735,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_93)?;
-                let __compact_effect_94: () = ();
-                let __compact_effect_95: () = ();
-                (frame, __compact_effect_95)
+                (frame, ())
             };
-            let __compact_effect_97: () = ();
-            Ok(frame.finish(__compact_effect_97))
+            Ok(frame.finish(()))
         }
         pub fn setAlsoKnownAs<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -3825,7 +3788,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_59): (_, ()) = {
@@ -3901,7 +3863,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -3917,7 +3878,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -3949,15 +3909,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            (frame, ())
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        (frame, ())
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -3966,9 +3922,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                (frame, ())
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertSetMutationDefined(__compact_effect_1)?;
@@ -3989,12 +3943,9 @@ pub mod ledger_contract {
                         "alsoKnownAs value already exists".to_owned(),
                     ));
                 }
-                let __compact_effect_73: () = ();
                 let frame = crate::ledger_slots::alsoKnownAs
                     .record_insert(frame, (__compact_effect_0).clone())?;
-                let __compact_effect_74: () = ();
-                let __compact_effect_75: () = ();
-                (frame, __compact_effect_75)
+                (frame, ())
             } else {
                 let __compact_effect_76: crate::types::SetMutation =
                     crate::types::SetMutation::Remove;
@@ -4007,30 +3958,23 @@ pub mod ledger_contract {
                             "alsoKnownAs value does not exist".to_owned(),
                         ));
                     }
-                    let __compact_effect_79: () = ();
                     let frame = crate::ledger_slots::alsoKnownAs
                         .record_remove(frame, (__compact_effect_0).clone())?;
-                    let __compact_effect_80: () = ();
-                    let __compact_effect_81: () = ();
-                    (frame, __compact_effect_81)
+                    (frame, ())
                 } else {
-                    let __compact_effect_82: () = ();
-                    (frame, __compact_effect_82)
+                    (frame, ())
                 };
-                let __compact_effect_84: () = ();
-                (frame, __compact_effect_84)
+                (frame, ())
             };
             let (frame, __compact_effect_93): (_, ()) = {
                 let __compact_effect_86: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_86).value() as u16)?;
-                let __compact_effect_87: () = ();
                 let __compact_effect_88: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_88).value() as u16)?;
-                let __compact_effect_89: () = ();
                 let (frame, __compact_effect_90): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -4042,12 +3986,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_90)?;
-                let __compact_effect_91: () = ();
-                let __compact_effect_92: () = ();
-                (frame, __compact_effect_92)
+                (frame, ())
             };
-            let __compact_effect_94: () = ();
-            Ok(frame.finish(__compact_effect_94))
+            Ok(frame.finish(()))
         }
         pub fn setVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -4098,7 +4039,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_59): (_, ()) = {
@@ -4174,7 +4114,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -4190,7 +4129,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -4222,15 +4160,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            (frame, ())
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        (frame, ())
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -4239,9 +4173,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                (frame, ())
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertMapMutationDefined(__compact_effect_1)?;
@@ -4260,7 +4192,6 @@ pub mod ledger_contract {
                         "Verification method does not exist".to_owned(),
                     ));
                 }
-                let __compact_effect_72: () = ();
                 let __compact_effect_73: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let __compact_effect_74: crate::types::PublicKeyJwk =
                     (__compact_effect_0.publicKeyJwk).clone();
@@ -4283,12 +4214,9 @@ pub mod ledger_contract {
                                 ),
                             );
                         }
-                        let __compact_effect_81: () = ();
-                        let __compact_effect_82: () = ();
-                        (frame, __compact_effect_82)
+                        (frame, ())
                     } else {
-                        let __compact_effect_83: () = ();
-                        (frame, __compact_effect_83)
+                        (frame, ())
                     };
                     let (frame, __compact_effect_85): (_, bool) =
                         crate::ledger_slots::authenticationRelation
@@ -4332,22 +4260,17 @@ pub mod ledger_contract {
                                 ),
                             );
                         }
-                        let __compact_effect_97: () = ();
-                        let __compact_effect_98: () = ();
-                        (frame, __compact_effect_98)
+                        (frame, ())
                     } else {
-                        let __compact_effect_99: () = ();
-                        (frame, __compact_effect_99)
+                        (frame, ())
                     };
-                    let __compact_effect_101: () = ();
-                    (frame, __compact_effect_101)
+                    (frame, ())
                 };
                 let __compact_effect_103: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::verificationMethods
                     .record_remove(frame, (__compact_effect_103).clone())?;
                 let __compact_effect_104: () = ();
-                let __compact_effect_105: () = ();
-                (frame, __compact_effect_105)
+                (frame, ())
             } else {
                 let __compact_effect_106: crate::types::MapMutation =
                     crate::types::MapMutation::Insert;
@@ -4384,15 +4307,11 @@ pub mod ledger_contract {
                             "Verification method already exists".to_owned(),
                         ));
                     }
-                    let __compact_effect_118: () = ();
-                    let __compact_effect_119: () = ();
-                    (frame, __compact_effect_119)
+                    (frame, ())
                 } else {
-                    let __compact_effect_120: () = ();
-                    (frame, __compact_effect_120)
+                    (frame, ())
                 };
-                let __compact_effect_122: () = ();
-                (frame, __compact_effect_122)
+                (frame, ())
             };
             let __compact_effect_124: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::verificationMethods.record_insert(
@@ -4406,12 +4325,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_126).value() as u16)?;
-                let __compact_effect_127: () = ();
                 let __compact_effect_128: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_128).value() as u16)?;
-                let __compact_effect_129: () = ();
                 let (frame, __compact_effect_130): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -4423,12 +4340,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_130)?;
-                let __compact_effect_131: () = ();
-                let __compact_effect_132: () = ();
-                (frame, __compact_effect_132)
+                (frame, ())
             };
-            let __compact_effect_134: () = ();
-            Ok(frame.finish(__compact_effect_134))
+            Ok(frame.finish(()))
         }
         pub fn removeVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -4476,7 +4390,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_58): (_, ()) = {
@@ -4552,7 +4465,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -4568,7 +4480,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -4600,15 +4511,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            (frame, ())
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        (frame, ())
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -4617,9 +4524,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                (frame, ())
             };
             let (frame, __compact_effect_65): (_, bool) = crate::ledger_slots::verificationMethods
                 .record_member(frame, (__compact_effect_0).clone())?;
@@ -4628,7 +4533,6 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_66: () = ();
             let (frame, __compact_effect_94): (_, ()) = {
                 let __compact_effect_67: runtime::OpaqueString = (__compact_effect_0).clone();
                 let (frame, __compact_effect_68): (_, bool) =
@@ -4646,7 +4550,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in authenticationRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_72: () = ();
                 let (frame, __compact_effect_73): (_, bool) =
                     crate::ledger_slots::assertionMethodRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4663,7 +4566,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_77: () = ();
                 let (frame, __compact_effect_78): (_, bool) =
                     crate::ledger_slots::keyAgreementRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4679,7 +4581,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in keyAgreementRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_82: () = ();
                 let (frame, __compact_effect_83): (_, bool) =
                     crate::ledger_slots::capabilityInvocationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4696,7 +4597,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_87: () = ();
                 let (frame, __compact_effect_88): (_, bool) =
                     crate::ledger_slots::capabilityDelegationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4713,9 +4613,7 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_92: () = ();
-                let __compact_effect_93: () = ();
-                (frame, __compact_effect_93)
+                (frame, ())
             };
             let frame = crate::ledger_slots::verificationMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
@@ -4725,12 +4623,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_96).value() as u16)?;
-                let __compact_effect_97: () = ();
                 let __compact_effect_98: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_98).value() as u16)?;
-                let __compact_effect_99: () = ();
                 let (frame, __compact_effect_100): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -4742,12 +4638,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_100)?;
-                let __compact_effect_101: () = ();
-                let __compact_effect_102: () = ();
-                (frame, __compact_effect_102)
+                (frame, ())
             };
-            let __compact_effect_104: () = ();
-            Ok(frame.finish(__compact_effect_104))
+            Ok(frame.finish(()))
         }
         pub fn setSchnorrJubjubVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -4799,7 +4692,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_59): (_, ()) = {
@@ -4875,7 +4767,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -4891,7 +4782,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -4923,15 +4813,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            (frame, ())
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        (frame, ())
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -4940,9 +4826,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                (frame, ())
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertMapMutationDefined(__compact_effect_1)?;
@@ -4958,13 +4842,11 @@ pub mod ledger_contract {
                         "Verification method does not exist".to_owned(),
                     ));
                 }
-                let __compact_effect_71: () = ();
                 let __compact_effect_72: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_remove(frame, (__compact_effect_72).clone())?;
                 let __compact_effect_73: () = ();
-                let __compact_effect_74: () = ();
-                (frame, __compact_effect_74)
+                (frame, ())
             } else {
                 let __compact_effect_75: crate::types::MapMutation =
                     crate::types::MapMutation::Insert;
@@ -5001,15 +4883,11 @@ pub mod ledger_contract {
                             "Verification method already exists".to_owned(),
                         ));
                     }
-                    let __compact_effect_87: () = ();
-                    let __compact_effect_88: () = ();
-                    (frame, __compact_effect_88)
+                    (frame, ())
                 } else {
-                    let __compact_effect_89: () = ();
-                    (frame, __compact_effect_89)
+                    (frame, ())
                 };
-                let __compact_effect_91: () = ();
-                (frame, __compact_effect_91)
+                (frame, ())
             };
             let __compact_effect_93: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::schnorrJubjubVerificationMethods.record_insert(
@@ -5023,12 +4901,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_95).value() as u16)?;
-                let __compact_effect_96: () = ();
                 let __compact_effect_97: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_97).value() as u16)?;
-                let __compact_effect_98: () = ();
                 let (frame, __compact_effect_99): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -5040,12 +4916,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_99)?;
-                let __compact_effect_100: () = ();
-                let __compact_effect_101: () = ();
-                (frame, __compact_effect_101)
+                (frame, ())
             };
-            let __compact_effect_103: () = ();
-            Ok(frame.finish(__compact_effect_103))
+            Ok(frame.finish(()))
         }
         pub fn removeSchnorrJubjubVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -5093,7 +4966,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_58): (_, ()) = {
@@ -5169,7 +5041,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -5185,7 +5056,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -5217,15 +5087,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            (frame, ())
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        (frame, ())
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -5234,9 +5100,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                (frame, ())
             };
             let (frame, __compact_effect_65): (_, bool) =
                 crate::ledger_slots::schnorrJubjubVerificationMethods
@@ -5246,7 +5110,6 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_66: () = ();
             let (frame, __compact_effect_94): (_, ()) = {
                 let __compact_effect_67: runtime::OpaqueString = (__compact_effect_0).clone();
                 let (frame, __compact_effect_68): (_, bool) =
@@ -5264,7 +5127,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in authenticationRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_72: () = ();
                 let (frame, __compact_effect_73): (_, bool) =
                     crate::ledger_slots::assertionMethodRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5281,7 +5143,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_77: () = ();
                 let (frame, __compact_effect_78): (_, bool) =
                     crate::ledger_slots::keyAgreementRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5297,7 +5158,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in keyAgreementRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_82: () = ();
                 let (frame, __compact_effect_83): (_, bool) =
                     crate::ledger_slots::capabilityInvocationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5314,7 +5174,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_87: () = ();
                 let (frame, __compact_effect_88): (_, bool) =
                     crate::ledger_slots::capabilityDelegationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5331,9 +5190,7 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_92: () = ();
-                let __compact_effect_93: () = ();
-                (frame, __compact_effect_93)
+                (frame, ())
             };
             let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
@@ -5343,12 +5200,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_96).value() as u16)?;
-                let __compact_effect_97: () = ();
                 let __compact_effect_98: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_98).value() as u16)?;
-                let __compact_effect_99: () = ();
                 let (frame, __compact_effect_100): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -5360,12 +5215,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_100)?;
-                let __compact_effect_101: () = ();
-                let __compact_effect_102: () = ();
-                (frame, __compact_effect_102)
+                (frame, ())
             };
-            let __compact_effect_104: () = ();
-            Ok(frame.finish(__compact_effect_104))
+            Ok(frame.finish(()))
         }
         pub fn verifySchnorrJubjubDigestSignature<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -5386,7 +5238,6 @@ pub mod ledger_contract {
                     "Contract is not active".to_owned(),
                 ));
             }
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, bool) =
                 crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_member(frame, (__compact_effect_0).clone())?;
@@ -5395,7 +5246,6 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             let (frame, __compact_effect_7): (_, crate::types::SchnorrJubjubVerificationMethod) =
                 crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_lookup(frame, (__compact_effect_0).clone())?;
@@ -5471,7 +5321,6 @@ pub mod ledger_contract {
                             "Schnorr quotient out of range".to_owned(),
                         ));
                     }
-                    let __compact_effect_29: () = ();
                     let __compact_effect_30: runtime::Field =
                         runtime::Field::from((__compact_effect_25).value());
                     let __compact_effect_31: runtime::Field =
@@ -5485,7 +5334,6 @@ pub mod ledger_contract {
                             "Invalid challenge reduction".to_owned(),
                         ));
                     }
-                    let __compact_effect_35: () = ();
                     let __compact_effect_36: runtime::Field = (__compact_effect_26).as_field();
                     let __compact_effect_37: runtime::JubjubPoint =
                         runtime::ec_mul_generator(__compact_effect_16)?;
@@ -5514,15 +5362,11 @@ pub mod ledger_contract {
                             "Invalid Jubjub Schnorr signature".to_owned(),
                         ));
                     }
-                    let __compact_effect_48: () = ();
-                    let __compact_effect_49: () = ();
-                    (frame, __compact_effect_49)
+                    (frame, ())
                 };
-                let __compact_effect_51: () = ();
-                (frame, __compact_effect_51)
+                (frame, ())
             };
-            let __compact_effect_53: () = ();
-            Ok(frame.finish(__compact_effect_53))
+            Ok(frame.finish(()))
         }
         pub fn setVerificationMethodRelation<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -5576,7 +5420,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_15: () = ();
                     let (frame, __compact_effect_16): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_60): (_, ()) = {
@@ -5652,7 +5495,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_37: () = ();
                             let __compact_effect_38: runtime::Field =
                                 runtime::Field::from((__compact_effect_33).value());
                             let __compact_effect_39: runtime::Field =
@@ -5668,7 +5510,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_43: () = ();
                             let __compact_effect_44: runtime::Field =
                                 (__compact_effect_34).as_field();
                             let __compact_effect_45: runtime::JubjubPoint =
@@ -5700,15 +5541,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_56: () = ();
-                            let __compact_effect_57: () = ();
-                            (frame, __compact_effect_57)
+                            (frame, ())
                         };
-                        let __compact_effect_59: () = ();
-                        (frame, __compact_effect_59)
+                        (frame, ())
                     };
-                    let __compact_effect_61: () = ();
-                    (frame, __compact_effect_61)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_63): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -5717,9 +5554,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_64: () = ();
-                let __compact_effect_65: () = ();
-                (frame, __compact_effect_65)
+                (frame, ())
             };
             let __compact_effect_67: () =
                 crate::pure_circuits::assertSetMutationDefined(__compact_effect_2)?;
@@ -5744,7 +5579,6 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_74: () = ();
             let __compact_effect_75: crate::types::VerificationMethodRelation =
                 crate::types::VerificationMethodRelation::Undefined;
             let __compact_effect_76: bool = __compact_effect_0 != __compact_effect_75;
@@ -5753,7 +5587,6 @@ pub mod ledger_contract {
                     "Verification relation must be defined".to_owned(),
                 ));
             }
-            let __compact_effect_77: () = ();
             let (frame, __compact_effect_101): (_, bool) = {
                 let __compact_effect_78: crate::types::VerificationMethodRelation =
                     __compact_effect_0;
@@ -5834,7 +5667,6 @@ pub mod ledger_contract {
                         "Verification method relation already exists".to_owned(),
                     ));
                 }
-                let __compact_effect_107: () = ();
                 let (frame, __compact_effect_140): (_, ()) = {
                     let __compact_effect_108: crate::types::VerificationMethodRelation =
                         __compact_effect_0;
@@ -5851,7 +5683,6 @@ pub mod ledger_contract {
                                 "KeyAgreement requires an agreement verification method".to_owned(),
                             ));
                         }
-                        let __compact_effect_113: () = ();
                         let (frame, __compact_effect_114): (_, crate::types::VerificationMethod) =
                             crate::ledger_slots::verificationMethods
                                 .record_lookup(frame, (__compact_effect_109).clone())?;
@@ -5868,9 +5699,7 @@ pub mod ledger_contract {
                                 "KeyAgreement requires an X25519 verification method".to_owned(),
                             ));
                         }
-                        let __compact_effect_119: () = ();
-                        let __compact_effect_120: () = ();
-                        (frame, __compact_effect_120)
+                        (frame, ())
                     } else {
                         let __compact_effect_121: bool =
                             crate::pure_circuits::isSigningVerificationMethodRelation(
@@ -5914,18 +5743,13 @@ pub mod ledger_contract {
                                     ),
                                 );
                             }
-                            let __compact_effect_133: () = ();
-                            let __compact_effect_134: () = ();
-                            (frame, __compact_effect_134)
+                            (frame, ())
                         } else {
-                            let __compact_effect_135: () = ();
-                            (frame, __compact_effect_135)
+                            (frame, ())
                         };
-                        let __compact_effect_137: () = ();
-                        (frame, __compact_effect_137)
+                        (frame, ())
                     };
-                    let __compact_effect_139: () = ();
-                    (frame, __compact_effect_139)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_174): (_, ()) = {
                     let __compact_effect_141: crate::types::VerificationMethodRelation =
@@ -5937,9 +5761,7 @@ pub mod ledger_contract {
                     let (frame, __compact_effect_172): (_, ()) = if __compact_effect_144 {
                         let frame = crate::ledger_slots::authenticationRelation
                             .record_insert(frame, (__compact_effect_142).clone())?;
-                        let __compact_effect_145: () = ();
-                        let __compact_effect_146: () = ();
-                        (frame, __compact_effect_146)
+                        (frame, ())
                     } else {
                         let __compact_effect_147: crate::types::VerificationMethodRelation =
                             crate::types::VerificationMethodRelation::AssertionMethod;
@@ -5948,9 +5770,7 @@ pub mod ledger_contract {
                         let (frame, __compact_effect_170): (_, ()) = if __compact_effect_148 {
                             let frame = crate::ledger_slots::assertionMethodRelation
                                 .record_insert(frame, (__compact_effect_142).clone())?;
-                            let __compact_effect_149: () = ();
-                            let __compact_effect_150: () = ();
-                            (frame, __compact_effect_150)
+                            (frame, ())
                         } else {
                             let __compact_effect_151: crate::types::VerificationMethodRelation =
                                 crate::types::VerificationMethodRelation::KeyAgreement;
@@ -5959,9 +5779,7 @@ pub mod ledger_contract {
                             let (frame, __compact_effect_168): (_, ()) = if __compact_effect_152 {
                                 let frame = crate::ledger_slots::keyAgreementRelation
                                     .record_insert(frame, (__compact_effect_142).clone())?;
-                                let __compact_effect_153: () = ();
-                                let __compact_effect_154: () = ();
-                                (frame, __compact_effect_154)
+                                (frame, ())
                             } else {
                                 let __compact_effect_155: crate::types::VerificationMethodRelation =
                                     crate::types::VerificationMethodRelation::CapabilityInvocation;
@@ -5972,9 +5790,7 @@ pub mod ledger_contract {
                                     let frame =
                                         crate::ledger_slots::capabilityInvocationRelation
                                             .record_insert(frame, (__compact_effect_142).clone())?;
-                                    let __compact_effect_157: () = ();
-                                    let __compact_effect_158: () = ();
-                                    (frame, __compact_effect_158)
+                                    (frame, ())
                                 } else {
                                     let __compact_effect_159: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityDelegation;
                                     let __compact_effect_160: bool =
@@ -5987,30 +5803,21 @@ pub mod ledger_contract {
                                                     frame,
                                                     (__compact_effect_142).clone(),
                                                 )?;
-                                            let __compact_effect_161: () = ();
-                                            let __compact_effect_162: () = ();
-                                            (frame, __compact_effect_162)
+                                            (frame, ())
                                         } else {
-                                            let __compact_effect_163: () = ();
-                                            (frame, __compact_effect_163)
+                                            (frame, ())
                                         };
-                                    let __compact_effect_165: () = ();
-                                    (frame, __compact_effect_165)
+                                    (frame, ())
                                 };
-                                let __compact_effect_167: () = ();
-                                (frame, __compact_effect_167)
+                                (frame, ())
                             };
-                            let __compact_effect_169: () = ();
-                            (frame, __compact_effect_169)
+                            (frame, ())
                         };
-                        let __compact_effect_171: () = ();
-                        (frame, __compact_effect_171)
+                        (frame, ())
                     };
-                    let __compact_effect_173: () = ();
-                    (frame, __compact_effect_173)
+                    (frame, ())
                 };
-                let __compact_effect_175: () = ();
-                (frame, __compact_effect_175)
+                (frame, ())
             } else {
                 let __compact_effect_176: crate::types::SetMutation =
                     crate::types::SetMutation::Remove;
@@ -6021,7 +5828,6 @@ pub mod ledger_contract {
                             "Verification method relation does not exist".to_owned(),
                         ));
                     }
-                    let __compact_effect_178: () = ();
                     let (frame, __compact_effect_212): (_, ()) = {
                         let __compact_effect_179: crate::types::VerificationMethodRelation =
                             __compact_effect_0;
@@ -6034,9 +5840,7 @@ pub mod ledger_contract {
                         let (frame, __compact_effect_210): (_, ()) = if __compact_effect_182 {
                             let frame = crate::ledger_slots::authenticationRelation
                                 .record_remove(frame, (__compact_effect_180).clone())?;
-                            let __compact_effect_183: () = ();
-                            let __compact_effect_184: () = ();
-                            (frame, __compact_effect_184)
+                            (frame, ())
                         } else {
                             let __compact_effect_185: crate::types::VerificationMethodRelation =
                                 crate::types::VerificationMethodRelation::AssertionMethod;
@@ -6045,9 +5849,7 @@ pub mod ledger_contract {
                             let (frame, __compact_effect_208): (_, ()) = if __compact_effect_186 {
                                 let frame = crate::ledger_slots::assertionMethodRelation
                                     .record_remove(frame, (__compact_effect_180).clone())?;
-                                let __compact_effect_187: () = ();
-                                let __compact_effect_188: () = ();
-                                (frame, __compact_effect_188)
+                                (frame, ())
                             } else {
                                 let __compact_effect_189: crate::types::VerificationMethodRelation =
                                     crate::types::VerificationMethodRelation::KeyAgreement;
@@ -6057,9 +5859,7 @@ pub mod ledger_contract {
                                 {
                                     let frame = crate::ledger_slots::keyAgreementRelation
                                         .record_remove(frame, (__compact_effect_180).clone())?;
-                                    let __compact_effect_191: () = ();
-                                    let __compact_effect_192: () = ();
-                                    (frame, __compact_effect_192)
+                                    (frame, ())
                                 } else {
                                     let __compact_effect_193: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityInvocation;
                                     let __compact_effect_194: bool =
@@ -6072,9 +5872,7 @@ pub mod ledger_contract {
                                                     frame,
                                                     (__compact_effect_180).clone(),
                                                 )?;
-                                            let __compact_effect_195: () = ();
-                                            let __compact_effect_196: () = ();
-                                            (frame, __compact_effect_196)
+                                            (frame, ())
                                         } else {
                                             let __compact_effect_197: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityDelegation;
                                             let __compact_effect_198: bool =
@@ -6083,48 +5881,35 @@ pub mod ledger_contract {
                                                 if __compact_effect_198 {
                                                     let frame = crate::ledger_slots::capabilityDelegationRelation
                                                 .record_remove(frame, (__compact_effect_180).clone())?;
-                                                    let __compact_effect_199: () = ();
-                                                    let __compact_effect_200: () = ();
-                                                    (frame, __compact_effect_200)
+                                                    (frame, ())
                                                 } else {
-                                                    let __compact_effect_201: () = ();
-                                                    (frame, __compact_effect_201)
+                                                    (frame, ())
                                                 };
-                                            let __compact_effect_203: () = ();
-                                            (frame, __compact_effect_203)
+                                            (frame, ())
                                         };
-                                    let __compact_effect_205: () = ();
-                                    (frame, __compact_effect_205)
+                                    (frame, ())
                                 };
-                                let __compact_effect_207: () = ();
-                                (frame, __compact_effect_207)
+                                (frame, ())
                             };
-                            let __compact_effect_209: () = ();
-                            (frame, __compact_effect_209)
+                            (frame, ())
                         };
-                        let __compact_effect_211: () = ();
-                        (frame, __compact_effect_211)
+                        (frame, ())
                     };
-                    let __compact_effect_213: () = ();
-                    (frame, __compact_effect_213)
+                    (frame, ())
                 } else {
-                    let __compact_effect_214: () = ();
-                    (frame, __compact_effect_214)
+                    (frame, ())
                 };
-                let __compact_effect_216: () = ();
-                (frame, __compact_effect_216)
+                (frame, ())
             };
             let (frame, __compact_effect_225): (_, ()) = {
                 let __compact_effect_218: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_218).value() as u16)?;
-                let __compact_effect_219: () = ();
                 let __compact_effect_220: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_220).value() as u16)?;
-                let __compact_effect_221: () = ();
                 let (frame, __compact_effect_222): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6136,12 +5921,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_222)?;
-                let __compact_effect_223: () = ();
-                let __compact_effect_224: () = ();
-                (frame, __compact_effect_224)
+                (frame, ())
             };
-            let __compact_effect_226: () = ();
-            Ok(frame.finish(__compact_effect_226))
+            Ok(frame.finish(()))
         }
         pub fn setService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -6192,7 +5974,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_59): (_, ()) = {
@@ -6268,7 +6049,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -6284,7 +6064,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -6316,15 +6095,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            (frame, ())
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        (frame, ())
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -6333,9 +6108,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                (frame, ())
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertMapMutationDefined(__compact_effect_1)?;
@@ -6350,13 +6123,11 @@ pub mod ledger_contract {
                         "Service with a given id does not exist".to_owned(),
                     ));
                 }
-                let __compact_effect_71: () = ();
                 let __compact_effect_72: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
                     .record_remove(frame, (__compact_effect_72).clone())?;
                 let __compact_effect_73: () = ();
-                let __compact_effect_74: () = ();
-                (frame, __compact_effect_74)
+                (frame, ())
             } else {
                 let __compact_effect_75: crate::types::MapMutation =
                     crate::types::MapMutation::Insert;
@@ -6378,15 +6149,11 @@ pub mod ledger_contract {
                             "Service with a given id already exists".to_owned(),
                         ));
                     }
-                    let __compact_effect_82: () = ();
-                    let __compact_effect_83: () = ();
-                    (frame, __compact_effect_83)
+                    (frame, ())
                 } else {
-                    let __compact_effect_84: () = ();
-                    (frame, __compact_effect_84)
+                    (frame, ())
                 };
-                let __compact_effect_86: () = ();
-                (frame, __compact_effect_86)
+                (frame, ())
             };
             let __compact_effect_88: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::services.record_insert(
@@ -6400,12 +6167,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_90).value() as u16)?;
-                let __compact_effect_91: () = ();
                 let __compact_effect_92: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_92).value() as u16)?;
-                let __compact_effect_93: () = ();
                 let (frame, __compact_effect_94): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6417,12 +6182,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_94)?;
-                let __compact_effect_95: () = ();
-                let __compact_effect_96: () = ();
-                (frame, __compact_effect_96)
+                (frame, ())
             };
-            let __compact_effect_98: () = ();
-            Ok(frame.finish(__compact_effect_98))
+            Ok(frame.finish(()))
         }
         pub fn removeService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -6470,7 +6232,6 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                     let (frame, __compact_effect_58): (_, ()) = {
@@ -6546,7 +6307,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -6562,7 +6322,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -6594,15 +6353,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            (frame, ())
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        (frame, ())
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    (frame, ())
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -6611,9 +6366,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                (frame, ())
             };
             let (frame, __compact_effect_65): (_, bool) =
                 crate::ledger_slots::services.record_member(frame, (__compact_effect_0).clone())?;
@@ -6622,7 +6375,6 @@ pub mod ledger_contract {
                     "Service with a given id does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_66: () = ();
             let frame =
                 crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
             let __compact_effect_67: () = ();
@@ -6631,12 +6383,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_68).value() as u16)?;
-                let __compact_effect_69: () = ();
                 let __compact_effect_70: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_70).value() as u16)?;
-                let __compact_effect_71: () = ();
                 let (frame, __compact_effect_72): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6648,12 +6398,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_72)?;
-                let __compact_effect_73: () = ();
-                let __compact_effect_74: () = ();
-                (frame, __compact_effect_74)
+                (frame, ())
             };
-            let __compact_effect_76: () = ();
-            Ok(frame.finish(__compact_effect_76))
+            Ok(frame.finish(()))
         }
         pub fn deactivate<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -6691,7 +6438,6 @@ pub mod ledger_contract {
                         "Controller authorization version is stale".to_owned(),
                     ));
                 }
-                let __compact_effect_9: () = ();
                 let (frame, __compact_effect_10): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controllerPublicKey.record_read(frame)?;
                 let (frame, __compact_effect_54): (_, ()) = {
@@ -6765,7 +6511,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_31: () = ();
                         let __compact_effect_32: runtime::Field =
                             runtime::Field::from((__compact_effect_27).value());
                         let __compact_effect_33: runtime::Field =
@@ -6779,7 +6524,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_37: () = ();
                         let __compact_effect_38: runtime::Field = (__compact_effect_28).as_field();
                         let __compact_effect_39: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_18)?;
@@ -6809,15 +6553,11 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_50: () = ();
-                        let __compact_effect_51: () = ();
-                        (frame, __compact_effect_51)
+                        (frame, ())
                     };
-                    let __compact_effect_53: () = ();
-                    (frame, __compact_effect_53)
+                    (frame, ())
                 };
-                let __compact_effect_55: () = ();
-                (frame, __compact_effect_55)
+                (frame, ())
             };
             let (frame, __compact_effect_57): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -6826,25 +6566,20 @@ pub mod ledger_contract {
                     "DID is already inactive".to_owned(),
                 ));
             }
-            let __compact_effect_58: () = ();
             let __compact_effect_59: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_59)?;
-            let __compact_effect_60: () = ();
             let __compact_effect_61: bool = true;
             let frame =
                 crate::ledger_slots::deactivated.record_write(frame, __compact_effect_61)?;
-            let __compact_effect_62: () = ();
             let (frame, __compact_effect_70): (_, ()) = {
                 let __compact_effect_63: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_63).value() as u16)?;
-                let __compact_effect_64: () = ();
                 let __compact_effect_65: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_65).value() as u16)?;
-                let __compact_effect_66: () = ();
                 let (frame, __compact_effect_67): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6856,12 +6591,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_67)?;
-                let __compact_effect_68: () = ();
-                let __compact_effect_69: () = ();
-                (frame, __compact_effect_69)
+                (frame, ())
             };
-            let __compact_effect_71: () = ();
-            Ok(frame.finish(__compact_effect_71))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

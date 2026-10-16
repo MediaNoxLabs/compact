@@ -434,7 +434,6 @@ pub mod ledger_contract {
                     __compact_effect_11,
                 )?;
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_14)?;
-                let __compact_effect_15: () = ();
                 let (frame, __compact_effect_16): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 (frame, __compact_effect_16)
@@ -465,13 +464,11 @@ pub mod ledger_contract {
                     )?;
                     let frame =
                         crate::ledger_slots::stored.record_write(frame, __compact_effect_24)?;
-                    let __compact_effect_25: () = ();
                     let (frame, __compact_effect_26): (_, runtime::Field) =
                         crate::ledger_slots::stored.record_read(frame)?;
                     (frame, __compact_effect_26)
                 };
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_27)?;
-                let __compact_effect_28: () = ();
                 let (frame, __compact_effect_29): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 let __compact_effect_30: bool = false;
@@ -504,13 +501,11 @@ pub mod ledger_contract {
                     )?;
                     let frame =
                         crate::ledger_slots::stored.record_write(frame, __compact_effect_38)?;
-                    let __compact_effect_39: () = ();
                     let (frame, __compact_effect_40): (_, runtime::Field) =
                         crate::ledger_slots::stored.record_read(frame)?;
                     (frame, __compact_effect_40)
                 };
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_41)?;
-                let __compact_effect_42: () = ();
                 let (frame, __compact_effect_43): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 let __compact_effect_44: bool = true;

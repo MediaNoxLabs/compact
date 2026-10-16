@@ -543,14 +543,11 @@ pub mod ledger_contract {
             let __compact_effect_13: runtime::OpaqueString = (__compact_effect_12.value).clone();
             let frame =
                 crate::ledger_slots::text.record_write(frame, (__compact_effect_13).clone())?;
-            let __compact_effect_14: () = ();
             let __compact_effect_15: runtime::OpaqueBytes = (__compact_effect_11.bytes).clone();
             let frame =
                 crate::ledger_slots::blob.record_write(frame, (__compact_effect_15).clone())?;
-            let __compact_effect_16: () = ();
             let frame =
                 crate::ledger_slots::envelope.record_write(frame, (__compact_effect_11).clone())?;
-            let __compact_effect_17: () = ();
             let (frame, __compact_effect_18): (_, crate::types::Envelope) =
                 crate::ledger_slots::envelope.record_read(frame)?;
             let (frame, __compact_effect_19): (_, runtime::OpaqueString) =
@@ -612,7 +609,6 @@ pub mod ledger_contract {
             };
             let __compact_effect_43: runtime::Field = __compact_effect_18.marker;
             let frame = crate::ledger_slots::outcome.record_write(frame, __compact_effect_43)?;
-            let __compact_effect_44: () = ();
             let (frame, __compact_effect_45): (_, runtime::Field) =
                 crate::ledger_slots::outcome.record_read(frame)?;
             let __compact_effect_46: crate::types::Receipt = crate::types::Receipt {

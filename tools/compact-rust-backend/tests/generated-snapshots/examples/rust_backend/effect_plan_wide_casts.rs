@@ -408,7 +408,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::WideUint<
                 1u128,
                 340282366920938463463374607431768211455u128,
@@ -440,7 +439,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::WideUint<
                 1329227995784915872903807060280344575u128,
                 340282366920938463463374607431768211455u128,
@@ -472,7 +470,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::BoundedUint<255> =
                 runtime::narrow_wide_uint::<255, 1, 340282366920938463463374607431768211455>(
                     __compact_effect_0,
@@ -501,7 +498,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::WideUint<
                 1u128,
                 340282366920938463463374607431768211455u128,
@@ -525,7 +521,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
             let __compact_effect_2: runtime::WideUint<
                 1329227995784915872903807060280344575u128,
                 340282366920938463463374607431768211455u128,
@@ -556,7 +551,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_5): (
                 _,
                 runtime::WideUint<

@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Issue #599 removes unreachable private recorded helper definitions. Original TypeScript capture, nine case identities, source and behavioral assertions are unchanged. This binds the reviewed Rust consumer; it is not fresh TS execution or proof evidence.",
+  "scope": "Issue #599 removes unreachable private recorded helper definitions. Original TypeScript capture, nine case identities, source and behavioral assertions are unchanged. This binds the reviewed Rust consumer; it is not fresh TS execution or proof evidence. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-alias-guard-reducer/lib.rs",
       "captured_sha256": "081bba71648a814ecbd2583148f76324d15159c289cc2c4526878824e6543000",
-      "current_sha256": "6f96fcda54ec9735a07309307bfa1b5a99dc9280ccf65b972f4db50131f034f8"
+      "current_sha256": "35eb7df1780dd751f88937aa5043daa7afba25988e75c4de755e0fa693f329d3"
     },
     {
       "path": "tests-rust-backend/did-alias-guard-reducer/tests/provenance.rs",

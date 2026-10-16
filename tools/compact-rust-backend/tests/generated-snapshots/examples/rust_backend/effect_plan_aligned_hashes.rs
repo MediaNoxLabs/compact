@@ -387,7 +387,6 @@ pub mod ledger_contract {
                         "point mismatch".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
                 let __compact_effect_6: runtime::FixedBytes<32> =
                     runtime::persistent_hash(__compact_effect_1);
                 let (frame, __compact_effect_7): (_, runtime::FixedBytes<32>) = frame
@@ -403,17 +402,13 @@ pub mod ledger_contract {
                         "digest mismatch".to_owned(),
                     ));
                 }
-                let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                (frame, ())
             };
             let __compact_effect_12: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_12).value() as u16)?;
-            let __compact_effect_13: () = ();
-            let __compact_effect_14: () = ();
-            Ok(frame.finish(__compact_effect_14))
+            Ok(frame.finish(()))
         }
         pub fn hashes<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -429,7 +424,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_7): (_, runtime::Field) = if __compact_effect_0 {
                 let (frame, __compact_effect_3): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
@@ -507,17 +501,13 @@ pub mod ledger_contract {
                         "digest mismatch".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
             let __compact_effect_8: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_8).value() as u16)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn hash_only<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -533,7 +523,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_7): (_, runtime::FixedBytes<32>) = if __compact_effect_0 {
                 let (frame, __compact_effect_3): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {

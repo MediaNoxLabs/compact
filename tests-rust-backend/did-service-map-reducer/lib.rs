@@ -286,13 +286,11 @@ pub mod ledger_contract {
                         "missing service".to_owned(),
                     ));
                 }
-                let __compact_effect_7: () = ();
                 let __compact_effect_8: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
                     .record_remove(frame, (__compact_effect_8).clone())?;
                 let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                (frame, ())
             } else {
                 let __compact_effect_11: crate::types::Mutation = crate::types::Mutation::Insert;
                 let __compact_effect_12: bool = __compact_effect_1 == __compact_effect_11;
@@ -313,15 +311,11 @@ pub mod ledger_contract {
                             "duplicate service".to_owned(),
                         ));
                     }
-                    let __compact_effect_18: () = ();
-                    let __compact_effect_19: () = ();
-                    (frame, __compact_effect_19)
+                    (frame, ())
                 } else {
-                    let __compact_effect_20: () = ();
-                    (frame, __compact_effect_20)
+                    (frame, ())
                 };
-                let __compact_effect_22: () = ();
-                (frame, __compact_effect_22)
+                (frame, ())
             };
             let __compact_effect_24: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::services.record_insert(
@@ -335,12 +329,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_26).value() as u16)?;
-                let __compact_effect_27: () = ();
-                let __compact_effect_28: () = ();
-                (frame, __compact_effect_28)
+                (frame, ())
             };
-            let __compact_effect_30: () = ();
-            Ok(frame.finish(__compact_effect_30))
+            Ok(frame.finish(()))
         }
         pub fn remove_service<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -356,7 +347,6 @@ pub mod ledger_contract {
                     "missing service".to_owned(),
                 ));
             }
-            let __compact_effect_2: () = ();
             let frame =
                 crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
             let __compact_effect_3: () = ();
@@ -365,12 +355,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

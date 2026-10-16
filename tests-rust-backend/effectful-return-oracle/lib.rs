@@ -184,7 +184,6 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_3: runtime::Field = __compact_effect_1 + __compact_effect_2;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, runtime::Field) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_6: runtime::Field = runtime::Field::from_le_bytes(&[
@@ -195,7 +194,6 @@ pub mod ledger_contract {
             let __compact_effect_7: bool = __compact_effect_5 == __compact_effect_6;
             let (frame, __compact_effect_14): (_, runtime::Field) = if __compact_effect_7 {
                 let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_0)?;
-                let __compact_effect_8: () = ();
                 (frame, __compact_effect_1)
             } else {
                 let __compact_effect_9: runtime::BoundedUint<100> =
@@ -208,7 +206,6 @@ pub mod ledger_contract {
                         }))
                     })?;
                 let frame = crate::ledger_slots::unused.record_write(frame, __compact_effect_10)?;
-                let __compact_effect_11: () = ();
                 let __compact_effect_12: runtime::Field =
                     runtime::Field::from((__compact_effect_9).value());
                 let __compact_effect_13: runtime::Field = __compact_effect_1 + __compact_effect_12;

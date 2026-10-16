@@ -182,7 +182,6 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::BoundedUint<65535> = __compact_param_1;
             let frame = crate::ledger_slots::round
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_raw_3) = crate::ledger_slots::peer.record_read(frame)?;
             let __compact_effect_3: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(__compact_effect_raw_3 as u128)?;
@@ -191,7 +190,6 @@ pub mod ledger_contract {
             let (frame, __compact_effect_11): (_, runtime::Field) = if __compact_effect_4 {
                 let frame = crate::ledger_slots::round
                     .record_decrement(frame, (__compact_effect_1).value() as u16)?;
-                let __compact_effect_5: () = ();
                 let (frame, __compact_effect_raw_6) =
                     crate::ledger_slots::round.record_read(frame)?;
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
@@ -203,7 +201,6 @@ pub mod ledger_contract {
                 (frame, __compact_effect_7)
             } else {
                 let frame = crate::ledger_slots::round.record_reset(frame)?;
-                let __compact_effect_8: () = ();
                 let (frame, __compact_effect_raw_9) =
                     crate::ledger_slots::round.record_read(frame)?;
                 let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =

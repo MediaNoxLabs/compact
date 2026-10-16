@@ -262,9 +262,7 @@ pub mod ledger_contract {
                 crate::pure_circuits::makeAlpha(__compact_effect_0)?;
             let __compact_effect_2: runtime::Field = __compact_effect_1.alpha;
             let frame = crate::ledger_slots::lastAlpha.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn runBeta<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -277,9 +275,7 @@ pub mod ledger_contract {
                 crate::pure_circuits::makeBeta(__compact_effect_0)?;
             let __compact_effect_2: runtime::Field = __compact_effect_1.beta;
             let frame = crate::ledger_slots::lastBeta.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

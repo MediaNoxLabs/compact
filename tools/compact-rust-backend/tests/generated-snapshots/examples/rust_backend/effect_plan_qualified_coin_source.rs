@@ -496,9 +496,7 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn write_read<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -527,7 +525,6 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_3): (_, crate::types::QualifiedShieldedCoinInfo) =
                 crate::ledger_slots::pot.record_read(frame)?;
             let __compact_effect_4: runtime::FixedBytes<32> = __compact_effect_3.nonce;

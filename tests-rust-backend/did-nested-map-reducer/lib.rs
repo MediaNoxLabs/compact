@@ -273,13 +273,11 @@ pub mod ledger_contract {
                 if !__compact_effect_4 {
                     return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
                 }
-                let __compact_effect_5: () = ();
                 let __compact_effect_6: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::methods
                     .record_remove(frame, (__compact_effect_6).clone())?;
                 let __compact_effect_7: () = ();
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                (frame, ())
             } else {
                 let __compact_effect_9: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_10): (_, bool) = crate::ledger_slots::methods
@@ -296,9 +294,7 @@ pub mod ledger_contract {
                         "duplicate".to_owned(),
                     ));
                 }
-                let __compact_effect_14: () = ();
-                let __compact_effect_15: () = ();
-                (frame, __compact_effect_15)
+                (frame, ())
             };
             let __compact_effect_17: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::methods.record_insert(
@@ -312,12 +308,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_19).value() as u16)?;
-                let __compact_effect_20: () = ();
-                let __compact_effect_21: () = ();
-                (frame, __compact_effect_21)
+                (frame, ())
             };
-            let __compact_effect_23: () = ();
-            Ok(frame.finish(__compact_effect_23))
+            Ok(frame.finish(()))
         }
         pub fn remove<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -331,7 +324,6 @@ pub mod ledger_contract {
             if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
-            let __compact_effect_2: () = ();
             let frame =
                 crate::ledger_slots::methods.record_remove(frame, (__compact_effect_0).clone())?;
             let __compact_effect_3: () = ();
@@ -340,12 +332,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

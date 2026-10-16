@@ -224,7 +224,6 @@ pub mod ledger_contract {
                     "first witness failed".to_owned(),
                 ));
             }
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.echo(
@@ -240,7 +239,6 @@ pub mod ledger_contract {
                     "second witness failed".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             Ok(frame.finish(__compact_effect_2))
         }
         pub fn checked_write<Private, W: super::TryWitnesses<Private>>(
@@ -268,11 +266,8 @@ pub mod ledger_contract {
                     "write denied".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let frame = crate::ledger_slots::cell.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn read_cell<Private>(
             context: runtime::context::CircuitContext<Private>,

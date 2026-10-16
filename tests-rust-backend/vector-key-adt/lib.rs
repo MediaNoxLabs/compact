@@ -304,9 +304,7 @@ pub mod ledger_contract {
                 runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
             let frame =
                 crate::ledger_slots::keys.record_insert(frame, (__compact_effect_2).clone())?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn setMember<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -328,9 +326,7 @@ pub mod ledger_contract {
             let (frame, __compact_effect_3): (_, bool) =
                 crate::ledger_slots::keys.record_member(frame, (__compact_effect_2).clone())?;
             let frame = crate::ledger_slots::present.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn setRemove<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -351,9 +347,7 @@ pub mod ledger_contract {
                 runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
             let frame =
                 crate::ledger_slots::keys.record_remove(frame, (__compact_effect_2).clone())?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn mapInsert<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -383,8 +377,7 @@ pub mod ledger_contract {
                 __compact_effect_3,
             )?;
             let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn mapMember<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -406,9 +399,7 @@ pub mod ledger_contract {
             let (frame, __compact_effect_3): (_, bool) =
                 crate::ledger_slots::values.record_member(frame, (__compact_effect_2).clone())?;
             let frame = crate::ledger_slots::present.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn mapLookup<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -430,9 +421,7 @@ pub mod ledger_contract {
             let (frame, __compact_effect_3): (_, runtime::Field) =
                 crate::ledger_slots::values.record_lookup(frame, (__compact_effect_2).clone())?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn mapRemove<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -454,8 +443,7 @@ pub mod ledger_contract {
             let frame =
                 crate::ledger_slots::values.record_remove(frame, (__compact_effect_2).clone())?;
             let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn mapInsertDefault<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -477,8 +465,7 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::values
                 .record_insert_default(frame, (__compact_effect_2).clone())?;
             let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

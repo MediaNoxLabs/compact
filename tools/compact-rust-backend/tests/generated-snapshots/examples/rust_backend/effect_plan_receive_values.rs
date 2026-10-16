@@ -244,17 +244,13 @@ pub mod ledger_contract {
             };
             let __compact_effect_7: bool = __compact_effect_0 == __compact_effect_1;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_7)?;
-            let __compact_effect_8: () = ();
             let (frame, __compact_effect_13): (_, ()) = if __compact_effect_4 {
                 let __compact_effect_9: bool =
                     (__compact_effect_5).clone() == (__compact_effect_6).clone();
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_9)?;
-                let __compact_effect_10: () = ();
-                let __compact_effect_11: () = ();
-                (frame, __compact_effect_11)
+                (frame, ())
             } else {
-                let __compact_effect_12: () = ();
-                (frame, __compact_effect_12)
+                (frame, ())
             };
             let (frame, __compact_effect_14): (_, bool) =
                 crate::ledger_slots::stored.record_read(frame)?;
@@ -277,7 +273,6 @@ pub mod ledger_contract {
             let __compact_effect_2: bool =
                 (__compact_effect_0).clone() == (__compact_effect_1).clone();
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             let __compact_effect_4: bool =
                 (__compact_effect_0).clone() == (__compact_effect_1).clone();
             let (frame, __compact_effect_5): (_, bool) =

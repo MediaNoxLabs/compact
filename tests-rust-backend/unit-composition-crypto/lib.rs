@@ -537,7 +537,6 @@ pub mod ledger_contract {
                 if !__compact_effect_7 {
                     return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                 }
-                let __compact_effect_8: () = ();
                 let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
                 let (frame, __compact_effect_53): (_, ()) = {
@@ -611,7 +610,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_30: () = ();
                         let __compact_effect_31: runtime::Field =
                             runtime::Field::from((__compact_effect_26).value());
                         let __compact_effect_32: runtime::Field =
@@ -625,7 +623,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_36: () = ();
                         let __compact_effect_37: runtime::Field = (__compact_effect_27).as_field();
                         let __compact_effect_38: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_17)?;
@@ -655,15 +652,11 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_49: () = ();
-                        let __compact_effect_50: () = ();
-                        (frame, __compact_effect_50)
+                        (frame, ())
                     };
-                    let __compact_effect_52: () = ();
-                    (frame, __compact_effect_52)
+                    (frame, ())
                 };
-                let __compact_effect_54: () = ();
-                (frame, __compact_effect_54)
+                (frame, ())
             };
             let (frame, __compact_effect_56): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -672,16 +665,13 @@ pub mod ledger_contract {
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_effect_57: () = ();
             let __compact_effect_58: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_58)?;
-            let __compact_effect_59: () = ();
             let (frame, __compact_effect_65): (_, ()) = {
                 let __compact_effect_60: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_60).value() as u16)?;
-                let __compact_effect_61: () = ();
                 let (frame, __compact_effect_62): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.now(context.witness_context_with(super::LedgerView {
@@ -691,12 +681,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_62)?;
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                (frame, ())
             };
-            let __compact_effect_66: () = ();
-            Ok(frame.finish(__compact_effect_66))
+            Ok(frame.finish(()))
         }
         pub fn verifyOnly<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -727,7 +714,6 @@ pub mod ledger_contract {
                 if !__compact_effect_7 {
                     return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                 }
-                let __compact_effect_8: () = ();
                 let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
                 let (frame, __compact_effect_53): (_, ()) = {
@@ -801,7 +787,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_30: () = ();
                         let __compact_effect_31: runtime::Field =
                             runtime::Field::from((__compact_effect_26).value());
                         let __compact_effect_32: runtime::Field =
@@ -815,7 +800,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_36: () = ();
                         let __compact_effect_37: runtime::Field = (__compact_effect_27).as_field();
                         let __compact_effect_38: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_17)?;
@@ -845,18 +829,13 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_49: () = ();
-                        let __compact_effect_50: () = ();
-                        (frame, __compact_effect_50)
+                        (frame, ())
                     };
-                    let __compact_effect_52: () = ();
-                    (frame, __compact_effect_52)
+                    (frame, ())
                 };
-                let __compact_effect_54: () = ();
-                (frame, __compact_effect_54)
+                (frame, ())
             };
-            let __compact_effect_56: () = ();
-            Ok(frame.finish(__compact_effect_56))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

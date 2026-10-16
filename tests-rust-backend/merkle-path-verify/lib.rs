@@ -286,8 +286,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn replace<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -304,8 +303,7 @@ pub mod ledger_contract {
                 __compact_effect_1,
             )?;
             let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

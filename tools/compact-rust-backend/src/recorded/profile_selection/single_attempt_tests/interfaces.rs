@@ -1,6 +1,18 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 use super::*;
 
 #[test]
@@ -93,9 +105,11 @@ fn empty_success_and_effectful_passthrough_never_become_fallback() {
     let c = unit(vec![]);
     let (current, old_trace) = equivalent(&c, "root");
     assert_eq!(old_trace[0]["body_owner"], "algebra.membership");
-    // Even effectless Unit lowering materializes an SSA Unit value.
-    assert_eq!(current.organizer_steps.as_ref().unwrap().len(), 1);
-    assert!(current.typed_result.is_some());
+    // An empty checked Unit plan succeeds without a payload temporary or fallback.
+    assert!(current.organizer_steps.as_ref().unwrap().is_empty());
+    assert!(
+        matches!(current.typed_result.as_ref(), Some(syn::Expr::Tuple(unit)) if unit.elems.is_empty())
+    );
     public(&c, "root");
 
     let context = Context::new(&c);

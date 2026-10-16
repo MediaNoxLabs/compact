@@ -320,7 +320,6 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_list_length_6) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(__compact_list_length_6 as u128)?;
@@ -332,7 +331,6 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_9: () = ();
             let (frame, __compact_effect_10): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_11: bool = __compact_effect_10.is_some;
@@ -343,7 +341,6 @@ pub mod ledger_contract {
                     "Head should not exist".to_owned(),
                 ));
             }
-            let __compact_effect_14: () = ();
             let frame = crate::ledger_slots::c.record_push_front(frame, __compact_effect_0)?;
             let __compact_effect_15: () = ();
             let (frame, __compact_list_length_16) = crate::ledger_slots::c.record_length(frame)?;
@@ -359,7 +356,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_19: () = ();
             let (frame, __compact_effect_20): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_21: bool = __compact_effect_20.is_some;
@@ -370,7 +366,6 @@ pub mod ledger_contract {
                     "Head should exist".to_owned(),
                 ));
             }
-            let __compact_effect_24: () = ();
             let (frame, __compact_effect_25): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_26: runtime::FixedBytes<128> = __compact_effect_25.value;
@@ -380,7 +375,6 @@ pub mod ledger_contract {
                     "Head should have value 0".to_owned(),
                 ));
             }
-            let __compact_effect_28: () = ();
             let frame = crate::ledger_slots::c.record_push_front(frame, __compact_effect_1)?;
             let __compact_effect_29: () = ();
             let (frame, __compact_list_length_30) = crate::ledger_slots::c.record_length(frame)?;
@@ -396,7 +390,6 @@ pub mod ledger_contract {
                     "Size should be 2".to_owned(),
                 ));
             }
-            let __compact_effect_33: () = ();
             let (frame, __compact_effect_34): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_35: bool = __compact_effect_34.is_some;
@@ -407,7 +400,6 @@ pub mod ledger_contract {
                     "Head should exist".to_owned(),
                 ));
             }
-            let __compact_effect_38: () = ();
             let (frame, __compact_effect_39): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_40: runtime::FixedBytes<128> = __compact_effect_39.value;
@@ -417,7 +409,6 @@ pub mod ledger_contract {
                     "Head should have value 1".to_owned(),
                 ));
             }
-            let __compact_effect_42: () = ();
             let frame = crate::ledger_slots::c.record_pop_front(frame)?;
             let __compact_effect_43: () = ();
             let (frame, __compact_list_length_44) = crate::ledger_slots::c.record_length(frame)?;
@@ -433,7 +424,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_47: () = ();
             let (frame, __compact_effect_48): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_49: bool = __compact_effect_48.is_some;
@@ -444,7 +434,6 @@ pub mod ledger_contract {
                     "Head should exist".to_owned(),
                 ));
             }
-            let __compact_effect_52: () = ();
             let (frame, __compact_effect_53): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_54: runtime::FixedBytes<128> = __compact_effect_53.value;
@@ -454,11 +443,9 @@ pub mod ledger_contract {
                     "Head should have value 0".to_owned(),
                 ));
             }
-            let __compact_effect_56: () = ();
             let frame = crate::ledger_slots::c.record_reset(frame)?;
             let __compact_effect_57: () = ();
-            let __compact_effect_58: () = ();
-            Ok(frame.finish(__compact_effect_58))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

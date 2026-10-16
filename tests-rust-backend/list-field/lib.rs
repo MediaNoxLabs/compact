@@ -241,8 +241,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::Field = __compact_param_0;
             let frame = crate::ledger_slots::items.record_push_front(frame, __compact_effect_0)?;
             let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn drop_first<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -251,8 +250,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::items.record_pop_front(frame)?;
             let __compact_effect_0: () = ();
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn clear_items<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -261,8 +259,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::items.record_reset(frame)?;
             let __compact_effect_0: () = ();
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

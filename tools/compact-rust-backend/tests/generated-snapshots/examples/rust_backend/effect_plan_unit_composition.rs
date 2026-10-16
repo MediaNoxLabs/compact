@@ -288,15 +288,12 @@ pub mod ledger_contract {
                         "first denied".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
                 let (frame, __compact_effect_9): (_, ()) = {
                     let __compact_effect_6: runtime::BoundedUint<65535> =
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::calls
                         .record_increment(frame, (__compact_effect_6).value() as u16)?;
-                    let __compact_effect_7: () = ();
-                    let __compact_effect_8: () = ();
-                    (frame, __compact_effect_8)
+                    (frame, ())
                 };
                 let __compact_effect_10: crate::types::Entry = crate::types::Entry {
                     label: (__compact_effect_0).clone(),
@@ -319,27 +316,20 @@ pub mod ledger_contract {
                         "second denied".to_owned(),
                     ));
                 }
-                let __compact_effect_13: () = ();
                 let (frame, __compact_effect_17): (_, ()) = {
                     let __compact_effect_14: runtime::BoundedUint<65535> =
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::calls
                         .record_increment(frame, (__compact_effect_14).value() as u16)?;
-                    let __compact_effect_15: () = ();
-                    let __compact_effect_16: () = ();
-                    (frame, __compact_effect_16)
+                    (frame, ())
                 };
                 let __compact_effect_18: bool = true;
                 let frame = crate::ledger_slots::done.record_write(frame, __compact_effect_18)?;
-                let __compact_effect_19: () = ();
-                let __compact_effect_20: () = ();
-                (frame, __compact_effect_20)
+                (frame, ())
             } else {
-                let __compact_effect_21: () = ();
-                (frame, __compact_effect_21)
+                (frame, ())
             };
-            let __compact_effect_23: () = ();
-            Ok(frame.finish(__compact_effect_23))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

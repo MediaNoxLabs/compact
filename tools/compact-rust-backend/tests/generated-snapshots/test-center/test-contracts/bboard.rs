@@ -372,7 +372,6 @@ pub mod ledger_contract {
                     "Attempted to post to an occupied board".to_owned(),
                 ));
             }
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.local_secret_key(context.witness_context_with(super::LedgerView {
@@ -395,17 +394,13 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::FixedBytes<32> =
                 crate::pure_circuits::public_key(__compact_effect_5, __compact_effect_8)?;
             let frame = crate::ledger_slots::poster.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
             let __compact_effect_11: crate::types::Maybe =
                 crate::pure_circuits::some((__compact_effect_0).clone())?;
             let frame =
                 crate::ledger_slots::message.record_write(frame, (__compact_effect_11).clone())?;
-            let __compact_effect_12: () = ();
             let __compact_effect_13: crate::types::STATE = crate::types::STATE::occupied;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_13)?;
-            let __compact_effect_14: () = ();
-            let __compact_effect_15: () = ();
-            Ok(frame.finish(__compact_effect_15))
+            Ok(frame.finish(()))
         }
         pub fn take_down<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -424,7 +419,6 @@ pub mod ledger_contract {
                     "Attempted to take down post from an empty board".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::poster.record_read(frame)?;
             let (frame, __compact_effect_5): (_, runtime::FixedBytes<32>) = frame
@@ -454,22 +448,18 @@ pub mod ledger_contract {
                     "Attempted to take down post, but not the current poster".to_owned(),
                 ));
             }
-            let __compact_effect_11: () = ();
             let (frame, __compact_effect_12): (_, crate::types::Maybe) =
                 crate::ledger_slots::message.record_read(frame)?;
             let __compact_effect_13: runtime::OpaqueString = (__compact_effect_12.value).clone();
             let __compact_effect_14: crate::types::STATE = crate::types::STATE::vacant;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_14)?;
-            let __compact_effect_15: () = ();
             let __compact_effect_16: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::instance
                 .record_increment(frame, (__compact_effect_16).value() as u16)?;
-            let __compact_effect_17: () = ();
             let __compact_effect_18: crate::types::Maybe = crate::pure_circuits::none()?;
             let frame =
                 crate::ledger_slots::message.record_write(frame, (__compact_effect_18).clone())?;
-            let __compact_effect_19: () = ();
             Ok(frame.finish((__compact_effect_13).clone()))
         }
         /// Typed handle for circuits with a complete recorded trace.

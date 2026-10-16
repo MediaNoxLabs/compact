@@ -274,12 +274,10 @@ pub mod ledger_contract {
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
                 let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_4)?;
-                let __compact_effect_5: () = ();
                 let __compact_effect_6: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_6).value() as u16)?;
-                let __compact_effect_7: () = ();
                 let (frame, __compact_effect_8): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.observe(
@@ -291,9 +289,7 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::receipt.record_write(frame, __compact_effect_8)?;
-                let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                (frame, ())
             };
             let __compact_effect_12: runtime::BoundedUint<18446744073709551615> =
                 crate::pure_circuits::echo(__compact_effect_1)?;
@@ -311,12 +307,10 @@ pub mod ledger_contract {
                 let __compact_effect_14: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_13;
                 let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_14)?;
-                let __compact_effect_15: () = ();
                 let __compact_effect_16: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_16).value() as u16)?;
-                let __compact_effect_17: () = ();
                 let (frame, __compact_effect_18): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.observe(
@@ -329,12 +323,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::receipt.record_write(frame, __compact_effect_18)?;
-                let __compact_effect_19: () = ();
-                let __compact_effect_20: () = ();
-                (frame, __compact_effect_20)
+                (frame, ())
             };
-            let __compact_effect_22: () = ();
-            Ok(frame.finish(__compact_effect_22))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -219,15 +219,11 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
             let __compact_effect_8: bool = true;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

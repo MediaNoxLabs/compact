@@ -156,9 +156,7 @@ pub mod ledger_contract {
             let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::s.record_is_empty(frame)?;
             let frame = crate::ledger_slots::flag_set.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn check_map_empty<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -168,9 +166,7 @@ pub mod ledger_contract {
             let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::m.record_is_empty(frame)?;
             let frame = crate::ledger_slots::flag_map.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

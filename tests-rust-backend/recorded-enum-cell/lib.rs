@@ -153,9 +153,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Choice = __compact_param_0;
             let frame = crate::ledger_slots::choice.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn selectNo<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -164,9 +162,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Choice = crate::types::Choice::no;
             let frame = crate::ledger_slots::choice.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn current<Private>(
             context: runtime::context::CircuitContext<Private>,

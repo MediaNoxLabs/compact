@@ -126,9 +126,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
             let frame = crate::ledger_slots::n.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok((frame, __compact_effect_2))
+            Ok((frame, ()))
         }
         pub fn reset<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -149,14 +147,10 @@ pub mod ledger_contract {
                 let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
                     <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
                 let frame = crate::ledger_slots::n.record_write(frame, __compact_effect_1)?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                (frame, ())
             };
             let frame = crate::ledger_slots::n.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_5: () = ();
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

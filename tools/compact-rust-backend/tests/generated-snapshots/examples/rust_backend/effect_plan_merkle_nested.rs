@@ -322,8 +322,7 @@ pub mod ledger_contract {
             let __compact_effect_1: () = ();
             let frame = crate::ledger_slots::historic.record_insert(frame, __compact_effect_0)?;
             let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

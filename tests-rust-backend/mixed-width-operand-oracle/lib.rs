@@ -356,9 +356,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::mixedOps
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn recordMatching<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -377,14 +375,11 @@ pub mod ledger_contract {
                     "values must match across widths".to_owned(),
                 ));
             }
-            let __compact_effect_4: () = ();
             let __compact_effect_5: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::mixedOps
                 .record_increment(frame, (__compact_effect_5).value() as u16)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

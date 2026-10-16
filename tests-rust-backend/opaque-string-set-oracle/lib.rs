@@ -120,9 +120,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
                 crate::ledger_slots::names.record_insert(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn hasName<Private>(
             context: runtime::context::CircuitContext<Private>,

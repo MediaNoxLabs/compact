@@ -1424,9 +1424,7 @@ pub mod ledger_contract {
             let __compact_effect_5: runtime::Field =
                 runtime::Field::from((__compact_effect_4).value());
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn walkerCompareEq<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1465,9 +1463,7 @@ pub mod ledger_contract {
                 (frame, __compact_effect_8)
             };
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         pub fn walkerCallPure<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1489,9 +1485,7 @@ pub mod ledger_contract {
                 runtime::Field::from((__compact_effect_3).value());
             let __compact_effect_5: runtime::Field = crate::pure_circuits::idf(__compact_effect_4)?;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn walkerStructMember<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1516,9 +1510,7 @@ pub mod ledger_contract {
             };
             let __compact_effect_6: runtime::Field = __compact_effect_5.f;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_6)?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn walkerWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1540,9 +1532,7 @@ pub mod ledger_contract {
                 (frame, __compact_effect_2)
             };
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn witnessArg<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1574,9 +1564,7 @@ pub mod ledger_contract {
                     )
                 })?;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn streamIncrement<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1598,7 +1586,6 @@ pub mod ledger_contract {
                 runtime::cast_unsigned::<4, 65535>(__compact_effect_3)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_4).value() as u16)?;
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_8): (_, runtime::BoundedUint<20>) = if __compact_effect_0 {
                 let __compact_effect_6: runtime::BoundedUint<20> =
                     <runtime::BoundedUint<20>>::new(10u128)?;
@@ -1611,9 +1598,7 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<20, 18446744073709551615>(__compact_effect_8)?;
             let frame = crate::ledger_slots::wideCell.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         pub fn streamCompareEq<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1650,9 +1635,7 @@ pub mod ledger_contract {
                 (frame, __compact_effect_7)
             };
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_8)?;
-            let __compact_effect_9: () = ();
-            let __compact_effect_10: () = ();
-            Ok(frame.finish(__compact_effect_10))
+            Ok(frame.finish(()))
         }
         pub fn streamWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1676,11 +1659,8 @@ pub mod ledger_contract {
                 runtime::cast_unsigned::<2, 65535>(__compact_effect_4)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_5).value() as u16)?;
-            let __compact_effect_6: () = ();
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn walkerVectorElement<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1721,9 +1701,7 @@ pub mod ledger_contract {
                 runtime::FixedVector::new([__compact_effect_4, __compact_effect_8]);
             let frame =
                 crate::ledger_slots::vecCell.record_write(frame, (__compact_effect_9).clone())?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         pub fn walkerNativeArg<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1747,9 +1725,7 @@ pub mod ledger_contract {
                 runtime::hash_to_curve(__compact_effect_4);
             let __compact_effect_6: runtime::Field = runtime::jubjub_point_x(__compact_effect_5);
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_6)?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn walkerNestedIf<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1790,9 +1766,7 @@ pub mod ledger_contract {
             let __compact_effect_10: runtime::Field =
                 runtime::Field::from((__compact_effect_9).value());
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_10)?;
-            let __compact_effect_11: () = ();
-            let __compact_effect_12: () = ();
-            Ok(frame.finish(__compact_effect_12))
+            Ok(frame.finish(()))
         }
         pub fn walkerInlineWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1814,9 +1788,7 @@ pub mod ledger_contract {
                 runtime::cast_unsigned::<2, 65535>(__compact_effect_3)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_4).value() as u16)?;
-            let __compact_effect_5: () = ();
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn streamCallPure<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1838,9 +1810,7 @@ pub mod ledger_contract {
                 runtime::Field::from((__compact_effect_3).value());
             let __compact_effect_5: runtime::Field = crate::pure_circuits::idf(__compact_effect_4)?;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn streamVectorElement<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1881,9 +1851,7 @@ pub mod ledger_contract {
                 runtime::FixedVector::new([__compact_effect_4, __compact_effect_8]);
             let frame =
                 crate::ledger_slots::vecCell.record_write(frame, (__compact_effect_9).clone())?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         pub fn streamNativeArg<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1907,9 +1875,7 @@ pub mod ledger_contract {
                 runtime::hash_to_curve(__compact_effect_4);
             let __compact_effect_6: runtime::Field = runtime::jubjub_point_x(__compact_effect_5);
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_6)?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn streamStructMember<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1934,9 +1900,7 @@ pub mod ledger_contract {
             };
             let __compact_effect_6: runtime::Field = __compact_effect_5.f;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_6)?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn streamCallWitness<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1968,9 +1932,7 @@ pub mod ledger_contract {
                     )
                 })?;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn streamConstAnnotated<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -1992,16 +1954,13 @@ pub mod ledger_contract {
                 runtime::cast_unsigned::<2, 65535>(__compact_effect_3)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_4).value() as u16)?;
-            let __compact_effect_5: () = ();
             let __compact_effect_6: runtime::Field = runtime::Field::from_le_bytes(&[
                 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_6)?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn streamAssertEq<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -2030,16 +1989,13 @@ pub mod ledger_contract {
                     "stream ternary assert".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let __compact_effect_9: runtime::Field = runtime::Field::from_le_bytes(&[
                 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         pub fn streamNestedIf<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -2078,14 +2034,11 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::Field =
                 runtime::Field::from((__compact_effect_8).value());
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
             let __compact_effect_11: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_11).value() as u16)?;
-            let __compact_effect_12: () = ();
-            let __compact_effect_13: () = ();
-            Ok(frame.finish(__compact_effect_13))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

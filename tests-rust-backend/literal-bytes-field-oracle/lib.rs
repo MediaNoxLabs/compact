@@ -160,7 +160,6 @@ pub mod ledger_contract {
                     "constructor cast".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::Field) =
                 crate::ledger_slots::value.record_read(frame)?;
             Ok(frame.finish(__compact_effect_4))

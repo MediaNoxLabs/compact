@@ -216,9 +216,7 @@ pub mod ledger_contract {
                         "same controller".to_owned(),
                     ));
                 }
-                let __compact_effect_12: () = ();
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                (frame, ())
             };
             let (frame, __compact_effect_28): (_, ()) = {
                 let __compact_effect_15: runtime::JubjubPoint = __compact_effect_0;
@@ -247,12 +245,9 @@ pub mod ledger_contract {
                         "same recovery".to_owned(),
                     ));
                 }
-                let __compact_effect_26: () = ();
-                let __compact_effect_27: () = ();
-                (frame, __compact_effect_27)
+                (frame, ())
             };
-            let __compact_effect_29: () = ();
-            Ok(frame.finish(__compact_effect_29))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

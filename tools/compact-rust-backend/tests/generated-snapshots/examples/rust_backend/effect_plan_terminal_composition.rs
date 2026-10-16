@@ -182,12 +182,10 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::Field =
                 crate::pure_circuits::combine(__compact_effect_1, __compact_effect_0)?;
             let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::Field) =
                 crate::ledger_slots::second.record_read(frame)?;
             let __compact_effect_5: runtime::Field = __compact_effect_4 + __compact_effect_2;
             let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
             Ok(frame.finish(__compact_effect_5))
         }
         pub fn optional_write<Private>(
@@ -203,12 +201,9 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::Field = __compact_param_1;
             let (frame, __compact_effect_5): (_, ()) = if __compact_effect_0 {
                 let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_1)?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                (frame, ())
             } else {
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                (frame, ())
             };
             Ok(frame.finish(__compact_effect_1))
         }

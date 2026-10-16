@@ -140,9 +140,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::round
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn decrement_by<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -153,9 +151,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::round
                 .record_decrement(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn reset_round<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -163,9 +159,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::round.record_reset(frame)?;
-            let __compact_effect_0: () = ();
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -199,12 +199,9 @@ pub mod ledger_contract {
             let (frame, __compact_effect_5): (_, ()) = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                (frame, ())
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn local_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -217,12 +214,9 @@ pub mod ledger_contract {
             let (frame, __compact_effect_5): (_, ()) = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                (frame, ())
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn transitive_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -235,12 +229,9 @@ pub mod ledger_contract {
             let (frame, __compact_effect_5): (_, ()) = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                (frame, ())
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

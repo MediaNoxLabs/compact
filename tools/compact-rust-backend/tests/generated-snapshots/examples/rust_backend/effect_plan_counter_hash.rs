@@ -370,7 +370,6 @@ pub mod ledger_contract {
             let __compact_effect_2: bool = __compact_param_2;
             let frame = crate::ledger_slots::round
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_3: () = ();
             let __compact_effect_4: runtime::FixedBytes<32> = runtime::FixedBytes::<32>::new(
                 (__compact_effect_0)
                     .as_le_bytes()
@@ -425,7 +424,6 @@ pub mod ledger_contract {
                 (frame, __compact_effect_14)
             };
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_15)?;
-            let __compact_effect_16: () = ();
             let (frame, __compact_effect_17): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::stored.record_read(frame)?;
             let __compact_effect_18: (runtime::FixedBytes<32>, runtime::FixedBytes<32>) =
@@ -453,7 +451,6 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::FixedBytes<32> =
                 runtime::persistent_hash(__compact_effect_0);
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::stored.record_read(frame)?;
             let __compact_effect_5: (runtime::FixedBytes<3>, runtime::FixedBytes<3>) =
@@ -470,9 +467,7 @@ pub mod ledger_contract {
                 runtime::persistent_hash((__compact_effect_8).clone());
             let __compact_effect_10: runtime::FixedBytes<32> =
                 runtime::persistent_hash(__compact_effect_1);
-            let __compact_effect_11: () = ();
-            let __compact_effect_12: runtime::FixedBytes<32> =
-                runtime::persistent_hash(__compact_effect_11);
+            let __compact_effect_12: runtime::FixedBytes<32> = runtime::persistent_hash(());
             let __compact_effect_13: crate::types::Empty = crate::types::Empty {};
             let __compact_effect_14: runtime::FixedBytes<32> =
                 runtime::persistent_hash((__compact_effect_13).clone());

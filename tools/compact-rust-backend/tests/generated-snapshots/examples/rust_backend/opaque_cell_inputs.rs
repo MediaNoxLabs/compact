@@ -199,9 +199,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
                 crate::ledger_slots::text.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn setBytes<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -212,9 +210,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueBytes = __compact_param_0;
             let frame =
                 crate::ledger_slots::blob.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn setEnvelope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -225,9 +221,7 @@ pub mod ledger_contract {
             let __compact_effect_0: crate::types::Envelope = __compact_param_0;
             let frame =
                 crate::ledger_slots::envelope.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

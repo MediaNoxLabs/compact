@@ -153,7 +153,6 @@ pub mod ledger_contract {
             let __compact_effect_5: runtime::JubjubPoint =
                 runtime::ec_add(__compact_effect_3, __compact_effect_4);
             let frame = crate::ledger_slots::result.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
             Ok(frame.finish(__compact_effect_5))
         }
         pub fn raw<Private>(
@@ -170,7 +169,6 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::JubjubPoint =
                 runtime::ec_mul(__compact_effect_0, __compact_effect_1)?;
             let frame = crate::ledger_slots::result.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             Ok(frame.finish(__compact_effect_2))
         }
         /// Typed handle for circuits with a complete recorded trace.

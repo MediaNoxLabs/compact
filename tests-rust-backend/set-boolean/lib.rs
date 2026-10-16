@@ -277,9 +277,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let frame = crate::ledger_slots::seen.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn contains<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -300,9 +298,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
             let frame = crate::ledger_slots::fields.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn contains_field<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -323,9 +319,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let frame = crate::ledger_slots::seen.record_remove(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn seen_size<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -360,9 +354,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::fields.record_reset(frame)?;
-            let __compact_effect_0: () = ();
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn choose<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -378,24 +370,17 @@ pub mod ledger_contract {
                     let __compact_effect_2: bool = true;
                     let frame =
                         crate::ledger_slots::seen.record_insert(frame, __compact_effect_2)?;
-                    let __compact_effect_3: () = ();
-                    let __compact_effect_4: () = ();
-                    (frame, __compact_effect_4)
+                    (frame, ())
                 } else {
                     let __compact_effect_5: bool = false;
                     let frame =
                         crate::ledger_slots::seen.record_insert(frame, __compact_effect_5)?;
-                    let __compact_effect_6: () = ();
-                    let __compact_effect_7: () = ();
-                    (frame, __compact_effect_7)
+                    (frame, ())
                 };
-                let __compact_effect_9: () = ();
-                (frame, __compact_effect_9)
+                (frame, ())
             } else {
                 let frame = crate::ledger_slots::seen.record_remove(frame, __compact_effect_0)?;
-                let __compact_effect_10: () = ();
-                let __compact_effect_11: () = ();
-                (frame, __compact_effect_11)
+                (frame, ())
             };
             let (frame, __compact_effect_13): (_, bool) =
                 crate::ledger_slots::seen.record_member(frame, __compact_effect_0)?;

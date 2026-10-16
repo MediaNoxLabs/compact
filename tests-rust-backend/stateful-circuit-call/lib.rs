@@ -158,9 +158,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::count
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok((frame, __compact_effect_2))
+            Ok((frame, ()))
         }
         fn __compact_recorded_body_add<Private>(
             frame: runtime::recording::RecordingFrame<Private>,
@@ -170,9 +168,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::count
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok((frame, __compact_effect_2))
+            Ok((frame, ()))
         }
         pub fn bump<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -192,21 +188,16 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_0).value() as u16)?;
-                let __compact_effect_1: () = ();
-                let __compact_effect_2: () = ();
-                (frame, __compact_effect_2)
+                (frame, ())
             };
             let (frame, __compact_effect_7): (_, ()) = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                (frame, ())
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn add<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -228,20 +219,15 @@ pub mod ledger_contract {
                 let __compact_effect_1: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_1).value() as u16)?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                (frame, ())
             };
             let (frame, __compact_effect_8): (_, ()) = {
                 let __compact_effect_5: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_5).value() as u16)?;
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                (frame, ())
             };
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -128,8 +128,7 @@ pub mod ledger_contract {
                 __compact_effect_0,
             )?;
             let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn lookup_true<Private>(
             context: runtime::context::CircuitContext<Private>,

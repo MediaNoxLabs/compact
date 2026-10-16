@@ -32,6 +32,13 @@ PROFILE = ('ledger8-8.1.3/zkir-2.1.1/transient-2.1.1/base-1.0.2/'
            'serialize-1.1.1/proofs-0.7.1/circuits-6.1.0/stdlib-1.1.0/'
            'curves-0.2.0/tagged-v1/forge-recipe-v1')
 BUILD = '340e0b3bd94394d987c1b2a073bb411afb755e7164934ca15e8d8cb02b77b879'
+# Candidate public Forge4ad82c8e, qualified against real consumer cases before
+# adoption. Preserve the original build's separately recorded legacy contract.
+PUBLIC_BUILD = 'bd1a54e776b8af58fb6ed682489b82d265aca4175040bd90c4acafa6db843e9f'
+QUALIFIED_BUILDS = frozenset({BUILD, PUBLIC_BUILD})
+SERIALIZATION = {'binary_ir': 'ir-source[v2]',
+                 'prover_key': 'prover-key[v7](ir-source[v2])',
+                 'verifier_key': 'verifier-key[v6]'}
 REVISION = 'b5d3e965a18e4cac17fac4f38446fc55c524439a'
 SOURCE = 'git+https://github.com/midnightntwrk/midnight-ledger?rev=' + REVISION + '#' + REVISION
 CONSUMER = {'midnight-ledger': '8.1.3', 'midnight-zkir': '2.1.1',
@@ -93,10 +100,51 @@ def zkir_executable(env):
     return env.get('COMPACT_ZKIR_REAL') or shutil.which('zkir', path=env.get('PATH'))
 
 
+def validate_descriptor(value, manifest, base):
+    """The public build must bind its descriptor to the checked legacy export."""
+    descriptor = value.get('descriptor')
+    fields = {'schema', 'record', 'materialized', 'input_format', 'input_version',
+              'keygen_recipe', 'serialization'}
+    require(isinstance(descriptor, dict) and set(descriptor) == fields,
+            'missing or unsupported Forge descriptor fields')
+    require(type(descriptor['schema']) is int and descriptor['schema'] == 1
+            and descriptor['materialized'] is True,
+            'unsupported or unmaterialized Forge descriptor')
+    version = descriptor['input_version']
+    require(isinstance(version, dict) and set(version) == {'major', 'minor'}
+            and type(version['major']) is int and type(version['minor']) is int
+            and version == {'major': 2, 'minor': 0}
+            and descriptor['input_format'] == 'midnight-zkir-v2-json',
+            'Forge descriptor source dialect differs from the qualified v2 profile')
+    require(descriptor['serialization'] == SERIALIZATION,
+            'Forge descriptor serialization differs from the consumer')
+    require(descriptor['keygen_recipe'] == 'library-keygen/default-options/no-rng',
+            'unqualified Forge key-generation options')
+    for key in ('bundle_id', 'derivation_id', 'artifact_set_id'):
+        require(isinstance(manifest[key], str) and re.fullmatch(r'[0-9a-f]{64}', manifest[key]),
+                'invalid Forge identity: ' + key)
+    manifest_fields = {'schema', 'profile', 'build_fingerprint', 'ledger_revision',
+                       'bundle_id', 'derivation_id', 'artifact_set_id', 'name',
+                       'k', 'parameter_digest', 'source', 'artifacts'}
+    require(set(manifest) == manifest_fields and isinstance(manifest['name'], str)
+            and bool(manifest['name']), 'unsupported Forge descriptor record fields')
+    require(all(set(row) == {'kind', 'digest', 'size'}
+                for row in [manifest['source'], *manifest['artifacts']]),
+            'unsupported Forge descriptor artifact fields')
+    require(descriptor['record'] == dict(manifest, generation_ms=None),
+            'Forge descriptor differs from the checked export manifest')
+    sidecar = base / 'descriptor.json'
+    require(not sidecar.is_symlink(), 'Forge descriptor symlink refused')
+    require(read_json(sidecar.read_bytes()) == descriptor,
+            'Forge descriptor sidecar differs from the response')
+
+
 def validate_export(value, source, params, *, expected_source=None):
     expected_source = expected_source or digest(source)
     require(type(value.get('schema')) is int and value['schema'] == 1
-            and value.get('profile') == PROFILE and value.get('build_fingerprint') == BUILD
+            and value.get('profile') == PROFILE
+            and isinstance(value.get('build_fingerprint'), str)
+            and value['build_fingerprint'] in QUALIFIED_BUILDS
             and value.get('ledger_revision') == REVISION, 'unqualified Forge profile/build/revision')
     require(type(value['cache']['hit']) is bool, 'missing Forge cache outcome')
     require(value['export']['lifetime'] == 'persistent_until_owner_removal', 'persistent Forge export required')
@@ -133,6 +181,8 @@ def validate_export(value, source, params, *, expected_source=None):
     require(set(paths) == set(declared) == KINDS, 'incomplete Forge export')
     require(digest(source) == expected_source and paths['source'].read_bytes() == source.read_bytes(),
             'current circuit changed during Forge preparation')
+    if value['build_fingerprint'] == PUBLIC_BUILD:
+        validate_descriptor(value, manifest, base)
     return paths, manifest
 
 

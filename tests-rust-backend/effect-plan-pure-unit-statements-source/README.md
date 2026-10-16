@@ -1,0 +1,9 @@
+# Pure Unit statement source fixture
+
+The retained complete schema20 IR is generated from `examples/rust_backend/effect_plan_pure_unit_statements.compact` by the pinned ledger8 frontend. The build script generates the entire crate with the current Rust AST backend and requires recorded and observed APIs for both exports. It never patches generated Rust.
+
+The source deliberately has explicit witness locals followed by a direct transitive pure Unit statement. Separate `argument_order` keeps fallible pure argument calls directly inside the Unit call. The exact source and IR matched the successful frozen native-generation baseline before the checked dispatch change; this is generation provenance, not a native compilation claim. Parent qualification supplies compile/runtime results.
+
+Four runtime tests compare native, generated recording, an independent manual frame and actual observed methods. They cover callback order/once-only calls and metered Counter/Cell observations, a skipped branch, callback and callee-assertion failure prefixes, pure argument error order, state/effects/gas/private outputs, exact replay, and literal prepared public input/Unit output. Manual assertions do not call generated pure helpers. Errors expose callback prefixes and the immutable observed prestate; they do not claim an unavailable partial execution result. Gas comparisons are sequential execution versus sequential manual execution; replay gas is compared separately to manual replay.
+
+Limits: direct inline witness expressions in PureCall arguments have a separately tracked native generation gap (#574). This fixture does not claim to fix that form. No new selector eligibility, provider/network integration or proof behavior is established by these tests. Existing source/retained semantics remain the authority.

@@ -1,0 +1,463 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "c",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "list",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "list_field.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "test",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_is_empty",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "boolean",
+              "value": true
+            }
+          },
+          "message": "Structure should be empty"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_length",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "unsigned_literal",
+              "value": "0",
+              "max": "18446744073709551615"
+            }
+          },
+          "message": "Size should be 0"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "list_head",
+                "field": "c",
+                "index": 0,
+                "ty": {
+                  "kind": "struct",
+                  "name": "Maybe",
+                  "fields": [
+                    {
+                      "name": "is_some",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              "field": "is_some",
+              "index": 0
+            },
+            "right": {
+              "kind": "boolean",
+              "value": false
+            }
+          },
+          "message": "Head should not exist"
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_27",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            }
+          ],
+          "action": {
+            "kind": "list_push_front",
+            "field": "c",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_27"
+            }
+          }
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_length",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "unsigned_literal",
+              "value": "1",
+              "max": "18446744073709551615"
+            }
+          },
+          "message": "Size should be 1"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "list_head",
+                "field": "c",
+                "index": 0,
+                "ty": {
+                  "kind": "struct",
+                  "name": "Maybe",
+                  "fields": [
+                    {
+                      "name": "is_some",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              "field": "is_some",
+              "index": 0
+            },
+            "right": {
+              "kind": "boolean",
+              "value": true
+            }
+          },
+          "message": "Head should exist"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "list_head",
+                "field": "c",
+                "index": 0,
+                "ty": {
+                  "kind": "struct",
+                  "name": "Maybe",
+                  "fields": [
+                    {
+                      "name": "is_some",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              "field": "value",
+              "index": 1
+            },
+            "right": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          },
+          "message": "Head should have value 0"
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_26",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "field_literal",
+                "value": "1"
+              }
+            }
+          ],
+          "action": {
+            "kind": "list_push_front",
+            "field": "c",
+            "index": 0,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_26"
+            }
+          }
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_length",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "unsigned_literal",
+              "value": "2",
+              "max": "18446744073709551615"
+            }
+          },
+          "message": "Size should be 2"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "list_head",
+                "field": "c",
+                "index": 0,
+                "ty": {
+                  "kind": "struct",
+                  "name": "Maybe",
+                  "fields": [
+                    {
+                      "name": "is_some",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              "field": "value",
+              "index": 1
+            },
+            "right": {
+              "kind": "field_literal",
+              "value": "1"
+            }
+          },
+          "message": "Head should have value 1"
+        },
+        {
+          "kind": "list_pop_front",
+          "field": "c",
+          "index": 0
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_length",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "unsigned_literal",
+              "value": "1",
+              "max": "18446744073709551615"
+            }
+          },
+          "message": "Size should be 1"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "list_head",
+                "field": "c",
+                "index": 0,
+                "ty": {
+                  "kind": "struct",
+                  "name": "Maybe",
+                  "fields": [
+                    {
+                      "name": "is_some",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              "field": "value",
+              "index": 1
+            },
+            "right": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          },
+          "message": "Head should have value 0"
+        },
+        {
+          "kind": "list_pop_front",
+          "field": "c",
+          "index": 0
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "list_head",
+                "field": "c",
+                "index": 0,
+                "ty": {
+                  "kind": "struct",
+                  "name": "Maybe",
+                  "fields": [
+                    {
+                      "name": "is_some",
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              "field": "is_some",
+              "index": 0
+            },
+            "right": {
+              "kind": "boolean",
+              "value": false
+            }
+          },
+          "message": "Head should not exist"
+        },
+        {
+          "kind": "list_reset",
+          "field": "c",
+          "index": 0
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_length",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "unsigned_literal",
+              "value": "0",
+              "max": "18446744073709551615"
+            }
+          },
+          "message": "Size should be 0"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "list_is_empty",
+              "field": "c",
+              "index": 0
+            },
+            "right": {
+              "kind": "boolean",
+              "value": true
+            }
+          },
+          "message": "Structure should be empty"
+        }
+      ],
+      "source": {
+        "file": "list_field.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ]
+}

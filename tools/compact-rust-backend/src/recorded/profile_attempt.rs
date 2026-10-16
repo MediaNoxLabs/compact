@@ -25,6 +25,7 @@ pub(super) enum ProfileAttempt<T, E = RecordingGap> {
 }
 
 impl<T, E> ProfileAttempt<T, E> {
+    #[cfg(test)]
     pub(super) fn into_option(self) -> Option<T> {
         match self {
             Self::Admitted(value) => Some(value),

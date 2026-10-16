@@ -18,8 +18,11 @@
 //! The traversal owns lexical scope and scheduling. This domain only appends
 //! the selected action's statements and updates its explicit effect state.
 
+use super::ActionOutput;
 use crate::ir::{LedgerField, LedgerFieldKind, PureCircuit, StateAction, Type};
-use crate::{RenderError, expression_with_calls, ident};
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
+use crate::stateful::NativeExpressionContext;
+use crate::{RenderError, ident};
 use proc_macro2::Span;
 use std::collections::HashMap;
 
@@ -30,29 +33,75 @@ pub(super) fn lower(
     circuits: &HashMap<&str, &PureCircuit>,
     statements: &mut Vec<syn::Stmt>,
 ) -> Result<(), RenderError> {
+    let witnesses = HashMap::new();
+    let stateful_circuits = HashMap::new();
+    let environment = NativeExpressionContext {
+        witnesses: &witnesses,
+        circuits,
+        stateful_circuits: &stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    lower_observed(
+        action,
+        parameters,
+        &environment,
+        ActionOutput {
+            statements,
+            next_temp: &mut 0,
+            uses_witness: &mut false,
+        },
+    )
+}
+
+pub(super) fn lower_observed(
+    action: &StateAction,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: ActionOutput<'_>,
+) -> Result<(), RenderError> {
+    let ActionOutput { statements, .. } = output;
+    let ledger_fields = environment.ledger_fields;
     match action {
         StateAction::ListPushFront {
             field,
             index,
             value,
         } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let LedgerFieldKind::List { ty } = &declaration.declaration else {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
             if declaration.index != *index {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "index"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            let original_value = value;
+            let (value, actual) = environment.pure_expression(value, parameters)?;
             if &actual != ty {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_value)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: ty.clone(),
                     actual,
                 });
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.push_front(context, #value)?;
             });
@@ -64,15 +113,23 @@ pub(super) fn lower(
             });
         }
         StateAction::ListPopFront { field, index } | StateAction::ListReset { field, index } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                 || declaration.index != *index
             {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             let method = if matches!(action, StateAction::ListPopFront { .. }) {
                 "pop_front"
             } else {
@@ -99,23 +156,40 @@ pub(super) fn lower(
             index,
             value,
         } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let LedgerFieldKind::Set { ty } = &declaration.declaration else {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
             if declaration.index != *index {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "index"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            let original_value = value;
+            let (value, actual) = environment.pure_expression(value, parameters)?;
             if &actual != ty {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_value)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: ty.clone(),
                     actual,
                 });
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             let method = if matches!(action, StateAction::SetInsert { .. }) {
                 syn::Ident::new("insert", Span::call_site())
             } else {
@@ -132,15 +206,23 @@ pub(super) fn lower(
             });
         }
         StateAction::SetReset { field, index } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
                 || declaration.index != *index
             {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.reset(context)?;
             });
@@ -157,34 +239,56 @@ pub(super) fn lower(
             key,
             value,
         } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let LedgerFieldKind::Map {
                 key: key_ty,
                 value: value_ty,
             } = &declaration.declaration
             else {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
             if declaration.index != *index {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "index"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (key, actual_key) = expression_with_calls(key, parameters, circuits)?;
+            let original_key = key;
+            let (key, actual_key) = environment.pure_expression(key, parameters)?;
             if &actual_key != key_ty {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_key)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: key_ty.clone(),
                     actual: actual_key,
                 });
             }
-            let (value, actual_value) = expression_with_calls(value, parameters, circuits)?;
+            let original_value = value;
+            let (value, actual_value) = environment.pure_expression(value, parameters)?;
             if &actual_value != value_ty {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_value)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: value_ty.clone(),
                     actual: actual_value,
                 });
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.insert(context, #key, #value)?;
             });
@@ -196,23 +300,40 @@ pub(super) fn lower(
             });
         }
         StateAction::MapInsertDefault { field, index, key } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let LedgerFieldKind::Map { key: key_ty, .. } = &declaration.declaration else {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
             if declaration.index != *index {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "index"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (key, actual_key) = expression_with_calls(key, parameters, circuits)?;
+            let original_key = key;
+            let (key, actual_key) = environment.pure_expression(key, parameters)?;
             if &actual_key != key_ty {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_key)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: key_ty.clone(),
                     actual: actual_key,
                 });
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.insert_default(context, #key)?;
             });
@@ -224,23 +345,40 @@ pub(super) fn lower(
             });
         }
         StateAction::MapRemove { field, index, key } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let LedgerFieldKind::Map { key: key_ty, .. } = &declaration.declaration else {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
             if declaration.index != *index {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "index"),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (key, actual_key) = expression_with_calls(key, parameters, circuits)?;
+            let original_key = key;
+            let (key, actual_key) = environment.pure_expression(key, parameters)?;
             if &actual_key != key_ty {
+                refused(
+                    RefusalSite::node(Owner::Expr(original_key)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: key_ty.clone(),
                     actual: actual_key,
                 });
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.remove(context, #key)?;
             });
@@ -252,15 +390,23 @@ pub(super) fn lower(
             });
         }
         StateAction::MapReset { field, index } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                 || declaration.index != *index
             {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             statements.push(syn::parse_quote! {
                 let step = crate::ledger_slots::#slot.reset(context)?;
             });
@@ -275,3 +421,23 @@ pub(super) fn lower(
     }
     Ok(())
 }
+
+fn ledger_ident(
+    declaration: &LedgerField,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<syn::Ident, RenderError> {
+    ident(&declaration.id).inspect_err(|_| {
+        if let Some(observer) = observer {
+            observer.refused(RefusalSite::field(Owner::Ledger(declaration), "id"));
+        }
+    })
+}
+
+fn refused(site: RefusalSite<'_>, observer: Option<&dyn RefusalObserver>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
+    }
+}
+
+#[cfg(test)]
+mod guard_tests;

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn getVector()
     -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
         Ok(runtime::FixedVector::new([
@@ -39,7 +39,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -248,91 +248,147 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
-                <runtime::FixedVector<runtime::Field, 2> as Default>::default();
-            let __compact_recorded_pure_vector_1: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_effect_0: runtime::FixedVector<runtime::Field, 2> =
+                <runtime::FixedVector<runtime::Field, 2> as ::core::default::Default>::default();
+            let __compact_effect_1: runtime::FixedVector<runtime::Field, 2> =
                 crate::pure_circuits::getVector()?;
-            let (frame, __compact_recorded_empty_2): (_, bool) =
+            let (frame, __compact_effect_2): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
-            if !(__compact_recorded_empty_2 == true) {
+            let __compact_effect_3: bool = true;
+            let __compact_effect_4: bool = __compact_effect_2 == __compact_effect_3;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_size_3): (_, u64) =
-                crate::ledger_slots::c.record_size(frame)?;
-            if !(__compact_recorded_size_3 == 0u64) {
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_set_size_6) = crate::ledger_slots::c.record_size(frame)?;
+            let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_effect_set_size_6 as u128,
+                )?;
+            let __compact_effect_7: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
+            let __compact_effect_8: bool = __compact_effect_6 == __compact_effect_7;
+            if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 0".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::c
-                .record_insert(frame, (__compact_recorded_static_0).clone())?;
-            let (frame, __compact_recorded_size_4): (_, u64) =
+            let __compact_effect_9: () = ();
+            let frame =
+                crate::ledger_slots::c.record_insert(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_10: () = ();
+            let (frame, __compact_effect_set_size_11) =
                 crate::ledger_slots::c.record_size(frame)?;
-            if !(__compact_recorded_size_4 == 1u64) {
+            let __compact_effect_11: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_effect_set_size_11 as u128,
+                )?;
+            let __compact_effect_12: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(1u128)?;
+            let __compact_effect_13: bool = __compact_effect_11 == __compact_effect_12;
+            if !__compact_effect_13 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_recorded_key_5 = (__compact_recorded_static_0).clone();
-            let (frame, __compact_recorded_member_6): (_, bool) =
-                crate::ledger_slots::c.record_member(frame, __compact_recorded_key_5)?;
-            if !(__compact_recorded_member_6 == true) {
+            let __compact_effect_14: () = ();
+            let (frame, __compact_effect_15): (_, bool) =
+                crate::ledger_slots::c.record_member(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_16: bool = true;
+            let __compact_effect_17: bool = __compact_effect_15 == __compact_effect_16;
+            if !__compact_effect_17 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Key 0 should have value 1".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::c
-                .record_insert(frame, (__compact_recorded_pure_vector_1).clone())?;
-            let (frame, __compact_recorded_size_7): (_, u64) =
+            let __compact_effect_18: () = ();
+            let frame =
+                crate::ledger_slots::c.record_insert(frame, (__compact_effect_1).clone())?;
+            let __compact_effect_19: () = ();
+            let (frame, __compact_effect_set_size_20) =
                 crate::ledger_slots::c.record_size(frame)?;
-            if !(__compact_recorded_size_7 == 2u64) {
+            let __compact_effect_20: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_effect_set_size_20 as u128,
+                )?;
+            let __compact_effect_21: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(2u128)?;
+            let __compact_effect_22: bool = __compact_effect_20 == __compact_effect_21;
+            if !__compact_effect_22 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 2".to_owned(),
                 ));
             }
-            let __compact_recorded_key_8 = (__compact_recorded_pure_vector_1).clone();
-            let (frame, __compact_recorded_member_9): (_, bool) =
-                crate::ledger_slots::c.record_member(frame, __compact_recorded_key_8)?;
-            if !(__compact_recorded_member_9 == true) {
+            let __compact_effect_23: () = ();
+            let (frame, __compact_effect_24): (_, bool) =
+                crate::ledger_slots::c.record_member(frame, (__compact_effect_1).clone())?;
+            let __compact_effect_25: bool = true;
+            let __compact_effect_26: bool = __compact_effect_24 == __compact_effect_25;
+            if !__compact_effect_26 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Key 1 should be member".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::c
-                .record_remove(frame, (__compact_recorded_static_0).clone())?;
-            let (frame, __compact_recorded_size_10): (_, u64) =
+            let __compact_effect_27: () = ();
+            let frame =
+                crate::ledger_slots::c.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_28: () = ();
+            let (frame, __compact_effect_set_size_29) =
                 crate::ledger_slots::c.record_size(frame)?;
-            if !(__compact_recorded_size_10 == 1u64) {
+            let __compact_effect_29: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_effect_set_size_29 as u128,
+                )?;
+            let __compact_effect_30: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(1u128)?;
+            let __compact_effect_31: bool = __compact_effect_29 == __compact_effect_30;
+            if !__compact_effect_31 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_recorded_key_11 = (__compact_recorded_pure_vector_1).clone();
-            let (frame, __compact_recorded_member_12): (_, bool) =
-                crate::ledger_slots::c.record_member(frame, __compact_recorded_key_11)?;
-            if !(__compact_recorded_member_12 == true) {
+            let __compact_effect_32: () = ();
+            let (frame, __compact_effect_33): (_, bool) =
+                crate::ledger_slots::c.record_member(frame, (__compact_effect_1).clone())?;
+            let __compact_effect_34: bool = true;
+            let __compact_effect_35: bool = __compact_effect_33 == __compact_effect_34;
+            if !__compact_effect_35 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Key 1 should be member".to_owned(),
                 ));
             }
+            let __compact_effect_36: () = ();
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let (frame, __compact_recorded_size_13): (_, u64) =
+            let __compact_effect_37: () = ();
+            let (frame, __compact_effect_set_size_38) =
                 crate::ledger_slots::c.record_size(frame)?;
-            if !(__compact_recorded_size_13 == 0u64) {
+            let __compact_effect_38: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(
+                    __compact_effect_set_size_38 as u128,
+                )?;
+            let __compact_effect_39: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
+            let __compact_effect_40: bool = __compact_effect_38 == __compact_effect_39;
+            if !__compact_effect_40 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Size should be 0".to_owned(),
                 ));
             }
-            let (frame, __compact_recorded_empty_14): (_, bool) =
+            let __compact_effect_41: () = ();
+            let (frame, __compact_effect_42): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
-            if !(__compact_recorded_empty_14 == true) {
+            let __compact_effect_43: bool = true;
+            let __compact_effect_44: bool = __compact_effect_42 == __compact_effect_43;
+            if !__compact_effect_44 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Structure should be empty".to_owned(),
                 ));
             }
-            Ok(frame.finish(()))
+            let __compact_effect_45: () = ();
+            let __compact_effect_46: () = ();
+            Ok(frame.finish(__compact_effect_46))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

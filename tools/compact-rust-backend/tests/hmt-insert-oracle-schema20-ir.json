@@ -1,0 +1,296 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "t",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "historic_merkle_tree",
+        "depth": 3,
+        "ty": {
+          "kind": "unsigned",
+          "max": "255"
+        }
+      },
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "append",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_insert",
+          "field": "t",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "place",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "index",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_insert_index",
+          "field": "t",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          },
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        }
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "append_hash",
+      "parameters": [
+        {
+          "name": "hash",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_insert_hash",
+          "field": "t",
+          "index": 0,
+          "hash": {
+            "kind": "parameter",
+            "name": "hash"
+          }
+        }
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 28,
+        "column": 1
+      }
+    },
+    {
+      "name": "place_hash",
+      "parameters": [
+        {
+          "name": "hash",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "index",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_insert_hash_index",
+          "field": "t",
+          "index": 0,
+          "hash": {
+            "kind": "parameter",
+            "name": "hash"
+          },
+          "position": {
+            "kind": "parameter",
+            "name": "index"
+          }
+        }
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 32,
+        "column": 1
+      }
+    },
+    {
+      "name": "forget_history",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_reset_history",
+          "field": "t",
+          "index": 0
+        }
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 36,
+        "column": 1
+      }
+    },
+    {
+      "name": "reset_tree",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "historic_merkle_reset_to_default",
+          "field": "t",
+          "index": 0
+        }
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 40,
+        "column": 1
+      }
+    },
+    {
+      "name": "full",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "historic_merkle_is_full",
+        "field": "t",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 44,
+        "column": 1
+      }
+    },
+    {
+      "name": "known",
+      "parameters": [
+        {
+          "name": "root",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreeDigest",
+            "fields": [
+              {
+                "name": "field",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "historic_merkle_check_root",
+        "field": "t",
+        "index": 0,
+        "root": {
+          "kind": "parameter",
+          "name": "root"
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "hmt_insert_oracle.compact",
+        "line": 48,
+        "column": 1
+      }
+    }
+  ]
+}

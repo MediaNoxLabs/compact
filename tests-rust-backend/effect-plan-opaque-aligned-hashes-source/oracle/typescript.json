@@ -1,0 +1,3854 @@
+{
+  "status": "passed",
+  "scope": "Fresh genuine default-v2 TS execution; no proof. Rust observed expectations are labels, not measured TS refusals. PersistentHash opaque inputs are excluded by official source semantics.",
+  "versions": {
+    "node": "v24.14.0",
+    "compactRuntime": "0.16.101"
+  },
+  "files": {
+    "artifact:sha256:e88c4ddbe7d9b47a32e0b6cc86dc6cbca4f0a4c60747c6463609f25ae63fc6f3/effect_plan_opaque_aligned_hashes.compact": "e88c4ddbe7d9b47a32e0b6cc86dc6cbca4f0a4c60747c6463609f25ae63fc6f3",
+    "artifact:sha256:175fd89b8da2048e8964757d507b8e13f48074cd7e6247fb61b57240881f859c/capture.mjs": "175fd89b8da2048e8964757d507b8e13f48074cd7e6247fb61b57240881f859c",
+    "artifact:sha256:5f8cedf50f597e3376c1f02ee8f7fc1f7d6a739b562df585f3189211923b570d/index.js": "5f8cedf50f597e3376c1f02ee8f7fc1f7d6a739b562df585f3189211923b570d",
+    "artifact:sha256:7ac2c4588f2aa3b33b4191abfdd10759796987c97353a7467d43afe94edfcd08/compact-rust-ir.json": "7ac2c4588f2aa3b33b4191abfdd10759796987c97353a7467d43afe94edfcd08",
+    "artifact:sha256:38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0/package.json": "38f113eeb408c9b7d51fc67c5688f3b9fcceff4bba0047b79413bbe0ad1d45b0",
+    "artifact:sha256:d0e454d3b50799efdd8f7e7e1c2920c903309d7cf4f87f703b1b79f9f889c5f3/package-lock.json": "d0e454d3b50799efdd8f7e7e1c2920c903309d7cf4f87f703b1b79f9f889c5f3",
+    "artifact:sha256:17f6c82a42a77ab73eccd057dfcd5741aa20f8471a0a5bb539558390dc9b490d/built-ins.d.ts": "17f6c82a42a77ab73eccd057dfcd5741aa20f8471a0a5bb539558390dc9b490d",
+    "artifact:sha256:db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7/built-ins.js": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
+    "artifact:sha256:3e5a4857700b2745ef48c95c774281a2bb10f75c5d3de86c4b749c5cf6b18d92/built-ins.js.map": "3e5a4857700b2745ef48c95c774281a2bb10f75c5d3de86c4b749c5cf6b18d92",
+    "artifact:sha256:6137fb1c69bd6b5a8cbcd21ef8578446ecc14a440465a3a72ef270491f4663bd/casts.d.ts": "6137fb1c69bd6b5a8cbcd21ef8578446ecc14a440465a3a72ef270491f4663bd",
+    "artifact:sha256:340072713fcb032b22209f226034aefb4cbb8401f914b77758fe36600ea1b2c1/casts.js": "340072713fcb032b22209f226034aefb4cbb8401f914b77758fe36600ea1b2c1",
+    "artifact:sha256:1fa728f3b8e483f17f2f850e87b2cdd734c02547530c468746572fc74dd06ba8/casts.js.map": "1fa728f3b8e483f17f2f850e87b2cdd734c02547530c468746572fc74dd06ba8",
+    "artifact:sha256:2024083e64d9d08c358d93f02701b6eaaddf0f2432171fafad0f748ca1efe3ce/circuit-context.d.ts": "2024083e64d9d08c358d93f02701b6eaaddf0f2432171fafad0f748ca1efe3ce",
+    "artifact:sha256:1d4e04503589ad7bef59a9cc9e5386c6ffe645c9503fbb2cd11ad26aeba95a95/circuit-context.js": "1d4e04503589ad7bef59a9cc9e5386c6ffe645c9503fbb2cd11ad26aeba95a95",
+    "artifact:sha256:ba0f8977ac3f1258721e5fd6840b2f9e84acdbcbfa740e9ba60ca1a085388f45/circuit-context.js.map": "ba0f8977ac3f1258721e5fd6840b2f9e84acdbcbfa740e9ba60ca1a085388f45",
+    "artifact:sha256:2033d058f593fcdbabd62fb3d8604032f27b22ea00a66379462846d6df13a202/compact-types.d.ts": "2033d058f593fcdbabd62fb3d8604032f27b22ea00a66379462846d6df13a202",
+    "artifact:sha256:5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b/compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b",
+    "artifact:sha256:cd3e264dbd6d4b7ac5a84d059ea8d21a983602de5c5e9dff98c8dfbecfc23260/compact-types.js.map": "cd3e264dbd6d4b7ac5a84d059ea8d21a983602de5c5e9dff98c8dfbecfc23260",
+    "artifact:sha256:52f566aa6b460b2c4663995bf853719d7c07d88cbffb998ffd6ac55af8f0506c/constants.d.ts": "52f566aa6b460b2c4663995bf853719d7c07d88cbffb998ffd6ac55af8f0506c",
+    "artifact:sha256:199ecbf52063edee09d388961ee9d65725e88fd5f005afe2172a994535b525d9/constants.js": "199ecbf52063edee09d388961ee9d65725e88fd5f005afe2172a994535b525d9",
+    "artifact:sha256:fea28653cfe09986eda8e8067131d89701331bc003115f56f9b3a003b1574a1c/constants.js.map": "fea28653cfe09986eda8e8067131d89701331bc003115f56f9b3a003b1574a1c",
+    "artifact:sha256:b28ebd976066cae55ce1298494622f5bdaee4586f48d159d4b88c83d02f37487/constructor-context.d.ts": "b28ebd976066cae55ce1298494622f5bdaee4586f48d159d4b88c83d02f37487",
+    "artifact:sha256:61908ad347c97a2517b62e4813647062a79c23743aa591075772d823c810d004/constructor-context.js": "61908ad347c97a2517b62e4813647062a79c23743aa591075772d823c810d004",
+    "artifact:sha256:2cd3c1e6fb6e5be0962a71ca5c11b3243e8ec10091bd9a7985aadcec601751eb/constructor-context.js.map": "2cd3c1e6fb6e5be0962a71ca5c11b3243e8ec10091bd9a7985aadcec601751eb",
+    "artifact:sha256:d0da5cc956fae48a34daa1fd217d40b46031abc47ad7e68fef35e7780c12cae0/contract-dependencies.d.ts": "d0da5cc956fae48a34daa1fd217d40b46031abc47ad7e68fef35e7780c12cae0",
+    "artifact:sha256:997be1d72c489ed128e0bf9e042feef3b5c88de4a378c7cec54a4887d390222d/contract-dependencies.js": "997be1d72c489ed128e0bf9e042feef3b5c88de4a378c7cec54a4887d390222d",
+    "artifact:sha256:44bcbfa1df11816535b9a33f8c3a08e0885dfea43b71f459376bf6c0752e2834/contract-dependencies.js.map": "44bcbfa1df11816535b9a33f8c3a08e0885dfea43b71f459376bf6c0752e2834",
+    "artifact:sha256:bb2592736f1915023e2409b620e0f7bbdfec84318236d4e01722e5e6fefa64a8/error.d.ts": "bb2592736f1915023e2409b620e0f7bbdfec84318236d4e01722e5e6fefa64a8",
+    "artifact:sha256:d8c33a222146c73d2ee59de1cce20d5ec937046b7be8e62fd196f642a3d5b893/error.js": "d8c33a222146c73d2ee59de1cce20d5ec937046b7be8e62fd196f642a3d5b893",
+    "artifact:sha256:cdb63cdeff9c755fb3451ee1a978f2c39196d95972b56ca90d2e5146ec0d463b/error.js.map": "cdb63cdeff9c755fb3451ee1a978f2c39196d95972b56ca90d2e5146ec0d463b",
+    "artifact:sha256:82b7786199a65ab3e72b094c6aafa3b31a365a7cebe7168bcdb427551cac163e/index.d.ts": "82b7786199a65ab3e72b094c6aafa3b31a365a7cebe7168bcdb427551cac163e",
+    "artifact:sha256:c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde/index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "artifact:sha256:02ded8d4606f1585301c8825e547664446e33333b57c7bc8f1012aed51682241/index.js.map": "02ded8d4606f1585301c8825e547664446e33333b57c7bc8f1012aed51682241",
+    "artifact:sha256:395e31cc65a6c2d2628650ac9fa2588ca5b7f3d224e2207b3b6b02505e36de04/proof-data.d.ts": "395e31cc65a6c2d2628650ac9fa2588ca5b7f3d224e2207b3b6b02505e36de04",
+    "artifact:sha256:0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29/proof-data.js": "0ebb8586d5144654b35b30d191dffd2308dc31d4ddd6d05277ef3d06015d2d29",
+    "artifact:sha256:dd40c6c8b1d62f35d707171f8be8f73b39f0bc450f9022bde46221ca955919a3/proof-data.js.map": "dd40c6c8b1d62f35d707171f8be8f73b39f0bc450f9022bde46221ca955919a3",
+    "artifact:sha256:3fdbacd5d724cd6160297f979b968643417bbfe3ad5368b51db338649f7b3280/utils.d.ts": "3fdbacd5d724cd6160297f979b968643417bbfe3ad5368b51db338649f7b3280",
+    "artifact:sha256:b22b8551d9bd2a941af9a14fb7c8505dae624698fcd175732a8f3b1b0a2a944a/utils.js": "b22b8551d9bd2a941af9a14fb7c8505dae624698fcd175732a8f3b1b0a2a944a",
+    "artifact:sha256:145254c55643418ae6c9da040354fc620bed18c602428dd8aaad6335f331e5c1/utils.js.map": "145254c55643418ae6c9da040354fc620bed18c602428dd8aaad6335f331e5c1",
+    "artifact:sha256:4d0a01cef17be4ba1c5293173073c7c2afecde1e5af2964d79597a2e3d806a93/version.d.ts": "4d0a01cef17be4ba1c5293173073c7c2afecde1e5af2964d79597a2e3d806a93",
+    "artifact:sha256:f1773226cd68c2331666af6d99f47a00d85762035e2d1a98f9ddd9d8d16c1e6e/version.js": "f1773226cd68c2331666af6d99f47a00d85762035e2d1a98f9ddd9d8d16c1e6e",
+    "artifact:sha256:fe1661c369840539160b32fec1d2dc152fc30e0e1ca554570a0198f0cdf09c29/version.js.map": "fe1661c369840539160b32fec1d2dc152fc30e0e1ca554570a0198f0cdf09c29",
+    "artifact:sha256:13fa81acd2bae844ecb807a8836ead4d2ed72d7a58e34e057f8ab3da5216286d/witness.d.ts": "13fa81acd2bae844ecb807a8836ead4d2ed72d7a58e34e057f8ab3da5216286d",
+    "artifact:sha256:41ee3eef3faea8f4dbe6aa92e614ba531d2525bd19685d5956421e00fa4ac3bb/witness.js": "41ee3eef3faea8f4dbe6aa92e614ba531d2525bd19685d5956421e00fa4ac3bb",
+    "artifact:sha256:bc7647301ee18e1dcc367aff0f13f1ffb394baab6355328f008767fde3371203/witness.js.map": "bc7647301ee18e1dcc367aff0f13f1ffb394baab6355328f008767fde3371203",
+    "artifact:sha256:ecad6ad12815cfe3aa18a72e4d081fcd291388f5d4f9f03ddbfc36d74ac378d5/zswap.d.ts": "ecad6ad12815cfe3aa18a72e4d081fcd291388f5d4f9f03ddbfc36d74ac378d5",
+    "artifact:sha256:1d98e2a9f4f2840b8b3eb46025e1254cb581286506324cb5084623161b6e9b8f/zswap.js": "1d98e2a9f4f2840b8b3eb46025e1254cb581286506324cb5084623161b6e9b8f",
+    "artifact:sha256:9b4381e42af882bd6523bb9c196ac48411ffb7eee92f8f92492f7d5a886cb750/zswap.js.map": "9b4381e42af882bd6523bb9c196ac48411ffb7eee92f8f92492f7d5a886cb750",
+    "artifact:sha256:f70e71923b7ddd69926a6f26674a26adbb7e6bc1085512a7e9dc05c071588442/midnight_onchain_runtime_wasm.js": "f70e71923b7ddd69926a6f26674a26adbb7e6bc1085512a7e9dc05c071588442",
+    "artifact:sha256:1b1264f59bad75fa215eadb1a9308b5b25128e676413845ba6c65dfc4261c35f/midnight_onchain_runtime_wasm_bg.js": "1b1264f59bad75fa215eadb1a9308b5b25128e676413845ba6c65dfc4261c35f",
+    "artifact:sha256:edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e/midnight_onchain_runtime_wasm_bg.wasm": "edeea319fe8b1dca486a3aeaa051e64d4b7fb96d83b5d2bb15e68fc1ce23369e",
+    "artifact:sha256:73678c901cae14ae9bede7f6ec0ce8ff723ad897192542297642111ffd97c932/midnight_onchain_runtime_wasm_fs.js": "73678c901cae14ae9bede7f6ec0ce8ff723ad897192542297642111ffd97c932",
+    "artifact:sha256:31d0d38a81d910c9154599494071b0fd4e99e354b34ebb386399a163cf0c627c/onchain-runtime-v3.d.ts": "31d0d38a81d910c9154599494071b0fd4e99e354b34ebb386399a163cf0c627c",
+    "artifact:sha256:1d1864e418678e065bd68fe3bb1f2f765de59f11b18d2750bea673682d9f4ea0/package-lock.json": "1d1864e418678e065bd68fe3bb1f2f765de59f11b18d2750bea673682d9f4ea0",
+    "artifact:sha256:bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54/package.json": "bea88fd56d85fdc8178945a784993980981fd7987e39018f9c0b3b25b3134f54"
+  },
+  "caseCount": 24,
+  "rows": [
+    {
+      "id": "curve_string-0",
+      "circuit": "curve_string",
+      "op": "curve",
+      "type": "string",
+      "index": 0,
+      "input": "",
+      "status": "success",
+      "result": {
+        "x": "39286861825592668938857228015519842367088173695839866656671141249519927733429",
+        "y": "25837152904870786417997093073262510224435471563289722119773299584367818633578",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              181,
+              172,
+              24,
+              151,
+              203,
+              228,
+              146,
+              4,
+              2,
+              128,
+              250,
+              4,
+              153,
+              188,
+              21,
+              146,
+              7,
+              37,
+              18,
+              253,
+              250,
+              198,
+              239,
+              89,
+              93,
+              60,
+              56,
+              63,
+              103,
+              147,
+              219,
+              86
+            ],
+            [
+              106,
+              241,
+              106,
+              215,
+              138,
+              46,
+              180,
+              146,
+              169,
+              64,
+              30,
+              71,
+              66,
+              170,
+              229,
+              118,
+              12,
+              102,
+              113,
+              191,
+              35,
+              36,
+              251,
+              176,
+              39,
+              80,
+              193,
+              181,
+              112,
+              79,
+              31,
+              57
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "curve_string-1",
+      "circuit": "curve_string",
+      "op": "curve",
+      "type": "string",
+      "index": 1,
+      "input": "a",
+      "status": "success",
+      "result": {
+        "x": "3061243691736363428593164263040539966243069333265024807344981988714551369645",
+        "y": "30598002115281343457814679496911918886889986558623097212004836148297661679485",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              97
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              173,
+              223,
+              6,
+              177,
+              156,
+              109,
+              199,
+              19,
+              59,
+              250,
+              137,
+              87,
+              32,
+              145,
+              203,
+              250,
+              45,
+              118,
+              54,
+              168,
+              166,
+              137,
+              16,
+              4,
+              74,
+              151,
+              41,
+              77,
+              63,
+              154,
+              196,
+              6
+            ],
+            [
+              125,
+              7,
+              188,
+              104,
+              11,
+              4,
+              40,
+              35,
+              174,
+              13,
+              122,
+              63,
+              199,
+              253,
+              189,
+              227,
+              39,
+              196,
+              217,
+              92,
+              33,
+              250,
+              193,
+              116,
+              32,
+              61,
+              142,
+              114,
+              0,
+              219,
+              165,
+              67
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "curve_string-2",
+      "circuit": "curve_string",
+      "op": "curve",
+      "type": "string",
+      "index": 2,
+      "input": "\u03bb\u0000key",
+      "status": "success",
+      "result": {
+        "x": "38254646532685218722171538334657084755411233175913016536130936451131962370430",
+        "y": "35181916939401952017875895112115585364031199789669363613692715868694827518972",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              206,
+              187,
+              0,
+              107,
+              101,
+              121
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              126,
+              41,
+              233,
+              37,
+              90,
+              32,
+              144,
+              91,
+              168,
+              62,
+              189,
+              7,
+              186,
+              21,
+              103,
+              122,
+              195,
+              18,
+              43,
+              54,
+              245,
+              80,
+              27,
+              147,
+              193,
+              42,
+              53,
+              29,
+              214,
+              92,
+              147,
+              84
+            ],
+            [
+              252,
+              75,
+              116,
+              95,
+              2,
+              32,
+              20,
+              133,
+              69,
+              213,
+              244,
+              216,
+              4,
+              184,
+              63,
+              186,
+              100,
+              113,
+              189,
+              226,
+              191,
+              237,
+              131,
+              157,
+              170,
+              20,
+              201,
+              11,
+              99,
+              66,
+              200,
+              77
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "curve_string-3",
+      "circuit": "curve_string",
+      "op": "curve",
+      "type": "string",
+      "index": 3,
+      "input": "a\u0000",
+      "status": "success",
+      "result": {
+        "x": "46133713640018970511109572238341656022967606899410690254789356654465995396901",
+        "y": "21693637694765956682688635313468986140265617452874913464355829138516930547689",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              97,
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              37,
+              87,
+              42,
+              237,
+              32,
+              247,
+              39,
+              219,
+              30,
+              166,
+              23,
+              241,
+              21,
+              245,
+              239,
+              127,
+              254,
+              95,
+              232,
+              32,
+              49,
+              101,
+              180,
+              184,
+              178,
+              115,
+              72,
+              224,
+              175,
+              193,
+              254,
+              101
+            ],
+            [
+              233,
+              79,
+              233,
+              117,
+              137,
+              200,
+              169,
+              84,
+              66,
+              148,
+              122,
+              160,
+              175,
+              120,
+              221,
+              102,
+              169,
+              71,
+              85,
+              197,
+              199,
+              225,
+              107,
+              232,
+              193,
+              90,
+              158,
+              174,
+              239,
+              41,
+              246,
+              47
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "curve_bytes-0",
+      "circuit": "curve_bytes",
+      "op": "curve",
+      "type": "bytes",
+      "index": 0,
+      "input": [],
+      "status": "success",
+      "result": {
+        "x": "39286861825592668938857228015519842367088173695839866656671141249519927733429",
+        "y": "25837152904870786417997093073262510224435471563289722119773299584367818633578",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              181,
+              172,
+              24,
+              151,
+              203,
+              228,
+              146,
+              4,
+              2,
+              128,
+              250,
+              4,
+              153,
+              188,
+              21,
+              146,
+              7,
+              37,
+              18,
+              253,
+              250,
+              198,
+              239,
+              89,
+              93,
+              60,
+              56,
+              63,
+              103,
+              147,
+              219,
+              86
+            ],
+            [
+              106,
+              241,
+              106,
+              215,
+              138,
+              46,
+              180,
+              146,
+              169,
+              64,
+              30,
+              71,
+              66,
+              170,
+              229,
+              118,
+              12,
+              102,
+              113,
+              191,
+              35,
+              36,
+              251,
+              176,
+              39,
+              80,
+              193,
+              181,
+              112,
+              79,
+              31,
+              57
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "curve_bytes-1",
+      "circuit": "curve_bytes",
+      "op": "curve",
+      "type": "bytes",
+      "index": 1,
+      "input": [
+        0
+      ],
+      "status": "success",
+      "result": {
+        "x": "21417267509815500340426248486631710658395194879711839188484756287441113528570",
+        "y": "47934444665893757644000070507953309360703412307027572280944114772663482966775",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              250,
+              56,
+              57,
+              105,
+              236,
+              15,
+              193,
+              161,
+              69,
+              66,
+              17,
+              241,
+              161,
+              189,
+              35,
+              168,
+              232,
+              33,
+              100,
+              191,
+              209,
+              133,
+              143,
+              106,
+              214,
+              106,
+              131,
+              200,
+              107,
+              190,
+              89,
+              47
+            ],
+            [
+              247,
+              226,
+              147,
+              208,
+              88,
+              10,
+              131,
+              141,
+              17,
+              142,
+              160,
+              100,
+              128,
+              248,
+              209,
+              202,
+              172,
+              200,
+              14,
+              77,
+              90,
+              62,
+              98,
+              55,
+              107,
+              92,
+              94,
+              216,
+              41,
+              239,
+              249,
+              105
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "curve_bytes-2",
+      "circuit": "curve_bytes",
+      "op": "curve",
+      "type": "bytes",
+      "index": 2,
+      "input": [
+        1,
+        0,
+        2
+      ],
+      "status": "success",
+      "result": {
+        "x": "46293675377942472826668616696331219233438686817849483405694217928265154973466",
+        "y": "41799717579499396721753355738666968258071759551445748204691194399299652307814",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1,
+              0,
+              2
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              26,
+              79,
+              76,
+              166,
+              65,
+              105,
+              249,
+              222,
+              191,
+              181,
+              5,
+              231,
+              56,
+              168,
+              193,
+              188,
+              229,
+              89,
+              8,
+              183,
+              151,
+              243,
+              74,
+              239,
+              47,
+              17,
+              119,
+              127,
+              174,
+              74,
+              89,
+              102
+            ],
+            [
+              102,
+              75,
+              200,
+              190,
+              51,
+              158,
+              3,
+              198,
+              22,
+              55,
+              115,
+              191,
+              7,
+              7,
+              122,
+              83,
+              133,
+              135,
+              73,
+              147,
+              106,
+              122,
+              249,
+              239,
+              203,
+              104,
+              195,
+              109,
+              63,
+              205,
+              105,
+              92
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "curve_bytes-3",
+      "circuit": "curve_bytes",
+      "op": "curve",
+      "type": "bytes",
+      "index": 3,
+      "input": [
+        1,
+        0
+      ],
+      "status": "success",
+      "result": {
+        "x": "33026097929610410719024046497780925651232875893415923737455720684984092100746",
+        "y": "40623548048356106931828469326065258348754158457456454367215520095838459354362",
+        "value": "0"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1,
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [
+              138,
+              136,
+              32,
+              248,
+              239,
+              169,
+              75,
+              218,
+              125,
+              24,
+              121,
+              248,
+              126,
+              255,
+              26,
+              47,
+              201,
+              193,
+              62,
+              145,
+              151,
+              246,
+              134,
+              0,
+              177,
+              140,
+              182,
+              188,
+              231,
+              27,
+              4,
+              73
+            ],
+            [
+              250,
+              92,
+              227,
+              150,
+              85,
+              140,
+              244,
+              64,
+              162,
+              222,
+              235,
+              115,
+              127,
+              164,
+              184,
+              98,
+              155,
+              79,
+              110,
+              208,
+              7,
+              61,
+              236,
+              13,
+              248,
+              45,
+              75,
+              214,
+              6,
+              29,
+              208,
+              89
+            ],
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "transient_string-0",
+      "circuit": "transient_string",
+      "op": "transient",
+      "type": "string",
+      "index": 0,
+      "input": "",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "9620025776880078320084866401708960911381310259544672466178048295274965038202"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              122,
+              244,
+              102,
+              247,
+              3,
+              95,
+              9,
+              135,
+              92,
+              110,
+              56,
+              23,
+              211,
+              163,
+              41,
+              187,
+              247,
+              194,
+              4,
+              210,
+              62,
+              110,
+              191,
+              204,
+              158,
+              0,
+              82,
+              208,
+              219,
+              189,
+              68,
+              21
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "transient_string-1",
+      "circuit": "transient_string",
+      "op": "transient",
+      "type": "string",
+      "index": 1,
+      "input": "a",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "48860664653450055184314248550688472795699216361714949745272831228140115392455"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              97
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              199,
+              247,
+              194,
+              193,
+              6,
+              232,
+              64,
+              216,
+              42,
+              107,
+              140,
+              2,
+              173,
+              164,
+              122,
+              182,
+              1,
+              9,
+              160,
+              104,
+              60,
+              56,
+              126,
+              182,
+              8,
+              172,
+              175,
+              151,
+              250,
+              39,
+              6,
+              108
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "transient_string-2",
+      "circuit": "transient_string",
+      "op": "transient",
+      "type": "string",
+      "index": 2,
+      "input": "\u03bb\u0000key",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "11698027511323245159570934630458618279436984272881314778518788093389856924294"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              206,
+              187,
+              0,
+              107,
+              101,
+              121
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              134,
+              98,
+              217,
+              96,
+              196,
+              226,
+              67,
+              253,
+              128,
+              160,
+              97,
+              2,
+              4,
+              29,
+              30,
+              67,
+              110,
+              184,
+              197,
+              242,
+              46,
+              211,
+              115,
+              15,
+              115,
+              34,
+              136,
+              245,
+              83,
+              217,
+              220,
+              25
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "transient_string-3",
+      "circuit": "transient_string",
+      "op": "transient",
+      "type": "string",
+      "index": 3,
+      "input": "a\u0000",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "29103991811436109343586974394837762872046457486602962275128774826460165250846"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              97,
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              30,
+              31,
+              153,
+              90,
+              145,
+              150,
+              25,
+              92,
+              58,
+              22,
+              160,
+              217,
+              3,
+              97,
+              159,
+              227,
+              62,
+              68,
+              1,
+              191,
+              116,
+              220,
+              164,
+              118,
+              75,
+              175,
+              135,
+              93,
+              142,
+              70,
+              88,
+              64
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "transient_bytes-0",
+      "circuit": "transient_bytes",
+      "op": "transient",
+      "type": "bytes",
+      "index": 0,
+      "input": [],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "9620025776880078320084866401708960911381310259544672466178048295274965038202"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              122,
+              244,
+              102,
+              247,
+              3,
+              95,
+              9,
+              135,
+              92,
+              110,
+              56,
+              23,
+              211,
+              163,
+              41,
+              187,
+              247,
+              194,
+              4,
+              210,
+              62,
+              110,
+              191,
+              204,
+              158,
+              0,
+              82,
+              208,
+              219,
+              189,
+              68,
+              21
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "transient_bytes-1",
+      "circuit": "transient_bytes",
+      "op": "transient",
+      "type": "bytes",
+      "index": 1,
+      "input": [
+        0
+      ],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "48889222002589842443291933733137831023465967485316858296520849221249749850332"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              220,
+              152,
+              45,
+              213,
+              172,
+              64,
+              122,
+              120,
+              88,
+              31,
+              205,
+              65,
+              85,
+              166,
+              254,
+              161,
+              137,
+              59,
+              2,
+              223,
+              114,
+              79,
+              207,
+              91,
+              30,
+              23,
+              21,
+              139,
+              173,
+              81,
+              22,
+              108
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "transient_bytes-2",
+      "circuit": "transient_bytes",
+      "op": "transient",
+      "type": "bytes",
+      "index": 2,
+      "input": [
+        1,
+        0,
+        2
+      ],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "51608625207689212547232824952251150403479819420393935713640047652222815641027"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1,
+              0,
+              2
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              195,
+              29,
+              79,
+              106,
+              211,
+              53,
+              19,
+              75,
+              132,
+              150,
+              177,
+              162,
+              13,
+              159,
+              112,
+              179,
+              231,
+              252,
+              64,
+              77,
+              170,
+              51,
+              140,
+              103,
+              183,
+              200,
+              35,
+              125,
+              92,
+              114,
+              25,
+              114
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "transient_bytes-3",
+      "circuit": "transient_bytes",
+      "op": "transient",
+      "type": "bytes",
+      "index": 3,
+      "input": [
+        1,
+        0
+      ],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "12721703504601865846293393339448876197705635438518093106312290838811438541838"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1,
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              14,
+              236,
+              208,
+              71,
+              246,
+              124,
+              1,
+              251,
+              161,
+              147,
+              177,
+              38,
+              253,
+              93,
+              104,
+              245,
+              196,
+              27,
+              236,
+              246,
+              72,
+              218,
+              246,
+              53,
+              11,
+              184,
+              106,
+              221,
+              160,
+              58,
+              32,
+              28
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "commit_string-0",
+      "circuit": "commit_string",
+      "op": "commit",
+      "type": "string",
+      "index": 0,
+      "input": "",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "34035439255628282856475151632820872560429694318990146974579685730716420467550"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              94,
+              235,
+              188,
+              49,
+              147,
+              154,
+              81,
+              197,
+              158,
+              162,
+              92,
+              206,
+              46,
+              138,
+              16,
+              74,
+              105,
+              149,
+              167,
+              66,
+              87,
+              9,
+              64,
+              14,
+              223,
+              196,
+              130,
+              72,
+              62,
+              96,
+              63,
+              75
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "commit_string-1",
+      "circuit": "commit_string",
+      "op": "commit",
+      "type": "string",
+      "index": 1,
+      "input": "a",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "43023638677315949421522404575762956070153087456775684146618885694032359617278"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              97
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              254,
+              114,
+              34,
+              53,
+              23,
+              171,
+              204,
+              130,
+              85,
+              64,
+              223,
+              15,
+              225,
+              218,
+              143,
+              96,
+              193,
+              28,
+              233,
+              117,
+              28,
+              133,
+              236,
+              91,
+              160,
+              139,
+              139,
+              17,
+              60,
+              132,
+              30,
+              95
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "commit_string-2",
+      "circuit": "commit_string",
+      "op": "commit",
+      "type": "string",
+      "index": 2,
+      "input": "\u03bb\u0000key",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "36555159402006679184204762999116122956052650673306746187147428343828436828239"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              206,
+              187,
+              0,
+              107,
+              101,
+              121
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              79,
+              64,
+              1,
+              191,
+              222,
+              47,
+              7,
+              110,
+              171,
+              4,
+              237,
+              40,
+              158,
+              251,
+              206,
+              37,
+              7,
+              173,
+              157,
+              113,
+              102,
+              136,
+              184,
+              160,
+              35,
+              124,
+              205,
+              238,
+              172,
+              124,
+              209,
+              80
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "commit_string-3",
+      "circuit": "commit_string",
+      "op": "commit",
+      "type": "string",
+      "index": 3,
+      "input": "a\u0000",
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "5372395315965972814666317098091360647139674831259854277685523096046285527722"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              97,
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              170,
+              154,
+              246,
+              125,
+              37,
+              36,
+              198,
+              163,
+              187,
+              144,
+              225,
+              8,
+              195,
+              53,
+              149,
+              5,
+              196,
+              235,
+              59,
+              114,
+              51,
+              33,
+              189,
+              127,
+              115,
+              236,
+              193,
+              127,
+              1,
+              171,
+              224,
+              11
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "commit_bytes-0",
+      "circuit": "commit_bytes",
+      "op": "commit",
+      "type": "bytes",
+      "index": 0,
+      "input": [],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "34035439255628282856475151632820872560429694318990146974579685730716420467550"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              94,
+              235,
+              188,
+              49,
+              147,
+              154,
+              81,
+              197,
+              158,
+              162,
+              92,
+              206,
+              46,
+              138,
+              16,
+              74,
+              105,
+              149,
+              167,
+              66,
+              87,
+              9,
+              64,
+              14,
+              223,
+              196,
+              130,
+              72,
+              62,
+              96,
+              63,
+              75
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "commit_bytes-1",
+      "circuit": "commit_bytes",
+      "op": "commit",
+      "type": "bytes",
+      "index": 1,
+      "input": [
+        0
+      ],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "24173313427659799853583436547355935292207606020829243797131571282065633896289"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              97,
+              231,
+              244,
+              231,
+              171,
+              223,
+              115,
+              81,
+              151,
+              81,
+              36,
+              216,
+              194,
+              113,
+              76,
+              64,
+              135,
+              162,
+              110,
+              24,
+              212,
+              17,
+              76,
+              88,
+              185,
+              33,
+              212,
+              123,
+              76,
+              156,
+              113,
+              53
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    },
+    {
+      "id": "commit_bytes-2",
+      "circuit": "commit_bytes",
+      "op": "commit",
+      "type": "bytes",
+      "index": 2,
+      "input": [
+        1,
+        0,
+        2
+      ],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "24846279225817402779440315778145368045090149469013909932171007909648242259219"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1,
+              0,
+              2
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              19,
+              53,
+              19,
+              129,
+              29,
+              78,
+              85,
+              144,
+              128,
+              30,
+              173,
+              48,
+              18,
+              96,
+              172,
+              51,
+              181,
+              4,
+              94,
+              211,
+              49,
+              253,
+              209,
+              2,
+              195,
+              63,
+              208,
+              66,
+              229,
+              126,
+              238,
+              54
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "success"
+    },
+    {
+      "id": "commit_bytes-3",
+      "circuit": "commit_bytes",
+      "op": "commit",
+      "type": "bytes",
+      "index": 3,
+      "input": [
+        1,
+        0
+      ],
+      "status": "success",
+      "result": {
+        "x": "0",
+        "y": "0",
+        "value": "47801883686758830058279212185050060759315832473289196975443604722895270804271"
+      },
+      "calls": "1",
+      "privateState": 5,
+      "proofData": {
+        "input": {
+          "value": [
+            [
+              1,
+              0
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "compress"
+              }
+            }
+          ]
+        },
+        "output": {
+          "value": [
+            [],
+            [],
+            [
+              47,
+              123,
+              149,
+              233,
+              243,
+              100,
+              180,
+              103,
+              17,
+              4,
+              251,
+              127,
+              138,
+              4,
+              227,
+              193,
+              152,
+              26,
+              54,
+              168,
+              126,
+              93,
+              199,
+              108,
+              199,
+              115,
+              140,
+              218,
+              73,
+              232,
+              174,
+              105
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            },
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        },
+        "publicTranscript": [
+          {
+            "idx": {
+              "cached": false,
+              "pushPath": true,
+              "path": [
+                {
+                  "tag": "value",
+                  "value": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addi": {
+              "immediate": 1
+            }
+          },
+          {
+            "ins": {
+              "cached": true,
+              "n": 1
+            }
+          }
+        ],
+        "privateTranscriptOutputs": []
+      },
+      "queryCostSum": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1323481916",
+        "bytesWritten": "36",
+        "bytesDeleted": "36"
+      },
+      "rustObservedExpectation": "trailing-zero-refusal"
+    }
+  ]
+}

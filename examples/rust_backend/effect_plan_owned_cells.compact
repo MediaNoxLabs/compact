@@ -1,0 +1,70 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+struct OptionalText { is_some: Boolean; value: Opaque<"string">; }
+struct Envelope { entry: OptionalText; bytes: Opaque<"Uint8Array">; marker: Field; }
+export struct Receipt { matched: Boolean; marker: Field; }
+export ledger text: Opaque<"string">;
+export ledger blob: Opaque<"Uint8Array">;
+export ledger envelope: Envelope;
+export ledger outcome: Field;
+export ledger padding0: Field;
+export ledger padding1: Field;
+export ledger padding2: Field;
+export ledger padding3: Field;
+export ledger padding4: Field;
+export ledger padding5: Field;
+export ledger padding6: Field;
+export ledger padding7: Field;
+export ledger padding8: Field;
+export ledger padding9: Field;
+export ledger padding10: Field;
+export ledger padding11: Field;
+constructor() {
+  text = default<Opaque<"string">>;
+  blob = default<Opaque<"Uint8Array">>;
+  envelope = default<Envelope>;
+  outcome = 0;
+  padding0 = 0;
+  padding1 = 0;
+  padding2 = 0;
+  padding3 = 0;
+  padding4 = 0;
+  padding5 = 0;
+  padding6 = 0;
+  padding7 = 0;
+  padding8 = 0;
+  padding9 = 0;
+  padding10 = 0;
+  padding11 = 0;
+}
+pure circuit emptyText(): Opaque<"string"> { return default<Opaque<"string">>; }
+pure circuit emptyBytes(): Opaque<"Uint8Array"> { return default<Opaque<"Uint8Array">>; }
+pure circuit copyText(value: Opaque<"string">): Opaque<"string"> { return value; }
+pure circuit copyBytes(value: Opaque<"Uint8Array">): Opaque<"Uint8Array"> { return value; }
+pure circuit copyEnvelope(value: Envelope): Envelope { return value; }
+export circuit run(selected: Boolean): Receipt {
+  const prior = envelope;
+  const saved = text;
+  const body = blob;
+  const chosen = selected ? prior : Envelope {
+    entry: OptionalText { is_some: true, value: emptyText() },
+    bytes: emptyBytes(), marker: 9
+  };
+  const copied = copyEnvelope(chosen);
+  text = disclose(copied.entry.value);
+  blob = disclose(copied.bytes);
+  envelope = disclose(copied);
+  const readback = envelope;
+  const readtext = text;
+  const readbytes = blob;
+  const same = copied == readback && readtext == readback.entry.value &&
+    readbytes == readback.bytes && prior == copyEnvelope(prior) && saved == copyText(saved) && body == copyBytes(body);
+  outcome = disclose(readback.marker);
+  return Receipt { matched: disclose(same), marker: outcome };
+}
+export circuit inspectText(): Receipt {
+  const value = text;
+  return Receipt { matched: value == copyText(value), marker: 0 };
+}

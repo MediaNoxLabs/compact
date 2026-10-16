@@ -1,0 +1,9 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger outer: Map<Field, Map<Field, Uint<64>>>;
+export struct Present { value: Boolean; }
+export circuit member(key: Field): Present {
+  return Present { value: outer.member(disclose(key)) };
+}

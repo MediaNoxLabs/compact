@@ -1,0 +1,418 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "entries",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "struct",
+          "name": "Entry",
+          "fields": [
+            {
+              "name": "label",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "calls",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "id": "done",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "first",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "second",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 10,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "require_enabled",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "enabled",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "parameter",
+              "name": "enabled"
+            },
+            "message": "disabled"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 14,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "bump",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_8",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 1,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_8"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "enabled",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "pure_call",
+          "name": "require_enabled",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "enabled"
+              },
+              "ty": {
+                "kind": "boolean"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "witness_call",
+                  "name": "first",
+                  "arguments": [
+                  ]
+                },
+                "message": "first denied"
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_7",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Entry",
+                      "fields": [
+                        {
+                          "name": "label",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "struct_literal",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Entry",
+                        "fields": [
+                          {
+                            "name": "label",
+                            "ty": {
+                              "kind": "opaque_string"
+                            }
+                          }
+                        ]
+                      },
+                      "fields": [
+                        {
+                          "kind": "parameter",
+                          "name": "key"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "map_insert",
+                  "field": "entries",
+                  "index": 0,
+                  "key": {
+                    "kind": "parameter",
+                    "name": "key"
+                  },
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_7"
+                  }
+                }
+              },
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "witness_call",
+                  "name": "second",
+                  "arguments": [
+                  ]
+                },
+                "message": "second denied"
+              },
+              {
+                "kind": "circuit_call",
+                "name": "bump",
+                "arguments": [
+                ]
+              },
+              {
+                "kind": "cell_write",
+                "field": "done",
+                "index": 2,
+                "value": {
+                  "kind": "boolean",
+                  "value": true
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_unit_composition.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "seed",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_6",
+            "ty": {
+              "kind": "struct",
+              "name": "Entry",
+              "fields": [
+                {
+                  "name": "label",
+                  "ty": {
+                    "kind": "opaque_string"
+                  }
+                }
+              ]
+            },
+            "value": {
+              "kind": "struct_literal",
+              "ty": {
+                "kind": "struct",
+                "name": "Entry",
+                "fields": [
+                  {
+                    "name": "label",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              },
+              "fields": [
+                {
+                  "kind": "parameter",
+                  "name": "seed"
+                }
+              ]
+            }
+          }
+        ],
+        "step": {
+          "kind": "map_insert",
+          "field": "entries",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "seed"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_6"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_unit_composition.compact",
+      "line": 11,
+      "column": 1
+    }
+  }
+}

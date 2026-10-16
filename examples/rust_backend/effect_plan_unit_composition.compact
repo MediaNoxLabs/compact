@@ -1,0 +1,28 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Entry { label: Opaque<"string">; }
+export ledger entries: Map<Opaque<"string">, Entry>;
+export ledger calls: Counter;
+export ledger done: Boolean;
+witness first(): Boolean;
+witness second(): Boolean;
+constructor(seed: Opaque<"string">) {
+  entries.insert(disclose(seed), Entry { label: disclose(seed) });
+}
+pure circuit require_enabled(enabled: Boolean): [] {
+  assert(enabled, "disabled");
+}
+circuit bump(): [] { calls.increment(1); }
+export circuit run(key: Opaque<"string">, enabled: Boolean, selected: Boolean): [] {
+  require_enabled(disclose(enabled));
+  if (disclose(selected)) {
+    assert(disclose(first()), "first denied");
+    bump();
+    entries.insert(disclose(key), Entry { label: disclose(key) });
+    assert(disclose(second()), "second denied");
+    bump();
+    done.write(true);
+  }
+}

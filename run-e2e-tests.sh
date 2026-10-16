@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -eu
+
 echo "Run e2e compactc tests"
 cd tests-e2e
 nix develop .#compiler --command yarn install

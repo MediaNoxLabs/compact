@@ -64,6 +64,7 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
 
+    // Typed composition accepts computed roots and preceding tree effects.
     let mut computed = contract.clone();
     let StateReturn::MerkleCheckRoot { root, .. } = &mut computed.stateful_circuits[0].return_value
     else {
@@ -71,7 +72,7 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
     };
     *root = Expr::Default { ty: digest.clone() };
     assert!(
-        !render_with_capabilities(&computed)
+        render_with_capabilities(&computed)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -87,7 +88,7 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
             value: Expr::Boolean { value: true },
         });
     assert!(
-        !render_with_capabilities(&effectful)
+        render_with_capabilities(&effectful)
             .unwrap()
             .capabilities
             .circuits[0]
@@ -154,9 +155,11 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
         *root = Expr::Default { ty: digest.clone() };
     }
     assert!(
-        !render_with_capabilities(&computed_historic)
-            .map(|rendered| rendered.capabilities.circuits[0].recorded)
-            .unwrap_or(false)
+        render_with_capabilities(&computed_historic)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
     );
     let mut effectful_historic = historic.clone();
     effectful_historic.stateful_circuits[0]
@@ -167,9 +170,11 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
             value: Expr::Boolean { value: true },
         });
     assert!(
-        !render_with_capabilities(&effectful_historic)
-            .map(|rendered| rendered.capabilities.circuits[0].recorded)
-            .unwrap_or(false)
+        render_with_capabilities(&effectful_historic)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
     );
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
@@ -250,8 +255,10 @@ fn plain_merkle_hash_recording_requires_declared_slot_and_exact_bytes32_source()
             name: "hash".into(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
+    // Conditional operands compose while preserving the exact declared type.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(composed.capabilities.circuits[0].recorded);
+    assert!(composed.capabilities.circuits[0].observed_call);
 }
 
 #[test]
@@ -299,7 +306,13 @@ fn plain_merkle_indexed_hash_recording_requires_exact_hash_and_uint64_position()
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    assert!(rendered.source.contains(".record_insert_hash_index(frame,"));
+    assert!(
+        rendered
+            .source
+            .split_whitespace()
+            .collect::<String>()
+            .contains(".record_insert_hash_index(frame,")
+    );
 
     contract.ledger_fields[0].path = vec![0, 0];
     assert!(render_with_capabilities(&contract).is_err());
@@ -335,8 +348,10 @@ fn plain_merkle_indexed_hash_recording_requires_exact_hash_and_uint64_position()
             name: "position".into(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
+    // Conditional operands compose while preserving the exact declared type.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(composed.capabilities.circuits[0].recorded);
+    assert!(composed.capabilities.circuits[0].observed_call);
 }
 
 #[test]
@@ -428,17 +443,17 @@ fn indexed_merkle_recording_requires_typed_leaf_and_position_sources() {
             name: "position".into(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert_eq!(
-        rejected.capabilities.circuits[0]
-            .recording_unavailable
-            .as_ref()
-            .unwrap()
-            .ir_node,
-        "StateAction::MerkleInsertIndex"
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(
+        composed
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
     );
-    assert!(rejected.capabilities.circuits[1].recorded);
+    let body = super::lifecycle_recording::generated_body(&composed.source, "recorded", "place");
+    assert!(body.contains("record_insert_index"));
+    assert!(body.contains("if "));
 
     let StateAction::MerkleInsertIndex {
         value, position, ..
@@ -458,13 +473,25 @@ fn indexed_merkle_recording_requires_typed_leaf_and_position_sources() {
             name: "value".into(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert!(rejected.capabilities.circuits[1].recorded);
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(
+        composed
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+    let StateAction::MerkleInsertIndex { index, .. } =
+        &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]
-fn indexed_merkle_recording_accepts_only_typed_literal_position_binding() {
+fn indexed_merkle_recording_composes_typed_conditional_position_binding() {
     let position = Type::Unsigned {
         max: u64::MAX.to_string(),
     };
@@ -529,9 +556,18 @@ fn indexed_merkle_recording_accepts_only_typed_literal_position_binding() {
             max: u64::MAX.to_string(),
         }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(!rejected.capabilities.circuits[0].recorded);
-    assert!(!rejected.capabilities.circuits[0].observed_call);
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(
+        composed.capabilities.circuits[0].recorded
+            && composed.capabilities.circuits[0].observed_call
+    );
+    let body = super::lifecycle_recording::generated_body(&composed.source, "recorded", "replace");
+    assert!(body.contains("if ") && body.contains("record_insert_index"));
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::Boolean { value: true };
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]

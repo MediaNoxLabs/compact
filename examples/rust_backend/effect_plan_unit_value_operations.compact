@@ -1,0 +1,34 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Result { x: Field; y: Field; blank: Bytes<32>; }
+witness coordinate_x(): Field;
+witness coordinate_y(): Field;
+witness permit(): Boolean;
+constructor() {}
+circuit check_point(offset: Field, expected: JubjubPoint, blank: Bytes<32>): [] {
+  const difference = coordinate_x() - offset;
+  const point = constructJubjubPoint(difference, coordinate_y());
+  assert(jubjubPointX(point) == jubjubPointX(expected), "wrong x");
+  assert(jubjubPointY(point) == jubjubPointY(expected), "wrong y");
+  assert(default<Bytes<32>> == blank, "wrong default");
+}
+export circuit close(offset: Field, expected: JubjubPoint, blank: Bytes<32>): [] {
+  calls.increment(1);
+  check_point(offset, expected, blank);
+  assert(permit(), "denied");
+}
+export circuit evaluate(offset: Field, fallback: JubjubPoint, selected: Boolean): Result {
+  calls.increment(1);
+  const point = disclose(selected)
+    ? constructJubjubPoint(coordinate_x() - offset, coordinate_y())
+    : fallback;
+  assert(permit(), "denied");
+  return Result {
+    x: disclose(jubjubPointX(point)),
+    y: disclose(jubjubPointY(point)),
+    blank: default<Bytes<32>>
+  };
+}

@@ -1,0 +1,22 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "compact-rust-qualified-coin-set-chunked-oracle-fixture"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[lib]
+path = "lib.rs"
+
+[features]
+ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
+
+[dependencies]
+midnight-compact-runtime = { path = "../../runtime-rs" }
+
+[build-dependencies]
+compact-rust-backend = { path = "../../tools/compact-rust-backend" }
+serde_json = "1"

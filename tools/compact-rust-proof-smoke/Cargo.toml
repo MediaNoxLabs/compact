@@ -17,11 +17,42 @@
 name = "compact-rust-proof-smoke"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.89"
 publish = false
 description = "Ledger-8 proof compatibility gate for Rust Compact output"
 
+[features]
+default = []
+experimental-recording-plan = ["dep:compact-rust-recording-effect-plan-prototype-fixture"]
+
 [dependencies]
+compact-rust-effect-plan-map-value-products-source-fixture = { path = "../../tests-rust-backend/effect-plan-map-value-products-source", features = ["ledger-transaction"] }
+compact-rust-opaque-cell-inputs-source-fixture = { path = "../../tests-rust-backend/opaque-cell-inputs-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-jubjub-negation-source-fixture = { path = "../../tests-rust-backend/effect-plan-jubjub-negation-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-unit-value-operations-source-fixture = { path = "../../tests-rust-backend/effect-plan-unit-value-operations-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-aligned-witness-results-source-fixture = { path = "../../tests-rust-backend/effect-plan-aligned-witness-results-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-aligned-hashes-source-fixture = { path = "../../tests-rust-backend/effect-plan-aligned-hashes-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-exact-hash-input-source-fixture = { path = "../../tests-rust-backend/effect-plan-exact-hash-input-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-unit-composition-source-fixture = { path = "../../tests-rust-backend/effect-plan-unit-composition-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-wide-add-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-add-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-wide-casts-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-casts-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-maps-source-fixture = { path = "../../tests-rust-backend/effect-plan-maps-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-public-products-source-fixture = { path = "../../tests-rust-backend/effect-plan-public-products-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-witness-inputs-source-fixture = { path = "../../tests-rust-backend/effect-plan-witness-inputs-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-opaque-public-source-fixture = { path = "../../tests-rust-backend/effect-plan-opaque-public-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-merkle-source-fixture = { path = "../../tests-rust-backend/effect-plan-merkle-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-transient-crypto-source-fixture = { path = "../../tests-rust-backend/effect-plan-transient-crypto-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-unsigned-arithmetic-source-fixture = { path = "../../tests-rust-backend/effect-plan-unsigned-arithmetic-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-jubjub-source-fixture = { path = "../../tests-rust-backend/effect-plan-jubjub-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-stateful-calls-source-fixture = { path = "../../tests-rust-backend/effect-plan-stateful-calls-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-pure-calls-source-fixture = { path = "../../tests-rust-backend/effect-plan-pure-calls-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-rich-values-source-fixture = { path = "../../tests-rust-backend/effect-plan-rich-values-source", features = ["ledger-transaction"] }
+compact-rust-guarded-point-read-source-fixture = { path = "../../tests-rust-backend/guarded-point-read-source", features = ["ledger-transaction"] }
+compact-rust-guarded-point-nested-source-fixture = { path = "../../tests-rust-backend/guarded-point-nested-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-counter-source-fixture = { path = "../../tests-rust-backend/effect-plan-counter-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-counter-only-source-fixture = { path = "../../tests-rust-backend/effect-plan-counter-only-source", features = ["ledger-transaction"] }
+compact-rust-effect-plan-wide-source-fixture = { path = "../../tests-rust-backend/effect-plan-wide-source", features = ["ledger-transaction"] }
+compact-rust-recording-effect-plan-prototype-fixture = { path = "../../tests-rust-backend/recording-effect-plan-prototype", optional = true, features = ["experimental-recording-plan", "ledger-transaction"] }
 compact-rust-shielded-merge-oracle-fixture = { path = "../../tests-rust-backend/shielded-merge-oracle", features = ["ledger-transaction"] }
 compact-rust-transient-receive-send-oracle-fixture = { path = "../../tests-rust-backend/transient-receive-send-oracle", features = ["ledger-transaction"] }
 compact-rust-zswap-transfer-oracle-fixture = { path = "../../tests-rust-backend/zswap-transfer-oracle", features = ["ledger-transaction"] }
@@ -66,6 +97,7 @@ compact-rust-set-size-oracle-fixture = { path = "../../tests-rust-backend/set-si
 compact-rust-adt-set-enum-fixture = { path = "../../tests-rust-backend/adt-set-enum", features = ["ledger-transaction"] }
 compact-rust-adt-set-qualified-coin-info-fixture = { path = "../../tests-rust-backend/adt-set-qualified-coin-info", features = ["ledger-transaction"] }
 compact-rust-qualified-coin-set-oracle-fixture = { path = "../../tests-rust-backend/qualified-coin-set-oracle", features = ["ledger-transaction"] }
+compact-rust-qualified-coin-set-chunked-oracle-fixture = { path = "../../tests-rust-backend/qualified-coin-set-chunked-oracle", features = ["ledger-transaction"] }
 compact-rust-qualified-coin-cell-oracle-fixture = { path = "../../tests-rust-backend/qualified-coin-cell-oracle", features = ["ledger-transaction"] }
 compact-rust-adt-set-vector-fixture = { path = "../../tests-rust-backend/adt-set-vector", features = ["ledger-transaction"] }
 compact-rust-adt-list-vector-field-4-fixture = { path = "../../tests-rust-backend/adt-list-vector-field-4", features = ["ledger-transaction"] }
@@ -99,22 +131,22 @@ compact-rust-pure-call-action-fixture = { path = "../../tests-rust-backend/pure-
 compact-rust-assert-parity-oracle-fixture = { path = "../../tests-rust-backend/assert-parity-oracle", features = ["ledger-transaction"] }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
-midnight-ledger = { version = "=8.0.3", features = ["proving", "test-utilities"] }
-midnight-zswap = "=8.0.3"
-midnight-coin-structure = "=2.0.1"
-midnight-onchain-state = "=3.0.0"
-midnight-onchain-runtime = "=3.0.0"
-midnight-onchain-vm = "=3.0.0"
-midnight-storage = "=2.0.1"
-midnight-zkir = "=2.1.0"
-midnight-serialize = "=1.0.0"
-midnight-transient-crypto = "=2.0.1"
-midnight-base-crypto = "=1.0.0"
-midnight-circuits = "=6.0.0"
+midnight-ledger = { version = "=8.1.3", features = ["proving", "test-utilities"], git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-zswap = { version = "=8.1.3", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-coin-structure = { version = "=2.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-state = { version = "=3.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-runtime = { version = "=3.1.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-vm = { version = "=3.1.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-storage = { version = "=2.0.3", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-zkir = { version = "=2.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-serialize = { version = "=1.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-transient-crypto = { version = "=2.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-base-crypto = { version = "=1.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-circuits = "=6.1.0"
 midnight-curves = "=0.2.0"
-midnight-proofs = "=0.7.0"
-midnight-zk-stdlib = "=1.0.0"
-midnight-storage-core = "=1.1.0"
+midnight-proofs = "=0.7.1"
+midnight-zk-stdlib = "=1.1.0"
+midnight-storage-core = { version = "=1.2.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
 rand = "=0.8.6"
 rand_chacha = "=0.3.1"
 futures-executor = "=0.3.32"

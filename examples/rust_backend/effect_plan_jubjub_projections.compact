@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Coordinates { x: Field; y: Field; repeatedX: Field; }
+witness first(): JubjubPoint;
+witness second(): JubjubPoint;
+export circuit project(point: JubjubPoint): Coordinates {
+  calls.increment(1);
+  return Coordinates {
+    x: jubjubPointX(point),
+    y: jubjubPointY(point),
+    repeatedX: jubjubPointX(point)
+  };
+}
+export circuit observe(selected: Boolean): Coordinates {
+  calls.increment(1);
+  const point = disclose(selected) ? disclose(first()) : ecMulGenerator(0);
+  const next = disclose(selected) ? disclose(second()) : point;
+  return Coordinates {
+    x: jubjubPointX(point),
+    y: jubjubPointY(next),
+    repeatedX: jubjubPointX(point)
+  };
+}

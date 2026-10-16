@@ -20,12 +20,12 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -170,19 +170,238 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn add_echo<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::BoundedUint<65535>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::BoundedUint<65535>>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::BoundedUint<65535>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_2: runtime::BoundedUint<65536> =
+                runtime::cast_unsigned::<65535, 65536>(__compact_effect_1)?;
+            let __compact_effect_3: runtime::BoundedUint<65536> =
+                <runtime::BoundedUint<65536>>::new(1u128)?;
+            let __compact_effect_4: runtime::BoundedUint<131071> =
+                runtime::add_unsigned::<65536, 65536, 131071>(
+                    __compact_effect_2,
+                    __compact_effect_3,
+                )?;
+            let __compact_effect_5: runtime::BoundedUint<65535> =
+                runtime::cast_unsigned::<131071, 65535>(__compact_effect_4)?;
+            Ok(frame.finish(__compact_effect_5))
+        }
+        pub fn subtract_echo<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::BoundedUint<65535>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::BoundedUint<65535>>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::BoundedUint<65535>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_2: runtime::BoundedUint<65535> =
+                <runtime::BoundedUint<65535>>::new(1u128)?;
+            let __compact_effect_3: runtime::BoundedUint<65535> =
+                runtime::subtract_unsigned::<65535, 65535, 65535>(
+                    __compact_effect_1,
+                    __compact_effect_2,
+                )?;
+            Ok(frame.finish(__compact_effect_3))
+        }
+        pub fn multiply_echo<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::BoundedUint<65535>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::BoundedUint<65535>>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, runtime::BoundedUint<65535>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let __compact_effect_2: runtime::BoundedUint<131070> =
+                runtime::cast_unsigned::<65535, 131070>(__compact_effect_1)?;
+            let __compact_effect_3: runtime::BoundedUint<131070> =
+                <runtime::BoundedUint<131070>>::new(2u128)?;
+            let __compact_effect_4: runtime::BoundedUint<131071> =
+                runtime::multiply_unsigned::<131070, 131070, 131071>(
+                    __compact_effect_2,
+                    __compact_effect_3,
+                )?;
+            let __compact_effect_5: runtime::BoundedUint<65535> =
+                runtime::cast_unsigned::<131071, 65535>(__compact_effect_4)?;
+            Ok(frame.finish(__compact_effect_5))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn add_echo<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::BoundedUint<65535>>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                add_echo(context, self.witnesses, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_echo_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::BoundedUint<65535>>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.add_echo(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "add_echo", input,
+                ))
+            }
+            pub fn subtract_echo<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::BoundedUint<65535>>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                subtract_echo(context, self.witnesses, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn subtract_echo_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::BoundedUint<65535>>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded =
+                    self.subtract_echo(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "subtract_echo",
+                    input,
+                ))
+            }
+            pub fn multiply_echo<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::BoundedUint<65535>>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                multiply_echo(context, self.witnesses, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn multiply_echo_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::BoundedUint<65535>>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded =
+                    self.multiply_echo(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "multiply_echo",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -224,6 +443,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::multiply_echo(context, &self.witnesses, value)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

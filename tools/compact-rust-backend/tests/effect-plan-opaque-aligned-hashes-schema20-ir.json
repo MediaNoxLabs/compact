@@ -1,0 +1,768 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "curve_string",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Output",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "point",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "hash_to_curve",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "Output",
+              "fields": [
+                {
+                  "name": "x",
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                {
+                  "name": "y",
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "jubjub_point_x",
+                "value": {
+                  "kind": "parameter",
+                  "name": "point"
+                }
+              },
+              {
+                "kind": "jubjub_point_y",
+                "value": {
+                  "kind": "parameter",
+                  "name": "point"
+                }
+              },
+              {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_5",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_5"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "curve_bytes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Output",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "point",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "hash_to_curve",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "Output",
+              "fields": [
+                {
+                  "name": "x",
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                {
+                  "name": "y",
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "jubjub_point_x",
+                "value": {
+                  "kind": "parameter",
+                  "name": "point"
+                }
+              },
+              {
+                "kind": "jubjub_point_y",
+                "value": {
+                  "kind": "parameter",
+                  "name": "point"
+                }
+              },
+              {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_4",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_4"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "name": "transient_string",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Output",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Output",
+            "fields": [
+              {
+                "name": "x",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "y",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "transient_hash",
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_3",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_3"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "transient_bytes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Output",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Output",
+            "fields": [
+              {
+                "name": "x",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "y",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "transient_hash",
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_2",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_2"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "name": "commit_string",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Output",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Output",
+            "fields": [
+              {
+                "name": "x",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "y",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "transient_commit",
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              },
+              "opening": {
+                "kind": "field_literal",
+                "value": "7"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_1",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_1"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "commit_bytes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Output",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Output",
+            "fields": [
+              {
+                "name": "x",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "y",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "field_literal",
+              "value": "0"
+            },
+            {
+              "kind": "transient_commit",
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              },
+              "opening": {
+                "kind": "field_literal",
+                "value": "7"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_0",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_0"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_opaque_aligned_hashes.compact",
+        "line": 30,
+        "column": 1
+      }
+    }
+  ]
+}

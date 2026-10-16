@@ -19,7 +19,18 @@ use compact_rust_terminal_lexical_return_oracle_fixture::{
     ledger_contract as c, ledger_slots as slots,
 };
 
+fn validate_ir(bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+    let expected: serde_json::Value =
+        serde_json::from_str(compact_rust_terminal_lexical_return_oracle_fixture::RETAINED_IR)?;
+    let actual: serde_json::Value = serde_json::from_slice(bytes)?;
+    if expected != actual {
+        return Err("terminal lexical return source/proof IR mismatch".into());
+    }
+    Ok(())
+}
+
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    validate_ir(&std::fs::read(root.join("contract/compact-rust-ir.json"))?)?;
     for (i, name) in ["two", "three", "nested", "observed"]
         .into_iter()
         .enumerate()
@@ -157,4 +168,21 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod source_pairing_tests {
+    use super::*;
+    #[test]
+    fn rejects_mismatched_source_before_keys() {
+        let source = compact_rust_terminal_lexical_return_oracle_fixture::RETAINED_IR;
+        validate_ir(source.as_bytes()).unwrap();
+        let mut altered: serde_json::Value = serde_json::from_str(source).unwrap();
+        altered["stateful_circuits"][0]["name"] = "different".into();
+        assert!(validate_ir(&serde_json::to_vec(&altered).unwrap()).is_err());
+        assert!(
+            validate_ir(compact_rust_root_let_action_return_oracle_fixture::RETAINED_IR.as_bytes())
+                .is_err()
+        );
+    }
 }

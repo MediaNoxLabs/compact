@@ -1,0 +1,17 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+export ledger count: Counter;
+export circuit mutate_then_subtract(selected: Boolean, value: Uint<16>): Uint<16> {
+  if (disclose(selected)) { count.increment(1); return value - 1; }
+  else { return value; }
+}
+export circuit explicit_guard_then_subtract(selected: Boolean, value: Uint<16>): Uint<16> {
+  if (disclose(selected)) {
+    assert(value >= 2, "explicit guard before mutation");
+    count.increment(1);
+    return value - 1;
+  } else { return value; }
+}

@@ -1,0 +1,510 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "stored",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "effect_plan_receive_values.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "points",
+      "parameters": [
+        {
+          "name": "left",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "right",
+          "ty": {
+            "kind": "jubjub_point"
+          }
+        },
+        {
+          "name": "leftMarker",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "rightMarker",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Receipt",
+        "fields": [
+          {
+            "name": "direct",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "aggregate",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Receipt",
+            "fields": [
+              {
+                "name": "direct",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "aggregate",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "parameter",
+              "name": "same"
+            },
+            {
+              "kind": "cell_read",
+              "field": "stored",
+              "index": 0
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "a",
+              "ty": {
+                "kind": "struct",
+                "name": "Holder",
+                "fields": [
+                  {
+                    "name": "point",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  },
+                  {
+                    "name": "marker",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Holder",
+                  "fields": [
+                    {
+                      "name": "point",
+                      "ty": {
+                        "kind": "jubjub_point"
+                      }
+                    },
+                    {
+                      "name": "marker",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "parameter",
+                    "name": "left"
+                  },
+                  {
+                    "kind": "parameter",
+                    "name": "leftMarker"
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "b",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Holder",
+                      "fields": [
+                        {
+                          "name": "point",
+                          "ty": {
+                            "kind": "jubjub_point"
+                          }
+                        },
+                        {
+                          "name": "marker",
+                          "ty": {
+                            "kind": "field"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "struct_literal",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Holder",
+                        "fields": [
+                          {
+                            "name": "point",
+                            "ty": {
+                              "kind": "jubjub_point"
+                            }
+                          },
+                          {
+                            "name": "marker",
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      },
+                      "fields": [
+                        {
+                          "kind": "parameter",
+                          "name": "right"
+                        },
+                        {
+                          "kind": "parameter",
+                          "name": "rightMarker"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "same",
+                          "ty": {
+                            "kind": "boolean"
+                          },
+                          "value": {
+                            "kind": "equal",
+                            "left": {
+                              "kind": "parameter",
+                              "name": "left"
+                            },
+                            "right": {
+                              "kind": "parameter",
+                              "name": "right"
+                            }
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "cell_write",
+                            "field": "stored",
+                            "index": 0,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "same"
+                            }
+                          },
+                          {
+                            "kind": "if",
+                            "condition": {
+                              "kind": "parameter",
+                              "name": "selected"
+                            },
+                            "then": {
+                              "kind": "let",
+                              "bindings": [
+                                {
+                                  "name": "tmp_15",
+                                  "ty": {
+                                    "kind": "boolean"
+                                  },
+                                  "value": {
+                                    "kind": "equal",
+                                    "left": {
+                                      "kind": "parameter",
+                                      "name": "a"
+                                    },
+                                    "right": {
+                                      "kind": "parameter",
+                                      "name": "b"
+                                    }
+                                  }
+                                }
+                              ],
+                              "action": {
+                                "kind": "cell_write",
+                                "field": "stored",
+                                "index": 0,
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "tmp_15"
+                                }
+                              }
+                            },
+                            "otherwise": {
+                              "kind": "sequence",
+                              "actions": [
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_receive_values.compact",
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "name": "emptyLocals",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Receipt",
+        "fields": [
+          {
+            "name": "direct",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "aggregate",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Receipt",
+            "fields": [
+              {
+                "name": "direct",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "aggregate",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "equal",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            },
+            {
+              "kind": "cell_read",
+              "field": "stored",
+              "index": 0
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "a",
+              "ty": {
+                "kind": "struct",
+                "name": "Empty",
+                "fields": [
+                ]
+              },
+              "value": {
+                "kind": "default",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Empty",
+                  "fields": [
+                  ]
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "b",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Empty",
+                      "fields": [
+                      ]
+                    },
+                    "value": {
+                      "kind": "struct_literal",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Empty",
+                        "fields": [
+                        ]
+                      },
+                      "fields": [
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_14",
+                          "ty": {
+                            "kind": "boolean"
+                          },
+                          "value": {
+                            "kind": "equal",
+                            "left": {
+                              "kind": "parameter",
+                              "name": "a"
+                            },
+                            "right": {
+                              "kind": "parameter",
+                              "name": "b"
+                            }
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "cell_write",
+                        "field": "stored",
+                        "index": 0,
+                        "value": {
+                          "kind": "parameter",
+                          "name": "tmp_14"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_receive_values.compact",
+        "line": 21,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "stored",
+        "index": 0,
+        "value": {
+          "kind": "boolean",
+          "value": false
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_receive_values.compact",
+      "line": 10,
+      "column": 1
+    }
+  }
+}

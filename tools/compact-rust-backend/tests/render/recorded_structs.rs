@@ -23,7 +23,7 @@ use compact_rust_backend::ir::{
 use compact_rust_backend::{RenderError, render_with_capabilities};
 
 #[test]
-fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_closed_body() {
+fn recorded_distinct_struct_constructor_calls_preserve_identity_and_typed_composition() {
     let fixture = || -> Contract {
         let mut contract: Contract = serde_json::from_str(include_str!(
             "../../fixtures/recorded-struct-constructor-cells.json"
@@ -67,13 +67,17 @@ fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_close
         unreachable!()
     };
     *value = Expr::Parameter { name: "x".into() };
-    assert!(
-        !render_with_capabilities(&wrong_write)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    // Writing the same-typed root Field directly is valid even though the
+    // legacy constructor recipe required a projection.
+    let direct = render_with_capabilities(&wrong_write).unwrap();
+    assert!(direct.capabilities.circuits[0].recorded);
+    let body = super::lifecycle_recording::generated_body(
+        &direct.source,
+        "recorded",
+        &wrong_write.stateful_circuits[0].name,
     );
+    assert!(body.contains("record_write"));
+    assert!(body.find("pure_circuits :: makeAlpha").unwrap() < body.find("record_write").unwrap());
 
     let mut effectful_helper = fixture();
     let previous = effectful_helper.circuits[0].body.clone();
@@ -84,17 +88,39 @@ fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_close
         }],
         value: Box::new(previous),
     };
-    assert!(
-        !render_with_capabilities(&effectful_helper)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    // A pure assertion is a checked native pure operation, not a ledger effect.
+    let asserted = render_with_capabilities(&effectful_helper).unwrap();
+    assert!(asserted.capabilities.circuits[0].recorded);
+    let pure = super::lifecycle_recording::generated_body(
+        &asserted.source,
+        "pure_circuits",
+        &effectful_helper.circuits[0].name,
     );
+    assert!(pure.contains("side condition"));
+    let recorded = super::lifecycle_recording::generated_body(
+        &asserted.source,
+        "recorded",
+        &effectful_helper.stateful_circuits[0].name,
+    );
+    assert!(
+        recorded.find("pure_circuits :: makeAlpha").unwrap()
+            < recorded.find("record_write").unwrap()
+    );
+    let StateAction::Let { action, .. } = &mut wrong_write.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { action, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::CellWrite { value, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    *value = Expr::Boolean { value: true };
+    assert!(render_with_capabilities(&wrong_write).is_err());
 }
 
 #[test]
-fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
+fn recorded_struct_pure_guard_composes_typed_calls_and_continuations() {
     let policy = Type::Struct {
         name: "Policy".into(),
         fields: vec![StructField {
@@ -219,19 +245,19 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
             index: 0,
             value: Expr::FieldLiteral { value: "2".into() },
         });
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = closed.clone();
     if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
         arguments[0] = Expr::Default {
             ty: parameters[0].ty.clone(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = closed.clone();
     if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {
         steps.push(Expr::Unit);
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = closed.clone();
     contract.stateful_circuits[0].parameters.push(Parameter {
         name: "extra".into(),
@@ -242,11 +268,10 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
     {
         arguments.push(Expr::FieldLiteral { value: "3".into() });
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
 
-    // The same guard may precede precisely one compiler-emitted Uint<16>
-    // literal-one Let/Counter increment. Different amounts and extra actions
-    // cannot be admitted by this shortcut.
+    // The checked effect sequence also supports different typed amounts and
+    // additional public operations after the same guard.
     contract = closed;
     contract.ledger_fields.push(LedgerField {
         source: None,
@@ -280,7 +305,7 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
             max: "65535".into(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = counter.clone();
     contract.stateful_circuits[1]
         .actions
@@ -288,18 +313,25 @@ fn recorded_struct_pure_guard_requires_closed_typed_call_and_continuation() {
             field: "accepted".into(),
             index: 1,
         });
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
     contract = counter;
     if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
         arguments[1] = Expr::Default {
             ty: parameters[1].ty.clone(),
         };
     }
-    assert!(!recorded(&contract));
+    assert!(recorded(&contract));
+    let source = render_with_capabilities(&contract).unwrap().source;
+    let body = super::lifecycle_recording::generated_body(&source, "recorded", "caller");
+    assert!(body.contains("guard") && body.contains("record_increment"));
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
+        arguments.pop();
+    }
+    assert!(render_with_capabilities(&contract).is_err());
 }
 
 #[test]
-fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
+fn vector_map_recording_composes_nonidentity_bodies_and_keeps_exact_native_shape() {
     let element = Type::Unsigned {
         max: u64::MAX.to_string(),
     };
@@ -339,7 +371,7 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
                     body: Box::new(Expr::Parameter {
                         name: "item".into(),
                     }),
-                    result: element,
+                    result: element.clone(),
                     length: 3,
                 },
             }],
@@ -365,12 +397,28 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
         unreachable!()
     };
     **body = literal();
-    assert!(
-        !render_with_capabilities(&nonidentity)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+    let mapped = render_with_capabilities(&nonidentity).unwrap();
+    assert!(mapped.capabilities.circuits[0].recorded);
+    assert!(mapped.capabilities.circuits[0].observed_call);
+    let body = super::lifecycle_recording::generated_body(&mapped.source, "recorded", "write_map");
+    assert!(body.find("into_array").unwrap() < body.find("record_write").unwrap());
+
+    // A supported nonidentity body still has to match the declared element type.
+    let mut wrong_result = nonidentity.clone();
+    let StateAction::Let { bindings, .. } = &mut wrong_result.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::VectorMap { body, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    **body = Expr::Boolean { value: true };
+    assert_eq!(
+        render_with_capabilities(&wrong_result).err().unwrap(),
+        RenderError::TypeMismatch {
+            expected: element.clone(),
+            actual: Type::Boolean
+        }
     );
     let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -379,5 +427,16 @@ fn identity_vector_map_recording_requires_closed_literals_and_exact_shape() {
         unreachable!()
     };
     *length = 2;
-    assert!(render_with_capabilities(&contract).is_err());
+    assert_eq!(
+        render_with_capabilities(&contract).err().unwrap(),
+        RenderError::TypeMismatch {
+            expected: Type::Vector {
+                element: Box::new(element.clone()),
+                length: 2
+            },
+            actual: Type::Tuple {
+                elements: vec![element; 3]
+            },
+        }
+    );
 }

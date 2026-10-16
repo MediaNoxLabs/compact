@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -33,7 +33,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -112,9 +112,9 @@ pub mod ledger_contract {
         __compact_constructor_param_2: runtime::BoundedUint<65535>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_counter(),
         ]);
@@ -297,98 +297,93 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::BoundedUint<255> =
-                runtime::BoundedUint::<255>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_1: runtime::BoundedUint<255> = __compact_plan_0;
-            let (frame, __compact_plan_2): (_, bool) =
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<255> =
+                <runtime::BoundedUint<255>>::new(1u128)?;
+            let (frame, __compact_effect_2): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.next_gate(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_1,
+                        __compact_effect_1,
                     )
                 })?;
-            let __compact_plan_3: bool = __compact_plan_2;
-            let (frame, __compact_plan_5): (_, bool) = if __compact_param_0 {
-                (frame, __compact_plan_3)
+            let (frame, __compact_effect_4): (_, bool) = if __compact_effect_0 {
+                (frame, __compact_effect_2)
             } else {
-                let __compact_plan_4: bool = false;
-                (frame, __compact_plan_4)
+                let __compact_effect_3: bool = false;
+                (frame, __compact_effect_3)
             };
-            let (frame, __compact_plan_8): (_, bool) = if __compact_plan_5 {
-                let (frame, __compact_plan_6): (_, bool) =
+            let (frame, __compact_effect_7): (_, bool) = if __compact_effect_4 {
+                let (frame, __compact_effect_5): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
-                (frame, __compact_plan_6)
+                (frame, __compact_effect_5)
             } else {
-                let __compact_plan_7: bool = false;
-                (frame, __compact_plan_7)
+                let __compact_effect_6: bool = false;
+                (frame, __compact_effect_6)
             };
-            let (frame, __compact_plan_13): (_, bool) = if __compact_plan_8 {
-                let __compact_plan_9: runtime::BoundedUint<255> =
-                    runtime::BoundedUint::<255>::new(2u128)
-                        .expect("Compact Uint literal fits its maximum");
-                let __compact_plan_10: runtime::BoundedUint<255> = __compact_plan_9;
-                let (frame, __compact_plan_11): (_, bool) =
+            let (frame, __compact_effect_11): (_, bool) = if __compact_effect_7 {
+                let __compact_effect_8: runtime::BoundedUint<255> =
+                    <runtime::BoundedUint<255>>::new(2u128)?;
+                let (frame, __compact_effect_9): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.next_gate(
                             context.witness_context_with(super::LedgerView {
                                 state: context.query.state.get_ref(),
                                 meter,
                             }),
-                            __compact_plan_10,
+                            __compact_effect_8,
                         )
                     })?;
-                (frame, __compact_plan_11)
+                (frame, __compact_effect_9)
             } else {
-                let __compact_plan_12: bool = false;
-                (frame, __compact_plan_12)
+                let __compact_effect_10: bool = false;
+                (frame, __compact_effect_10)
             };
-            let (frame, __compact_plan_20): (_, bool) = if __compact_plan_13 {
-                let (frame, __compact_plan_14) = crate::ledger_slots::high.record_read(frame)?;
-                let __compact_plan_15: runtime::BoundedUint<18446744073709551615> =
-                    runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_14 as u128)?;
-                let __compact_plan_16: runtime::BoundedUint<18446744073709551615> =
-                    __compact_plan_15;
-                let (frame, __compact_plan_17) = crate::ledger_slots::low
-                    .record_less_than(frame, (__compact_plan_16).value() as u64)?;
-                let __compact_plan_18: bool = __compact_plan_17;
-                (frame, __compact_plan_18)
+            let (frame, __compact_effect_15): (_, bool) = if __compact_effect_11 {
+                let (frame, __compact_effect_raw_12) =
+                    crate::ledger_slots::high.record_read(frame)?;
+                let __compact_effect_12: runtime::BoundedUint<18446744073709551615> =
+                    <runtime::BoundedUint<18446744073709551615>>::new(
+                        __compact_effect_raw_12 as u128,
+                    )?;
+                let (frame, __compact_effect_13): (_, bool) = crate::ledger_slots::low
+                    .record_less_than(frame, (__compact_effect_12).value() as u64)?;
+                (frame, __compact_effect_13)
             } else {
-                let __compact_plan_19: bool = false;
-                (frame, __compact_plan_19)
+                let __compact_effect_14: bool = false;
+                (frame, __compact_effect_14)
             };
-            let (frame, __compact_plan_25): (_, bool) = if __compact_plan_20 {
-                let __compact_plan_21: runtime::BoundedUint<255> =
-                    runtime::BoundedUint::<255>::new(3u128)
-                        .expect("Compact Uint literal fits its maximum");
-                let __compact_plan_22: runtime::BoundedUint<255> = __compact_plan_21;
-                let (frame, __compact_plan_23): (_, bool) =
+            let (frame, __compact_effect_19): (_, bool) = if __compact_effect_15 {
+                let __compact_effect_16: runtime::BoundedUint<255> =
+                    <runtime::BoundedUint<255>>::new(3u128)?;
+                let (frame, __compact_effect_17): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.next_gate(
                             context.witness_context_with(super::LedgerView {
                                 state: context.query.state.get_ref(),
                                 meter,
                             }),
-                            __compact_plan_22,
+                            __compact_effect_16,
                         )
                     })?;
-                (frame, __compact_plan_23)
+                (frame, __compact_effect_17)
             } else {
-                let __compact_plan_24: bool = false;
-                (frame, __compact_plan_24)
+                let __compact_effect_18: bool = false;
+                (frame, __compact_effect_18)
             };
-            if !__compact_plan_25 {
+            if !__compact_effect_19 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "nested stateful guard".to_owned(),
                 ));
             }
-            let (frame, __compact_plan_26) = crate::ledger_slots::high.record_read(frame)?;
-            let __compact_plan_27: runtime::BoundedUint<18446744073709551615> =
-                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_26 as u128)?;
-            Ok(frame.finish(__compact_plan_27))
+            let __compact_effect_20: () = ();
+            let (frame, __compact_effect_raw_21) = crate::ledger_slots::high.record_read(frame)?;
+            let __compact_effect_21: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(__compact_effect_raw_21 as u128)?;
+            Ok(frame.finish(__compact_effect_21))
         }
         pub fn unit_result<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -397,41 +392,41 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::BoundedUint<255> =
-                runtime::BoundedUint::<255>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_1: runtime::BoundedUint<255> = __compact_plan_0;
-            let (frame, __compact_plan_2): (_, bool) =
+            let __compact_effect_0: bool = __compact_param_0;
+            let __compact_effect_1: runtime::BoundedUint<255> =
+                <runtime::BoundedUint<255>>::new(1u128)?;
+            let (frame, __compact_effect_2): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.next_gate(
                         context.witness_context_with(super::LedgerView {
                             state: context.query.state.get_ref(),
                             meter,
                         }),
-                        __compact_plan_1,
+                        __compact_effect_1,
                     )
                 })?;
-            let __compact_plan_3: bool = __compact_plan_2;
-            let (frame, __compact_plan_5): (_, bool) = if __compact_param_0 {
-                (frame, __compact_plan_3)
+            let (frame, __compact_effect_4): (_, bool) = if __compact_effect_0 {
+                (frame, __compact_effect_2)
             } else {
-                let __compact_plan_4: bool = false;
-                (frame, __compact_plan_4)
+                let __compact_effect_3: bool = false;
+                (frame, __compact_effect_3)
             };
-            let (frame, __compact_plan_8): (_, bool) = if __compact_plan_5 {
-                let (frame, __compact_plan_6): (_, bool) =
+            let (frame, __compact_effect_7): (_, bool) = if __compact_effect_4 {
+                let (frame, __compact_effect_5): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
-                (frame, __compact_plan_6)
+                (frame, __compact_effect_5)
             } else {
-                let __compact_plan_7: bool = false;
-                (frame, __compact_plan_7)
+                let __compact_effect_6: bool = false;
+                (frame, __compact_effect_6)
             };
-            if !__compact_plan_8 {
+            if !__compact_effect_7 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "nested unit guard".to_owned(),
                 ));
             }
-            Ok(frame.finish(()))
+            let __compact_effect_8: () = ();
+            let __compact_effect_9: () = ();
+            Ok(frame.finish(__compact_effect_9))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

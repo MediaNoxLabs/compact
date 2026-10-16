@@ -1,0 +1,8 @@
+{
+  "kind": "unchanged genuine frontend full-IR consumer",
+  "source": "tools/compact-rust-backend/tests/frontend-return-plans/value_effects.compact",
+  "source_sha256": "48287c72ed5f3f2fcb6be7fdc4af4238662f0c7fb506823a226b2275ed03a549",
+  "retained_ir_sha256": "15bea92d52c91834e53df86baf7e6bd4a4f3f1ad57a0dec9391f5ad7416470c6",
+  "corpus_index": "001",
+  "scope": "Native/recorded/observed/manual Counter query and Uint subtraction; independent integer expectations; no fresh TS or proof claim"
+}

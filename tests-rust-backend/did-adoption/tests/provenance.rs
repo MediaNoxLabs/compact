@@ -15,6 +15,9 @@
 
 //! Checked-in evidence is bound to the original source, capture code and typed
 //! assertions. Changes require reviewing and regenerating the explicit matrix.
+#[path = "../../support/reviewed_capture.rs"]
+mod reviewed_capture;
+
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::{collections::BTreeSet, fs, path::Path};
@@ -53,7 +56,7 @@ fn capture_source_and_reviewed_test_identities() {
         "schnorr-method-lifecycle.json",
         "jwk-method-lifecycle.json",
     ] {
-        hash_rows(&data(file)["provenance"]);
+        reviewed_capture::verify(env!("CARGO_MANIFEST_DIR"), file);
     }
     hash_rows(&data("reviewed-matrix.json")["artifacts"]);
 }

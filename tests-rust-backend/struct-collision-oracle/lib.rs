@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Inner {
         pub b: ::core::primitive::bool,
@@ -39,6 +40,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct InnerCompact1 {
         pub a: ::midnight_compact_runtime::Field,
@@ -51,6 +53,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Rec {
         pub beta: ::midnight_compact_runtime::Field,
@@ -63,6 +66,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct RecCompact1 {
         pub alpha: ::midnight_compact_runtime::Field,
@@ -75,6 +79,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Wrap {
         pub inner: crate::types::Inner,
@@ -87,6 +92,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct WrapCompact1 {
         pub inner: crate::types::InnerCompact1,
@@ -95,7 +101,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn makeAlpha(
         x: runtime::Field,
     ) -> Result<crate::types::RecCompact1, runtime::CompactError> {
@@ -141,7 +147,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -179,12 +185,12 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
-            runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
+            runtime::ledger::try_constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
-            runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
+            )?,
+            runtime::ledger::try_constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
                 Default::default(),
-            ),
+            )?,
         ]);
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
@@ -251,14 +257,14 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_struct_arg_0: runtime::Field = __compact_param_0;
-            let __compact_recorded_struct_call_1: crate::types::RecCompact1 =
-                crate::pure_circuits::makeAlpha(__compact_recorded_struct_arg_0)?;
-            let __compact_recorded_struct_field_2: runtime::Field =
-                __compact_recorded_struct_call_1.alpha;
-            let frame = crate::ledger_slots::lastAlpha
-                .record_write(frame, __compact_recorded_struct_field_2)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let __compact_effect_1: crate::types::RecCompact1 =
+                crate::pure_circuits::makeAlpha(__compact_effect_0)?;
+            let __compact_effect_2: runtime::Field = __compact_effect_1.alpha;
+            let frame = crate::ledger_slots::lastAlpha.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn runBeta<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -266,14 +272,14 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_struct_arg_0: runtime::Field = __compact_param_0;
-            let __compact_recorded_struct_call_1: crate::types::Rec =
-                crate::pure_circuits::makeBeta(__compact_recorded_struct_arg_0)?;
-            let __compact_recorded_struct_field_2: runtime::Field =
-                __compact_recorded_struct_call_1.beta;
-            let frame = crate::ledger_slots::lastBeta
-                .record_write(frame, __compact_recorded_struct_field_2)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let __compact_effect_1: crate::types::Rec =
+                crate::pure_circuits::makeBeta(__compact_effect_0)?;
+            let __compact_effect_2: runtime::Field = __compact_effect_1.beta;
+            let frame = crate::ledger_slots::lastBeta.record_write(frame, __compact_effect_2)?;
+            let __compact_effect_3: () = ();
+            let __compact_effect_4: () = ();
+            Ok(frame.finish(__compact_effect_4))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

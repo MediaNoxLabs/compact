@@ -1143,3 +1143,9 @@ fn typed_custody_grant_write_rejects_missing_duplicate_invalid_closed_and_frozen
     assert!(native_witnesses.calls().is_empty());
     assert!(recorded_witnesses.calls().is_empty());
 }
+
+#[path = "writable_recording/watch_second_map.rs"]
+mod watch_second_map;
+
+#[path = "writable_recording/cross_map_duplicates.rs"]
+mod cross_map_duplicates;

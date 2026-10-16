@@ -22,6 +22,24 @@ use compact_rust_backend::ir::{
 };
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
+// Optional raw-output gate for compositional expansions, separate from frozen
+// whole-oracle inclusion and funded proof qualification. Requires a fresh root.
+fn export_zswap_expansion(name: &str, contract: &Contract, generated: &str) {
+    let Some(root) = std::env::var_os("COMPACT_ZSWAP_EXPANSION_OUTPUT") else {
+        return;
+    };
+    let root = std::path::PathBuf::from(root);
+    std::fs::create_dir_all(&root).unwrap();
+    let directory = root.join(name);
+    std::fs::create_dir(&directory).expect("Zswap expansion export requires a fresh destination");
+    std::fs::write(directory.join("lib.rs"), generated).unwrap();
+    std::fs::write(
+        directory.join("compact-rust-ir.json"),
+        serde_json::to_vec_pretty(contract).unwrap(),
+    )
+    .unwrap();
+}
+
 #[test]
 fn qualified_set_coin_insert_requires_exact_typed_slot_and_operands() {
     let bytes = Type::Bytes { length: 32 };
@@ -257,15 +275,15 @@ fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
             .iter()
             .find(|c| c.name == name)
             .unwrap();
-        let proof_required = matches!(name, "flow" | "read_coin");
-        assert_eq!(circuit.recorded, proof_required, "{name}");
-        assert_eq!(circuit.observed_call, proof_required, "{name}");
+        assert!(circuit.recorded, "{name}");
+        assert!(circuit.observed_call, "{name}");
     }
     assert!(rendered.source.contains(".create_zswap_output("));
     assert!(rendered.source.contains(".create_zswap_input("));
     assert!(!rendered.source.contains(".call_local("));
-    // Removing the only public query leaves input/output intents, including
-    // the inlined pair helper, but cannot make a proof API by itself.
+    // Removing the only public query retains checked intent recording, including
+    // the inlined pair helper. An empty public transcript is still rejected by
+    // transaction preparation; compiler capability is not proof qualification.
     let mut intent_only = contract.clone();
     let flow = intent_only
         .stateful_circuits
@@ -279,14 +297,15 @@ fn native_zswap_intents_validate_types_and_record_bounded_unit_helpers() {
         panic!("expected sequence")
     };
     actions.retain(|action| !matches!(action, StateAction::CellWriteCoin { .. }));
-    let native_only = render_with_capabilities(&intent_only).unwrap();
-    let flow = native_only
+    let intent_recorded = render_with_capabilities(&intent_only).unwrap();
+    let flow = intent_recorded
         .capabilities
         .circuits
         .iter()
         .find(|c| c.name == "flow")
         .unwrap();
-    assert!(!flow.recorded && !flow.observed_call);
+    assert!(flow.recorded && flow.observed_call);
+    export_zswap_expansion("intent-only-flow", &intent_only, &intent_recorded.source);
     for mode in 0..3 {
         let mut wrong = contract.clone();
         let name = if mode == 0 { "consume" } else { "produce" };
@@ -414,7 +433,7 @@ fn kernel_effects_have_typed_arguments_and_no_fictional_ledger_slots() {
 }
 
 #[test]
-fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
+fn kernel_recording_composes_public_slots_but_rejects_escaped_scopes() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../kernel-shielded-effects-schema20-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -436,7 +455,13 @@ fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
         .iter()
         .find(|c| c.name == "mint")
         .unwrap();
-    assert!(!mint.recorded && !mint.observed_call);
+    assert!(mint.recorded && mint.observed_call);
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let mint_body = recorded.split("pub fn nullifier").next().unwrap();
+    assert!(
+        mint_body.find(".record_write(frame,").unwrap()
+            < mint_body.find(".kernel_mint_shielded(").unwrap()
+    );
 
     let mut escaped = contract.clone();
     let circuit = escaped
@@ -444,6 +469,7 @@ fn kernel_recording_rejects_public_slot_composition_and_escaped_scopes() {
         .iter_mut()
         .find(|c| c.name == "witness_order")
         .unwrap();
+    // The first Let is followed by a sibling action: its locals cannot escape.
     circuit.actions.push(StateAction::Expression {
         value: Expr::KernelClaim {
             claim: compact_rust_backend::ir::KernelClaimKind::CoinSpend,
@@ -556,7 +582,7 @@ fn stateful_structs_validate_member_types_and_record_zswap_unit_members() {
 }
 
 #[test]
-fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
+fn zswap_recording_composes_query_helpers_but_rejects_escaped_bindings() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../native-zswap-intents-schema18-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -583,8 +609,9 @@ fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
         .iter()
         .find(|c| c.name == "flow")
         .unwrap();
-    assert!(!flow.recorded && !flow.observed_call);
+    assert!(flow.recorded && flow.observed_call);
     assert!(!rendered.source.contains(".call_local("));
+    export_zswap_expansion("query-helper", &contract, &rendered.source);
     let pair = contract
         .stateful_circuits
         .iter_mut()
@@ -605,7 +632,7 @@ fn zswap_recording_does_not_adopt_query_helpers_or_escaped_bindings() {
 }
 
 #[test]
-fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
+fn composite_intents_compose_without_public_queries_and_require_exact_typed_operands() {
     let original: Contract =
         serde_json::from_str(include_str!("../stateful-struct-schema20-ir.json")).unwrap();
     let transfer: Contract =
@@ -684,12 +711,15 @@ fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
         .iter()
         .find(|c| c.name == "planned")
         .unwrap();
-    assert!(!planned.recorded && !planned.observed_call);
-    // Mint composition has no evidence in this narrowly admitted value profile.
-    let mut unsupported = transfer.clone();
+    // A checked recording may contain only private intent events. The actual
+    // source fixture separately checks EmptyTranscript at preparation time.
+    assert!(planned.recorded && planned.observed_call);
+    // The algebra composes typed mint and transfer effects without a profile
+    // allowlist. This compiler check makes no balanced-offer/proof claim.
+    let mut composed = transfer.clone();
     let StateReturn::Expression {
         value: Expr::StructLiteral { fields, .. },
-    } = &mut unsupported.stateful_circuits[0].return_value
+    } = &mut composed.stateful_circuits[0].return_value
     else {
         panic!("transfer literal")
     };
@@ -702,6 +732,7 @@ fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
             max: u64::MAX.to_string(),
         }),
     };
-    let out = render_with_capabilities(&unsupported).unwrap();
-    assert!(!out.capabilities.circuits[0].recorded);
+    let out = render_with_capabilities(&composed).unwrap();
+    assert!(out.capabilities.circuits[0].recorded);
+    assert!(out.capabilities.circuits[0].observed_call);
 }

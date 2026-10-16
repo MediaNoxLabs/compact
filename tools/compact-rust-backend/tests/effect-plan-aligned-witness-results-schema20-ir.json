@@ -1,0 +1,1424 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "text_value",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "opaque_string"
+      },
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "name": "entry_value",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Entry",
+        "fields": [
+          {
+            "name": "text",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          },
+          {
+            "name": "point",
+            "ty": {
+              "kind": "jubjub_point"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "nested_value",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Nested",
+        "fields": [
+          {
+            "name": "items",
+            "ty": {
+              "kind": "vector",
+              "length": 2,
+              "element": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "opaque_string"
+                  },
+                  {
+                    "kind": "jubjub_point"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "name": "tuple_value",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          },
+          {
+            "kind": "bytes",
+            "length": 32
+          }
+        ]
+      },
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "name": "permit",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 14,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "text",
+      "parameters": [
+        {
+          "name": "fallback",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Hashes",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "transient",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "text_value",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "opaque_string"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "fallback"
+                  },
+                  "ty": {
+                    "kind": "opaque_string"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "point",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "hash_to_curve",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "transient",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "transient_hash",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "value"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "sequence",
+                "steps": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "witness_call",
+                      "name": "permit",
+                      "arguments": [
+                      ]
+                    },
+                    "message": "denied"
+                  }
+                ],
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Hashes",
+                    "fields": [
+                      {
+                        "name": "x",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "name": "y",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "name": "transient",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "jubjub_point_x",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    {
+                      "kind": "jubjub_point_y",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "transient"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_80",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_80"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 16,
+        "column": 1
+      }
+    },
+    {
+      "name": "entry",
+      "parameters": [
+        {
+          "name": "fallback",
+          "ty": {
+            "kind": "struct",
+            "name": "Entry",
+            "fields": [
+              {
+                "name": "text",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "point",
+                "ty": {
+                  "kind": "jubjub_point"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Hashes",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "transient",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "struct",
+                "name": "Entry",
+                "fields": [
+                  {
+                    "name": "text",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "point",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "entry_value",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Entry",
+                    "fields": [
+                      {
+                        "name": "text",
+                        "ty": {
+                          "kind": "opaque_string"
+                        }
+                      },
+                      {
+                        "name": "point",
+                        "ty": {
+                          "kind": "jubjub_point"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "fallback"
+                  },
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Entry",
+                    "fields": [
+                      {
+                        "name": "text",
+                        "ty": {
+                          "kind": "opaque_string"
+                        }
+                      },
+                      {
+                        "name": "point",
+                        "ty": {
+                          "kind": "jubjub_point"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "point",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "hash_to_curve",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "transient",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "transient_hash",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "value"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "sequence",
+                "steps": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "witness_call",
+                      "name": "permit",
+                      "arguments": [
+                      ]
+                    },
+                    "message": "denied"
+                  }
+                ],
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Hashes",
+                    "fields": [
+                      {
+                        "name": "x",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "name": "y",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "name": "transient",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "jubjub_point_x",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    {
+                      "kind": "jubjub_point_y",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "transient"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_79",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_79"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "nested",
+      "parameters": [
+        {
+          "name": "fallback",
+          "ty": {
+            "kind": "struct",
+            "name": "Nested",
+            "fields": [
+              {
+                "name": "items",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "tuple",
+                    "elements": [
+                      {
+                        "kind": "opaque_string"
+                      },
+                      {
+                        "kind": "jubjub_point"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Hashes",
+        "fields": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "y",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "transient",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "struct",
+                "name": "Nested",
+                "fields": [
+                  {
+                    "name": "items",
+                    "ty": {
+                      "kind": "vector",
+                      "length": 2,
+                      "element": {
+                        "kind": "tuple",
+                        "elements": [
+                          {
+                            "kind": "opaque_string"
+                          },
+                          {
+                            "kind": "jubjub_point"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "nested_value",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Nested",
+                    "fields": [
+                      {
+                        "name": "items",
+                        "ty": {
+                          "kind": "vector",
+                          "length": 2,
+                          "element": {
+                            "kind": "tuple",
+                            "elements": [
+                              {
+                                "kind": "opaque_string"
+                              },
+                              {
+                                "kind": "jubjub_point"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "fallback"
+                  },
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Nested",
+                    "fields": [
+                      {
+                        "name": "items",
+                        "ty": {
+                          "kind": "vector",
+                          "length": 2,
+                          "element": {
+                            "kind": "tuple",
+                            "elements": [
+                              {
+                                "kind": "opaque_string"
+                              },
+                              {
+                                "kind": "jubjub_point"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "point",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "hash_to_curve",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "transient",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "transient_hash",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "value"
+                    }
+                  }
+                }
+              ],
+              "body": {
+                "kind": "sequence",
+                "steps": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "witness_call",
+                      "name": "permit",
+                      "arguments": [
+                      ]
+                    },
+                    "message": "denied"
+                  }
+                ],
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Hashes",
+                    "fields": [
+                      {
+                        "name": "x",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "name": "y",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "name": "transient",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "jubjub_point_x",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    {
+                      "kind": "jubjub_point_y",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "point"
+                      }
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "transient"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_78",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_78"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 32,
+        "column": 1
+      }
+    },
+    {
+      "name": "tuple11",
+      "parameters": [
+        {
+          "name": "fallback",
+          "ty": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              },
+              {
+                "kind": "bytes",
+                "length": 32
+              }
+            ]
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Digest",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  },
+                  {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                ]
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "tuple_value",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "tuple",
+                    "elements": [
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    ]
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "fallback"
+                  },
+                  "ty": {
+                    "kind": "tuple",
+                    "elements": [
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      },
+                      {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "digest",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                },
+                "value": {
+                  "kind": "persistent_hash",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "value"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "sequence",
+              "steps": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "witness_call",
+                    "name": "permit",
+                    "arguments": [
+                    ]
+                  },
+                  "message": "denied"
+                }
+              ],
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Digest",
+                  "fields": [
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "parameter",
+                    "name": "digest"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_77",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_77"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 40,
+        "column": 1
+      }
+    },
+    {
+      "name": "verify_text",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "text_value",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "assert",
+            "condition": {
+              "kind": "not_equal",
+              "left": {
+                "kind": "transient_hash",
+                "value": {
+                  "kind": "parameter",
+                  "name": "value"
+                }
+              },
+              "right": {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            },
+            "message": "zero text hash"
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 47,
+        "column": 1
+      }
+    },
+    {
+      "name": "unit_text",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_76",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_76"
+            }
+          }
+        },
+        {
+          "kind": "circuit_call",
+          "name": "verify_text",
+          "arguments": [
+          ]
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "witness_call",
+            "name": "permit",
+            "arguments": [
+            ]
+          },
+          "message": "denied"
+        }
+      ],
+      "source": {
+        "file": "effect_plan_aligned_witness_results.compact",
+        "line": 51,
+        "column": 1
+      }
+    }
+  ]
+}

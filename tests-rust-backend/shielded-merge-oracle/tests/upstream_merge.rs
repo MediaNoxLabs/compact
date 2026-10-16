@@ -83,7 +83,9 @@ fn upstream_merge_covers_historical_and_transient_union_without_index_remapping(
                 .unwrap();
         let a_nullifier = input_a.nullifier;
         let input_b = if immediate {
-            let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+            let wallet = midnight_zswap::local::State::<DefaultDB>::new()
+                .apply(&keys, &seed)
+                .expect("valid seed offer updates the test wallet");
             wallet.spend(&mut rng, &keys, &b_qualified, None).unwrap().1
         } else {
             Input::new_contract_owned(&mut rng, &b_qualified, None, address, &ledger.coin_coms)

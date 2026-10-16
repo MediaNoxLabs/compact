@@ -167,6 +167,17 @@ class BuildReceiptTests(unittest.TestCase):
 
 
 class WorkspaceTestPlanTests(unittest.TestCase):
+    def test_full_selection_includes_real_consumers_and_accepted_probes(self):
+        selected = dict(gate.select_sources([], True))
+        registrations = gate.fixture_inventory.source_registry(gate.ROOT)
+        self.assertEqual(set(selected), {row.source for row in registrations})
+        for row in registrations:
+            self.assertEqual(selected[row.source], gate.fixture_inventory.emission_fixture(row, gate.ROOT))
+        probe = gate.ROOT / "examples/rust_backend/recorded_tuple13_result.compact"
+        self.assertIn(probe, selected)
+        self.assertIsNone(selected[probe])
+        self.assertEqual(gate.select_sources(["recorded_tuple13_result"], False), [(probe, None)])
+
     def test_full_gate_reports_missing_fee_fixture_before_compiler_or_build(self):
         environment = os.environ.copy()
         environment.pop("MIDNIGHT_LEDGER_TEST_STATIC_DIR", None)
@@ -196,8 +207,14 @@ class WorkspaceTestPlanTests(unittest.TestCase):
                 if label == "did-proof-lifecycles":
                     raise gate.GateError("controlled stop after mandatory DID invocation")
             with patch.object(sys, "argv", ["gate", "--full", "--compiler", str(compiler),
-                    "--scheme", str(compiler), "--run-dir", str(root / "run")]), \
+                    "--scheme", str(compiler), "--run-dir", str(root / "run"),
+                    "--conformance-baseline-root", str(root),
+                    "--guarded-point-artifacts", str(root)]), \
                  patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": str(root)}), \
+                 patch.object(gate.conformance_baseline_archive, "authenticate_archive",
+                              return_value={"root": str(root)}), \
+                 patch.object(gate.guarded_point_zkir, "authenticate_retained_artifacts",
+                              return_value={"root": str(root)}), \
                  patch.object(gate.shutil, "which", return_value=str(compiler)), \
                  patch.object(did_proof_gate, "prerequisites", return_value={}), \
                  patch.object(gate, "select_sources", return_value=[]), \
@@ -225,6 +242,46 @@ class WorkspaceTestPlanTests(unittest.TestCase):
                 str(gate.ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
                 "--adt-set-qualified"])
             self.assertNotIn("--skip", by_label["did-proof-lifecycles"])
+
+    def test_missing_or_invalid_conformance_archive_refuses_before_tools_or_build(self):
+        for selected in ([], ["--conformance-baseline-root", str(gate.ROOT)]):
+            with self.subTest(selected=selected), tempfile.TemporaryDirectory() as temporary:
+                run_dir = Path(temporary) / "not-created"
+                missing_default = Path(temporary) / "missing-bundled-baseline"
+                with patch.object(sys, "argv", ["gate", "--full", "--run-dir", str(run_dir), *selected]), \
+                     patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": temporary}), \
+                     patch.object(gate.conformance_baseline_archive, "BUNDLED_ROOT", missing_default), \
+                     patch.object(gate.conformance_baseline_archive, "authenticate_archive",
+                                  wraps=gate.conformance_baseline_archive.authenticate_archive) as authenticate, \
+                     patch.object(gate.shutil, "which") as tools, \
+                     patch.object(gate, "stable_copy") as snapshot, \
+                     patch.object(gate, "run") as commands:
+                    os.environ.pop(gate.conformance_baseline_archive.ENVIRONMENT, None)
+                    self.assertEqual(gate.main(), 1)
+                authenticate.assert_called_once_with(missing_default if not selected else gate.ROOT)
+                tools.assert_not_called()
+                snapshot.assert_not_called()
+                commands.assert_not_called()
+                self.assertFalse(run_dir.exists())
+
+    def test_missing_or_invalid_guarded_point_inputs_refuse_before_tools_or_build(self):
+        for selected in ([], ["--guarded-point-artifacts", str(gate.ROOT)]):
+            with self.subTest(selected=selected), tempfile.TemporaryDirectory() as temporary:
+                run_dir = Path(temporary) / "not-created"
+                with patch.object(sys, "argv", ["gate", "--full", "--run-dir", str(run_dir),
+                        "--conformance-baseline-root", temporary, *selected]), \
+                     patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": temporary}), \
+                     patch.object(gate.conformance_baseline_archive, "authenticate_archive",
+                                  return_value={"root": temporary}), \
+                     patch.object(gate.shutil, "which") as tools, \
+                     patch.object(gate, "stable_copy") as snapshot, \
+                     patch.object(gate, "run") as commands:
+                    os.environ.pop(gate.guarded_point_zkir.RETAINED_GRAPH_ENVIRONMENT, None)
+                    self.assertEqual(gate.main(), 1)
+                tools.assert_not_called()
+                snapshot.assert_not_called()
+                commands.assert_not_called()
+                self.assertFalse(run_dir.exists())
 
     def test_generated_library_guard_falls_back_for_test_or_unknown_expansion(self):
         safe = '#[derive(Clone)]\npub fn f() { if !(true) { assert!(false); } }'
@@ -276,18 +333,35 @@ class WorkspaceTestPlanTests(unittest.TestCase):
 
 
 class MaintainedFixtureAndProofTests(unittest.TestCase):
+    def test_recording_support_does_not_imply_frontend_proof_applicability(self):
+        source = gate.ROOT / "examples/bugs/pm-19252/example_ten.compact"
+        self.assertIn('ownPublicKey();', source.read_text())
+        # Actual paired reports from this source: an available recording path
+        # can legitimately have no frontend proof artifact.
+        report = {"schema_version": 3, "circuits": [{"name": "test1", "recorded": True,
+                  "observed_call": True, "proof_required": False, "recording_status": "not_applicable"}]}
+        frontend = {"circuits": [{"name": "test1", "pure": False, "proof": False}]}
+        gate.validate_report(report, source)
+        self.assertEqual(gate.proof_cross_tab(report, frontend, source),
+                         [{"name": "test1", "proof": False, "recorded": True, "observed_call": True}])
+        frontend["circuits"][0]["proof"] = True
+        with self.assertRaisesRegex(gate.GateError, 'applicability disagrees'):
+            gate.proof_cross_tab(report, frontend, source)
+
     def test_shared_registry_and_newly_registered_sources(self):
         import check_fixture_outputs as freshness
         import fixture_inventory
         mapping = gate.fixture_map()
         self.assertEqual(mapping, fixture_inventory.fixture_map())
         self.assertEqual(freshness.EXTRA_SOURCES, fixture_inventory.extra_sources())
-        self.assertEqual(len(mapping), 198)
+        self.assertEqual(len(mapping), 169)
         inventory_paths = set(gate.inventory.source_paths(gate.ROOT))
         self.assertTrue(set(mapping) <= inventory_paths)
+        registrations = {row.source: row for row in fixture_inventory.source_registry()}
         for source in fixture_inventory.SPECIAL_FIXTURES:
             selected = gate.select_sources([source], False)
-            self.assertEqual(selected, [(gate.ROOT / source, mapping[gate.ROOT / source])])
+            self.assertEqual(selected, [(gate.ROOT / source, fixture_inventory.emission_fixture(registrations[gate.ROOT / source], gate.ROOT))])
+            self.assertIn(gate.ROOT / source, inventory_paths)
 
     def test_duplicate_stems_have_distinct_artifact_directories(self):
         sources = [gate.ROOT / name for name in (

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -208,24 +208,22 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0) = crate::ledger_slots::low
-                .record_less_than(frame, (__compact_param_0).value() as u64)?;
-            let __compact_plan_1: bool = __compact_plan_0;
-            Ok(frame.finish(__compact_plan_1))
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) = crate::ledger_slots::low
+                .record_less_than(frame, (__compact_effect_0).value() as u64)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn nested<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0) = crate::ledger_slots::high.record_read(frame)?;
-            let __compact_plan_1: runtime::BoundedUint<18446744073709551615> =
-                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_0 as u128)?;
-            let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_plan_1;
-            let (frame, __compact_plan_3) = crate::ledger_slots::low
-                .record_less_than(frame, (__compact_plan_2).value() as u64)?;
-            let __compact_plan_4: bool = __compact_plan_3;
-            Ok(frame.finish(__compact_plan_4))
+            let (frame, __compact_effect_raw_0) = crate::ledger_slots::high.record_read(frame)?;
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> =
+                <runtime::BoundedUint<18446744073709551615>>::new(__compact_effect_raw_0 as u128)?;
+            let (frame, __compact_effect_1): (_, bool) = crate::ledger_slots::low
+                .record_less_than(frame, (__compact_effect_0).value() as u64)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         pub fn short_circuit<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -233,20 +231,22 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_6): (_, bool) = if __compact_param_0 {
-                let (frame, __compact_plan_0) = crate::ledger_slots::high.record_read(frame)?;
-                let __compact_plan_1: runtime::BoundedUint<18446744073709551615> =
-                    runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_0 as u128)?;
-                let __compact_plan_2: runtime::BoundedUint<18446744073709551615> = __compact_plan_1;
-                let (frame, __compact_plan_3) = crate::ledger_slots::low
-                    .record_less_than(frame, (__compact_plan_2).value() as u64)?;
-                let __compact_plan_4: bool = __compact_plan_3;
-                (frame, __compact_plan_4)
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_4): (_, bool) = if __compact_effect_0 {
+                let (frame, __compact_effect_raw_1) =
+                    crate::ledger_slots::high.record_read(frame)?;
+                let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
+                    <runtime::BoundedUint<18446744073709551615>>::new(
+                        __compact_effect_raw_1 as u128,
+                    )?;
+                let (frame, __compact_effect_2): (_, bool) = crate::ledger_slots::low
+                    .record_less_than(frame, (__compact_effect_1).value() as u64)?;
+                (frame, __compact_effect_2)
             } else {
-                let __compact_plan_5: bool = false;
-                (frame, __compact_plan_5)
+                let __compact_effect_3: bool = false;
+                (frame, __compact_effect_3)
             };
-            Ok(frame.finish(__compact_plan_6))
+            Ok(frame.finish(__compact_effect_4))
         }
         pub fn checked<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -254,15 +254,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_plan_0) = crate::ledger_slots::low
-                .record_less_than(frame, (__compact_param_0).value() as u64)?;
-            let __compact_plan_1: bool = __compact_plan_0;
-            if !__compact_plan_1 {
+            let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) = crate::ledger_slots::low
+                .record_less_than(frame, (__compact_effect_0).value() as u64)?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "counter guard".to_owned(),
                 ));
             }
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

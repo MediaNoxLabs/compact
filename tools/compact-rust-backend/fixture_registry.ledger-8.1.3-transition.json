@@ -1,0 +1,845 @@
+{
+  "schema_version": 1,
+  "claim": "Finite current consumer-manifest input successor for the reviewed ledger 8.1.3 upgrade. Original source/IR identities, roles, rows and nonmanifest input authority remain unchanged; no execution, proof or isolated-consumer qualification is claimed.",
+  "predecessor": {
+    "path": "fixture_registry.ledger-8.0.3.json",
+    "sha256": "690e370bc4729f5d39918a1086e956e3fd5663a76f443f7fc7282d8385409c08",
+    "ledger": "ledger-8.0.3"
+  },
+  "successor": {
+    "path": "fixture_registry.json",
+    "sha256": "912b0ec66f313869b0df061233974316ee4b4069682a1be805ff5e6b6e194e35",
+    "ledger": "ledger-8.1.3"
+  },
+  "reviewed_upgrade_commit": "535e4470e44cbed57e0cfe8db27a665d12c2093f",
+  "pre_upgrade_commit": "f8450e32b4eabd462df42cbae024b12d690f0eea",
+  "official_ledger": {
+    "git": "https://github.com/midnightntwrk/midnight-ledger",
+    "rev": "b5d3e965a18e4cac17fac4f38446fc55c524439a"
+  },
+  "counts": {
+    "source_rows": 257,
+    "changed_manifest_inputs": 73,
+    "changed_source_rows": 73,
+    "dependency_manifests": 66,
+    "minimum_rust_version_manifests": 12,
+    "dependency_entries": 210,
+    "dependency_entries_by_package": {
+      "midnight-base-crypto": 40,
+      "midnight-coin-structure": 15,
+      "midnight-onchain-state": 59,
+      "midnight-serialize": 38,
+      "midnight-storage": 52,
+      "midnight-transient-crypto": 4,
+      "midnight-zswap": 2
+    }
+  },
+  "manifest_changes": [
+    {
+      "path": "tests-rust-backend/adt-set-enum/Cargo.toml",
+      "before_sha256": "5dcf697ee4ca5aec9274f77c48c38e309996f8636c9c82b8cbf82d6163325ea4",
+      "after_sha256": "2325fc0f09375f9d967a84e8dd0f538da3a017348259d748347188edfde402e3",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-adt-set-enum-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n# Compact keeps the source's explicit Boolean assertions in generated Rust.\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/adt-set-qualified-coin-info/Cargo.toml",
+      "before_sha256": "d92581c63e6bdd6509f19bfa218928e1cc45c2615b3189352882f54acf41b38d",
+      "after_sha256": "7da7f1cafa74b18ca7d10f6bc6e050224aa6a428ba79ad41e59e841e6e6debbd",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-adt-set-qualified-coin-info-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n# Compact keeps the source's explicit Boolean assertions in generated Rust.\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/call-arg-declared-type/Cargo.toml",
+      "before_sha256": "3e83295ff1429b386b64c6641db1ff42f16946cad8d783d0d197b5b9983047ab",
+      "after_sha256": "35c785666576d7ef608e94e0466fd7aef641488128ae9b8c7d0e008122f1d077",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-call-arg-declared-type-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/canonical-output-order-oracle/Cargo.toml",
+      "before_sha256": "e1492fc7c50dc19103229338f1df7cb0debe6b4373e99d054b7bbac1bc346179",
+      "after_sha256": "0c980d4124e7d46cc394bb0130639c7a3df295c090c9051cf8b6a62661b9d74c",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-canonical-output-order-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/composite-zswap-transfer-oracle/Cargo.toml",
+      "before_sha256": "5f4dc04e4d2dae75abf914625ba8b7da2aecdd0c63d21a1e2a0116139b205340",
+      "after_sha256": "a8e7eec370e98b5e9b84892a06f1fe2158f07674710b953e94b1df03d1746066",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-composite-zswap-transfer-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\ncompact-rust-stateful-struct-oracle-fixture = { path = \"../stateful-struct-oracle\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-aligned-hashes-source/Cargo.toml",
+      "before_sha256": "ba79c6a7519e1e160ba36e871b12b9f21b43893832fc8918e7678d9fad8e8a03",
+      "after_sha256": "98e87e6d139b380b0433266a5e550798cfd0df253b051f8996bd639007bb45f4",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-aligned-hashes-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-aligned-witness-results-source/Cargo.toml",
+      "before_sha256": "9ac4b8f2277d00bb7062f102c5c660aa2641ac470570499847be31f875971b44",
+      "after_sha256": "a22a30e5730983968a48ca24a5168a74bd3f4df994ca4e8c9935f1ab59bab5ef",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-aligned-witness-results-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-composite-source/Cargo.toml",
+      "before_sha256": "fda0ec059a21d2e77c5205503334b44306f1a6e9821ec769e1091a6d93dfb611",
+      "after_sha256": "9e8ac872efb9f4f56c9f9f41584a5dd8ac7b959e2998e9eea171d644d7fb8f10",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-composite-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version",
+        "midnight-serialize",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-context-query-source/Cargo.toml",
+      "before_sha256": "f96183a726c87a19452a4596da394eb245223f265b6db230820bd49d801c64e8",
+      "after_sha256": "69a2ec6d518a9773b895e00a2fc26511840fbc940e9245d4173e28b085ef9d63",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-context-query-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version",
+        "midnight-serialize",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-counter-only-source/Cargo.toml",
+      "before_sha256": "313ce1616cdd44575a9c2b828dc632eae81212392633ea16bcba6a1e27cc4770",
+      "after_sha256": "e33cc5f9c61ea66e229ef067c6e163e71b2d971e20b17bc67f0fac4f7c681d7d",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-counter-only-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-counter-source/Cargo.toml",
+      "before_sha256": "4a626199e7f4862edb2db3ad1a7bd4bc4aa9b2e334f54cf031396a77e767b9aa",
+      "after_sha256": "48bcc5d6541a2db4af5856a87653c4c8c05aa54845fd416a65b8ed4dac38f999",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-counter-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-exact-hash-input-source/Cargo.toml",
+      "before_sha256": "924e4b4daf19b429f7d5c9444ef2b0544a332a058588e7c47b33edc4cdc67b90",
+      "after_sha256": "41100d792cfd22a2eee7790b228343b095fac0d91951cf90d508779e5fa32cf0",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-exact-hash-input-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-field-multiply-source/Cargo.toml",
+      "before_sha256": "f5644aed8040ea6f16869ae082e50dd1a0efb4ba7df42f97f414d2004cf6825c",
+      "after_sha256": "1150bbaccef4e5e9ebc316367d5c0a9759fe43dcea6c8ae72083d61af8c4dada",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-field-multiply-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-inequality-source/Cargo.toml",
+      "before_sha256": "33c1d29ffdbd4ef406a6531e0c3c6aed2d9d5855dd567342d48835908b5025bf",
+      "after_sha256": "6a03a1da704db1e7433288abf1c61c1d1f869eda987a51f9031dba3933d7ec5b",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-inequality-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-internal-interfaces-source/Cargo.toml",
+      "before_sha256": "b17a5f75ecb58e0888202097ddd9aabe883d0a9e6155711c637e0fbf722d7963",
+      "after_sha256": "d1a52922a8df2ba20c68ba4e4064c7a22e821e0bb57857b822609a32b019387e",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-internal-interfaces-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-jubjub-negation-source/Cargo.toml",
+      "before_sha256": "09bdb1022536da1c7e8972b1ed6841a3ef80bcecdde179fa34623df5e449aa35",
+      "after_sha256": "34526cdbbcf87bcd0bccc813210ef52a67544d04fffd9141155a7e744dc8f060",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-jubjub-negation-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-jubjub-projections-source/Cargo.toml",
+      "before_sha256": "eda8026bd0bc2744a62b6819c4e37037b69721b0283a2575b00f3e61a91fa117",
+      "after_sha256": "7e5397701d9d0282e89ddec9bf408417c01284aebd43f279dcbb4b66481acbc1",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-jubjub-projections-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\nmidnight-transient-crypto = \"=2.0.1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-transient-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-jubjub-source/Cargo.toml",
+      "before_sha256": "3db7ca7150d8848167ab432c502cd87e34031ae9a056aebf76451c347a7283ea",
+      "after_sha256": "b0ab5852c0f3edcb29358521070df3cc8aa1ccbe65adfc242b4758d554ca6a67",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-jubjub-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-compact-testkit = { path = \"../../testkit-rs\" }\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-kernel-source/Cargo.toml",
+      "before_sha256": "4e3d0c99d0222e961505141c72487c36978565afa02984626b0837cdd0227a6c",
+      "after_sha256": "f28695a11336a01c0ee1c2e9978c3184ceeb6d34a07d4280a3caec6086cd2609",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-kernel-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version",
+        "midnight-serialize",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-map-value-products-source/Cargo.toml",
+      "before_sha256": "e84d213ae58413223a777c30d0543c359f083b1675c7b80f2e48d000fcbbdf67",
+      "after_sha256": "f4449dec56e99a08628c3b1d89d5f38f7f449545a7a49b0d8d756f4cbaedb7f5",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-map-value-products-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-maps-source/Cargo.toml",
+      "before_sha256": "1f56a4fba65b911e4018a429d65566287ef2e4ebdd002c39bc055be196336e1c",
+      "after_sha256": "b09a533caebb067fd1d8d22487438bd58f764e401f8a6300cab8d7d9de2dcea8",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-maps-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-nested-map-member-source/Cargo.toml",
+      "before_sha256": "caaa6fb41a1253170ed6bdebc61077c5fbe58b13df34913ebfc083e0ed35b433",
+      "after_sha256": "3a51380f5c7fbf8fc5e2e863e366de475cc3db485edd33baf8fdd5e6cb82de83",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-nested-map-member-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-nested-map-remove-source/Cargo.toml",
+      "before_sha256": "03661c02d09a75bf84644c9a759a12ff38b7efb7c25053e8dd9059e56afaca59",
+      "after_sha256": "f3c6e9852ef89788e9876cadbcaef567a0db5232c0731674fab872a7eef7af3b",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-nested-map-remove-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/Cargo.toml",
+      "before_sha256": "02698f1f21b443ef7ad8ca606151f890dc96a16b5dda6a8aa801deaf83478c89",
+      "after_sha256": "88b103928fea966368387c28452c01299396ab3b03ad5ea046bd13c3db251a60",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-opaque-aligned-hashes-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-opaque-public-source/Cargo.toml",
+      "before_sha256": "8853f90055ab167bc1daccd95ad0ab03c016f1fe37a0934f462c8dda64e09d0f",
+      "after_sha256": "7c45086332d62f63133973e2f4d6a5281fe67a78e5edff6a338f05ceedaf2ee3",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-opaque-public-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-optional-send-source/Cargo.toml",
+      "before_sha256": "291b3764857089d44f99b3363554dbaa3fea5cdb7ab86c98d79aa0ffe7e4e853",
+      "after_sha256": "eb19db527ba1f4946330bd6f466cbe137df602983c13b1d8bbc5e2d60c340076",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-optional-send-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-transient-crypto = \"=2.0.1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-coin-structure",
+        "midnight-transient-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-ordered-comparisons-source/Cargo.toml",
+      "before_sha256": "3e7331c4550d08184eb151e78780dd3b8cad7bb640e35ef5cafe56df6606e263",
+      "after_sha256": "dbc6a49037331dfd8b9af4e1b17bc30ddc54dcb9f96ff4e32d966b9c82017407",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-ordered-comparisons-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-own-public-key-source/Cargo.toml",
+      "before_sha256": "3032f761b0523b968e18de36dffd65323b1a494c06d13b2e65a915c47054e312",
+      "after_sha256": "4869f9d178c94a643a7004817700431a4bd17fc98769a0ac377d09d6e91fe4fd",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-own-public-key-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-public-products-source/Cargo.toml",
+      "before_sha256": "481c5bf8c717d9203c19217862c7770b9bb624e39916f500a4524e3eed579d70",
+      "after_sha256": "70046f7609030c9a1c105168205ffbfe2100414602fe6df89cf4888eb74ee2a5",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-public-products-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-pure-calls-source/Cargo.toml",
+      "before_sha256": "e5831882d781d2568e9771844f740e0209ee2f0a47038924d020f4050af81e6a",
+      "after_sha256": "99dfe2f83b20b0634697aadf4691314a1d5040d957b0ea2ee44af40f4d3ac2eb",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-pure-calls-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-compact-testkit = { path = \"../../testkit-rs\" }\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-pure-unit-statements-source/Cargo.toml",
+      "before_sha256": "0932427ee02a1be1a1c2bc5ef72714f0f15430fea8429b5ac806aa48607f312f",
+      "after_sha256": "82c4b22db1dd415bb6ff37697b147b304fb771d8489747c4c4e9c0d450141e68",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-pure-unit-statements-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-qualified-coin-source/Cargo.toml",
+      "before_sha256": "05fe1b09117b71f0c4053f4fe0718bafac67b05ad2d449e29dea524f8f5f773d",
+      "after_sha256": "490e3115587693dca6db024205e0bae08d3b98fad528ba0dc12f09a3317ce53c",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-qualified-coin-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "midnight-serialize"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-qualified-set-source/Cargo.toml",
+      "before_sha256": "87b2d588ade63d1f5f73b5a0cc3b84f4c24ab5c1647526f21458ff26be0136b9",
+      "after_sha256": "3cb6fa56a5f4742d051d038fdc5aff2d1179dbe835e77629939f6318d6d9cd4a",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-qualified-set-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "midnight-serialize"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-rich-values-source/Cargo.toml",
+      "before_sha256": "c99585213ac47ce71e123bbc5896f37ff304b46f3fd6c5020651c49fd56e38f8",
+      "after_sha256": "25048f1203defc521c4a4e9d67987d9f78aab53f0e1b786cccc1fd9d3f10c386",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-rich-values-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-compact-testkit = { path = \"../../testkit-rs\" }\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-stateful-calls-source/Cargo.toml",
+      "before_sha256": "fdd39a3f74e12a3bc47c8d7a4cb178776ce7e0f1ffd8b5d15353ff0cd7f19aa2",
+      "after_sha256": "a7c6706f4427898baa42fe23d0edd852ef19b5ead1b79a84f4cb4082124e3b34",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-stateful-calls-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-compact-testkit = { path = \"../../testkit-rs\" }\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-terminal-composition-source/Cargo.toml",
+      "before_sha256": "c0bb886023837a82de20e844cb098bbc16da18b2b6113444dac63e0d4e1dbff0",
+      "after_sha256": "7b8f83af2b0f19460c29c4063ca3ce70e54f99bbf35aea9bcb6e0f5db43d4c01",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-terminal-composition-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version",
+        "midnight-serialize"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-actions-source/Cargo.toml",
+      "before_sha256": "aa026b62feeb80cb0ab41290b13bf642c373d67ed32737c6d45a6de1ae94aa0a",
+      "after_sha256": "d42435b0a37875e3a3c56e47d12e716988445338ab8a9f720fb8eaf64b979409",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-unit-actions-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-serialize = \"=1.0.0\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version",
+        "midnight-serialize"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-composition-source/Cargo.toml",
+      "before_sha256": "1f3bab8fcb2ad02b3ee7eb1c24ebaa9fbb74b9a55415f340784c13914c2b6277",
+      "after_sha256": "9c9ff3bd15091e8617f8e244840d3117efeb144cb98e3e8340162595cfee5071",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-unit-composition-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-keccak-source/Cargo.toml",
+      "before_sha256": "3d9275561b8ff381742d4ad3debe0ba13ac6b997db4dd9c7357e5783c61852f6",
+      "after_sha256": "1c050f19b07474b148eee621016a2337936c80f2cc958c036f2987a23dee1506",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-unit-keccak-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-value-operations-source/Cargo.toml",
+      "before_sha256": "53a360acdce06356159d304608b1f3602456fb6c7154e3fd34b854778b37c232",
+      "after_sha256": "a7e1ac52bc2bcdd83fba18a2db7d88f5c61f8513c9eaef49d672c139d1a2d3f3",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-unit-value-operations-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-add-source/Cargo.toml",
+      "before_sha256": "d69f0a0cf79034ae6f673f290ce18e7889a33cfa438733f87bb809ce9e9bfc44",
+      "after_sha256": "5438fe5586dcaae85b7ee42b54d6656f69169ded307cd23f42bb9790e1399d9f",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-wide-add-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-casts-source/Cargo.toml",
+      "before_sha256": "205f920814cee255a4b383910665762ec2bfd945eab02bfd960b5ce1ec8e5287",
+      "after_sha256": "ad803a51ac8ecc620418553e0d6ad4468125ba9044b771cd22d3447b00c55a73",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-wide-casts-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-field-cast-source/Cargo.toml",
+      "before_sha256": "5d0b823a6b1f92fb211e099834cd1303ba915f5e24f43a017e3453958885a865",
+      "after_sha256": "214c9418e2c5b4f97e7e9edab869f109d381349248288b20368a7a58d899c4e5",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-wide-field-cast-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-source/Cargo.toml",
+      "before_sha256": "ba0b6bcea1d06cd8b820ee9cef9452b6a8563efda9e4eb713267136d706b212c",
+      "after_sha256": "7caba0f66cd6b4c7843deb12b4354bc08d8d32d04f198137d7409b99a09fab65",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n\n[package]\nname = \"compact-rust-effect-plan-wide-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nrust-version = \"1.88\"\nlicense = \"Apache-2.0\"\npublish = false\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "minimum-rust-version"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-witness-inputs-source/Cargo.toml",
+      "before_sha256": "ad76e3a08c25d0fa4fca835d8e602e5418ff7caa72fa34755ffe058dadcd45b5",
+      "after_sha256": "6e2872b7168b0e7579e536a70cf32a4a09fef9074a9cdab07729a781a019bf7e",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-effect-plan-witness-inputs-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/effectful-return-oracle/Cargo.toml",
+      "before_sha256": "f4df3f1ba731a63f041553d460c5e2bcfbca455bd0fd279cd0a052c87c8d0e5a",
+      "after_sha256": "782926d6127aec38346165b38c487bd01f112a71cbc5ed89a088b57a9a73c9fd",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-effectful-return-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"fixture.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nsha2 = \"0.10\"\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\nsha2 = \"0.10\"\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/empty-recording-witness-source/Cargo.toml",
+      "before_sha256": "f1e60ad967175d13a77dee28ca5c653ee6b2102c6bc5a482ec30fe1d77c637df",
+      "after_sha256": "032ab007a31162b734ea60e914d264e4cea9c079a1f9b03bf524cd1c272a0ac3",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-empty-recording-witness-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nmidnight-serialize = \"=1.0.0\"\nmidnight-onchain-state = \"=3.0.0\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/field-observation-oracle/Cargo.toml",
+      "before_sha256": "bbe081c82f3e90631291ef708e65161f4e785737b0588b514777d52d4b378bc8",
+      "after_sha256": "06662c4b510000f58c5c11981237d0cbf57415a5ff70cb01ceeb32d1579fd3a0",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-field-observation-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/field-to-bytes32-oracle/Cargo.toml",
+      "before_sha256": "9b2811bd7d5cc41ea3bd94ba7f3915940b468c2cac532a01333662aff4f8c930",
+      "after_sha256": "5743d50ce48f121162761a9cded7aa8d7419e0d3684f914e72d841a7d8fdb8a7",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-field-to-bytes32-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/hmt-default-oracle/Cargo.toml",
+      "before_sha256": "227b15d8e1139d57ccee4a967ee5748ec8cc9abb198c2f6971bf5a45f81460ec",
+      "after_sha256": "7eadce396faee0da77714b73a65ab83fee9d81683e824e44a8b6edd27e467dc2",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-hmt-default-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/hmt-insert-oracle/Cargo.toml",
+      "before_sha256": "efa8f90c728c97a38c03b5c95d58605ce80a74bfaf115cde51cfea796c499078",
+      "after_sha256": "ee8af6c6cd65fca89dcbbbb883ff56714ac54dae87ee6286f5ee649bbec143e9",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-hmt-insert-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\nnum-bigint = \"0.4\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/kernel-shielded-effects-oracle/Cargo.toml",
+      "before_sha256": "70ed0fd757944538f610b73eda31a866c63328f0ff61c2dac624fcf22fc5a251",
+      "after_sha256": "0009667b27674170f472aad8de1a350e91be71381dfd4d77e44350a2b75ab317",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-kernel-shielded-effects-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/merkle-tree-oracle/Cargo.toml",
+      "before_sha256": "d035ddf76d288eb9625c69e000547ce149ea4b24ac54d09fdabe458aa804cb41",
+      "after_sha256": "3c32d9cfa05af5d20ec4b7df167447293bff77a01d73d68193ff6ca7b991c4ad",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-merkle-tree-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\nnum-bigint = \"0.4\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/native-zswap-intents-oracle/Cargo.toml",
+      "before_sha256": "1c72dacba737fd22bb7a490de4389a1823c7f419177e254c46306cb15d31f2cb",
+      "after_sha256": "67bbf7437cdb2f7bd75dd1f575449d5d884bd1206fbfb4e394558257cd204cda",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-native-zswap-intents-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nrand = \"=0.8.6\"\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/opaque-cell-inputs-source/Cargo.toml",
+      "before_sha256": "d3c108ef609273b8d20b27d10af87f483cc195277d5ad0a0248e5dec5a3d6c2f",
+      "after_sha256": "a3ad677fc8acbcfe92e024c61c4b491f498d5d7325ce320690f36244c0fc8325",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-opaque-cell-inputs-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/opaque-observed-boundary-source/Cargo.toml",
+      "before_sha256": "5bf1981a9eb85e0b8fd34991b08c860e6f6beec523839e08127a01d85d65679c",
+      "after_sha256": "b8a237fef5665e1d5eab508b299ea7bb237fc41a3079a7f8d275539560105aa6",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n[package]\nname = \"compact-rust-opaque-observed-boundary-source-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\npublish = false\n[lib]\npath = \"fixture.rs\"\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n[dev-dependencies]\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-storage = \"=2.0.1\"\nmidnight-base-crypto = \"=1.0.0\"\nrand = \"=0.8.6\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/qualified-coin-cell-oracle/Cargo.toml",
+      "before_sha256": "7890f6afecb73d898f761b105ab2c1933a0e4b66722d0d780a16e6275020a2b2",
+      "after_sha256": "3584d9d8974ab3a86fa3c8c3c047635f507f77419b940419edd987b34d03f672",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-qualified-coin-cell-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/qualified-coin-set-oracle/Cargo.toml",
+      "before_sha256": "2e73e92cd31f3801b4ebb71b4abf7c37547697c5f05ec0592ef81e9569c0e941",
+      "after_sha256": "29b6e9f67cef61508c8191fc0b86c2b38511088c080f12ca6ae9bde5bca3cbfc",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-qualified-coin-set-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/root-let-action-return-oracle/Cargo.toml",
+      "before_sha256": "d84f96fdcbb7bbd78ef69b8ba9d8143e4948275404d7ce178d2ed345860055db",
+      "after_sha256": "c692f66668be16cdde973c2372a58471608d5995830ed0e27ec19a6f9648d854",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-root-let-action-return-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/shielded-merge-oracle/Cargo.toml",
+      "before_sha256": "3f901e6d69fa54ee6f934027f878e57a23c369513e997091fc9d67d3eb70c1e9",
+      "after_sha256": "14ac1080c7a83f11faa0df2bdd70ed8643b1958309fa4d77b99218060719b468",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-shielded-merge-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-zswap = \"=8.0.3\"\nrand = \"=0.8.6\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-base-crypto",
+        "midnight-coin-structure",
+        "midnight-zswap"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/shielded-receive-oracle/Cargo.toml",
+      "before_sha256": "5772dd0e9713bd880045a6d60a138a9ffea58331a6244d7da5311b626472729c",
+      "after_sha256": "b37065acf62e07be8ca6c1a1499c3fb6edf2d1a5e0b783c249839ae6793e2954",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-shielded-receive-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/shielded-send-oracle/Cargo.toml",
+      "before_sha256": "5620139faeef723e8df3261ed03843216b381e3042138affa8543e1bad4ba4d5",
+      "after_sha256": "38de9771ccbae035da89563530255c972c8e7217c59237c2d589f7a93cd781a7",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-shielded-send-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-transient-crypto = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-base-crypto",
+        "midnight-coin-structure",
+        "midnight-transient-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/stateful-struct-oracle/Cargo.toml",
+      "before_sha256": "a1edaec82bb559d3682f5b6a462d79a30cf50cc3a59d564bffeecb75f06cfc9f",
+      "after_sha256": "6f21c3518675240eb9d0ffb25f10bf20090254b5ba3739366fa4a1e9b1cd6cb0",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-stateful-struct-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/terminal-lexical-return-oracle/Cargo.toml",
+      "before_sha256": "679a22a1fc42aa7b73fb997d602816b681c734b45cf76ff963160e74b9cd0360",
+      "after_sha256": "8066d79e2ca1b460ec7c58da483944bb78b7f06627ea3be55aa838b3d31ba32e",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-terminal-lexical-return-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nmidnight-base-crypto = \"=1.0.0\"\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/ternary-cond-oracle/Cargo.toml",
+      "before_sha256": "9df55d23b95ac32c16323deb7b06b30c328e4f9a8452ca89ea87cc586f29cf12",
+      "after_sha256": "519c0f9777079198a8c0114a707cb03157b78c0ba9232dc01ef74bf8d181b80b",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-ternary-cond-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/test-center-bboard/Cargo.toml",
+      "before_sha256": "bc98aae613f5a75d56dbe0979ca15a5cdc8171ebe08ff90f846143db0b4d1081",
+      "after_sha256": "8a374284927fe34d4bad2d7fd7b85558942140f317f308181bb970b54c4f5147",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n# Licensed under the Apache License, Version 2.0 (the \"License\"); you may not use\n# this file except in compliance with the License. You may obtain a copy of the\n# License at http://www.apache.org/licenses/LICENSE-2.0\n\n[package]\nname = \"compact-rust-test-center-bboard-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nserde_json = \"1\"\nhex = \"0.4\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/test-center-coracle/Cargo.toml",
+      "before_sha256": "e1b8a63aa87c56df2038b82ac0206d7e69e8811273061d9afcecabb3cde6a326",
+      "after_sha256": "9d90cbfd067cf77a23f19af3fc3c8c8a117d8e3669dc980c7c608d4c55069322",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-test-center-coracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/test-center-micro-dao/Cargo.toml",
+      "before_sha256": "8f2ea4ab9b308b9dd45c2369b92932eb10371f5b0de1003ba041b69303bb4022",
+      "after_sha256": "83401d5bd5205ab370cab977b245c2309b81bb72e9869b53744afa902aefc894",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-test-center-micro-dao-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/transient-receive-send-oracle/Cargo.toml",
+      "before_sha256": "cb8505f23832a4b99eed399d2a19840e4ee2de890a9a7fc1b2e029b38cf9bd9a",
+      "after_sha256": "94bbaf136d7ae710eb1d09a18ed6c898536b697be622e876aab485bd6022020b",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-transient-receive-send-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-zswap = \"=8.0.3\"\nrand = \"=0.8.6\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-base-crypto",
+        "midnight-coin-structure",
+        "midnight-zswap"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/witness-hash/Cargo.toml",
+      "before_sha256": "4575716afcad072bf89cb6b5435ca45c729145c2ebb58da163e16f4df4ee1e50",
+      "after_sha256": "f95a89854d7246e1bcf2f93833ac4a8c906a53527b3180b666466d073a1f8bb5",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-witness-hash-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nmidnight-serialize = \"=1.0.0\"\nmidnight-onchain-state = \"=3.0.0\"\nhex = \"0.4\"\nserde_json = \"1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/witness-jubjub/Cargo.toml",
+      "before_sha256": "ae0594cd3116833b7cb7eaf8741ff1951c0d6a244e8538253fe8e7fc9d3fec6c",
+      "after_sha256": "9019e2b6e945fc933708c1d4bab64b404fd317e1696dfd621c4f458733567998",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-witness-jubjub-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nmidnight-serialize = \"=1.0.0\"\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-transient-crypto = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-transient-crypto"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/zerocash-oracle/Cargo.toml",
+      "before_sha256": "92318379afcc41b87c03ad65a42dec58b51ba8e225cc9f3b840eb9fb93944771",
+      "after_sha256": "59e95ed054ea6a9f1c39bde230bb5120c0cb7e5b9f852d84ddcc6edff45c4752",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-zerocash-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde_json = \"1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage"
+      ]
+    },
+    {
+      "path": "tests-rust-backend/zswap-transfer-oracle/Cargo.toml",
+      "before_sha256": "3f7b7329a28fbbf023e8c82e53de198a57e277274a9cdf5586ea845dde6eb64a",
+      "after_sha256": "6d372281a8ce78e510a1906d24066649ba91c062326d95c98e4b7349b93f37f8",
+      "before_toml": "# This file is part of Compact.\n# Copyright (C) 2026 Midnight Foundation\n# SPDX-License-Identifier: Apache-2.0\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#  \thttp://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n\n[package]\nname = \"compact-rust-zswap-transfer-oracle-fixture\"\nversion = \"0.1.0\"\nedition = \"2024\"\nlicense = \"Apache-2.0\"\n\n[lints.clippy]\nbool_comparison = \"allow\"\n\n[lib]\npath = \"lib.rs\"\n\n[features]\nledger-transaction = [\"midnight-compact-runtime/ledger-transaction\"]\n\n[dependencies]\nmidnight-compact-runtime = { path = \"../../runtime-rs\" }\n\n[dev-dependencies]\nhex = \"0.4\"\nserde = \"1\"\nserde_json = \"1\"\nmidnight-base-crypto = \"=1.0.0\"\nmidnight-coin-structure = \"=2.0.1\"\nmidnight-onchain-state = \"=3.0.0\"\nmidnight-serialize = \"=1.0.0\"\nmidnight-storage = \"=2.0.1\"\n\n[build-dependencies]\ncompact-rust-backend = { path = \"../../tools/compact-rust-backend\" }\nserde_json = \"1\"\n",
+      "reviewed_changes": [
+        "midnight-onchain-state",
+        "midnight-serialize",
+        "midnight-storage",
+        "midnight-base-crypto",
+        "midnight-coin-structure"
+      ]
+    }
+  ]
+}

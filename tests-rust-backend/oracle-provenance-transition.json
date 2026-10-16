@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "scope": "Retained semantic oracles; metadata-only provenance-label successor. No new TypeScript capture, circuit execution, proof or artifact reproduction is asserted.",
+  "transformation": "Only files map keys / files list path labels become artifact:sha256:<retained-content-sha256>/<basename>; original hashes, optional byte lengths, every semantic row and all other fields remain unchanged.",
+  "artifact_label_semantics": "Opaque retained content identities, not file paths, fetchable locations or an assertion that referenced original artifacts are distributed.",
+  "semantic_payload_hash": "UTF-8 JSON after removing files, sorted keys, compact separators, ensure_ascii=false.",
+  "oracles": [
+    {
+      "path": "tests-rust-backend/effect-plan-aligned-hashes-source/oracle/typescript.json",
+      "predecessor_sha256": "2232e24588a4f12c41f9ed5f7b5dd0816366d61112f902871ca9908691f87992",
+      "successor_sha256": "af8772e6371778bf039d05e5a55b00f14410710dd3de8595ef59ae7081547a6a",
+      "semantic_payload_sha256": "c1ee9900fe75524b8c1f3efbdb8344aabda7db3aa27b751e0e28202779cef585",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-aligned-witness-results-source/oracle/typescript.json",
+      "predecessor_sha256": "2ec268513d781c9297b6851063a07b86b00a25d339498927f37c09b9e798f229",
+      "successor_sha256": "95d07af1ec7f80fad8e376354c2a4086b442c36901c8a22078def2ddb7d40235",
+      "semantic_payload_sha256": "4b654f8129c03ace6544823e9dcd8e518da3dc1774e1451284818a73be345c01",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-exact-hash-input-source/oracle/typescript.json",
+      "predecessor_sha256": "5991876add8b786c0c1f275640dca42121600185919c43a4da71fe21fd7dbc5e",
+      "successor_sha256": "3a4de0861958c682e82c84de3737691ea0311cc2d2dd9985833eed8478b9967a",
+      "semantic_payload_sha256": "ec4a009b324ca521ddde5f23f12de0cc2ad8c976fed8d1a053b3aa0a0957acfa",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-jubjub-negation-source/oracle/typescript.json",
+      "predecessor_sha256": "b91a715a85847bbfba828a071ee8ab365c68517af84a97e01c40c44413b75d94",
+      "successor_sha256": "fe198ac5a33d6b988b3262da5a44e3796e76df6e8773918fbc2630ce53aa0350",
+      "semantic_payload_sha256": "dc22f36a8f61ef7e528251d2bd92efdc8b9dc2a7ec0118dfb2c548d3526843dd",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-maps-source/oracle/typescript.json",
+      "predecessor_sha256": "e4d3f6e0705a0e56fd067eb212bb0505e4fa7ce6fbc9ae3651f06304e8f6d216",
+      "successor_sha256": "63022471e0d9359bef84b007dc91a27d155f17b63dbdb59517f087af155ed84c",
+      "semantic_payload_sha256": "a1b9769bfe8cd5e4fe5365c382167084391c26bd7ecbd8900184e0d260774770",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-nested-map-member-source/oracle/typescript.json",
+      "predecessor_sha256": "af281ac3cfcffb5aaba2dbfde5edcca1d9c026810a5dff05972893708ba6ed22",
+      "successor_sha256": "5606397abe609f7390df209823f7d3559dce204563a1c239611ca2d2ad31e32e",
+      "semantic_payload_sha256": "792451a615415655429a41ea4e5a850fb597a6f9aaab6049ff8f4ddc83732dcd",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-nested-map-remove-source/oracle/typescript.json",
+      "predecessor_sha256": "37f917e81cd005a3ead36a4d8f8b765d7257657d1db23b6be900dfb178254118",
+      "successor_sha256": "377d6ecb199d6fa6a4b3ffd2e221d6f8282819f41fc0f58934cbe3f520feb6cc",
+      "semantic_payload_sha256": "f451e29f8831df501455755bad33e1323d3db0483d6621008bf7336aaa1ad8b0",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/oracle/normalized-reference.json",
+      "predecessor_sha256": "7644d0aa06e458ed06fd314146ffabe20c13447a3f9931c2a280bfec5119bca3",
+      "successor_sha256": "1011ec6e926d910d2aa6e953347cbf1af7b660ed1fd938b5fda204367c346be0",
+      "semantic_payload_sha256": "d7576cc8caa290fdec8c8dbe80a7447a9a89b4b06f8547e66de8b3384002e7c5",
+      "provenance_reference_count": 53
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/oracle/typescript.json",
+      "predecessor_sha256": "8c5f12db033cf5d49129806bd39a83bbe96c4ae886381bb0586ec162366f835f",
+      "successor_sha256": "b92dddc6c2beb8547632c50f93d5b8a545fd96c791b714c9510ab3add7608588",
+      "semantic_payload_sha256": "57e1a9dbf7ab12f578a9031b0135d857b498bc65e324665778ee38bf5cf5426f",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-optional-send-source/oracle/typescript.json",
+      "predecessor_sha256": "1001ab0b2b585219d31ead169b71fe7d1a4e5a75c61a877ebf94bd806d765619",
+      "successor_sha256": "d31e25ca03704da4d72fb61c74c0ca528b1f744b2ac0a2544f423e415f95b05a",
+      "semantic_payload_sha256": "cf6ff8dddf4d09307ee1ca43c830791e70785306c4b418a8ac1a9fac9c8129af",
+      "provenance_reference_count": 6
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-composition-source/oracle/typescript.json",
+      "predecessor_sha256": "be754bbc94244c2629ea814f89e0e06c2438ba9d386c86532655a5ffcff4f486",
+      "successor_sha256": "32c21a9cb820ddefa7249171fce6bbb04cfbaeaaf79e1b83ba0c10fed1365a73",
+      "semantic_payload_sha256": "6d035f1ff90970242e20f51204262734350ee0039dc976cbe4bb095a77f567f6",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-keccak-source/oracle/typescript.json",
+      "predecessor_sha256": "f2a5489ef54f663ab99d6f4febed17099baf4e4581ee5a1ab6d1f04cd2e43b00",
+      "successor_sha256": "66f16a08902336d38d14ee8e9eeb28c26a3c7ff6c6e3d2112cda92f5242106be",
+      "semantic_payload_sha256": "d3fb752bd5d4118dd203e94ac2041eb6c2cbd59ab8bdd67220b457d88f4d557e",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-unit-value-operations-source/oracle/typescript.json",
+      "predecessor_sha256": "5496c3ac1fffd8bae1dc745d562cb87ecf7f5e8c921ef711b15cea8da0b782ef",
+      "successor_sha256": "b60107d7f46f55ebb155e2897f76587381a1eb74290b54dcd273f8117508eff2",
+      "semantic_payload_sha256": "6180ce62ab6c406d6936f06d2d66682d7554049b1af07d3736daba6d1bf6a2c8",
+      "provenance_reference_count": 55
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-add-source/oracle/typescript.json",
+      "predecessor_sha256": "9bbef47b8f3ae54325e26908a6b5b7a6a85cbc9adf8e0797a8cb55232bd03701",
+      "successor_sha256": "052cd0a03bfc1e116fa2d4f011129e7973ea86fef8ccf45806ee3dde155069bd",
+      "semantic_payload_sha256": "17ebb54e8dc59c9d84af7bc659a5423d06fd78addcf3ac07f76dc860651441c8",
+      "provenance_reference_count": 10
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-casts-source/oracle/typescript.json",
+      "predecessor_sha256": "edba596692911d5e53f14ce8f3f38c0afe3d0c7cb8d01127f16a0bf9b83bafde",
+      "successor_sha256": "826f9d3c955cfc5ef1f0e1918cbe7f9ad27ba8bd5c5de37edb73603ad876d2ad",
+      "semantic_payload_sha256": "aa5cb14e4b677a02b68baf5af3cb88ffcc5a4fd01af69347fc7e66bca6fd40e0",
+      "provenance_reference_count": 10
+    },
+    {
+      "path": "tests-rust-backend/effect-plan-wide-field-cast-source/oracle/typescript.json",
+      "predecessor_sha256": "ada0e7f6ccbd60ddda40c0b4062015948480ffc7b931c1f8b7f0553236080830",
+      "successor_sha256": "d8f0f7fc65125ca23f22ec7acf52b4651f15a64eb58b6db1e51d35e833c97363",
+      "semantic_payload_sha256": "ca4db5d744258f53217db5c4e62715b7efcf81e39ddcc125b1f9e503447d5256",
+      "provenance_reference_count": 55
+    }
+  ],
+  "retained_original_capture_dependency": {
+    "consumer": "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/oracle/normalized-reference.json",
+    "original_capture_path": "tests-rust-backend/effect-plan-opaque-aligned-hashes-source/oracle/typescript.json",
+    "original_capture_sha256": "8c5f12db033cf5d49129806bd39a83bbe96c4ae886381bb0586ec162366f835f",
+    "identity": "artifact:sha256:8c5f12db033cf5d49129806bd39a83bbe96c4ae886381bb0586ec162366f835f/typescript.json",
+    "explanation": "Normalized-reference was derived from original capture bytes. Its original-input identity is preserved; it does not refer to the differently hashed metadata successor."
+  }
+}

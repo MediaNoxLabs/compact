@@ -16,7 +16,9 @@
 //! This audits every branch and binding; the shared Plan owns evaluation,
 //! concrete types, lexical scope, argument ordering and same-frame calls.
 use super::*;
-use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
+#[cfg(test)]
+use crate::coin_shapes::shielded_recipient_type;
+use crate::coin_shapes::{qualified_coin_type, shielded_coin_type};
 
 pub(super) fn uncoerced(value: &Expr) -> &Expr {
     match value {
@@ -55,6 +57,7 @@ pub(super) fn singleton_bridge(callee: &PureCircuit) -> bool {
 }
 
 // Shared exact singleton wrapper audit; caller policies own amount/provenance.
+#[cfg(test)]
 pub(super) fn audit_bridge(
     name: &str,
     ledger: &HashMap<&str, &LedgerField>,
@@ -115,6 +118,7 @@ pub(super) fn audit_bridge(
     Some(())
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,

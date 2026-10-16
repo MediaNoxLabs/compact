@@ -22,9 +22,18 @@ license = "Apache-2.0"
 [lib]
 path = "lib.rs"
 
+[features]
+ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]
+
 [dependencies]
 midnight-compact-runtime = { path = "../../runtime-rs" }
 
 [dev-dependencies]
+midnight-serialize = { version = "=1.1.1", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
+midnight-onchain-state = { version = "=3.0.2", git = "https://github.com/midnightntwrk/midnight-ledger", rev = "b5d3e965a18e4cac17fac4f38446fc55c524439a" }
 hex = "0.4"
+serde_json = "1"
+
+[build-dependencies]
+compact-rust-backend = { path = "../../tools/compact-rust-backend" }
 serde_json = "1"

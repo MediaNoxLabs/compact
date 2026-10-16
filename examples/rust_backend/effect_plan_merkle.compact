@@ -1,0 +1,49 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger plain: MerkleTree<3, Uint<8>>;
+export ledger historic: HistoricMerkleTree<3, Uint<8>>;
+export struct Snapshot {
+  plain_full: Boolean,
+  historic_full: Boolean,
+  plain_known: Boolean,
+  historic_known: Boolean
+}
+circuit append_historic(value: Uint<8>): [] {
+  historic.insert(disclose(value));
+}
+circuit plain_full_value(): Boolean { return plain.isFull(); }
+circuit historic_full_value(): Boolean { return historic.isFull(); }
+circuit plain_known_value(root: MerkleTreeDigest): Boolean { return plain.checkRoot(disclose(root)); }
+circuit historic_known_value(root: MerkleTreeDigest): Boolean { return historic.checkRoot(disclose(root)); }
+export circuit observe(root: MerkleTreeDigest): Snapshot {
+  const plain_full = plain_full_value();
+  const historic_full = historic_full_value();
+  const plain_known = plain_known_value(root);
+  const historic_known = historic_known_value(root);
+  return Snapshot { plain_full, historic_full, plain_known, historic_known };
+}
+export circuit run(value: Uint<8>, root: MerkleTreeDigest, selected: Boolean): Snapshot {
+  plain.insert(disclose(value));
+  if (disclose(selected)) { append_historic(value); }
+  return observe(root);
+}
+export circuit place(value: Uint<8>, index: Uint<64>): [] {
+  plain.insertIndex(disclose(value), disclose(index));
+  historic.insertIndex(disclose(value), disclose(index));
+}
+export circuit hashes(hash: Bytes<32>, index: Uint<64>): [] {
+  plain.insertHash(disclose(hash));
+  historic.insertHash(disclose(hash));
+  plain.insertHashIndex(disclose(hash), disclose(index));
+  historic.insertHashIndex(disclose(hash), disclose(index));
+}
+export circuit defaults(index: Uint<64>): [] {
+  plain.insertIndexDefault(disclose(index));
+  historic.insertIndexDefault(disclose(index));
+}
+export circuit forget(): [] { historic.resetHistory(); }
+export circuit reset(): [] {
+  plain.resetToDefault(); historic.resetToDefault();
+}

@@ -1,0 +1,17 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Payload { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; }
+export struct Envelope { payload: Payload; marker: Field; }
+export ledger text: Opaque<"string">;
+export ledger blob: Opaque<"Uint8Array">;
+export ledger envelope: Envelope;
+constructor(t: Opaque<"string">, b: Opaque<"Uint8Array">, e: Envelope) {
+  text = disclose(t);
+  blob = disclose(b);
+  envelope = disclose(e);
+}
+export circuit setText(value: Opaque<"string">): [] { text = disclose(value); }
+export circuit setBytes(value: Opaque<"Uint8Array">): [] { blob = disclose(value); }
+export circuit setEnvelope(value: Envelope): [] { envelope = disclose(value); }

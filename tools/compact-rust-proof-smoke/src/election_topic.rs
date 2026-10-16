@@ -19,6 +19,8 @@ use compact_rust_election_oracle_fixture::ledger_contract as contract;
 use compact_rust_election_oracle_fixture::types::{MaybeCompact1, PermissibleVotes, PrivateState};
 use contract::{LedgerView, Witnesses};
 use midnight_compact_runtime as runtime;
+const RETAINED_IR: &str =
+    include_str!("../../compact-rust-backend/tests/election-oracle-schema20-ir.json");
 const AUTHORITY: [u8; 32] = [
     0x33, 0xef, 0xf3, 0xd5, 0x7e, 0x66, 0xfd, 0x14, 0x2b, 0xb4, 0x08, 0xe4, 0x89, 0x44, 0xa4, 0xd6,
     0xb8, 0xf2, 0xdb, 0xf5, 0xc1, 0x80, 0x96, 0xf8, 0x27, 0xb0, 0x28, 0x3d, 0xbf, 0x91, 0x11, 0xc8,
@@ -81,6 +83,10 @@ impl Witnesses<u64> for FixedWitness {
 }
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     let topic = runtime::OpaqueString::from("議題 🗳️");
     let initial =
         contract::initial_state(ConstructorContext::new(10_u64), FixedBytes::new(AUTHORITY))?;
@@ -128,26 +134,41 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let prepared = generated
         .recording()
         .set_topic_call(&observed, 10_u64, topic.clone())?
-        .prepare(verifier, Fr::from(0_u64))?;
+        .prepare(verifier.clone(), Fr::from(0_u64))?;
     if format!("{manual:?}") != format!("{prepared:?}") {
         return Err("typed topic call differs from manual recording".into());
     }
-    check_transaction(root, "set_topic", deploy, prepared, &mut rng, |applied| {
-        if applied.data.get_ref() != &expected_state {
-            return Err("applied topic state differs from native".into());
-        }
-        let stored = contract::PublicStateView::from(applied).topic()?;
-        if !stored.is_some || stored.value != topic {
-            return Err("applied optional topic changed".into());
-        }
-        Ok(())
-    })?;
-    println!("election authority/phase guarded Unicode topic proved and applied through ledger-8");
+    if prepared.input != AlignedValue::from(topic.clone())
+        || prepared.output != AlignedValue::from(())
+    {
+        return Err("topic public input/output binding differs".into());
+    }
+    let stored = contract::PublicStateView::from(&native.context).topic()?;
+    if !stored.is_some || stored.value != topic {
+        return Err("expected optional topic state differs".into());
+    }
+    kernel_shielded_effects::prove_and_verify_call(root, "set_topic", &prepared, &verifier)?;
+    opaque_public::apply_funded(
+        root,
+        "set_topic",
+        prepared,
+        deploy,
+        &expected_state,
+        rng,
+        587,
+    )?;
+    println!(
+        "election topic: authority/phase guarded Unicode write proved, changed binding rejected, default-strict funded ledger8 application passed; constructor state supplied, deployment not proved"
+    );
     Ok(())
 }
 
 /// Exercise every source successor branch, including the stable final state.
 pub(super) fn advance(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     use compact_rust_election_oracle_fixture::types::PublicState;
     for (step, expected_phase) in [
         PublicState::commit,
@@ -208,28 +229,41 @@ pub(super) fn advance(root: &Path) -> Result<(), Box<dyn Error>> {
         let prepared = generated
             .recording()
             .advance_call(&observed, private)?
-            .prepare(verifier, Fr::from(0_u64))?;
+            .prepare(verifier.clone(), Fr::from(0_u64))?;
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("typed advance call differs from manual recording".into());
         }
-        check_transaction(root, "advance", deploy, prepared, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected_state {
-                return Err("applied phase state differs from native".into());
-            }
-            let view = contract::PublicStateView::from(applied);
-            if view.state()? != expected_phase || !view.topic()?.is_some {
-                return Err("applied phase or optional topic changed".into());
-            }
-            Ok(())
-        })?;
-        println!("election advance transition {step} proved and applied through ledger-8");
+        if prepared.input != AlignedValue::from(()) || prepared.output != AlignedValue::from(()) {
+            return Err("advance original Unit input/output differs".into());
+        }
+        let view = contract::PublicStateView::from(&native.context);
+        let topic = view.topic()?;
+        if view.state()? != expected_phase
+            || !topic.is_some
+            || topic.value != runtime::OpaqueString::from("議題 🗳️")
+        {
+            return Err("expected phase or optional topic changed".into());
+        }
+        kernel_shielded_effects::prove_and_verify_call(root, "advance", &prepared, &verifier)?;
+        opaque_public::apply_funded(
+            root,
+            "advance",
+            prepared,
+            deploy,
+            &expected_state,
+            rng,
+            588 + step as u64,
+        )?;
+        println!(
+            "election advance transition {step}: proof verified, changed binding rejected, default-strict funded ledger8 application passed; constructor and seeded prior state supplied, deployment not proved"
+        );
     }
     Ok(())
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct LedgerWitness {
-    calls: std::cell::RefCell<Vec<&'static str>>,
+    calls: std::rc::Rc<std::cell::RefCell<Vec<&'static str>>>,
 }
 
 impl Witnesses<u64> for LedgerWitness {
@@ -307,6 +341,10 @@ impl Witnesses<u64> for LedgerWitness {
 }
 
 pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        RETAINED_IR,
+    )?;
     for value in [8_u8, 9] {
         let initial =
             contract::initial_state(ConstructorContext::new(10_u64), FixedBytes::new(AUTHORITY))?;
@@ -334,15 +372,13 @@ pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
             },
         );
         let pk = FixedBytes::new([value; 32]);
-        let native = contract::add_voter(
-            observed.circuit_context(private),
-            &LedgerWitness::default(),
-            pk,
-        )?;
+        let native_witness = LedgerWitness::default();
+        let native = contract::add_voter(observed.circuit_context(private), &native_witness, pk)?;
         let witness = LedgerWitness::default();
         let recorded =
             contract::recorded::add_voter(observed.circuit_context(private), &witness, pk)?;
         if *witness.calls.borrow() != ["path", "secret"]
+            || *native_witness.calls.borrow() != *witness.calls.borrow()
             || native.gas_cost != recorded.execution.gas_cost
             || native.private_transcript_outputs != recorded.execution.private_transcript_outputs
             || recorded.execution.private_transcript_outputs.len() != 2
@@ -358,28 +394,92 @@ pub(super) fn add_voter(root: &Path) -> Result<(), Box<dyn Error>> {
         let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
             root.join("keys/add_voter.verifier"),
         )?))?;
-        let generated = contract::Contract::from(LedgerWitness::default());
+        let observed_witness = LedgerWitness::default();
+        let generated = contract::Contract::from(observed_witness.clone());
         let prepared = generated
             .recording()
             .add_voter_call(&observed, private, pk)?
-            .prepare(verifier, Fr::from(0_u64))?;
-        if format!("{manual:?}") != format!("{prepared:?}") {
+            .prepare(verifier.clone(), Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{prepared:?}")
+            || *observed_witness.calls.borrow() != ["path", "secret"]
+        {
             return Err("typed voter call differs from recording".into());
         }
-        check_transaction(root, "add_voter", deploy, prepared, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected_state {
-                return Err("applied voter state differs from native".into());
-            }
-            let view = contract::PublicStateView::from(applied);
-            let tree = view.eligible_voters()?;
-            if tree.first_free()?.value() != u128::from(value - 7)
-                || tree.find_path_for_leaf(pk).is_none()
-            {
-                return Err("applied voter path or index changed".into());
-            }
-            Ok(())
-        })?;
-        println!("election voter {value} proved and applied through ledger-8");
+        if prepared.input != AlignedValue::from(pk) || prepared.output != AlignedValue::from(()) {
+            return Err("voter original public input/output differs".into());
+        }
+        let view = contract::PublicStateView::from(&native.context);
+        let tree = view.eligible_voters()?;
+        if tree.first_free()?.value() != u128::from(value - 7)
+            || tree.find_path_for_leaf(pk).is_none()
+        {
+            return Err("expected voter path or index changed".into());
+        }
+        kernel_shielded_effects::prove_and_verify_call(root, "add_voter", &prepared, &verifier)?;
+        opaque_public::apply_funded(
+            root,
+            "add_voter",
+            prepared,
+            deploy,
+            &expected_state,
+            rng,
+            589 + u64::from(value),
+        )?;
+        println!(
+            "election voter {value}: proof verified, changed binding rejected, default-strict funded ledger8 application passed; constructor and seeded prior state supplied, deployment not proved"
+        );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod source_tests {
+    use super::*;
+    #[test]
+    fn changed_source_refuses_before_keys() {
+        counter_scenario::validate_ir(RETAINED_IR.as_bytes(), RETAINED_IR).unwrap();
+        let mut altered: serde_json::Value = serde_json::from_str(RETAINED_IR).unwrap();
+        altered["independent_topic_guard"] = true.into();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&altered).unwrap(), RETAINED_IR)
+                .is_err()
+        );
+    }
+    #[test]
+    fn absent_source_refuses_before_keys_or_state() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-topic-proof-absent-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        assert_eq!(
+            run(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert_eq!(
+            advance(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert_eq!(
+            add_voter(&root)
+                .unwrap_err()
+                .downcast_ref::<io::Error>()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::NotFound
+        );
+        assert!(!root.exists());
+    }
 }

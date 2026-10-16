@@ -84,6 +84,7 @@ pub(in crate::recorded) fn append_steps(
             steps,
             next_temp,
             visiting,
+            failure_precision,
         ),
         StateAction::Expression { .. }
         | StateAction::PureCall { .. }

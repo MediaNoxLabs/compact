@@ -17,17 +17,22 @@
 //! Duplicate, unknown and cyclic inputs return to the semantic owner after
 //! local resource checks. A pure-cycle target is retained for deferred refusal.
 use super::{
-    CallEdge, Contract, GraphStatus, Kind, LimitError, Metrics, Scan, add_cost, check,
+    CallEdge, Contract, GraphStatus, Kind, LimitError, Metrics, RefusalSite, Scan, add_cost, check,
     check_frames, max_cost,
 };
 use std::collections::HashMap;
 #[derive(Clone, Copy)]
-struct ResolvedEdge {
+struct ResolvedEdge<'a> {
+    site: RefusalSite<'a>,
     target: usize,
     depth: usize,
     cost: [usize; 4],
 }
-pub(super) fn finish(contract: &Contract, mut scan: Scan<'_>) -> Result<Metrics, LimitError> {
+pub(super) fn finish<'a>(
+    contract: &Contract,
+    mut scan: Scan<'a>,
+    pure_cycle_site: &mut Option<RefusalSite<'a>>,
+) -> Result<Metrics, LimitError> {
     let count = scan.callable_count;
     let limits = scan.limits;
     let mut names = HashMap::new();
@@ -45,12 +50,19 @@ pub(super) fn finish(contract: &Contract, mut scan: Scan<'_>) -> Result<Metrics,
     }
     let mut graph = vec![Vec::new(); count];
     for (i, edges) in scan.edges.iter().enumerate() {
-        for &CallEdge { name, depth, cost } in edges {
+        for &CallEdge {
+            name,
+            depth,
+            cost,
+            site,
+        } in edges
+        {
             let Some(&j) = names.get(name) else {
                 scan.metrics.graph_status = GraphStatus::UnknownCallee;
                 return Ok(scan.metrics);
             };
             graph[i].push(ResolvedEdge {
+                site,
                 target: j,
                 depth,
                 cost,
@@ -73,7 +85,8 @@ pub(super) fn finish(contract: &Contract, mut scan: Scan<'_>) -> Result<Metrics,
                 stack.pop();
                 continue;
             }
-            let j = graph[*node][*next].target;
+            let edge = graph[*node][*next];
+            let j = edge.target;
             *next += 1;
             if color[j] == 1 {
                 // Only the active suffix starting at j is the cycle. A
@@ -87,6 +100,7 @@ pub(super) fn finish(contract: &Contract, mut scan: Scan<'_>) -> Result<Metrics,
                     .all(|(node, _)| *node < scan.pure_count)
                     && j < scan.pure_count;
                 scan.metrics.graph_status = if pure_cycle {
+                    *pure_cycle_site = Some(edge.site);
                     GraphStatus::PureCycle(j)
                 } else {
                     GraphStatus::Cycle
@@ -108,6 +122,7 @@ pub(super) fn finish(contract: &Contract, mut scan: Scan<'_>) -> Result<Metrics,
             target: j,
             depth: d,
             cost,
+            ..
         } in &graph[i]
         {
             frames[i] = max_cost(frames[i], add_cost(cost, frames[j]));

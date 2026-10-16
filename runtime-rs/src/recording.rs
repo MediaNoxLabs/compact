@@ -199,6 +199,22 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok((self, value))
     }
 
+    /// Record exact opaque-bearing witness bytes, retaining ordinary callback
+    /// ordering and success-only adoption. Preparation checks transport validity.
+    pub fn try_witness_metered_exact<T, F>(self, call: F) -> Result<(Self, T), CompactError>
+    where
+        T: Clone + crate::HashInputValue,
+        F: FnOnce(
+            &CircuitContext<Private, D>,
+            &WitnessReadMeter<'_, D>,
+        ) -> Result<(Private, T), CompactError>,
+    {
+        let (frame, value) = self.try_witness_metered(|context, meter| {
+            call(context, meter).map(|(private, value)| (private, crate::exact_hash_input(value)))
+        })?;
+        Ok((frame, value.into_inner()))
+    }
+
     /// Adopt a generated helper that has been statically audited as local.
     ///
     /// The helper may change private state, emit private witness values, and
@@ -225,6 +241,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         let path = path.into();
         let program = ledger::cell_write_program(path.as_slice(), value);
         self.apply_checked_verify_program(program)
@@ -308,6 +325,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         let path = path.into();
         self.apply_checked_verify_program(ledger::set_insert_program(path.as_slice(), value))
     }
@@ -334,6 +352,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         let path = path.into();
         self.apply_checked_verify_program(ledger::set_remove_program(path.as_slice(), value))
     }
@@ -417,6 +436,8 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         key: K,
         value: V,
     ) -> Result<Self, CompactError> {
+        key.validate_cell_value()?;
+        value.validate_cell_value()?;
         let path = path.into();
         self.apply_checked_verify_program(ledger::map_insert_program(path.as_slice(), key, value))
     }
@@ -479,6 +500,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
+        value.validate_cell_value()?;
         self.apply_checked_verify_program(ledger::list_push_front_program(path, value))
     }
 

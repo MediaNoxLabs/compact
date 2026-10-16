@@ -2,7 +2,7 @@
   "format": "compact-did-primitive-reducer-capture/v1",
   "kind": "alias-guard",
   "generatedJavaScriptSha256": "9274b5cc16438ec3541e53b986ef46c4b11d1acfa57ee35ead9a16cd755c0f15",
-  "runtimeJavaScriptSha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+  "runtimeJavaScriptSha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
   "captureSha256": "97e2ed2b889abc091417a436025d909afbe232ce84031ff6c781e864579b2507",
   "runtimeVersion": "0.16.101",
   "provenance": [
@@ -12,7 +12,7 @@
     },
     {
       "path": "tests-rust-backend/did-alias-guard-reducer/lib.rs",
-      "sha256": "408962386df18ddaf0cfeb20c2710480176a1c97c920828a2a571084ff38193e"
+      "sha256": "081bba71648a814ecbd2583148f76324d15159c289cc2c4526878824e6543000"
     },
     {
       "path": "tests-rust-backend/did-alias-guard-reducer/tests/behavior.rs",

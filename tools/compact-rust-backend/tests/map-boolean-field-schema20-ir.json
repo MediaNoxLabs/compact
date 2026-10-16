@@ -1,0 +1,329 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "table",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "boolean"
+        },
+        "value": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert",
+          "field": "table",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "key"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "put_pair",
+      "parameters": [
+        {
+          "name": "left",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "right",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert",
+          "field": "table",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "left"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        },
+        {
+          "kind": "map_insert",
+          "field": "table",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "right"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "put_default",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert_default",
+          "field": "table",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "key"
+          }
+        }
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 29,
+        "column": 1
+      }
+    },
+    {
+      "name": "has",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "map_member",
+        "field": "table",
+        "index": 0,
+        "key": {
+          "kind": "parameter",
+          "name": "key"
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 33,
+        "column": 1
+      }
+    },
+    {
+      "name": "get",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "map_lookup",
+        "field": "table",
+        "index": 0,
+        "key": {
+          "kind": "parameter",
+          "name": "key"
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "name": "remove_key",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_remove",
+          "field": "table",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "key"
+          }
+        }
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 41,
+        "column": 1
+      }
+    },
+    {
+      "name": "table_size",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "return_value": {
+        "kind": "map_size",
+        "field": "table",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 45,
+        "column": 1
+      }
+    },
+    {
+      "name": "table_is_empty",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "map_is_empty",
+        "field": "table",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 49,
+        "column": 1
+      }
+    },
+    {
+      "name": "reset_table",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_reset",
+          "field": "table",
+          "index": 0
+        }
+      ],
+      "source": {
+        "file": "map_boolean_field.compact",
+        "line": 53,
+        "column": 1
+      }
+    }
+  ]
+}

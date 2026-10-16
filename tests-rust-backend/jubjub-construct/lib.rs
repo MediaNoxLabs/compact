@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn construct_point(
         x: runtime::Field,
         y: runtime::Field,
@@ -39,7 +39,7 @@ pub mod pure_circuits {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -108,19 +108,113 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn construct_echo<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+            __compact_param_1: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: runtime::Field = __compact_param_0;
+            let __compact_effect_1: runtime::Field = __compact_param_1;
+            let (frame, __compact_effect_2): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_0,
+                    )
+                })?;
+            let (frame, __compact_effect_3): (_, runtime::Field) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_1,
+                    )
+                })?;
+            let __compact_effect_4: runtime::JubjubPoint =
+                runtime::construct_jubjub_point(__compact_effect_2, __compact_effect_3)?;
+            Ok(frame.finish(__compact_effect_4))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn construct_echo<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                x: runtime::Field,
+                y: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                construct_echo(context, self.witnesses, x, y)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn construct_echo_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                x: runtime::Field,
+                y: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((x, y));
+                let recorded =
+                    self.construct_echo(observed.circuit_context(private_state), x, y)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "construct_echo",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -137,6 +231,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::construct_echo(context, &self.witnesses, x, y)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

@@ -38,3 +38,8 @@ pub(super) fn identity(result: Type, body: Expr) -> Contract {
         stateful_circuits: vec![],
     }
 }
+
+// Real pure declaration is required in each complete refusal fixture.
+#[path = "../support/recording_refusal.rs"]
+mod recording_refusal;
+pub(super) use recording_refusal::{register_unsupported_fold, unsupported_commit_input};

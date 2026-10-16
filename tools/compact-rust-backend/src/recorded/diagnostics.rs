@@ -19,8 +19,13 @@
 //! Constructors preserve existing codes, IR paths and details; the renderer
 //! retains responsibility for selecting and refining the reported cause.
 
-use crate::ir::{Expr, StateAction, StateReturn, Type};
+#[cfg(test)]
+use crate::ir::Type;
+use crate::ir::{Expr, StateAction, StateReturn};
 use serde::Serialize;
+
+mod resource;
+pub use resource::{RecordingResource, RecordingResourceKind, RecordingResourcePhase};
 
 /// The first definite reason an exported circuit has no recorded Rust API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -29,6 +34,10 @@ pub struct RecordingGap {
     pub ir_node: String,
     pub path: String,
     pub detail: String,
+    /// Additive capability-schema-3 metadata; absent for ordinary refusals.
+    /// Rust callers constructing this public struct must set this field explicitly.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource: Option<Box<RecordingResource>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -61,6 +70,7 @@ impl RecordingGap {
     pub(super) fn action(action: &StateAction, path: String) -> Self {
         let ir_node = node_name(action, "StateAction");
         Self {
+            resource: None,
             code: RecordingGapCode::UnsupportedAction,
             ir_node: ir_node.clone(),
             path,
@@ -71,6 +81,7 @@ impl RecordingGap {
     pub(super) fn returned(value: &StateReturn) -> Self {
         let ir_node = node_name(value, "StateReturn");
         Self {
+            resource: None,
             code: RecordingGapCode::UnsupportedReturn,
             ir_node: ir_node.clone(),
             path: "return_value".to_owned(),
@@ -81,6 +92,7 @@ impl RecordingGap {
     pub(super) fn expression(value: &Expr, path: String) -> Self {
         let ir_node = node_name(value, "Expr");
         Self {
+            resource: None,
             code: RecordingGapCode::UnsupportedExpression,
             ir_node: ir_node.clone(),
             path,
@@ -88,8 +100,10 @@ impl RecordingGap {
         }
     }
 
+    #[cfg(test)]
     pub(super) fn unsupported_type(action: &StateAction, ty: &Type, path: String) -> Self {
         Self {
+            resource: None,
             code: RecordingGapCode::UnsupportedType,
             ir_node: node_name(action, "StateAction"),
             path,
@@ -99,6 +113,7 @@ impl RecordingGap {
 
     pub(super) fn no_effect() -> Self {
         Self {
+            resource: None,
             code: RecordingGapCode::NoRecordedEffect,
             ir_node: "StatefulCircuit".to_owned(),
             path: "actions".to_owned(),
@@ -107,16 +122,23 @@ impl RecordingGap {
     }
 
     pub(crate) fn recording_dependency(gap: Self) -> Self {
+        let mut detail = "the observed-call API requires a recorded circuit".to_owned();
+        if gap.resource.is_some() {
+            detail.push_str(": ");
+            detail.push_str(&gap.detail);
+        }
         Self {
+            resource: gap.resource,
             code: RecordingGapCode::RecordingUnavailable,
             ir_node: gap.ir_node,
             path: gap.path,
-            detail: "the observed-call API requires a recorded circuit".to_owned(),
+            detail,
         }
     }
 
     pub(crate) fn name_collision(name: &str) -> Self {
         Self {
+            resource: None,
             code: RecordingGapCode::NameCollision,
             ir_node: "StatefulCircuit".to_owned(),
             path: "name".to_owned(),

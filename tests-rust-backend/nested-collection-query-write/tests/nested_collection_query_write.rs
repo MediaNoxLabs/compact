@@ -199,3 +199,105 @@ fn nested_query_cost_includes_read_and_write() {
         write.context.query.state.get_ref(),
     );
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[test]
+fn recorded_seed_keeps_set_then_map_insertion_and_replacement() {
+    use compact_rust_nested_collection_query_write_fixture::{
+        ledger_contract as c, ledger_slots as slots,
+    };
+    use midnight_compact_runtime as r;
+    use r::recording::RecordingFrame;
+    use r::transaction::{Observation, ObservedContractState};
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let mut public = initial.ledger_state.get_ref().clone();
+    for number in [42_u64, 42, 0] {
+        let observed = ObservedContractState::new(
+            Default::default(),
+            ContractState::new(public, Default::default(), Default::default()),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let value = Field::from(number);
+        let native = seed(observed.circuit_context(()), value).unwrap();
+        let recorded = c::recorded::seed(observed.circuit_context(()), value).unwrap();
+        let frame = slots::seen
+            .record_insert(RecordingFrame::new(observed.circuit_context(())), value)
+            .unwrap();
+        let manual = slots::table
+            .record_insert(frame, value, value)
+            .unwrap()
+            .finish(());
+        let call = c::recorded::Contract
+            .seed_call(&observed, (), value)
+            .unwrap();
+        // Verification replay groups queries differently from native gathering.
+        // Compare its cost against independent manual verification replay, while
+        // execution gas above/below remains equal to native execution gas.
+        let manual_replay = manual
+            .public
+            .initial()
+            .query(manual.public.verify_ops(), None, &native.context.cost_model)
+            .unwrap();
+        for actual in [&recorded, &manual, call.recorded()] {
+            let _: () = actual.execution.result;
+            assert_eq!(
+                actual.execution.context.query.state,
+                native.context.query.state
+            );
+            assert_eq!(
+                actual.execution.context.query.effects,
+                native.context.query.effects
+            );
+            let _: () = actual.execution.context.private_state;
+            assert_eq!(
+                actual.execution.private_transcript_outputs,
+                native.private_transcript_outputs
+            );
+            assert_eq!(actual.execution.gas_cost, native.gas_cost);
+            assert_eq!(actual.public.verify_ops(), manual.public.verify_ops());
+            let replay = actual
+                .public
+                .initial()
+                .query(actual.public.verify_ops(), None, &native.context.cost_model)
+                .unwrap();
+            assert_eq!(replay.context.state, native.context.query.state);
+            assert_eq!(replay.context.effects, native.context.query.effects);
+            assert_eq!(replay.gas_cost, manual_replay.gas_cost);
+        }
+        assert!(
+            slots::seen
+                .inspect(native.context.query.state.get_ref())
+                .unwrap()
+                .try_member(value)
+                .unwrap()
+        );
+        assert_eq!(
+            slots::table
+                .inspect(native.context.query.state.get_ref())
+                .unwrap()
+                .lookup(value)
+                .unwrap(),
+            value
+        );
+        public = native.context.query.state.get_ref().clone();
+        if number == 42 {
+            // Existing TS capture records these views after seed(42). Reuse it
+            // as a retained state oracle, not as a newly captured seed transcript.
+            let member = check_member(native.context, value).unwrap();
+            let set_empty = check_set_empty(member.context).unwrap();
+            let map_empty = check_map_empty(set_empty.context).unwrap();
+            let oracle: serde_json::Value = serde_json::from_str(include_str!(
+                "../../../runtime-rs/tests/fixtures/nested-collection-query-write.json"
+            ))
+            .unwrap();
+            assert_eq!(
+                state_hex(map_empty.context.query.state.get_ref().clone()),
+                oracle["after"]["stateHex"]
+            );
+        }
+    }
+}

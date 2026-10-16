@@ -46,7 +46,7 @@ pub(super) fn checkpoint(
                 observation,
                 address: observed.address(),
                 network_id: "local-test".into(),
-                ledger_version: "8.0.3".into(),
+                ledger_version: "8.1.3".into(),
                 zswap_root: ledger
                     .zswap
                     .coin_coms
@@ -67,7 +67,7 @@ pub(super) fn checkpoint(
                 block_hash: observation.block_hash,
                 block_height: observation.block_height,
                 network_id: "local-test".into(),
-                ledger_version: "8.0.3".into(),
+                ledger_version: "8.1.3".into(),
                 applied_event_id: 1,
                 wallet_state_sha256,
             },

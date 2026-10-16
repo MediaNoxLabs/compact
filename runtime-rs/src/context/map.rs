@@ -26,6 +26,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         key: K,
         value: V,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        key.validate_cell_value()?;
+        value.validate_cell_value()?;
         let result = ledger::insert_map(
             &self.query,
             path,

@@ -1,0 +1,37 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger table: Map<Opaque<"string">, Field>;
+export ledger calls: Counter;
+export struct Present { value: Boolean; }
+export struct Found { value: Field; }
+witness pick_key(): Boolean;
+witness pick_value(): Boolean;
+constructor(seed: Opaque<"string">) { table.insert(disclose(seed), 7 as Field); }
+export circuit member(key: Opaque<"string">): Present {
+  return Present { value: table.member(disclose(key)) };
+}
+export circuit lookup(key: Opaque<"string">): Found {
+  return Found { value: table.lookup(disclose(key)) };
+}
+export circuit put(key: Opaque<"string">, value: Field): Found {
+  table.insert(disclose(key), disclose(value));
+  calls.increment(1);
+  return Found { value: table.lookup(disclose(key)) };
+}
+export circuit remove(key: Opaque<"string">): Present {
+  table.remove(disclose(key));
+  calls.increment(1);
+  return Present { value: table.member(disclose(key)) };
+}
+export circuit lazy_put(selected: Boolean, first: Opaque<"string">, second: Opaque<"string">, a: Field, b: Field): Present {
+  if (disclose(selected)) {
+    table.insert(disclose(pick_key()) ? disclose(first) : disclose(second), disclose(pick_value()) ? disclose(a) : disclose(b));
+    calls.increment(1);
+  }
+  return Present { value: table.member(disclose(first)) };
+}
+
+export circuit direct_member(key: Opaque<"string">): Boolean { return table.member(disclose(key)); }
+export circuit direct_lookup(key: Opaque<"string">): Field { return table.lookup(disclose(key)); }

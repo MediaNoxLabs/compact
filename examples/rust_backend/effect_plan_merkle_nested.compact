@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger plain: MerkleTree<3, Field>;
+ledger filler_0: Counter;
+ledger filler_1: Counter;
+ledger filler_2: Counter;
+ledger filler_3: Counter;
+ledger filler_4: Counter;
+ledger filler_5: Counter;
+ledger filler_6: Counter;
+ledger filler_7: Counter;
+ledger filler_8: Counter;
+ledger filler_9: Counter;
+ledger filler_10: Counter;
+ledger filler_11: Counter;
+ledger filler_12: Counter;
+ledger filler_13: Counter;
+ledger filler_14: Counter;
+ledger filler_15: Counter;
+export ledger historic: HistoricMerkleTree<3, Field>;
+export circuit run(value: Field): [] {
+  plain.insert(disclose(value));
+  historic.insert(disclose(value));
+}

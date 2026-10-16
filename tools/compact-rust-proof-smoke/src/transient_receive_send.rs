@@ -24,6 +24,12 @@ use runtime::transaction::{
 };
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Pair the complete source fixture before keys, wallet setup or deployment.
+    // This checks input pairing, not authenticated proving-key provenance.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_transient_receive_send_oracle_fixture::RETAINED_IR,
+    )?;
     const NAME: &str = "receive_then_send";
     let mut rng = StdRng::seed_from_u64(0x0204_5052);
     let initial = c::initial_state(ConstructorContext::new(()))?;
@@ -64,7 +70,7 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let ledger = fees.ledger.clone();
     let start = ledger.zswap.first_free;
     assert!(start > 1);
-    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed)?;
     assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
     let seed_coin = *wallet
         .coins

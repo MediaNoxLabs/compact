@@ -82,6 +82,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: &[u8],
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        value.validate_cell_value()?;
         let result =
             ledger::write_cell_at_path(&self.query, path, value, self.gas_limit, &self.cost_model)
                 .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;

@@ -25,6 +25,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        value.validate_cell_value()?;
         let result = ledger::insert_set(&self.query, path, value, self.gas_limit, &self.cost_model)
             .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
@@ -82,6 +83,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        value.validate_cell_value()?;
         let result = ledger::remove_set(&self.query, path, value, self.gas_limit, &self.cost_model)
             .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;

@@ -1,0 +1,45 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Owned {
+  text: Opaque<"string">;
+  bytes: Opaque<"Uint8Array">;
+  values: Vector<2, Field>;
+  pair: [Field, Boolean];
+  large: Uint<160>;
+}
+export ledger marker: Field;
+export ledger blob: Opaque<"Uint8Array">;
+witness bytes(): Opaque<"Uint8Array">;
+witness trace(): Field;
+constructor() { marker = 0; blob = default<Opaque<"Uint8Array">>; }
+circuit touchBytes(value: Opaque<"Uint8Array">): Opaque<"Uint8Array"> { marker = 1; trace(); return value; }
+circuit touchText(value: Opaque<"string">): Opaque<"string"> { marker = 2; trace(); return value; }
+circuit touchVector(value: Vector<2, Field>): Vector<2, Field> { marker = 3; trace(); return value; }
+circuit touchPair(value: [Field, Boolean]): [Field, Boolean] { marker = 4; trace(); return value; }
+circuit touchWide(value: Uint<160>): Uint<160> { marker = 5; trace(); return value; }
+circuit touchOwned(value: Owned): Owned { marker = 6; trace(); return value; }
+circuit assemble(payload: Opaque<"Uint8Array">, values: Vector<2, Field>): Owned {
+  marker = 7; trace();
+  const empty = default<Owned>;
+  return Owned { text: empty.text, bytes: payload, values: values,
+    pair: [23, true], large: 340282366920938463463374607431768211711 as Uint<160> };
+}
+circuit checked(value: Owned, permit: Boolean): Owned {
+  marker = 8; trace(); assert(permit, "owned stateful helper refused"); return value;
+}
+export circuit run(selected: Boolean, permit: Boolean): Field {
+  const payload = bytes();
+  const first = assemble(touchBytes(payload), touchVector([7, 11]));
+  const copied = touchOwned(touchOwned(first));
+  const again = touchOwned(first);
+  blob = disclose(copied.bytes);
+  if (disclose(selected)) {
+    const text = touchText(copied.text);
+    const pair = touchPair(copied.pair);
+    const large = touchWide(copied.large);
+    const accepted = checked(copied, permit);
+    return disclose(accepted == first && again == first && text == first.text && pair == first.pair && large == first.large) ? (1 as Field) : (0 as Field);
+  } else { return disclose(copied == first && again == first) ? (1 as Field) : (0 as Field); }
+}

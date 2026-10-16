@@ -9,17 +9,40 @@ mod resource_limits;
 pub use capabilities::{
     RUST_CAPABILITY_SCHEMA_VERSION, RecordingStatus, RustCapabilityReport, RustCircuitCapability,
 };
+mod constructor_vm;
+mod hash_input;
+mod implicit_types;
 mod jubjub_value;
 mod naming;
 mod native_frame;
+mod native_header;
+mod native_representation;
+mod origins;
+mod source_diagnostics;
+pub use origins::diagnostic::{SourceDiagnostic, SourcePosition};
+pub use origins::frontend::render::{
+    FrontendRender, NativeCompileFailure, NativeFailureCause, RecordingRequirement, RenderOptions,
+};
+pub use origins::frontend::{
+    ConfiguredFrontend, FrontendArtifacts, FrontendError, FrontendRequest, InvocationFingerprint,
+};
+pub use origins::recording::RecordingDiagnostic;
+pub use origins::status::{
+    BindingSummary, MetadataProblem, MetadataStatus, MetadataUnavailable, SourceSnapshotFingerprint,
+};
+mod pure_native;
+mod pure_semantics;
 mod recorded;
-pub use recorded::{RecordingGap, RecordingGapCode};
+pub use recorded::{
+    RecordingGap, RecordingGapCode, RecordingResource, RecordingResourceKind,
+    RecordingResourcePhase,
+};
 mod stateful;
 mod type_declarations;
 mod value_lowering;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 50;
+const RUNTIME_ABI_VERSION: u32 = 52;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -43,20 +66,24 @@ use std::error::Error;
 use std::fmt;
 
 use ir::{
-    ComparisonOperator, ConstructorStep, Contract, CounterAmount, Expr, LedgerFieldKind,
-    PureCircuit, SCHEMA_VERSION, StateAction, StatefulCircuit, StructField, Type,
+    ConstructorStep, Contract, CounterAmount, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION,
+    StateAction, StatefulCircuit, StructField, Type,
 };
 use naming::{ident, semantic_identifier, validate_circuit_function_namespace};
 use proc_macro2::Span;
+use pure_native::fragment::NativeFragment;
 use quote::quote;
 use serde_json::Value;
+use source_diagnostics::{Owner, RefusalObserver, RefusalSite};
 use syn::visit_mut::{self, VisitMut};
 // Preserve the internal entry points while typed-value rules have one owner.
 use value_lowering::{
-    UnsignedMaximum, coerce_expression, copy_type, field_literal_bytes, field_to_bytes_32_syntax,
+    UnsignedMaximum, coerce_expression, field_literal_bytes, field_to_bytes_32_syntax,
     map_slot_types, retained_value, rust_type, unsigned_arithmetic_syntax, unsigned_cast_syntax,
-    unsigned_maximum, wide_uint_type,
+    unsigned_maximum,
 };
+#[cfg(test)]
+use value_lowering::{copy_type, wide_uint_type};
 
 pub struct RenderedContract {
     pub source: String,
@@ -94,6 +121,10 @@ pub enum RenderError {
         location: ir::SourceLocation,
         error: Box<RenderError>,
     },
+    RecordingPlanInvariant {
+        path: String,
+        detail: String,
+    },
     SchemaVersion(u32),
     ProofApplicability(String),
     InvalidIdentifier(String),
@@ -102,6 +133,13 @@ pub enum RenderError {
     UnsupportedWideUnsignedOperation {
         operation: &'static str,
         max: String,
+    },
+    /// An operation requires a trait the pinned Rust tuple carrier cannot provide.
+    UnsupportedTupleOperation {
+        operation: &'static str,
+        arity: usize,
+        limit: usize,
+        required_trait: &'static str,
     },
     InvalidFieldLiteral(String),
     InvalidUnsignedLiteral {
@@ -171,6 +209,9 @@ impl fmt::Display for RenderError {
                 "{} line {} char {}: {}",
                 location.file, location.line, location.column, error
             ),
+            Self::RecordingPlanInvariant { path, detail } => {
+                write!(f, "recording plan invariant at {path}: {detail}")
+            }
             Self::SchemaVersion(version) => {
                 write!(f, "unsupported Rust backend IR schema {version}")
             }
@@ -191,6 +232,15 @@ impl fmt::Display for RenderError {
             Self::UnsupportedWideUnsignedOperation { operation, max } => write!(
                 f,
                 "unsupported wide Compact Uint {operation} for maximum {max:?}"
+            ),
+            Self::UnsupportedTupleOperation {
+                operation,
+                arity,
+                limit,
+                required_trait,
+            } => write!(
+                f,
+                "{operation} requires {required_trait}; tuple arity {arity} exceeds the supported maximum {limit}"
             ),
             Self::InvalidFieldLiteral(value) => {
                 write!(
@@ -447,106 +497,184 @@ fn has_named_type_collision(
     Ok(false)
 }
 
+// Originless compatibility entry used by synthesized and recorded type environments.
 fn collect_named_types(
     ty: &Type,
     structs: &mut BTreeMap<String, Vec<StructField>>,
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
+    collect_named_types_observed(ty, structs, enums, None, None)
+}
+
+fn collect_named_types_with_origins<'ir>(
+    ty: &'ir Type,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+    origins: Option<&mut type_declarations::DefinitionOrigins<'ir>>,
+) -> Result<(), RenderError> {
+    collect_named_types_observed(ty, structs, enums, None, origins)
+}
+fn named_collection_refused(observer: Option<&dyn RefusalObserver>, site: RefusalSite<'_>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
+    }
+}
+
+fn collect_named_types_observed<'ir>(
+    ty: &'ir Type,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+    observer: Option<&dyn RefusalObserver>,
+    mut origins: Option<&mut type_declarations::DefinitionOrigins<'ir>>,
+) -> Result<(), RenderError> {
     match ty {
         Type::Struct { name, fields } => {
-            ident(name)?;
+            ident(name).inspect_err(|_| {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Type(ty), "name"));
+                }
+            })?;
             if enums.contains_key(name) {
+                named_collection_refused(observer, RefusalSite::node(Owner::Type(ty)));
                 return Err(RenderError::ConflictingStruct(name.clone()));
             }
             if let Some(existing) = structs.get(name) {
                 if existing != fields {
+                    named_collection_refused(observer, RefusalSite::node(Owner::Type(ty)));
                     return Err(RenderError::ConflictingStruct(name.clone()));
                 }
             } else {
                 if has_named_type_collision(name, structs, enums)? {
+                    named_collection_refused(observer, RefusalSite::node(Owner::Type(ty)));
                     return Err(RenderError::ConflictingStruct(name.clone()));
                 }
                 let mut names = HashSet::new();
                 for field in fields {
-                    ident(&field.name)?;
+                    ident(&field.name).inspect_err(|_| {
+                        if let Some(observer) = observer {
+                            observer.refused(RefusalSite::field(Owner::StructField(field), "name"));
+                        }
+                    })?;
                     if !names.insert(field.name.as_str()) {
+                        named_collection_refused(
+                            observer,
+                            RefusalSite::field(Owner::StructField(field), "name"),
+                        );
                         return Err(RenderError::DuplicateStructField(field.name.clone()));
                     }
                 }
                 structs.insert(name.clone(), fields.clone());
+                if let Some(origins) = origins.as_deref_mut() {
+                    origins.insert(name.clone(), ty);
+                }
             }
             for field in fields {
-                collect_named_types(&field.ty, structs, enums)?;
+                collect_named_types_observed(
+                    &field.ty,
+                    structs,
+                    enums,
+                    observer,
+                    origins.as_deref_mut(),
+                )?;
             }
         }
         Type::Enum { name, variants } => {
-            ident(name)?;
+            ident(name).inspect_err(|_| {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Type(ty), "name"));
+                }
+            })?;
             if structs.contains_key(name) {
+                named_collection_refused(observer, RefusalSite::node(Owner::Type(ty)));
                 return Err(RenderError::ConflictingEnum(name.clone()));
             }
             if variants.is_empty() {
+                named_collection_refused(observer, RefusalSite::field(Owner::Type(ty), "variants"));
                 return Err(RenderError::EmptyEnum(name.clone()));
             }
             let mut names = HashSet::new();
-            for variant in variants {
-                ident(variant)?;
+            for (index, variant) in variants.iter().enumerate() {
+                ident(variant).inspect_err(|_| {
+                    if let Some(observer) = observer {
+                        observer.refused(RefusalSite::element(Owner::Type(ty), "variants", index));
+                    }
+                })?;
                 if !names.insert(variant.as_str()) {
+                    named_collection_refused(
+                        observer,
+                        RefusalSite::element(Owner::Type(ty), "variants", index),
+                    );
                     return Err(RenderError::DuplicateEnumVariant(variant.clone()));
                 }
             }
             if let Some(existing) = enums.get(name) {
                 if existing != variants {
+                    named_collection_refused(observer, RefusalSite::node(Owner::Type(ty)));
                     return Err(RenderError::ConflictingEnum(name.clone()));
                 }
             } else {
                 if has_named_type_collision(name, structs, enums)? {
+                    named_collection_refused(observer, RefusalSite::node(Owner::Type(ty)));
                     return Err(RenderError::ConflictingEnum(name.clone()));
                 }
                 enums.insert(name.clone(), variants.clone());
+                if let Some(origins) = origins.as_deref_mut() {
+                    origins.insert(name.clone(), ty);
+                }
             }
         }
         Type::Tuple { elements } => {
             for element in elements {
-                collect_named_types(element, structs, enums)?;
+                collect_named_types_observed(
+                    element,
+                    structs,
+                    enums,
+                    observer,
+                    origins.as_deref_mut(),
+                )?;
             }
         }
-        Type::Vector { element, .. } => collect_named_types(element, structs, enums)?,
+        Type::Vector { element, .. } => {
+            collect_named_types_observed(element, structs, enums, observer, origins.as_deref_mut())?
+        }
         Type::LedgerMap { key, value } => {
-            collect_named_types(key, structs, enums)?;
-            collect_named_types(value, structs, enums)?;
+            collect_named_types_observed(key, structs, enums, observer, origins.as_deref_mut())?;
+            collect_named_types_observed(value, structs, enums, observer, origins)?;
         }
         _ => {}
     }
     Ok(())
 }
 
-fn collect_expression_types(
-    expr: &Expr,
+fn collect_expression_types<'ir>(
+    expr: &'ir Expr,
     structs: &mut BTreeMap<String, Vec<StructField>>,
     enums: &mut BTreeMap<String, Vec<String>>,
+    origins: &mut type_declarations::DefinitionOrigins<'ir>,
+    observer: Option<&dyn RefusalObserver>,
 ) -> Result<(), RenderError> {
     match expr {
         Expr::Default { ty } | Expr::EnumVariant { ty, .. } => {
-            collect_named_types(ty, structs, enums)?
+            collect_named_types_observed(ty, structs, enums, observer, Some(origins))?
         }
         Expr::StructField { value, .. } | Expr::TupleIndex { value, .. } => {
-            collect_expression_types(value, structs, enums)?
+            collect_expression_types(value, structs, enums, origins, observer)?
         }
         Expr::StructLiteral { ty, fields } => {
-            collect_named_types(ty, structs, enums)?;
+            collect_named_types_observed(ty, structs, enums, observer, Some(origins))?;
             for field in fields {
-                collect_expression_types(field, structs, enums)?;
+                collect_expression_types(field, structs, enums, origins, observer)?;
             }
         }
         Expr::Tuple { elements } => {
             for element in elements {
-                collect_expression_types(element, structs, enums)?;
+                collect_expression_types(element, structs, enums, origins, observer)?;
             }
         }
         Expr::Vector { element, elements } => {
-            collect_named_types(element, structs, enums)?;
+            collect_named_types_observed(element, structs, enums, observer, Some(origins))?;
             for value in elements {
-                collect_expression_types(value, structs, enums)?;
+                collect_expression_types(value, structs, enums, origins, observer)?;
             }
         }
         Expr::VectorMap {
@@ -556,10 +684,10 @@ fn collect_expression_types(
             result,
             ..
         } => {
-            collect_named_types(&parameter.ty, structs, enums)?;
-            collect_named_types(result, structs, enums)?;
-            collect_expression_types(source, structs, enums)?;
-            collect_expression_types(body, structs, enums)?;
+            collect_named_types_observed(&parameter.ty, structs, enums, observer, Some(origins))?;
+            collect_named_types_observed(result, structs, enums, observer, Some(origins))?;
+            collect_expression_types(source, structs, enums, origins, observer)?;
+            collect_expression_types(body, structs, enums, origins, observer)?;
         }
         Expr::VectorFoldCall {
             initial,
@@ -568,49 +696,49 @@ fn collect_expression_types(
             element,
             ..
         } => {
-            collect_named_types(accumulator, structs, enums)?;
-            collect_named_types(element, structs, enums)?;
-            collect_expression_types(initial, structs, enums)?;
-            collect_expression_types(source, structs, enums)?;
+            collect_named_types_observed(accumulator, structs, enums, observer, Some(origins))?;
+            collect_named_types_observed(element, structs, enums, observer, Some(origins))?;
+            collect_expression_types(initial, structs, enums, origins, observer)?;
+            collect_expression_types(source, structs, enums, origins, observer)?;
         }
         Expr::If {
             condition,
             then,
             otherwise,
         } => {
-            collect_expression_types(condition, structs, enums)?;
-            collect_expression_types(then, structs, enums)?;
-            collect_expression_types(otherwise, structs, enums)?;
+            collect_expression_types(condition, structs, enums, origins, observer)?;
+            collect_expression_types(then, structs, enums, origins, observer)?;
+            collect_expression_types(otherwise, structs, enums, origins, observer)?;
         }
         Expr::Let { bindings, body } => {
             for binding in bindings {
-                collect_named_types(&binding.ty, structs, enums)?;
-                collect_expression_types(&binding.value, structs, enums)?;
+                collect_named_types_observed(&binding.ty, structs, enums, observer, Some(origins))?;
+                collect_expression_types(&binding.value, structs, enums, origins, observer)?;
             }
-            collect_expression_types(body, structs, enums)?;
+            collect_expression_types(body, structs, enums, origins, observer)?;
         }
         Expr::Sequence { steps, value } => {
             for step in steps {
-                collect_expression_types(step, structs, enums)?;
+                collect_expression_types(step, structs, enums, origins, observer)?;
             }
-            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
         }
         Expr::Assert { condition, .. } => {
-            collect_expression_types(condition, structs, enums)?;
+            collect_expression_types(condition, structs, enums, origins, observer)?;
         }
         Expr::SetMember { value, .. }
         | Expr::CounterLessThan {
             threshold: value, ..
-        } => collect_expression_types(value, structs, enums)?,
+        } => collect_expression_types(value, structs, enums, origins, observer)?,
         Expr::MapMember { key, .. } | Expr::MapLookup { key, .. } => {
-            collect_expression_types(key, structs, enums)?
+            collect_expression_types(key, structs, enums, origins, observer)?
         }
         Expr::MerkleCheckRoot { root, .. } | Expr::HistoricMerkleCheckRoot { root, .. } => {
-            collect_expression_types(root, structs, enums)?
+            collect_expression_types(root, structs, enums, origins, observer)?
         }
         Expr::Call { arguments, .. } | Expr::WitnessCall { arguments, .. } => {
             for argument in arguments {
-                collect_expression_types(argument, structs, enums)?;
+                collect_expression_types(argument, structs, enums, origins, observer)?;
             }
         }
         Expr::TransientHash { value }
@@ -623,33 +751,37 @@ fn collect_expression_types(
         | Expr::JubjubPointY { value }
         | Expr::EcNeg { value }
         | Expr::JubjubScalarFromNative { value } => {
-            collect_expression_types(value, structs, enums)?
+            collect_expression_types(value, structs, enums, origins, observer)?
         }
-        Expr::EcMulGenerator { scalar } => collect_expression_types(scalar, structs, enums)?,
+        Expr::EcMulGenerator { scalar } => {
+            collect_expression_types(scalar, structs, enums, origins, observer)?
+        }
         Expr::EcMul { point, scalar } => {
-            collect_expression_types(point, structs, enums)?;
-            collect_expression_types(scalar, structs, enums)?;
+            collect_expression_types(point, structs, enums, origins, observer)?;
+            collect_expression_types(scalar, structs, enums, origins, observer)?;
         }
         Expr::ConstructJubjubPoint { x, y } => {
-            collect_expression_types(x, structs, enums)?;
-            collect_expression_types(y, structs, enums)?;
+            collect_expression_types(x, structs, enums, origins, observer)?;
+            collect_expression_types(y, structs, enums, origins, observer)?;
         }
         Expr::TransientCommit { value, opening } | Expr::PersistentCommit { value, opening } => {
-            collect_expression_types(value, structs, enums)?;
-            collect_expression_types(opening, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
+            collect_expression_types(opening, structs, enums, origins, observer)?;
         }
         Expr::UnsignedCast { value, .. }
         | Expr::FieldCast { value }
-        | Expr::FieldToBytes32 { value } => collect_expression_types(value, structs, enums)?,
+        | Expr::FieldToBytes32 { value } => {
+            collect_expression_types(value, structs, enums, origins, observer)?
+        }
         Expr::Coerce { value, ty } => {
-            collect_expression_types(value, structs, enums)?;
-            collect_named_types(ty, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
+            collect_named_types_observed(ty, structs, enums, observer, Some(origins))?;
         }
         Expr::UnsignedAdd { left, right, .. }
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => {
-            collect_expression_types(left, structs, enums)?;
-            collect_expression_types(right, structs, enums)?;
+            collect_expression_types(left, structs, enums, origins, observer)?;
+            collect_expression_types(right, structs, enums, origins, observer)?;
         }
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
@@ -658,8 +790,8 @@ fn collect_expression_types(
         | Expr::NotEqual { left, right }
         | Expr::Compare { left, right, .. }
         | Expr::EcAdd { left, right } => {
-            collect_expression_types(left, structs, enums)?;
-            collect_expression_types(right, structs, enums)?;
+            collect_expression_types(left, structs, enums, origins, observer)?;
+            collect_expression_types(right, structs, enums, origins, observer)?;
         }
         Expr::Unit
         | Expr::Boolean { .. }
@@ -667,21 +799,26 @@ fn collect_expression_types(
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
-        Expr::KernelClaim { value, .. } => collect_expression_types(value, structs, enums)?,
-        Expr::KernelMintShielded { domain, amount } => {
-            collect_expression_types(domain, structs, enums)?;
-            collect_expression_types(amount, structs, enums)?;
+        Expr::KernelClaim { value, .. } => {
+            collect_expression_types(value, structs, enums, origins, observer)?
         }
-        Expr::CreateZswapInput { coin } => collect_expression_types(coin, structs, enums)?,
+        Expr::KernelMintShielded { domain, amount } => {
+            collect_expression_types(domain, structs, enums, origins, observer)?;
+            collect_expression_types(amount, structs, enums, origins, observer)?;
+        }
+        Expr::CreateZswapInput { coin } => {
+            collect_expression_types(coin, structs, enums, origins, observer)?
+        }
         Expr::CreateZswapOutput { coin, recipient } => {
-            collect_expression_types(coin, structs, enums)?;
-            collect_expression_types(recipient, structs, enums)?;
+            collect_expression_types(coin, structs, enums, origins, observer)?;
+            collect_expression_types(recipient, structs, enums, origins, observer)?;
         }
         Expr::NativeWitnessCall { builtin } => {
-            collect_named_types(&builtin.result_type(), structs, enums)?;
+            collect_named_types_with_origins(&builtin.result_type(), structs, enums, None)
+                .inspect_err(|_| named_collection_refused(observer, RefusalSite::unavailable()))?;
         }
         Expr::KernelSelf { ty } | Expr::ListHead { ty, .. } => {
-            collect_named_types(ty, structs, enums)?
+            collect_named_types_observed(ty, structs, enums, observer, Some(origins))?
         }
         Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }
@@ -694,15 +831,17 @@ fn collect_expression_types(
     Ok(())
 }
 
-fn collect_action_types(
-    action: &StateAction,
+fn collect_action_types<'ir>(
+    action: &'ir StateAction,
     structs: &mut BTreeMap<String, Vec<StructField>>,
     enums: &mut BTreeMap<String, Vec<String>>,
+    origins: &mut type_declarations::DefinitionOrigins<'ir>,
+    observer: Option<&dyn RefusalObserver>,
 ) -> Result<(), RenderError> {
     match action {
         StateAction::Sequence { actions } => {
             for action in actions {
-                collect_action_types(action, structs, enums)?;
+                collect_action_types(action, structs, enums, origins, observer)?;
             }
         }
         StateAction::If {
@@ -710,27 +849,27 @@ fn collect_action_types(
             then,
             otherwise,
         } => {
-            collect_expression_types(condition, structs, enums)?;
-            collect_action_types(then, structs, enums)?;
-            collect_action_types(otherwise, structs, enums)?;
+            collect_expression_types(condition, structs, enums, origins, observer)?;
+            collect_action_types(then, structs, enums, origins, observer)?;
+            collect_action_types(otherwise, structs, enums, origins, observer)?;
         }
         StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
             for argument in arguments {
-                collect_expression_types(argument, structs, enums)?;
+                collect_expression_types(argument, structs, enums, origins, observer)?;
             }
         }
         StateAction::Expression { value } => {
-            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
         }
         StateAction::Assert { condition, .. } => {
-            collect_expression_types(condition, structs, enums)?;
+            collect_expression_types(condition, structs, enums, origins, observer)?;
         }
         StateAction::Let { bindings, action } => {
             for binding in bindings {
-                collect_named_types(&binding.ty, structs, enums)?;
-                collect_expression_types(&binding.value, structs, enums)?;
+                collect_named_types_observed(&binding.ty, structs, enums, observer, Some(origins))?;
+                collect_expression_types(&binding.value, structs, enums, origins, observer)?;
             }
-            collect_action_types(action, structs, enums)?;
+            collect_action_types(action, structs, enums, origins, observer)?;
         }
         StateAction::CellWrite { value, .. }
         | StateAction::SetInsert { value, .. }
@@ -740,7 +879,7 @@ fn collect_action_types(
         | StateAction::MerkleInsertHash { hash: value, .. }
         | StateAction::HistoricMerkleInsert { value, .. }
         | StateAction::HistoricMerkleInsertHash { hash: value, .. } => {
-            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
         }
         StateAction::SetInsertCoin {
             coin, recipient, ..
@@ -748,8 +887,8 @@ fn collect_action_types(
         | StateAction::CellWriteCoin {
             coin, recipient, ..
         } => {
-            collect_expression_types(coin, structs, enums)?;
-            collect_expression_types(recipient, structs, enums)?;
+            collect_expression_types(coin, structs, enums, origins, observer)?;
+            collect_expression_types(recipient, structs, enums, origins, observer)?;
         }
         StateAction::MerkleInsertIndex {
             value, position, ..
@@ -767,22 +906,25 @@ fn collect_action_types(
             position,
             ..
         } => {
-            collect_expression_types(value, structs, enums)?;
-            collect_expression_types(position, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
+            collect_expression_types(position, structs, enums, origins, observer)?;
         }
         StateAction::MapInsert { key, value, .. } => {
-            collect_expression_types(key, structs, enums)?;
-            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(key, structs, enums, origins, observer)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
         }
         StateAction::MapInsertDefault { key, .. } | StateAction::MapRemove { key, .. } => {
-            collect_expression_types(key, structs, enums)?;
+            collect_expression_types(key, structs, enums, origins, observer)?;
         }
         StateAction::MerkleInsertIndexDefault { position, .. }
         | StateAction::HistoricMerkleInsertIndexDefault { position, .. } => {
-            collect_expression_types(position, structs, enums)?;
+            collect_expression_types(position, structs, enums, origins, observer)?;
         }
-        StateAction::NativeWitnessCall { .. }
-        | StateAction::CounterIncrement { .. }
+        StateAction::NativeWitnessCall { builtin } => {
+            collect_named_types_with_origins(&builtin.result_type(), structs, enums, None)
+                .inspect_err(|_| named_collection_refused(observer, RefusalSite::unavailable()))?;
+        }
+        StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::SetReset { .. }
@@ -796,34 +938,38 @@ fn collect_action_types(
     Ok(())
 }
 
-fn collect_return_plan_types(
-    plan: &ir::ReturnPlan,
+fn collect_return_plan_types<'ir>(
+    plan: &'ir ir::ReturnPlan,
     structs: &mut BTreeMap<String, Vec<StructField>>,
     enums: &mut BTreeMap<String, Vec<String>>,
+    origins: &mut type_declarations::DefinitionOrigins<'ir>,
+    observer: Option<&dyn RefusalObserver>,
 ) -> Result<(), RenderError> {
     match plan {
-        ir::ReturnPlan::Value { value } => collect_expression_types(value, structs, enums),
+        ir::ReturnPlan::Value { value } => {
+            collect_expression_types(value, structs, enums, origins, observer)
+        }
         ir::ReturnPlan::Sequence { actions, result } => {
             for action in actions {
-                collect_action_types(action, structs, enums)?;
+                collect_action_types(action, structs, enums, origins, observer)?;
             }
-            collect_return_plan_types(result, structs, enums)
+            collect_return_plan_types(result, structs, enums, origins, observer)
         }
         ir::ReturnPlan::Let { bindings, result } => {
             for binding in bindings {
-                collect_named_types(&binding.ty, structs, enums)?;
-                collect_expression_types(&binding.value, structs, enums)?;
+                collect_named_types_observed(&binding.ty, structs, enums, observer, Some(origins))?;
+                collect_expression_types(&binding.value, structs, enums, origins, observer)?;
             }
-            collect_return_plan_types(result, structs, enums)
+            collect_return_plan_types(result, structs, enums, origins, observer)
         }
         ir::ReturnPlan::Conditional {
             condition,
             then,
             otherwise,
         } => {
-            collect_expression_types(condition, structs, enums)?;
-            collect_return_plan_types(then, structs, enums)?;
-            collect_return_plan_types(otherwise, structs, enums)
+            collect_expression_types(condition, structs, enums, origins, observer)?;
+            collect_return_plan_types(then, structs, enums, origins, observer)?;
+            collect_return_plan_types(otherwise, structs, enums, origins, observer)
         }
     }
 }
@@ -972,43 +1118,6 @@ pub(crate) fn condition_needs_statement(condition: &Expr) -> bool {
     !matches!(condition, Expr::Boolean { .. } | Expr::Parameter { .. })
 }
 
-fn lift_block_condition(
-    condition: syn::Expr,
-    parameters: &HashMap<&str, (&Type, syn::Ident)>,
-) -> (Vec<syn::Stmt>, syn::Expr) {
-    fn contains_local(expression: &syn::Expr) -> bool {
-        match expression {
-            syn::Expr::Block(block) => block
-                .block
-                .stmts
-                .iter()
-                .any(|statement| matches!(statement, syn::Stmt::Local(_))),
-            syn::Expr::Paren(paren) => contains_local(&paren.expr),
-            syn::Expr::Group(group) => contains_local(&group.expr),
-            _ => false,
-        }
-    }
-    if !contains_local(&condition) {
-        return (Vec::new(), condition);
-    }
-    let mut suffix = 0;
-    let name = loop {
-        let candidate = if suffix == 0 {
-            "__compact_condition".to_owned()
-        } else {
-            format!("__compact_condition_{suffix}")
-        };
-        if parameters.values().all(|(_, name)| *name != candidate) {
-            break syn::Ident::new(&candidate, Span::call_site());
-        }
-        suffix += 1;
-    };
-    (
-        vec![syn::parse_quote!(let #name: bool = #condition;)],
-        syn::parse_quote!(#name),
-    )
-}
-
 #[cfg(test)]
 mod discarded_expression_tests {
     use super::{Type, discard_expression};
@@ -1040,491 +1149,89 @@ mod discarded_expression_tests {
     }
 }
 
-fn unit_statements(
+/// Complete generic fold; native consumers retain expression and Unit views.
+fn native_fragment_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
-) -> Result<Vec<syn::Stmt>, RenderError> {
-    match expr {
-        Expr::Unit | Expr::Default { ty: Type::Unit } => Ok(Vec::new()),
-        Expr::Sequence { steps, value } => {
-            let mut statements = Vec::new();
-            for step in steps {
-                statements.extend(unit_statements(step, parameters, circuits)?);
-            }
-            statements.extend(unit_statements(value, parameters, circuits)?);
-            Ok(statements)
-        }
-        Expr::Assert { condition, message } => {
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            let (mut statements, condition) = lift_block_condition(condition, parameters);
-            statements.push(syn::parse_quote!(if !(#condition) {
-                return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-            }));
-            Ok(statements)
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            let evaluate_condition = condition_needs_statement(condition);
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            let (mut statements, condition) = lift_block_condition(condition, parameters);
-            if then == otherwise {
-                if evaluate_condition && statements.is_empty() {
-                    statements.push(syn::parse_quote!(let _ = #condition;));
-                }
-                statements.extend(unit_statements(then, parameters, circuits)?);
-                return Ok(statements);
-            }
-            let then = unit_statements(then, parameters, circuits)?;
-            let otherwise = unit_statements(otherwise, parameters, circuits)?;
-            if otherwise.is_empty()
-                && let [syn::Stmt::Expr(syn::Expr::If(inner), _)] = then.as_slice()
-                && inner.else_branch.is_none()
-            {
-                let inner_condition = &inner.cond;
-                let inner_body = &inner.then_branch;
-                statements
-                    .push(syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body));
-                return Ok(statements);
-            }
-            if otherwise.is_empty() && then.is_empty() {
-                if statements.is_empty() && evaluate_condition {
-                    statements.push(syn::parse_quote!(let _ = #condition;));
-                }
-            } else if otherwise.is_empty() {
-                statements.push(syn::parse_quote!(if #condition { #(#then)* }));
-            } else if then.is_empty() {
-                statements.push(syn::parse_quote!(if !(#condition) { #(#otherwise)* }));
-            } else {
-                statements.push(syn::parse_quote!(if #condition {
-                    #(#then)*
-                } else {
-                    #(#otherwise)*
-                }));
-            }
-            Ok(statements)
-        }
-        Expr::Let { bindings, body } => {
-            let mut locals = parameters.clone();
-            let mut statements = Vec::<syn::Stmt>::new();
-            for binding in bindings {
-                ident(&binding.name)?;
-                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                let local_ty = rust_type(&binding.ty)?;
-                let local_name = syn::Ident::new(
-                    &format!("__compact_local_{}", binding.name),
-                    Span::call_site(),
-                );
-                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
-                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
-            }
-            let body = unit_statements(body, &locals, circuits)?;
-            if statements.is_empty() {
-                Ok(body)
-            } else {
-                statements.extend(body);
-                Ok(vec![syn::parse_quote!({ #(#statements)* })])
-            }
-        }
-        _ => {
-            let (rendered, actual) = expression_with_calls(expr, parameters, circuits)?;
-            if actual != Type::Unit {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unit,
-                    actual,
-                });
-            }
-            Ok(vec![syn::parse_quote!(#rendered;)])
-        }
-    }
+) -> Result<(NativeFragment, Type), RenderError> {
+    let typed = pure_semantics::expression::fold_expression(
+        expr,
+        parameters,
+        circuits,
+        &mut pure_native::sink::NativeSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
-// Recursive dispatch owns selection only; families retain exact original arms.
-// Keep recursive dispatch small; each helper retains one operation family.
+/// Only configured frontend artifacts supply this borrowed pure-body observer.
+/// Recursive traversal remains the same generic fold and native consumer.
+fn native_fragment_with_refusal(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+    callback: &mut pure_native::sink::RefusalCallback<'_>,
+) -> Result<(NativeFragment, Type), RenderError> {
+    let typed = pure_semantics::expression::fold_expression(
+        expr,
+        parameters,
+        circuits,
+        &mut pure_native::sink::NativeSink::with_refusal_callback(callback),
+    )?;
+    Ok((typed.output, typed.ty))
+}
+
 fn expression_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::Unit => pure_leaf_expression(expr, parameters, circuits),
-        Expr::Default { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::Boolean { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::FieldLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::BytesLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::UnsignedLiteral { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::Parameter { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::EnumVariant { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::StructField { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::TupleIndex { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::StructLiteral { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::Assert { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Sequence { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Tuple { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::Vector { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::VectorMap { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::VectorFoldCall { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::If { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Let { .. } => pure_control_expression(expr, parameters, circuits),
-        Expr::Call { .. } => pure_aggregate_expression(expr, parameters, circuits),
-        Expr::TransientHash { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::TransientCommit { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::PersistentHash { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::Keccak256 { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::PersistentCommit { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::DegradeToTransient { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::UpgradeFromTransient { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::HashToCurve { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. } => {
-            pure_crypto_expression(expr, parameters, circuits)
-        }
-        Expr::EcAdd { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::ConstructJubjubPoint { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::EcNeg { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::EcMul { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::EcMulGenerator { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::JubjubScalarFromNative { .. } => pure_crypto_expression(expr, parameters, circuits),
-        Expr::WitnessCall { .. }
-        | Expr::KernelClaim { .. }
-        | Expr::KernelMintShielded { .. }
-        | Expr::CreateZswapInput { .. }
-        | Expr::CreateZswapOutput { .. }
-        | Expr::NativeWitnessCall { .. }
-        | Expr::SetMember { .. }
-        | Expr::MapMember { .. }
-        | Expr::MapLookup { .. }
-        | Expr::MerkleCheckRoot { .. }
-        | Expr::HistoricMerkleCheckRoot { .. }
-        | Expr::SetIsEmpty { .. }
-        | Expr::SetSize { .. }
-        | Expr::MapIsEmpty { .. }
-        | Expr::ListLength { .. }
-        | Expr::ListIsEmpty { .. }
-        | Expr::ListHead { .. }
-        | Expr::CellRead { .. }
-        | Expr::CounterRead { .. }
-        | Expr::CounterLessThan { .. }
-        | Expr::KernelSelf { .. } => pure_leaf_expression(expr, parameters, circuits),
-        Expr::FieldCast { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::FieldToBytes32 { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::Coerce { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::UnsignedCast { .. } => pure_conversion_expression(expr, parameters, circuits),
-        Expr::UnsignedAdd { .. }
-        | Expr::UnsignedSubtract { .. }
-        | Expr::UnsignedMultiply { .. } => pure_arithmetic_expression(expr, parameters, circuits),
-        Expr::Add { .. } | Expr::Subtract { .. } | Expr::Multiply { .. } => {
-            pure_arithmetic_expression(expr, parameters, circuits)
-        }
-        Expr::Equal { .. } | Expr::NotEqual { .. } => {
-            pure_arithmetic_expression(expr, parameters, circuits)
-        }
-        Expr::Compare { .. } => pure_arithmetic_expression(expr, parameters, circuits),
-    }
+    let typed = pure_semantics::expression::fold_expression(
+        expr,
+        parameters,
+        circuits,
+        &mut pure_native::sink::NativeSink::new(),
+    )?;
+    Ok((typed.output.into_expression(), typed.ty))
 }
 
-fn pure_control_expression(
-    expr: &Expr,
-    parameters: &HashMap<&str, (&Type, syn::Ident)>,
-    circuits: &HashMap<&str, &PureCircuit>,
-) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::Assert { condition, message } => {
-            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
-            if actual != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual,
-                });
-            }
-            let (prefix, condition) = lift_block_condition(condition, parameters);
-            Ok((
-                syn::parse_quote!({
-                    #(#prefix)*
-                    if !(#condition) {
-                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-                    }
-                }),
-                Type::Unit,
-            ))
-        }
-        Expr::Sequence { steps, value } => {
-            let mut statements = Vec::<syn::Stmt>::new();
-            for step in steps {
-                let (_, actual) = expression_with_calls(step, parameters, circuits)?;
-                if actual != Type::Unit {
-                    return Err(RenderError::TypeMismatch {
-                        expected: Type::Unit,
-                        actual,
-                    });
-                }
-                statements.extend(unit_statements(step, parameters, circuits)?);
-            }
-            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
-            Ok((syn::parse_quote!({ #(#statements)* #value }), ty))
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            let evaluate_condition = condition_needs_statement(condition);
-            let (condition, condition_ty) = expression_with_calls(condition, parameters, circuits)?;
-            if condition_ty != Type::Boolean {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Boolean,
-                    actual: condition_ty,
-                });
-            }
-            let (mut prefix, condition) = lift_block_condition(condition, parameters);
-            if then == otherwise {
-                let (value, ty) = expression_with_calls(then, parameters, circuits)?;
-                if evaluate_condition && prefix.is_empty() {
-                    prefix.push(syn::parse_quote!(let _ = #condition;));
-                }
-                return Ok((
-                    if prefix.is_empty() {
-                        value
-                    } else {
-                        syn::parse_quote!({ #(#prefix)* #value })
-                    },
-                    ty,
-                ));
-            }
-            let (then, then_ty) = expression_with_calls(then, parameters, circuits)?;
-            let (otherwise, otherwise_ty) = expression_with_calls(otherwise, parameters, circuits)?;
-            if then_ty != otherwise_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: then_ty,
-                    actual: otherwise_ty,
-                });
-            }
-            let conditional: syn::Expr =
-                syn::parse_quote!(if #condition { #then } else { #otherwise });
-            Ok((
-                if prefix.is_empty() {
-                    conditional
-                } else {
-                    syn::parse_quote!({ #(#prefix)* #conditional })
-                },
-                then_ty,
-            ))
-        }
-        Expr::Let { bindings, body } => {
-            let mut locals = parameters.clone();
-            let mut statements = Vec::<syn::Stmt>::new();
-            for binding in bindings {
-                ident(&binding.name)?;
-                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                let local_ty = rust_type(&binding.ty)?;
-                let local_name = syn::Ident::new(
-                    &format!("__compact_local_{}", binding.name),
-                    Span::call_site(),
-                );
-                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
-                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
-            }
-            let (body, body_ty) = expression_with_calls(body, &locals, circuits)?;
-            Ok((syn::parse_quote!({ #(#statements)* #body }), body_ty))
-        }
-        _ => unreachable!("private pure-expression dispatcher selects this family"),
-    }
-}
-
+#[cfg(test)]
 fn pure_aggregate_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
+    use pure_semantics::aggregate::{AggregateSource, fold_aggregate};
+    let source = match expr {
         Expr::StructField {
             value,
             field,
             index,
-        } => {
-            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
-            let Type::Struct { fields, .. } = ty else {
-                return Err(RenderError::InvalidStructField(field.clone()));
-            };
-            let declaration = fields
-                .get(*index)
-                .filter(|declaration| declaration.name == *field)
-                .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
-            let name = ident(field)?;
-            let field_value = retained_value(syn::parse_quote!((#value).#name), &declaration.ty);
-            Ok((field_value, declaration.ty.clone()))
-        }
-        Expr::TupleIndex { value, index } => {
-            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
-            let Type::Tuple { elements } = ty else {
-                return Err(RenderError::ExpectedTuple(ty));
-            };
-            let result = elements
-                .get(*index)
-                .ok_or(RenderError::InvalidTupleIndex(*index))?
-                .clone();
-            let index = syn::Index::from(*index);
-            Ok((syn::parse_quote!((#value).#index), result))
-        }
-        Expr::StructLiteral { ty, fields } => {
-            let Type::Struct {
-                name,
-                fields: declarations,
-            } = ty
-            else {
-                return Err(RenderError::InvalidStructField("<literal>".into()));
-            };
-            if fields.len() != declarations.len() {
-                return Err(RenderError::InvalidStructField(name.clone()));
-            }
-            let mut field_values = Vec::<syn::FieldValue>::with_capacity(fields.len());
-            for (value, declaration) in fields.iter().zip(declarations) {
-                let (rendered, actual) = expression_with_calls(value, parameters, circuits)?;
-                if actual != declaration.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: declaration.ty.clone(),
-                        actual,
-                    });
-                }
-                let field_name = ident(&declaration.name)?;
-                let shorthand = matches!(
-                    &rendered,
-                    syn::Expr::Path(path)
-                        if path.qself.is_none()
-                            && path.path.leading_colon.is_none()
-                            && path.path.segments.len() == 1
-                            && path.path.segments[0].ident == field_name
-                            && matches!(path.path.segments[0].arguments, syn::PathArguments::None)
-                );
-                field_values.push(if shorthand {
-                    syn::parse_quote!(#field_name)
-                } else {
-                    syn::parse_quote!(#field_name: #rendered)
-                });
-            }
-            let name = ident(name)?;
-            Ok((
-                syn::parse_quote!(crate::types::#name { #(#field_values),* }),
-                ty.clone(),
-            ))
-        }
-        Expr::Tuple { elements } => {
-            let (exprs, types): (Vec<_>, Vec<_>) = elements
-                .iter()
-                .map(|element| expression_with_calls(element, parameters, circuits))
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .unzip();
-            let mut tuple = syn::ExprTuple {
-                attrs: vec![],
-                paren_token: syn::token::Paren::default(),
-                elems: syn::punctuated::Punctuated::new(),
-            };
-            for expr in exprs {
-                tuple.elems.push_value(expr);
-                tuple.elems.push_punct(syn::token::Comma::default());
-            }
-            if tuple.elems.len() > 1 {
-                tuple.elems.pop_punct();
-            }
-            Ok((syn::Expr::Tuple(tuple), Type::Tuple { elements: types }))
-        }
-        Expr::Vector { element, elements } => {
-            let mut values = Vec::new();
-            for value in elements {
-                let (rendered, actual) = expression_with_calls(value, parameters, circuits)?;
-                if actual != *element {
-                    return Err(RenderError::TypeMismatch {
-                        expected: element.clone(),
-                        actual,
-                    });
-                }
-                values.push(rendered);
-            }
-            let length = elements.len();
-            let rendered = if values.is_empty() {
-                // An empty literal has no value from which Rust can infer its
-                // element type, including inside an ignored map argument.
-                let element = rust_type(element)?;
-                syn::parse_quote!(runtime::FixedVector::<#element, 0>::new([]))
-            } else {
-                syn::parse_quote!(runtime::FixedVector::new([#(#values),*]))
-            };
-            Ok((
-                rendered,
-                Type::Vector {
-                    element: Box::new(element.clone()),
-                    length,
-                },
-            ))
-        }
+        } => AggregateSource::StructField {
+            value,
+            field,
+            index: *index,
+        },
+        Expr::TupleIndex { value, index } => AggregateSource::TupleIndex {
+            value,
+            index: *index,
+        },
+        Expr::StructLiteral { ty, fields } => AggregateSource::StructLiteral { ty, fields },
+        Expr::Tuple { elements } => AggregateSource::Tuple { elements },
+        Expr::Vector { element, elements } => AggregateSource::Vector { element, elements },
         Expr::VectorMap {
             parameter,
             source,
             body,
             result,
             length,
-        } => {
-            let (source, source_ty) = expression_with_calls(source, parameters, circuits)?;
-            let target_source_ty = Type::Vector {
-                element: Box::new(parameter.ty.clone()),
-                length: *length,
-            };
-            let source = coerce_expression(source, &source_ty, &target_source_ty, 0)?;
-            let item_name = ident(&parameter.name)?;
-            let mut body_parameters = parameters.clone();
-            body_parameters.insert(parameter.name.as_str(), (&parameter.ty, item_name.clone()));
-            let (body, actual) = expression_with_calls(body, &body_parameters, circuits)?;
-            if actual != *result {
-                return Err(RenderError::TypeMismatch {
-                    expected: result.clone(),
-                    actual,
-                });
-            }
-            let mapped = syn::Ident::new("__compact_mapped", Span::call_site());
-            let source_name = syn::Ident::new("__compact_map_source", Span::call_site());
-            let length_lit = syn::LitInt::new(&length.to_string(), Span::call_site());
-            Ok((
-                syn::parse_quote!({
-                    let #source_name = #source;
-                    let mut #mapped = Vec::with_capacity(#length_lit);
-                    for #item_name in #source_name.into_array() {
-                        #mapped.push(#body);
-                    }
-                    runtime::FixedVector::new(<[_; #length_lit]>::try_from(#mapped).expect("Vector map preserves its length"))
-                }),
-                Type::Vector {
-                    element: Box::new(result.clone()),
-                    length: *length,
-                },
-            ))
-        }
+        } => AggregateSource::VectorMap {
+            parameter,
+            source,
+            body,
+            result,
+            length: *length,
+        },
         Expr::VectorFoldCall {
             name,
             initial,
@@ -1532,490 +1239,171 @@ fn pure_aggregate_expression(
             accumulator,
             element,
             length,
-        } => {
-            let circuit = circuits
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
-            if circuit.parameters.len() != 2
-                || circuit.parameters[0].ty != *accumulator
-                || circuit.parameters[1].ty != *element
-                || circuit.result != *accumulator
-            {
-                return Err(RenderError::TypeMismatch {
-                    expected: accumulator.clone(),
-                    actual: circuit.result.clone(),
-                });
-            }
-            let (initial, initial_ty) = expression_with_calls(initial, parameters, circuits)?;
-            let initial = coerce_expression(initial, &initial_ty, accumulator, 0)?;
-            let (source, source_ty) = expression_with_calls(source, parameters, circuits)?;
-            let expected_source = Type::Vector {
-                element: Box::new(element.clone()),
-                length: *length,
-            };
-            let source = coerce_expression(source, &source_ty, &expected_source, 0)?;
-            let function = ident(name)?;
-            let acc = syn::Ident::new("__compact_fold_accumulator", Span::call_site());
-            let item = syn::Ident::new("__compact_fold_item", Span::call_site());
-            let source_name = syn::Ident::new("__compact_fold_source", Span::call_site());
-            Ok((
-                syn::parse_quote!({
-                    let #source_name = #source;
-                    let mut #acc = #initial;
-                    for #item in #source_name.into_array() {
-                        #acc = crate::pure_circuits::#function(#acc, #item)?;
-                    }
-                    #acc
-                }),
-                accumulator.clone(),
-            ))
-        }
-        Expr::Call { name, arguments } => {
-            let circuit = circuits
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
-            if arguments.len() != circuit.parameters.len() {
-                return Err(RenderError::ArgumentCount {
-                    circuit: name.clone(),
-                    expected: circuit.parameters.len(),
-                    actual: arguments.len(),
-                });
-            }
-            let mut rendered_arguments = Vec::with_capacity(arguments.len());
-            for (argument, parameter) in arguments.iter().zip(&circuit.parameters) {
-                let (value, actual) = expression_with_calls(argument, parameters, circuits)?;
-                if actual != parameter.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: parameter.ty.clone(),
-                        actual,
-                    });
-                }
-                rendered_arguments.push(value);
-            }
-            let name = ident(name)?;
-            Ok((
-                syn::parse_quote!(crate::pure_circuits::#name(#(#rendered_arguments),*)?),
-                circuit.result.clone(),
-            ))
-        }
+        } => AggregateSource::VectorFoldCall {
+            name,
+            initial,
+            source,
+            accumulator,
+            element,
+            length: *length,
+        },
+        Expr::Call { name, arguments } => AggregateSource::Call { name, arguments },
         _ => unreachable!("private pure-expression dispatcher selects this family"),
-    }
+    };
+    let typed = fold_aggregate(
+        source,
+        &mut pure_native::children::NativeChildren::new(parameters, circuits),
+        circuits,
+        &mut pure_native::leaf::NativeLeafSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_conversion_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::FieldCast { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            let Type::Unsigned { max } = &actual else {
-                return Err(RenderError::ExpectedUnsigned(actual));
-            };
-            let rendered = match unsigned_maximum(max)? {
-                UnsignedMaximum::Small(_) => {
-                    syn::parse_quote!(runtime::Field::from((#value).value()))
-                }
-                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
-            };
-            Ok((rendered, Type::Field))
-        }
-        Expr::FieldToBytes32 { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((field_to_bytes_32_syntax(value), Type::Bytes { length: 32 }))
-        }
-        Expr::Coerce { value, ty } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            Ok((coerce_expression(value, &actual, ty, 0)?, ty.clone()))
-        }
-        Expr::UnsignedCast { max, value } => {
-            unsigned_maximum(max)?;
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            let Type::Unsigned { max: source_max } = actual else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual,
-                });
-            };
-            Ok((
-                unsigned_cast_syntax(value, &source_max, max)?,
-                Type::Unsigned { max: max.clone() },
-            ))
-        }
+    use pure_semantics::conversion::{ConversionSource, fold_conversion};
+    let source = match expr {
+        Expr::FieldCast { value } => ConversionSource::FieldCast { value },
+        Expr::FieldToBytes32 { value } => ConversionSource::FieldToBytes32 { value },
+        Expr::Coerce { value, ty } => ConversionSource::Coerce { value, ty },
+        Expr::UnsignedCast { max, value } => ConversionSource::UnsignedCast { max, value },
         _ => unreachable!("private pure-expression dispatcher selects this family"),
-    }
+    };
+    let typed = fold_conversion(
+        source,
+        &mut pure_native::children::NativeChildren::new(parameters, circuits),
+        &mut pure_native::leaf::NativeLeafSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_arithmetic_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::UnsignedAdd { max, left, right }
-        | Expr::UnsignedSubtract { max, left, right }
-        | Expr::UnsignedMultiply { max, left, right } => {
-            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
-            let Type::Unsigned { max: left_max } = left_type else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual: left_type,
-                });
-            };
-            let Type::Unsigned { max: right_max } = right_type else {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Unsigned { max: max.clone() },
-                    actual: right_type,
-                });
-            };
-            Ok((
-                unsigned_arithmetic_syntax(expr, left, right, &left_max, &right_max, max)?,
-                Type::Unsigned { max: max.clone() },
-            ))
-        }
-        Expr::Add { left, right }
-        | Expr::Subtract { left, right }
-        | Expr::Multiply { left, right } => {
-            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
-            if left_type != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: left_type,
-                });
-            }
-            if right_type != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual: right_type,
-                });
-            }
-            let op = match expr {
-                Expr::Add { .. } => syn::BinOp::Add(syn::token::Plus::default()),
-                Expr::Subtract { .. } => syn::BinOp::Sub(syn::token::Minus::default()),
-                Expr::Multiply { .. } => syn::BinOp::Mul(syn::token::Star::default()),
-                _ => unreachable!(),
-            };
-            Ok((
-                syn::Expr::Binary(syn::ExprBinary {
-                    attrs: vec![],
-                    left: Box::new(left),
-                    op,
-                    right: Box::new(right),
-                }),
-                Type::Field,
-            ))
-        }
-        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
-            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
-            if right_ty != left_ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: left_ty,
-                    actual: right_ty,
-                });
-            }
-            let rendered = if matches!(expr, Expr::Equal { .. }) {
-                syn::parse_quote!(#left == #right)
-            } else {
-                syn::parse_quote!(#left != #right)
-            };
-            Ok((rendered, Type::Boolean))
-        }
+    use pure_semantics::{
+        arithmetic::{ArithmeticSource, fold_arithmetic},
+        numeric::ArithmeticKind,
+    };
+    let source = match expr {
+        Expr::UnsignedAdd { max, left, right } => ArithmeticSource::Unsigned {
+            kind: ArithmeticKind::Add,
+            max,
+            left,
+            right,
+        },
+        Expr::UnsignedSubtract { max, left, right } => ArithmeticSource::Unsigned {
+            kind: ArithmeticKind::Subtract,
+            max,
+            left,
+            right,
+        },
+        Expr::UnsignedMultiply { max, left, right } => ArithmeticSource::Unsigned {
+            kind: ArithmeticKind::Multiply,
+            max,
+            left,
+            right,
+        },
+        Expr::Add { left, right } => ArithmeticSource::Field {
+            kind: ArithmeticKind::Add,
+            left,
+            right,
+        },
+        Expr::Subtract { left, right } => ArithmeticSource::Field {
+            kind: ArithmeticKind::Subtract,
+            left,
+            right,
+        },
+        Expr::Multiply { left, right } => ArithmeticSource::Field {
+            kind: ArithmeticKind::Multiply,
+            left,
+            right,
+        },
+        Expr::Equal { left, right } => ArithmeticSource::Equality {
+            negated: false,
+            left,
+            right,
+        },
+        Expr::NotEqual { left, right } => ArithmeticSource::Equality {
+            negated: true,
+            left,
+            right,
+        },
         Expr::Compare {
             operator,
             left,
             right,
-        } => {
-            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
-            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
-            for actual in [left_ty, right_ty] {
-                let Type::Unsigned { max } = &actual else {
-                    return Err(RenderError::ExpectedUnsigned(actual));
-                };
-                if matches!(unsigned_maximum(max)?, UnsignedMaximum::Wide { .. }) {
-                    return Err(RenderError::UnsupportedWideUnsignedOperation {
-                        operation: "ordered comparison",
-                        max: max.clone(),
-                    });
-                }
-            }
-            let rendered = match operator {
-                ComparisonOperator::Less => syn::parse_quote!(#left.value() < #right.value()),
-                ComparisonOperator::LessEqual => syn::parse_quote!(#left.value() <= #right.value()),
-                ComparisonOperator::Greater => syn::parse_quote!(#left.value() > #right.value()),
-                ComparisonOperator::GreaterEqual => {
-                    syn::parse_quote!(#left.value() >= #right.value())
-                }
-            };
-            Ok((rendered, Type::Boolean))
-        }
+        } => ArithmeticSource::Ordered {
+            operator: *operator,
+            left,
+            right,
+        },
         _ => unreachable!("private pure-expression dispatcher selects this family"),
-    }
+    };
+    let typed = fold_arithmetic(
+        source,
+        &mut pure_native::children::NativeChildren::new(parameters, circuits),
+        &mut pure_native::leaf::NativeLeafSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_crypto_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::TransientHash { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
-            Ok((
-                syn::parse_quote!(runtime::transient_hash(#value)),
-                Type::Field,
-            ))
-        }
-        Expr::TransientCommit { value, opening } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
-            let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::transient_commit(#value, #opening)),
-                Type::Field,
-            ))
-        }
-        Expr::PersistentHash { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
-            Ok((
-                syn::parse_quote!(runtime::persistent_hash(#value)),
-                Type::Bytes { length: 32 },
-            ))
-        }
-        Expr::Keccak256 { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
-            Ok((
-                syn::parse_quote!(runtime::keccak256(#value)),
-                Type::Bytes { length: 32 },
-            ))
-        }
-        Expr::PersistentCommit { value, opening } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
-            let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
-            if actual != (Type::Bytes { length: 32 }) {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Bytes { length: 32 },
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::persistent_commit(#value, #opening)),
-                Type::Bytes { length: 32 },
-            ))
-        }
-        Expr::DegradeToTransient { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != (Type::Bytes { length: 32 }) {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Bytes { length: 32 },
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::degrade_to_transient(#value)),
-                Type::Field,
-            ))
-        }
-        Expr::UpgradeFromTransient { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != Type::Field {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::Field,
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::upgrade_from_transient(#value)),
-                Type::Bytes { length: 32 },
-            ))
-        }
-        Expr::HashToCurve { value } => {
-            let (value, _) = expression_with_calls(value, parameters, circuits)?;
-            Ok((
-                syn::parse_quote!(runtime::hash_to_curve(#value)),
-                Type::JubjubPoint,
-            ))
-        }
-        Expr::JubjubPointX { value } | Expr::JubjubPointY { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != Type::JubjubPoint {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::JubjubPoint,
-                    actual,
-                });
-            }
-            let operation: syn::Path = match expr {
-                Expr::JubjubPointX { .. } => syn::parse_quote!(runtime::jubjub_point_x),
-                Expr::JubjubPointY { .. } => syn::parse_quote!(runtime::jubjub_point_y),
-                _ => unreachable!(),
-            };
-            Ok((syn::parse_quote!(#operation(#value)), Type::Field))
-        }
-        Expr::EcAdd { left, right } => {
-            let left = expression_with_calls(left, parameters, circuits)?;
-            let right = expression_with_calls(right, parameters, circuits)?;
-            jubjub_value::Operation::Add(left, right).lower()
-        }
-        Expr::ConstructJubjubPoint { x, y } => {
-            let (x, x_ty) = expression_with_calls(x, parameters, circuits)?;
-            let (y, y_ty) = expression_with_calls(y, parameters, circuits)?;
-            for actual in [x_ty, y_ty] {
-                if actual != Type::Field {
-                    return Err(RenderError::TypeMismatch {
-                        expected: Type::Field,
-                        actual,
-                    });
-                }
-            }
-            Ok((
-                syn::parse_quote!(runtime::construct_jubjub_point(#x, #y)?),
-                Type::JubjubPoint,
-            ))
-        }
-        Expr::EcNeg { value } => {
-            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if actual != Type::JubjubPoint {
-                return Err(RenderError::TypeMismatch {
-                    expected: Type::JubjubPoint,
-                    actual,
-                });
-            }
-            Ok((
-                syn::parse_quote!(runtime::ec_neg(#value)),
-                Type::JubjubPoint,
-            ))
-        }
-        Expr::EcMul { point, scalar } => {
-            let point = expression_with_calls(point, parameters, circuits)?;
-            let scalar = expression_with_calls(scalar, parameters, circuits)?;
-            jubjub_value::Operation::Multiply(point, scalar).lower()
-        }
-        Expr::EcMulGenerator { scalar } => {
-            let scalar = expression_with_calls(scalar, parameters, circuits)?;
-            jubjub_value::Operation::Generator(scalar).lower()
-        }
-        Expr::JubjubScalarFromNative { value } => {
-            let value = expression_with_calls(value, parameters, circuits)?;
-            jubjub_value::Operation::Reduce(value).lower()
-        }
+    use pure_semantics::crypto::{CryptoSource, fold_crypto};
+    let source = match expr {
+        Expr::TransientHash { value } => CryptoSource::TransientHash(value),
+        Expr::TransientCommit { value, opening } => CryptoSource::TransientCommit(value, opening),
+        Expr::PersistentHash { value } => CryptoSource::PersistentHash(value),
+        Expr::PersistentCommit { value, opening } => CryptoSource::PersistentCommit(value, opening),
+        Expr::Keccak256 { value } => CryptoSource::Keccak256(value),
+        Expr::DegradeToTransient { value } => CryptoSource::DegradeToTransient(value),
+        Expr::UpgradeFromTransient { value } => CryptoSource::UpgradeFromTransient(value),
+        Expr::HashToCurve { value } => CryptoSource::HashToCurve(value),
+        Expr::JubjubPointX { value } => CryptoSource::JubjubPointX(value),
+        Expr::JubjubPointY { value } => CryptoSource::JubjubPointY(value),
+        Expr::ConstructJubjubPoint { x, y } => CryptoSource::ConstructJubjubPoint(x, y),
+        Expr::EcAdd { left, right } => CryptoSource::EcAdd(left, right),
+        Expr::EcNeg { value } => CryptoSource::EcNeg(value),
+        Expr::EcMul { point, scalar } => CryptoSource::EcMul(point, scalar),
+        Expr::EcMulGenerator { scalar } => CryptoSource::EcMulGenerator(scalar),
+        Expr::JubjubScalarFromNative { value } => CryptoSource::JubjubScalarFromNative(value),
         _ => unreachable!("private pure-expression dispatcher selects this family"),
-    }
+    };
+    let typed = fold_crypto(
+        source,
+        &mut pure_native::children::NativeChildren::new(parameters, circuits),
+        &mut pure_native::leaf::NativeLeafSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
+#[cfg(test)]
 fn pure_leaf_expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     _circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
-    match expr {
-        Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
-        Expr::Default { ty } => {
-            let rendered_type = rust_type(ty)?;
-            Ok((
-                syn::parse_quote!(<#rendered_type as Default>::default()),
-                ty.clone(),
-            ))
-        }
-        Expr::Boolean { value } => Ok((syn::parse_quote!(#value), Type::Boolean)),
-        Expr::FieldLiteral { value } => {
-            let bytes = field_literal_bytes(value)?;
-            if let Ok(parsed) = value.parse::<u128>() {
-                let value = syn::LitInt::new(&format!("{parsed}u128"), Span::call_site());
-                return Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field));
-            }
-            let bytes = bytes
-                .iter()
-                .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
-                .collect::<Vec<_>>();
-            Ok((
-                syn::parse_quote!(runtime::Field::from_le_bytes(&[#(#bytes),*]).expect("validated Compact Field literal")),
-                Type::Field,
-            ))
-        }
-        Expr::BytesLiteral { bytes } => {
-            let values = bytes
-                .iter()
-                .map(|value| syn::LitInt::new(&format!("{value}u8"), Span::call_site()))
-                .collect::<Vec<_>>();
-            Ok((
-                syn::parse_quote!(runtime::FixedBytes::new([#(#values),*])),
-                Type::Bytes {
-                    length: bytes.len(),
-                },
-            ))
-        }
-        Expr::UnsignedLiteral { value, max } => {
-            let maximum = unsigned_maximum(max)?;
-            let bytes =
-                field_literal_bytes(value).map_err(|_| RenderError::InvalidUnsignedLiteral {
-                    value: value.clone(),
-                    max: max.clone(),
-                })?;
-            let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
-            let high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb"));
-            let maximum_limbs = match maximum {
-                UnsignedMaximum::Small(maximum) => (0, maximum),
-                UnsignedMaximum::Wide { high, low } => (high, low),
-            };
-            if (high, low) > maximum_limbs {
-                return Err(RenderError::InvalidUnsignedLiteral {
-                    value: value.clone(),
-                    max: max.clone(),
-                });
-            }
-            let rendered: syn::Expr = match maximum {
-                UnsignedMaximum::Small(_) => {
-                    let max_lit = syn::LitInt::new(max, Span::call_site());
-                    let value_lit = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
-                    syn::parse_quote!(runtime::BoundedUint::<#max_lit>::new(#value_lit).expect("Compact Uint literal fits its maximum"))
-                }
-                UnsignedMaximum::Wide { high, low } => {
-                    let ty = wide_uint_type(high, low);
-                    let bytes = bytes[..31]
-                        .iter()
-                        .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
-                        .collect::<Vec<_>>();
-                    syn::parse_quote!(<#ty>::from_le_bytes(&[#(#bytes),*]).expect("Compact Uint literal fits its maximum"))
-                }
-            };
-            Ok((rendered, Type::Unsigned { max: max.clone() }))
-        }
-        Expr::Parameter { name } => {
-            let (ty, rust_name) = parameters
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
-            let value = if copy_type(ty) {
-                syn::parse_quote!(#rust_name)
-            } else {
-                syn::parse_quote!(#rust_name.clone())
-            };
-            Ok((value, (*ty).clone()))
-        }
-        Expr::EnumVariant { ty, variant } => {
-            let Type::Enum { variants, .. } = ty else {
-                return Err(RenderError::InvalidEnumVariant(variant.clone()));
-            };
-            if !variants.contains(variant) {
-                return Err(RenderError::InvalidEnumVariant(variant.clone()));
-            }
-            let rust_ty = rust_type(ty)?;
-            let rust_variant = ident(variant)?;
-            Ok((syn::parse_quote!(#rust_ty::#rust_variant), ty.clone()))
-        }
+    use pure_semantics::leaf::{LeafSource, fold_leaf};
+    let source = match expr {
+        Expr::Unit => LeafSource::Unit,
+        Expr::Default { ty } => LeafSource::Default(ty),
+        Expr::Boolean { value } => LeafSource::Boolean(*value),
+        Expr::FieldLiteral { value } => LeafSource::FieldLiteral(value),
+        Expr::BytesLiteral { bytes } => LeafSource::BytesLiteral(bytes),
+        Expr::UnsignedLiteral { value, max } => LeafSource::UnsignedLiteral { value, max },
+        Expr::Parameter { name } => LeafSource::Parameter(name),
+        Expr::EnumVariant { ty, variant } => LeafSource::EnumVariant { ty, variant },
         Expr::WitnessCall { .. }
         | Expr::KernelClaim { .. }
         | Expr::KernelMintShielded { .. }
@@ -2036,9 +1424,15 @@ fn pure_leaf_expression(
         | Expr::CellRead { .. }
         | Expr::CounterRead { .. }
         | Expr::CounterLessThan { .. }
-        | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),
+        | Expr::KernelSelf { .. } => pure_semantics::leaf::LeafSource::Effectful,
         _ => unreachable!("private pure-expression dispatcher selects this family"),
-    }
+    };
+    let typed = fold_leaf(
+        source,
+        parameters,
+        &mut pure_native::leaf::NativeLeafSink::new(),
+    )?;
+    Ok((typed.output, typed.ty))
 }
 
 fn infallible_constructor_expr(value: &Expr) -> bool {
@@ -2066,42 +1460,44 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
     }
 }
 
-fn collect_constructor_step_types(
-    step: &ConstructorStep,
+fn collect_constructor_step_types<'ir>(
+    step: &'ir ConstructorStep,
     structs: &mut BTreeMap<String, Vec<StructField>>,
     enums: &mut BTreeMap<String, Vec<String>>,
+    origins: &mut type_declarations::DefinitionOrigins<'ir>,
+    observer: Option<&dyn RefusalObserver>,
 ) -> Result<(), RenderError> {
     match step {
         ConstructorStep::Expression { value } => {
-            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
         }
         ConstructorStep::Let { bindings, step } => {
             for binding in bindings {
-                collect_named_types(&binding.ty, structs, enums)?;
-                collect_expression_types(&binding.value, structs, enums)?;
+                collect_named_types_observed(&binding.ty, structs, enums, observer, Some(origins))?;
+                collect_expression_types(&binding.value, structs, enums, origins, observer)?;
             }
-            collect_constructor_step_types(step, structs, enums)?;
+            collect_constructor_step_types(step, structs, enums, origins, observer)?;
         }
         ConstructorStep::Sequence { steps } => {
             for step in steps {
-                collect_constructor_step_types(step, structs, enums)?;
+                collect_constructor_step_types(step, structs, enums, origins, observer)?;
             }
         }
         ConstructorStep::Assert { condition, .. } => {
-            collect_expression_types(condition, structs, enums)?
+            collect_expression_types(condition, structs, enums, origins, observer)?
         }
         ConstructorStep::CellWrite { value, .. }
         | ConstructorStep::SetInsert { value, .. }
         | ConstructorStep::SetRemove { value, .. }
         | ConstructorStep::ListPushFront { value, .. } => {
-            collect_expression_types(value, structs, enums)?
+            collect_expression_types(value, structs, enums, origins, observer)?
         }
         ConstructorStep::MapInsert { key, value, .. } => {
-            collect_expression_types(key, structs, enums)?;
-            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(key, structs, enums, origins, observer)?;
+            collect_expression_types(value, structs, enums, origins, observer)?;
         }
         ConstructorStep::MapInsertDefault { key, .. } | ConstructorStep::MapRemove { key, .. } => {
-            collect_expression_types(key, structs, enums)?
+            collect_expression_types(key, structs, enums, origins, observer)?
         }
         ConstructorStep::CounterIncrement { .. }
         | ConstructorStep::CounterDecrement { .. }
@@ -2115,12 +1511,12 @@ fn collect_constructor_step_types(
             values,
             steps,
         } => {
-            collect_named_types(&binding.ty, structs, enums)?;
+            collect_named_types_observed(&binding.ty, structs, enums, observer, Some(origins))?;
             for value in values {
-                collect_expression_types(value, structs, enums)?;
+                collect_expression_types(value, structs, enums, origins, observer)?;
             }
             for step in steps {
-                collect_constructor_step_types(step, structs, enums)?;
+                collect_constructor_step_types(step, structs, enums, origins, observer)?;
             }
         }
         ConstructorStep::ForEachVector {
@@ -2129,10 +1525,10 @@ fn collect_constructor_step_types(
             steps,
             ..
         } => {
-            collect_named_types(&binding.ty, structs, enums)?;
-            collect_expression_types(source, structs, enums)?;
+            collect_named_types_observed(&binding.ty, structs, enums, observer, Some(origins))?;
+            collect_expression_types(source, structs, enums, origins, observer)?;
             for step in steps {
-                collect_constructor_step_types(step, structs, enums)?;
+                collect_constructor_step_types(step, structs, enums, origins, observer)?;
             }
         }
         ConstructorStep::If {
@@ -2140,15 +1536,16 @@ fn collect_constructor_step_types(
             then_steps,
             otherwise_steps,
         } => {
-            collect_expression_types(condition, structs, enums)?;
+            collect_expression_types(condition, structs, enums, origins, observer)?;
             for step in then_steps.iter().chain(otherwise_steps) {
-                collect_constructor_step_types(step, structs, enums)?;
+                collect_constructor_step_types(step, structs, enums, origins, observer)?;
             }
         }
     }
     Ok(())
 }
 
+#[cfg(test)]
 fn constructor_step_uses_witness(
     step: &ConstructorStep,
     stateful_circuits: &HashMap<&str, &StatefulCircuit>,
@@ -2229,6 +1626,90 @@ fn constructor_step_uses_witness(
     }
 }
 
+/// Keep the original witness-first constructor selection; observe only propagated graph failures.
+fn constructor_step_uses_witness_observed(
+    step: &ConstructorStep,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<bool, RenderError> {
+    let requires = |value: &Expr| {
+        stateful::expression_requires_witness_observed(value, stateful_circuits, observer)
+    };
+    match step {
+        ConstructorStep::Expression { value } => requires(value),
+        ConstructorStep::Let { bindings, step } => {
+            for binding in bindings {
+                if requires(&binding.value)? {
+                    return Ok(true);
+                }
+            }
+            constructor_step_uses_witness_observed(step, stateful_circuits, observer)
+        }
+        ConstructorStep::Sequence { steps } => {
+            for step in steps {
+                if constructor_step_uses_witness_observed(step, stateful_circuits, observer)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::Assert { condition, .. } => requires(condition),
+        ConstructorStep::CellWrite { value, .. }
+        | ConstructorStep::SetInsert { value, .. }
+        | ConstructorStep::SetRemove { value, .. }
+        | ConstructorStep::ListPushFront { value, .. }
+        | ConstructorStep::MapInsertDefault { key: value, .. }
+        | ConstructorStep::MapRemove { key: value, .. } => requires(value),
+        ConstructorStep::MapInsert { key, value, .. } => Ok(requires(key)? || requires(value)?),
+        ConstructorStep::ForEach { values, steps, .. } => {
+            for value in values {
+                if requires(value)? {
+                    return Ok(true);
+                }
+            }
+            for step in steps {
+                if constructor_step_uses_witness_observed(step, stateful_circuits, observer)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::ForEachVector { source, steps, .. } => {
+            if requires(source)? {
+                return Ok(true);
+            }
+            for step in steps {
+                if constructor_step_uses_witness_observed(step, stateful_circuits, observer)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::If {
+            condition,
+            then_steps,
+            otherwise_steps,
+        } => {
+            if requires(condition)? {
+                return Ok(true);
+            }
+            for step in then_steps.iter().chain(otherwise_steps) {
+                if constructor_step_uses_witness_observed(step, stateful_circuits, observer)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::CounterIncrement { .. }
+        | ConstructorStep::CounterDecrement { .. }
+        | ConstructorStep::CounterReset { .. }
+        | ConstructorStep::SetReset { .. }
+        | ConstructorStep::ListPopFront { .. }
+        | ConstructorStep::ListReset { .. }
+        | ConstructorStep::MapReset { .. } => Ok(false),
+    }
+}
+
 #[expect(
     clippy::too_many_arguments,
     reason = "constructor VM lowering threads declarations and ordered loop and temporary state explicitly"
@@ -2243,22 +1724,49 @@ fn render_constructor_vm_steps<'a>(
     next_loop: &mut usize,
     next_temp: &mut usize,
 ) -> Result<Vec<syn::Stmt>, RenderError> {
+    let environment = stateful::NativeExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    render_constructor_vm_steps_observed(
+        steps,
+        parameters,
+        &environment,
+        constructor_vm::Output {
+            next_loop,
+            next_temp,
+        },
+    )
+}
+
+/// Preserve source-step recursion while observing existing operand/name failures.
+fn render_constructor_vm_steps_observed<'a>(
+    steps: &'a [ConstructorStep],
+    parameters: &HashMap<&'a str, (&'a Type, syn::Ident)>,
+    environment: &stateful::NativeExpressionContext<'_, '_>,
+    output: constructor_vm::Output<'_>,
+) -> Result<Vec<syn::Stmt>, RenderError> {
+    let constructor_vm::Output {
+        next_loop,
+        next_temp,
+    } = output;
+    let ledger_fields = environment.ledger_fields;
     let mut actions = Vec::new();
     for step in steps {
         match step {
             ConstructorStep::Expression { value } => {
                 let mut expression_steps = Vec::new();
                 let mut query_effect = false;
-                let (value, ty, _) = stateful::render_state_expression(
+                let (value, ty, _) = stateful::render_state_expression_observed(
                     value,
                     parameters,
-                    witnesses,
                     &mut expression_steps,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     &mut query_effect,
+                    environment,
                 )?;
                 actions.extend(expression_steps);
                 actions.extend(discard_expression(value, &ty));
@@ -2266,21 +1774,27 @@ fn render_constructor_vm_steps<'a>(
             ConstructorStep::Let { bindings, step } => {
                 let mut locals = parameters.clone();
                 for binding in bindings {
-                    ident(&binding.name)?;
+                    native_header::identifier(
+                        &binding.name,
+                        RefusalSite::field(Owner::Binding(binding), "name"),
+                        environment.observer,
+                    )?;
                     let mut expression_steps = Vec::new();
                     let mut query_effect = false;
-                    let (value, actual, _witness_effect) = stateful::render_state_expression(
-                        &binding.value,
-                        &locals,
-                        witnesses,
-                        &mut expression_steps,
-                        next_temp,
-                        circuits,
-                        stateful_circuits,
-                        ledger_fields,
-                        &mut query_effect,
-                    )?;
+                    let (value, actual, _witness_effect) =
+                        stateful::render_state_expression_observed(
+                            &binding.value,
+                            &locals,
+                            &mut expression_steps,
+                            next_temp,
+                            &mut query_effect,
+                            environment,
+                        )?;
                     if actual != binding.ty {
+                        constructor_vm::refused(
+                            RefusalSite::node(Owner::Expr(&binding.value)),
+                            environment.observer,
+                        );
                         return Err(RenderError::TypeMismatch {
                             expected: binding.ty.clone(),
                             actual,
@@ -2292,48 +1806,49 @@ fn render_constructor_vm_steps<'a>(
                         Span::call_site(),
                     );
                     *next_temp += 1;
-                    let ty = rust_type(&binding.ty)?;
+                    let ty = native_header::carrier(&binding.ty, environment.observer)?;
                     actions.push(syn::parse_quote!(let #local_name: #ty = #value;));
                     locals.insert(binding.name.as_str(), (&binding.ty, local_name));
                 }
-                actions.extend(render_constructor_vm_steps(
+                actions.extend(render_constructor_vm_steps_observed(
                     std::slice::from_ref(step.as_ref()),
-                    ledger_fields,
                     &locals,
-                    witnesses,
-                    circuits,
-                    stateful_circuits,
-                    next_loop,
-                    next_temp,
+                    environment,
+                    constructor_vm::Output {
+                        next_loop,
+                        next_temp,
+                    },
                 )?);
             }
             ConstructorStep::Sequence { steps } => {
-                actions.extend(render_constructor_vm_steps(
+                actions.extend(render_constructor_vm_steps_observed(
                     steps,
-                    ledger_fields,
                     parameters,
-                    witnesses,
-                    circuits,
-                    stateful_circuits,
-                    next_loop,
-                    next_temp,
+                    environment,
+                    constructor_vm::Output {
+                        next_loop,
+                        next_temp,
+                    },
                 )?);
             }
             ConstructorStep::Assert { condition, message } => {
+                let original_condition = condition;
                 let mut expression_steps = Vec::new();
                 let mut query_effect = false;
-                let (condition, actual, _witness_effect) = stateful::render_state_expression(
-                    condition,
-                    parameters,
-                    witnesses,
-                    &mut expression_steps,
-                    next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    &mut query_effect,
-                )?;
+                let (condition, actual, _witness_effect) =
+                    stateful::render_state_expression_observed(
+                        condition,
+                        parameters,
+                        &mut expression_steps,
+                        next_temp,
+                        &mut query_effect,
+                        environment,
+                    )?;
                 if actual != Type::Boolean {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_condition)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: Type::Boolean,
                         actual,
@@ -2351,29 +1866,43 @@ fn render_constructor_vm_steps<'a>(
                 index,
                 value,
             } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.index != *index {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "index"),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidLedgerIndex(*index));
                 }
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 };
                 let mut expression_steps = Vec::new();
                 let mut query_effect = false;
-                let (value, actual, _witness_effect) = stateful::render_state_expression(
+                let original_value = value;
+                let (value, actual, _witness_effect) = stateful::render_state_expression_observed(
                     value,
                     parameters,
-                    witnesses,
                     &mut expression_steps,
                     next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
                     &mut query_effect,
+                    environment,
                 )?;
                 if actual != *ty {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_value)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
                         actual,
@@ -2405,12 +1934,20 @@ fn render_constructor_vm_steps<'a>(
                 index,
                 amount,
             } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.declaration != LedgerFieldKind::Counter
                     || declaration.index != *index
                 {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::ConstructorStep(step)),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
                 let amount: syn::Expr = match amount {
@@ -2419,13 +1956,21 @@ fn render_constructor_vm_steps<'a>(
                         syn::parse_quote!(#value)
                     }
                     CounterAmount::Parameter { name } => {
-                        let (ty, rust_name) = parameters
-                            .get(name.as_str())
-                            .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
+                        let (ty, rust_name) = parameters.get(name.as_str()).ok_or_else(|| {
+                            constructor_vm::refused(
+                                RefusalSite::field(Owner::CounterAmount(amount), "name"),
+                                environment.observer,
+                            );
+                            RenderError::UnknownParameter(name.clone())
+                        })?;
                         let expected = Type::Unsigned {
                             max: "65535".into(),
                         };
                         if *ty != &expected {
+                            constructor_vm::refused(
+                                RefusalSite::field(Owner::CounterAmount(amount), "name"),
+                                environment.observer,
+                            );
                             return Err(RenderError::TypeMismatch {
                                 expected,
                                 actual: (*ty).clone(),
@@ -2444,12 +1989,20 @@ fn render_constructor_vm_steps<'a>(
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::CounterReset { field, index } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.declaration != LedgerFieldKind::Counter
                     || declaration.index != *index
                 {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::ConstructorStep(step)),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
                 let index = ledger_path_expr(declaration);
@@ -2466,20 +2019,42 @@ fn render_constructor_vm_steps<'a>(
                 index,
                 value,
             } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.index != *index {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "index"),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidLedgerIndex(*index));
                 }
                 let LedgerFieldKind::Set { ty } = &declaration.declaration else {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 };
                 if !infallible_constructor_expr(value) {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(value)),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 }
-                let (value, actual) = expression_with_calls(value, parameters, &HashMap::new())?;
+                let original_value = value;
+                let (value, actual) =
+                    constructor_vm::pure_expression(value, parameters, environment.observer)?;
                 if actual != *ty {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_value)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
                         actual,
@@ -2496,12 +2071,20 @@ fn render_constructor_vm_steps<'a>(
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::SetReset { field, index } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
                     || declaration.index != *index
                 {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::ConstructorStep(step)),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
                 let index = ledger_path_expr(declaration);
@@ -2513,20 +2096,42 @@ fn render_constructor_vm_steps<'a>(
                 index,
                 value,
             } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.index != *index {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "index"),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidLedgerIndex(*index));
                 }
                 let LedgerFieldKind::List { ty } = &declaration.declaration else {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 };
                 if !infallible_constructor_expr(value) {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(value)),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 }
-                let (value, actual) = expression_with_calls(value, parameters, &HashMap::new())?;
+                let original_value = value;
+                let (value, actual) =
+                    constructor_vm::pure_expression(value, parameters, environment.observer)?;
                 if actual != *ty {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_value)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
                         actual,
@@ -2540,12 +2145,20 @@ fn render_constructor_vm_steps<'a>(
             }
             ConstructorStep::ListPopFront { field, index }
             | ConstructorStep::ListReset { field, index } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                     || declaration.index != *index
                 {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::ConstructorStep(step)),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
                 let method = if matches!(step, ConstructorStep::ListPopFront { .. }) {
@@ -2563,10 +2176,18 @@ fn render_constructor_vm_steps<'a>(
                 key,
                 value,
             } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.index != *index {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "index"),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidLedgerIndex(*index));
                 }
                 let LedgerFieldKind::Map {
@@ -2574,21 +2195,40 @@ fn render_constructor_vm_steps<'a>(
                     value: value_ty,
                 } = &declaration.declaration
                 else {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 };
                 if !infallible_constructor_expr(key) || !infallible_constructor_expr(value) {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::ConstructorStep(step)),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 }
-                let (key, actual_key) = expression_with_calls(key, parameters, &HashMap::new())?;
+                let original_key = key;
+                let (key, actual_key) =
+                    constructor_vm::pure_expression(key, parameters, environment.observer)?;
                 if actual_key != *key_ty {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_key)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: key_ty.clone(),
                         actual: actual_key,
                     });
                 }
+                let original_value = value;
                 let (value, actual_value) =
-                    expression_with_calls(value, parameters, &HashMap::new())?;
+                    constructor_vm::pure_expression(value, parameters, environment.observer)?;
                 if actual_value != *value_ty {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_value)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: value_ty.clone(),
                         actual: actual_value,
@@ -2603,10 +2243,18 @@ fn render_constructor_vm_steps<'a>(
             }
             ConstructorStep::MapInsertDefault { field, index, key }
             | ConstructorStep::MapRemove { field, index, key } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if declaration.index != *index {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "index"),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidLedgerIndex(*index));
                 }
                 let LedgerFieldKind::Map {
@@ -2614,13 +2262,27 @@ fn render_constructor_vm_steps<'a>(
                     value: value_ty,
                 } = &declaration.declaration
                 else {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 };
                 if !infallible_constructor_expr(key) {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(key)),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 }
-                let (key, actual_key) = expression_with_calls(key, parameters, &HashMap::new())?;
+                let original_key = key;
+                let (key, actual_key) =
+                    constructor_vm::pure_expression(key, parameters, environment.observer)?;
                 if actual_key != *key_ty {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_key)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: key_ty.clone(),
                         actual: actual_key,
@@ -2629,7 +2291,7 @@ fn render_constructor_vm_steps<'a>(
                 let key = retained_value(key, key_ty);
                 let index = ledger_path_expr(declaration);
                 if matches!(step, ConstructorStep::MapInsertDefault { .. }) {
-                    let value_ty = rust_type(value_ty)?;
+                    let value_ty = native_header::carrier(value_ty, environment.observer)?;
                     actions.push(syn::parse_quote!(let step = context.insert_map(#index, #key, <#value_ty as Default>::default())?;));
                 } else {
                     actions.push(syn::parse_quote!(let step = context.remove_map(#index, #key)?;));
@@ -2637,12 +2299,20 @@ fn render_constructor_vm_steps<'a>(
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::MapReset { field, index } => {
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::field(Owner::ConstructorStep(step), "field"),
+                        environment.observer,
+                    );
+                    RenderError::UnknownLedgerField(field.clone())
+                })?;
                 if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                     || declaration.index != *index
                 {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::ConstructorStep(step)),
+                        environment.observer,
+                    );
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
                 let index = ledger_path_expr(declaration);
@@ -2667,13 +2337,22 @@ fn render_constructor_vm_steps<'a>(
                 let mut rendered_values = Vec::new();
                 for value in values {
                     if !infallible_constructor_expr(value) {
+                        constructor_vm::refused(
+                            RefusalSite::node(Owner::Expr(value)),
+                            environment.observer,
+                        );
                         return Err(RenderError::InvalidConstructorInitializer(
                             binding.name.clone(),
                         ));
                     }
+                    let original_value = value;
                     let (value, actual) =
-                        expression_with_calls(value, parameters, &HashMap::new())?;
+                        constructor_vm::pure_expression(value, parameters, environment.observer)?;
                     if actual != binding.ty {
+                        constructor_vm::refused(
+                            RefusalSite::node(Owner::Expr(original_value)),
+                            environment.observer,
+                        );
                         return Err(RenderError::TypeMismatch {
                             expected: binding.ty.clone(),
                             actual,
@@ -2683,17 +2362,16 @@ fn render_constructor_vm_steps<'a>(
                 }
                 let mut body_parameters = parameters.clone();
                 body_parameters.insert(binding.name.as_str(), (&binding.ty, item.clone()));
-                let body = render_constructor_vm_steps(
+                let body = render_constructor_vm_steps_observed(
                     steps,
-                    ledger_fields,
                     &body_parameters,
-                    witnesses,
-                    circuits,
-                    stateful_circuits,
-                    next_loop,
-                    next_temp,
+                    environment,
+                    constructor_vm::Output {
+                        next_loop,
+                        next_temp,
+                    },
                 )?;
-                let ty = rust_type(&binding.ty)?;
+                let ty = native_header::carrier(&binding.ty, environment.observer)?;
                 let len = syn::LitInt::new(&values.len().to_string(), Span::call_site());
                 let values = rendered_values
                     .into_iter()
@@ -2715,18 +2393,30 @@ fn render_constructor_vm_steps<'a>(
                     Span::call_site(),
                 );
                 let Expr::Parameter { name } = source else {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(source)),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer(
                         binding.name.clone(),
                     ));
                 };
-                let (actual, iterable) = parameters
-                    .get(name.as_str())
-                    .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
+                let (actual, iterable) = parameters.get(name.as_str()).ok_or_else(|| {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(source)),
+                        environment.observer,
+                    );
+                    RenderError::UnknownParameter(name.clone())
+                })?;
                 let expected = Type::Vector {
                     element: Box::new(binding.ty.clone()),
                     length: *length,
                 };
                 if **actual != expected {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(source)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected,
                         actual: (*actual).clone(),
@@ -2734,15 +2424,14 @@ fn render_constructor_vm_steps<'a>(
                 }
                 let mut body_parameters = parameters.clone();
                 body_parameters.insert(binding.name.as_str(), (&binding.ty, item.clone()));
-                let body = render_constructor_vm_steps(
+                let body = render_constructor_vm_steps_observed(
                     steps,
-                    ledger_fields,
                     &body_parameters,
-                    witnesses,
-                    circuits,
-                    stateful_circuits,
-                    next_loop,
-                    next_temp,
+                    environment,
+                    constructor_vm::Output {
+                        next_loop,
+                        next_temp,
+                    },
                 )?;
                 actions.push(syn::parse_quote!(for #item in #iterable.0.iter() { #(#body)* }));
             }
@@ -2752,35 +2441,42 @@ fn render_constructor_vm_steps<'a>(
                 otherwise_steps,
             } => {
                 if !infallible_constructor_expr(condition) {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(condition)),
+                        environment.observer,
+                    );
                     return Err(RenderError::InvalidConstructorInitializer("if".into()));
                 }
+                let original_condition = condition;
                 let (condition, actual) =
-                    expression_with_calls(condition, parameters, &HashMap::new())?;
+                    constructor_vm::pure_expression(condition, parameters, environment.observer)?;
                 if actual != Type::Boolean {
+                    constructor_vm::refused(
+                        RefusalSite::node(Owner::Expr(original_condition)),
+                        environment.observer,
+                    );
                     return Err(RenderError::TypeMismatch {
                         expected: Type::Boolean,
                         actual,
                     });
                 }
-                let then_body = render_constructor_vm_steps(
+                let then_body = render_constructor_vm_steps_observed(
                     then_steps,
-                    ledger_fields,
                     parameters,
-                    witnesses,
-                    circuits,
-                    stateful_circuits,
-                    next_loop,
-                    next_temp,
+                    environment,
+                    constructor_vm::Output {
+                        next_loop,
+                        next_temp,
+                    },
                 )?;
-                let otherwise_body = render_constructor_vm_steps(
+                let otherwise_body = render_constructor_vm_steps_observed(
                     otherwise_steps,
-                    ledger_fields,
                     parameters,
-                    witnesses,
-                    circuits,
-                    stateful_circuits,
-                    next_loop,
-                    next_temp,
+                    environment,
+                    constructor_vm::Output {
+                        next_loop,
+                        next_temp,
+                    },
                 )?;
                 if otherwise_body.is_empty() {
                     actions.push(syn::parse_quote!(if #condition { #(#then_body)* }));
@@ -2874,31 +2570,59 @@ pub fn render_with_proof_capabilities(
 }
 
 pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract, RenderError> {
+    render_with_native_refusal(contract, None, None)
+}
+
+/// Private common renderer. Originless public APIs never discover metadata.
+fn render_with_native_refusal(
+    contract: &Contract,
+    refusal_callback: Option<&mut pure_native::sink::RefusalCallback<'_>>,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<RenderedContract, RenderError> {
+    render_with_refusals(contract, refusal_callback, observer, None)
+}
+fn render_with_refusals(
+    contract: &Contract,
+    mut refusal_callback: Option<&mut pure_native::sink::RefusalCallback<'_>>,
+    observer: Option<&dyn RefusalObserver>,
+    recording_observer: Option<&dyn source_diagnostics::RefusalObserver>,
+) -> Result<RenderedContract, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
     }
 
-    let preflight = resource_limits::validate(contract)?;
+    let preflight = match observer {
+        Some(observer) => resource_limits::validate_with_observer(contract, Some(observer))?,
+        None => resource_limits::validate(contract)?,
+    };
 
     // Build callable lookup maps only after checking their keys. Otherwise a
     // later declaration silently replaces an earlier one in a HashMap, and a
     // caller can fail with a misleading type error before we reach the
     // duplicate declaration and its Compact source location.
     let mut names = HashSet::new();
-    for (name, source) in contract
+    for (name, source, owner) in contract
         .circuits
         .iter()
-        .map(|circuit| (&circuit.name, circuit.source.as_ref()))
-        .chain(
-            contract
-                .stateful_circuits
-                .iter()
-                .map(|circuit| (&circuit.name, circuit.source.as_ref())),
-        )
+        .map(|circuit| (&circuit.name, circuit.source.as_ref(), Owner::Pure(circuit)))
+        .chain(contract.stateful_circuits.iter().map(|circuit| {
+            (
+                &circuit.name,
+                circuit.source.as_ref(),
+                Owner::Stateful(circuit),
+            )
+        }))
     {
         located(source, || {
-            ident(name)?;
+            ident(name).inspect_err(|_| {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(owner, "name"));
+                }
+            })?;
             if !names.insert(name.as_str()) {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(owner, "name"));
+                }
                 return Err(RenderError::DuplicateCircuit(name.clone()));
             }
             Ok(())
@@ -2923,13 +2647,16 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
 
     let mut struct_definitions = BTreeMap::new();
     let mut enum_definitions = BTreeMap::new();
+    let mut definition_origins = type_declarations::DefinitionOrigins::new();
     if let Some(constructor) = &contract.constructor {
         located(constructor.source.as_ref(), || {
             for parameter in &constructor.parameters {
-                collect_named_types(
+                collect_named_types_observed(
                     &parameter.ty,
                     &mut struct_definitions,
                     &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
                 )?;
             }
             for step in &constructor.steps {
@@ -2937,6 +2664,8 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     step,
                     &mut struct_definitions,
                     &mut enum_definitions,
+                    &mut definition_origins,
+                    observer,
                 )?;
             }
             Ok(())
@@ -2945,21 +2674,27 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     for circuit in &contract.circuits {
         located(circuit.source.as_ref(), || {
             for parameter in &circuit.parameters {
-                collect_named_types(
+                collect_named_types_observed(
                     &parameter.ty,
                     &mut struct_definitions,
                     &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
                 )?;
             }
-            collect_named_types(
+            collect_named_types_observed(
                 &circuit.result,
                 &mut struct_definitions,
                 &mut enum_definitions,
+                observer,
+                Some(&mut definition_origins),
             )?;
             collect_expression_types(
                 &circuit.body,
                 &mut struct_definitions,
                 &mut enum_definitions,
+                &mut definition_origins,
+                observer,
             )?;
             Ok(())
         })?;
@@ -2967,16 +2702,20 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     for witness in &contract.witnesses {
         located(witness.source.as_ref(), || {
             for parameter in &witness.parameters {
-                collect_named_types(
+                collect_named_types_observed(
                     &parameter.ty,
                     &mut struct_definitions,
                     &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
                 )?;
             }
-            collect_named_types(
+            collect_named_types_observed(
                 &witness.result,
                 &mut struct_definitions,
                 &mut enum_definitions,
+                observer,
+                Some(&mut definition_origins),
             )?;
             Ok(())
         })?;
@@ -2984,50 +2723,102 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     for circuit in &contract.stateful_circuits {
         located(circuit.source.as_ref(), || {
             for parameter in &circuit.parameters {
-                collect_named_types(
+                collect_named_types_observed(
                     &parameter.ty,
                     &mut struct_definitions,
                     &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
                 )?;
             }
-            collect_named_types(
+            collect_named_types_observed(
                 &circuit.result,
                 &mut struct_definitions,
                 &mut enum_definitions,
+                observer,
+                Some(&mut definition_origins),
             )?;
             if let ir::StateReturn::Expression { value }
             | ir::StateReturn::HistoricMerkleCheckRoot { root: value, .. }
             | ir::StateReturn::MerkleCheckRoot { root: value, .. } = &circuit.return_value
             {
-                collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
+                collect_expression_types(
+                    value,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    &mut definition_origins,
+                    observer,
+                )?;
             }
             if let ir::StateReturn::Effectful { body } = &circuit.return_value {
-                collect_return_plan_types(body, &mut struct_definitions, &mut enum_definitions)?;
+                collect_return_plan_types(
+                    body,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    &mut definition_origins,
+                    observer,
+                )?;
             }
             for action in &circuit.actions {
-                collect_action_types(action, &mut struct_definitions, &mut enum_definitions)?;
+                collect_action_types(
+                    action,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    &mut definition_origins,
+                    observer,
+                )?;
             }
             Ok(())
         })?;
     }
+    let has_merkle_witness_view = implicit_types::collect_witness_view_types(
+        contract,
+        &mut struct_definitions,
+        &mut enum_definitions,
+    )
+    .inspect_err(|_| named_collection_refused(observer, RefusalSite::unavailable()))?;
     for field in &contract.ledger_fields {
         match &field.declaration {
             LedgerFieldKind::Cell { ty }
             | LedgerFieldKind::Set { ty }
             | LedgerFieldKind::List { ty } => {
-                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)
-                    .map_err(|error| error.at(field.source.as_ref()))?;
+                collect_named_types_observed(
+                    ty,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
+                )
+                .map_err(|error| error.at(field.source.as_ref()))?;
             }
             LedgerFieldKind::Map { key, value } => {
-                collect_named_types(key, &mut struct_definitions, &mut enum_definitions)
-                    .map_err(|error| error.at(field.source.as_ref()))?;
-                collect_named_types(value, &mut struct_definitions, &mut enum_definitions)
-                    .map_err(|error| error.at(field.source.as_ref()))?;
+                collect_named_types_observed(
+                    key,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
+                )
+                .map_err(|error| error.at(field.source.as_ref()))?;
+                collect_named_types_observed(
+                    value,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
+                )
+                .map_err(|error| error.at(field.source.as_ref()))?;
             }
             LedgerFieldKind::MerkleTree { ty, .. }
             | LedgerFieldKind::HistoricMerkleTree { ty, .. } => {
-                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)
-                    .map_err(|error| error.at(field.source.as_ref()))?;
+                collect_named_types_observed(
+                    ty,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                    observer,
+                    Some(&mut definition_origins),
+                )
+                .map_err(|error| error.at(field.source.as_ref()))?;
             }
             LedgerFieldKind::Counter => {}
         }
@@ -3042,20 +2833,38 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         let path = field.physical_path();
         if &path != expected_path || path.first() != Some(&field.index) {
             if field.path.is_empty() {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Ledger(field), "index"));
+                }
                 return Err(RenderError::InvalidLedgerIndex(field.index).at(field.source.as_ref()));
+            }
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::node(Owner::Ledger(field)));
             }
             return Err(RenderError::InvalidLedgerPath(path).at(field.source.as_ref()));
         }
         if path.len() > 2 {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::field(Owner::Ledger(field), "path"));
+            }
             return Err(RenderError::UnsupportedLedgerPath(path).at(field.source.as_ref()));
         }
         if let LedgerFieldKind::MerkleTree { depth, .. }
         | LedgerFieldKind::HistoricMerkleTree { depth, .. } = field.declaration
             && !(2..=32).contains(&depth)
         {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::field(
+                    Owner::LedgerKind(&field.declaration),
+                    "depth",
+                ));
+            }
             return Err(RenderError::InvalidMerkleTreeDepth(depth).at(field.source.as_ref()));
         }
         if ledger_fields.insert(field.id.as_str(), *field).is_some() {
+            if let Some(observer) = observer {
+                observer.refused(RefusalSite::field(Owner::Ledger(field), "id"));
+            }
             return Err(
                 RenderError::DuplicateLedgerField(field.id.clone()).at(field.source.as_ref())
             );
@@ -3066,7 +2875,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         .iter()
         .map(|circuit| (circuit.name.as_str(), circuit))
         .collect();
-    let witness_syntax = witness::build(&contract.witnesses, &ordered_fields)?;
+    let witness_syntax = witness::build(&contract.witnesses, &ordered_fields, observer)?;
     let mut items = Vec::new();
     for circuit in &contract.circuits {
         let item = located(circuit.source.as_ref(), || {
@@ -3078,63 +2887,64 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 .iter()
                 .zip(naming::parameter_idents(&circuit.parameters, &[]))
             {
-                ident(&parameter.name)?;
+                native_header::identifier(
+                    &parameter.name,
+                    RefusalSite::field(Owner::Parameter(parameter), "name"),
+                    observer,
+                )?;
                 if parameters
                     .insert(parameter.name.as_str(), (&parameter.ty, arg_name.clone()))
                     .is_some()
                 {
+                    if let Some(observer) = observer {
+                        observer.refused(RefusalSite::field(Owner::Parameter(parameter), "name"));
+                    }
                     return Err(RenderError::DuplicateParameter(parameter.name.clone()));
                 }
-                let arg_ty = rust_type(&parameter.ty)?;
-                let arg: syn::FnArg = syn::parse_quote!(#arg_name: #arg_ty);
+                let arg_ty = native_header::carrier(&parameter.ty, observer)?;
+                let arg = pure_native::item::argument(arg_name, arg_ty);
                 args.push(arg);
             }
-            let (body, actual) =
-                expression_with_calls(&circuit.body, &parameters, &callable_circuits)?;
+            let mut observed_callback = |expression: &Expr, _: &RenderError| {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::node(Owner::Expr(expression)));
+                }
+            };
+            let (body, actual) = match (observer, refusal_callback.as_mut()) {
+                (Some(_), _) => native_fragment_with_refusal(
+                    &circuit.body,
+                    &parameters,
+                    &callable_circuits,
+                    &mut observed_callback,
+                )?,
+                (None, Some(callback)) => native_fragment_with_refusal(
+                    &circuit.body,
+                    &parameters,
+                    &callable_circuits,
+                    &mut **callback,
+                )?,
+                (None, None) => {
+                    native_fragment_with_calls(&circuit.body, &parameters, &callable_circuits)?
+                }
+            };
             if actual != circuit.result {
+                if let Some(observer) = observer {
+                    observer.refused(RefusalSite::field(Owner::Pure(circuit), "result"));
+                }
                 return Err(RenderError::TypeMismatch {
                     expected: circuit.result.clone(),
                     actual,
                 });
             }
-            let result = rust_type(&circuit.result)?;
-            let unit_body = if actual == Type::Unit {
-                unit_statements(&circuit.body, &parameters, &callable_circuits)?
-            } else {
-                Vec::new()
-            };
-            let value_tail: syn::Expr = if let syn::Expr::Try(fallible) = &body {
-                (*fallible.expr).clone()
-            } else {
-                syn::parse_quote!(Ok(#body))
-            };
-            let item: syn::Item = if circuit.internal && actual == Type::Unit {
-                syn::parse_quote! {
-                    pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                        #(#unit_body)*
-                        Ok(())
-                    }
-                }
-            } else if actual == Type::Unit {
-                syn::parse_quote! {
-                    pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                        #(#unit_body)*
-                        Ok(())
-                    }
-                }
-            } else if circuit.internal {
-                syn::parse_quote! {
-                    pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                        #value_tail
-                    }
-                }
-            } else {
-                syn::parse_quote! {
-                    pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                        #value_tail
-                    }
-                }
-            };
+            let result = native_header::carrier(&circuit.result, observer)?;
+            let item = pure_native::item::pure(
+                name,
+                circuit.internal,
+                args,
+                result,
+                body,
+                actual == Type::Unit,
+            );
             Ok(item)
         })?;
         items.push(item);
@@ -3160,12 +2970,13 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         .collect::<Result<HashSet<_>, _>>()?;
     for circuit in &contract.stateful_circuits {
         located(circuit.source.as_ref(), || {
-            stateful_items.push(stateful::render_stateful_circuit(
+            stateful_items.push(stateful::render_stateful_circuit_observed(
                 circuit,
                 &ledger_fields,
                 &witness_syntax.declarations,
                 &callable_circuits,
                 &callable_stateful_circuits,
+                observer,
             )?);
             if let Some(method) =
                 stateful::render_contract_method(circuit, &callable_stateful_circuits)?
@@ -3175,24 +2986,37 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             Ok(())
         })?;
     }
-    let (shared_recorded_callees, mut recorded_items) = recorded::plan_recorded_helpers(
+    let (shared_recorded_callees, recorded_helpers) = recorded::plan_recorded_helpers(
         &contract.stateful_circuits,
         &ledger_fields,
         &witness_syntax.declarations,
         &callable_circuits,
         &callable_stateful_circuits,
     )?;
+    let mut recorded_items = Vec::new();
     let mut proof_capabilities = Vec::new();
     for circuit in &contract.stateful_circuits {
         located(circuit.source.as_ref(), || {
-            let recorded = recorded::render_recorded_circuit(
-                circuit,
-                &ledger_fields,
-                &witness_syntax.declarations,
-                &callable_circuits,
-                &callable_stateful_circuits,
-                &shared_recorded_callees,
-            )?;
+            let recorded = if recording_observer.is_some() {
+                recorded::render_recorded_circuit_observed(
+                    circuit,
+                    &ledger_fields,
+                    &witness_syntax.declarations,
+                    &callable_circuits,
+                    &callable_stateful_circuits,
+                    &shared_recorded_callees,
+                    recording_observer,
+                )
+            } else {
+                recorded::render_recorded_circuit(
+                    circuit,
+                    &ledger_fields,
+                    &witness_syntax.declarations,
+                    &callable_circuits,
+                    &callable_stateful_circuits,
+                    &shared_recorded_callees,
+                )
+            }?;
             let call_name = format!("{}_call", circuit.name);
             let recording_unavailable = recorded.gap().cloned();
             let observed_call = recorded.is_supported()
@@ -3249,8 +3073,9 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     let constructor_uses_witness = if let Some(constructor) = &contract.constructor {
         let mut uses_witness = false;
         for step in &constructor.steps {
-            uses_witness |= constructor_step_uses_witness(step, &callable_stateful_circuits)
-                .map_err(|error| error.at(constructor.source.as_ref()))?;
+            uses_witness |=
+                constructor_step_uses_witness_observed(step, &callable_stateful_circuits, observer)
+                    .map_err(|error| error.at(constructor.source.as_ref()))?;
         }
         uses_witness
     } else {
@@ -3294,7 +3119,11 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     if let Some(constructor) = &contract.constructor {
         located(constructor.source.as_ref(), || {
             for (index, parameter) in constructor.parameters.iter().enumerate() {
-                ident(&parameter.name)?;
+                native_header::identifier(
+                    &parameter.name,
+                    RefusalSite::field(Owner::Parameter(parameter), "name"),
+                    observer,
+                )?;
                 let name = syn::Ident::new(
                     &format!("__compact_constructor_param_{index}"),
                     Span::call_site(),
@@ -3303,24 +3132,46 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     .insert(parameter.name.as_str(), (&parameter.ty, name.clone()))
                     .is_some()
                 {
+                    if let Some(observer) = observer {
+                        observer.refused(RefusalSite::field(Owner::Parameter(parameter), "name"));
+                    }
                     return Err(RenderError::DuplicateParameter(parameter.name.clone()));
                 }
-                let ty = rust_type(&parameter.ty)?;
+                let ty = native_header::carrier(&parameter.ty, observer)?;
                 constructor_args.push(syn::parse_quote!(#name: #ty));
             }
             if constructor_uses_vm {
-                constructor_actions = render_constructor_vm_steps(
-                    &constructor.steps,
-                    &ledger_fields,
-                    &constructor_parameters,
-                    &witness_syntax.declarations,
-                    &callable_circuits,
-                    &callable_stateful_circuits,
-                    &mut 0,
-                    &mut 0,
-                )?;
+                constructor_actions = if observer.is_some() {
+                    let environment = stateful::NativeExpressionContext {
+                        witnesses: &witness_syntax.declarations,
+                        circuits: &callable_circuits,
+                        stateful_circuits: &callable_stateful_circuits,
+                        ledger_fields: &ledger_fields,
+                        observer,
+                    };
+                    render_constructor_vm_steps_observed(
+                        &constructor.steps,
+                        &constructor_parameters,
+                        &environment,
+                        constructor_vm::Output {
+                            next_loop: &mut 0,
+                            next_temp: &mut 0,
+                        },
+                    )
+                } else {
+                    render_constructor_vm_steps(
+                        &constructor.steps,
+                        &ledger_fields,
+                        &constructor_parameters,
+                        &witness_syntax.declarations,
+                        &callable_circuits,
+                        &callable_stateful_circuits,
+                        &mut 0,
+                        &mut 0,
+                    )
+                }?;
             } else {
-                for step in &constructor.steps {
+                for (preparation_index, step) in constructor.steps.iter().enumerate() {
                     let ConstructorStep::CellWrite {
                         field,
                         index,
@@ -3329,31 +3180,59 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     else {
                         unreachable!("VM constructor selection includes effects and loops")
                     };
-                    let declaration = ledger_fields
-                        .get(field.as_str())
-                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                        if let Some(observer) = observer {
+                            observer
+                                .refused(RefusalSite::field(Owner::ConstructorStep(step), "field"));
+                        }
+                        RenderError::UnknownLedgerField(field.clone())
+                    })?;
                     if declaration.index != *index {
+                        if let Some(observer) = observer {
+                            observer
+                                .refused(RefusalSite::field(Owner::ConstructorStep(step), "index"));
+                        }
                         return Err(RenderError::InvalidLedgerIndex(*index));
                     }
                     let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                        if let Some(observer) = observer {
+                            observer
+                                .refused(RefusalSite::field(Owner::ConstructorStep(step), "field"));
+                        }
                         return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                     };
-                    let (value, actual) =
-                        expression_with_calls(value, &constructor_parameters, &callable_circuits)?;
+                    let original_value = value;
+                    let (value, actual) = if let Some(observer) = observer {
+                        let mut callback = |expression: &Expr, _: &RenderError| {
+                            observer.refused(RefusalSite::node(Owner::Expr(expression)));
+                        };
+                        let (fragment, actual) = native_fragment_with_refusal(
+                            value,
+                            &constructor_parameters,
+                            &callable_circuits,
+                            &mut callback,
+                        )?;
+                        (fragment.into_expression(), actual)
+                    } else {
+                        expression_with_calls(value, &constructor_parameters, &callable_circuits)?
+                    };
                     if actual != *ty {
+                        if let Some(observer) = observer {
+                            observer.refused(RefusalSite::node(Owner::Expr(original_value)));
+                        }
                         return Err(RenderError::TypeMismatch {
                             expected: ty.clone(),
                             actual,
                         });
                     }
                     let name = syn::Ident::new(
-                        &format!(
-                            "__compact_constructor_value_{}",
-                            constructor_preparations.len()
-                        ),
+                        &format!("__compact_constructor_value_{preparation_index}"),
                         Span::call_site(),
                     );
                     constructor_preparations.push(syn::parse_quote!(let #name = #value;));
+                    constructor_preparations.push(syn::parse_quote!(
+                        runtime::ledger::CellValue::validate_cell_value(&#name)?;
+                    ));
                     constructor_values.insert(field.as_str(), syn::parse_quote!(#name));
                 }
             }
@@ -3375,14 +3254,15 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         }
         LedgerFieldKind::Cell { ty } => {
             if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::OpaqueString | Type::OpaqueBytes | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
+                if let Some(observer) = observer { observer.refused(RefusalSite::node(Owner::Type(ty))); }
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
             let value = constructor_values
                 .get(field.id.as_str())
                 .map(|value| retained_value(value.clone(), ty))
                 .unwrap_or_else(|| syn::parse_quote!(Default::default()));
-            let ty = rust_type(ty)?;
-            Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(#value)))
+            let ty = native_header::carrier(ty, observer)?;
+            Ok(syn::parse_quote!(runtime::ledger::try_constructor_cell::<#ty, runtime::ledger::DefaultDB>(#value)?))
         }
     }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
 
@@ -3459,6 +3339,17 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             #borrowed_from_contract
         }
     });
+    // All admission and helper validation has already completed. Prune only
+    // private definitions absent from the final recorded Rust reference graph;
+    // keep the names used during rendering and every public item unchanged.
+    let mut reachable_helpers = recorded::retain_reachable_helpers(
+        recorded_helpers,
+        &mut recorded_items,
+        &mut recorded_methods,
+        &mut borrowed_recorded_methods,
+    );
+    reachable_helpers.append(&mut recorded_items);
+    let recorded_items = reachable_helpers;
     let recorded_module: Option<syn::Item> = if recorded_items.is_empty() {
         None
     } else {
@@ -3502,11 +3393,15 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     let mut slot_items = Vec::<syn::Item>::new();
     let mut public_state_getters = Vec::<syn::ImplItemFn>::new();
     for field in &contract.ledger_fields {
-        let name = ident(&field.id)?;
+        let name = native_header::identifier(
+            &field.id,
+            RefusalSite::field(Owner::Ledger(field), "id"),
+            observer,
+        )?;
         let path = field.physical_path();
         match &field.declaration {
             LedgerFieldKind::Cell { ty } => {
-                let ty = rust_type(ty)?;
+                let ty = native_header::carrier(ty, observer)?;
                 public_state_getters.push(syn::parse_quote! {
                     /// Decode this declared Cell from the borrowed public state.
                     pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
@@ -3533,7 +3428,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 });
             }
             LedgerFieldKind::Set { ty } => {
-                let ty = rust_type(ty)?;
+                let ty = native_header::carrier(ty, observer)?;
                 public_state_getters.push(syn::parse_quote! {
                     /// Inspect this declared Set in the borrowed public state.
                     pub fn #name(&self) -> Result<runtime::ledger::SetView<'a, #ty, D>, runtime::CompactError> {
@@ -3546,7 +3441,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 });
             }
             LedgerFieldKind::List { ty } => {
-                let ty = rust_type(ty)?;
+                let ty = native_header::carrier(ty, observer)?;
                 public_state_getters.push(syn::parse_quote! {
                     /// Inspect this declared List in the borrowed public state.
                     pub fn #name(&self) -> Result<runtime::ledger::ListView<'a, #ty, D>, runtime::CompactError> {
@@ -3579,7 +3474,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
             LedgerFieldKind::MerkleTree { ty, depth }
             | LedgerFieldKind::HistoricMerkleTree { ty, depth } => {
-                let leaf = rust_type(ty)?;
+                let leaf = native_header::carrier(ty, observer)?;
                 let historic = matches!(
                     &field.declaration,
                     LedgerFieldKind::HistoricMerkleTree { .. }
@@ -3621,7 +3516,13 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     // or silently resolve to a different alias with the same Rust spelling.
     for alias in &contract.type_aliases {
         located(alias.source.as_ref(), || {
-            collect_named_types(&alias.ty, &mut struct_definitions, &mut enum_definitions)
+            collect_named_types_observed(
+                &alias.ty,
+                &mut struct_definitions,
+                &mut enum_definitions,
+                observer,
+                Some(&mut definition_origins),
+            )
         })?;
     }
     let type_declarations::TypeDeclarations {
@@ -3632,6 +3533,9 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         &enum_definitions,
         &contract.type_aliases,
         slots_module.is_some(),
+        has_merkle_witness_view,
+        &definition_origins,
+        observer,
     )?;
     let public_state_view = (!public_state_getters.is_empty()).then(|| {
         quote! {
@@ -3706,21 +3610,14 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
     // Preserve existing semantic diagnostics before refusing private-IR pure
     // recursion. This consumes facts from the bounded preflight, not a new walk.
     preflight.finish(contract)?;
-    let mut file: syn::File = syn::parse2(quote! {
-        /// The matching Midnight Compact Rust runtime used by this generated crate.
-        pub use midnight_compact_runtime as runtime;
-        #types_module
-        #alias_exports
-        #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
-        pub mod pure_circuits {
-            use midnight_compact_runtime as runtime;
-            const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
-            #(#items)*
-        }
-        #slots_module
-        #ledger_module
-    })
-    .expect("typed renderer constructed invalid Rust syntax");
+    let mut file = pure_native::item::file(
+        runtime_abi,
+        types_module,
+        alias_exports,
+        items,
+        slots_module,
+        ledger_module,
+    );
     CompactSignatureLint.visit_file_mut(&mut file);
     CompactBooleanLiterals.visit_file_mut(&mut file);
     Ok(RenderedContract {
@@ -3735,3 +3632,12 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         },
     })
 }
+
+#[cfg(test)]
+mod constructor_cell_observer_tests;
+
+#[cfg(test)]
+mod constructor_prepass;
+
+#[cfg(test)]
+mod named_collection_tests;

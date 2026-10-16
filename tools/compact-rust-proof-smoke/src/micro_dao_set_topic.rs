@@ -51,6 +51,12 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
+    // Pair the complete original DAO before keys, deployment or seeded state.
+    // This checks source identity; proving-key provenance is qualified separately.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_test_center_micro_dao_fixture::RETAINED_IR,
+    )?;
     let name = "set_topic";
     let mut rng = StdRng::seed_from_u64(0x0211_0000 + u64::from(occupied));
     let h = runtime::ledger::coin_info_from_compact(
@@ -116,8 +122,8 @@ fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
     let ledger = fees.ledger.clone();
     assert_eq!(ledger.zswap.first_free, 2);
     let wallet = midnight_zswap::local::State::<DefaultDB>::new()
-        .apply(&keys, &seed_h)
-        .apply(&keys, &seed_w);
+        .apply(&keys, &seed_h)?
+        .apply(&keys, &seed_w)?;
     assert_eq!(wallet.merkle_tree.root(), ledger.zswap.coin_coms.root());
     let segment = occupied.then_some(1);
     let placement = if occupied {
@@ -432,4 +438,59 @@ fn run_case(root: &Path, occupied: bool) -> Result<(), Box<dyn Error>> {
         "original set_topic occupied={occupied}: default-strict proof/application, actual wallet funding, canonical qualified pot and replay refusal passed"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod source_binding_tests {
+    use super::*;
+
+    #[test]
+    fn full_source_pairing_accepts_exact_dao_ir() {
+        let retained = compact_rust_test_center_micro_dao_fixture::RETAINED_IR;
+        counter_scenario::validate_ir(retained.as_bytes(), retained).unwrap();
+    }
+
+    #[test]
+    fn both_pot_cases_reject_missing_and_changed_ir_before_setup() {
+        let root = std::env::temp_dir().join(format!(
+            "compact-set-topic-source-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(!root.exists());
+        for occupied in [false, true] {
+            let error = run_case(&root, occupied).unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<io::Error>().unwrap().kind(),
+                io::ErrorKind::NotFound
+            );
+            assert!(!root.exists());
+        }
+        std::fs::create_dir_all(root.join("contract")).unwrap();
+        let retained = compact_rust_test_center_micro_dao_fixture::RETAINED_IR;
+        let mut changed: serde_json::Value = serde_json::from_str(retained).unwrap();
+        // Change another circuit: matching set_topic alone is insufficient.
+        let other = changed["stateful_circuits"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|circuit| circuit["name"] != "set_topic")
+            .unwrap();
+        other["name"] = serde_json::json!("wrong-source");
+        let bytes = serde_json::to_vec(&changed).unwrap();
+        let path = root.join("contract/compact-rust-ir.json");
+        std::fs::write(&path, &bytes).unwrap();
+        for occupied in [false, true] {
+            assert_eq!(
+                run_case(&root, occupied).unwrap_err().to_string(),
+                "Proof artifact IR differs from the generated source fixture"
+            );
+            assert!(!root.join("keys").exists());
+            assert_eq!(std::fs::read(&path).unwrap(), bytes);
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }

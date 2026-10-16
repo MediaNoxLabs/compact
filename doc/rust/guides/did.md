@@ -52,7 +52,7 @@ This fence is a conceptual excerpt from the adapted test; the file uses assertio
 
 The adopted source has twelve stateful exports with native/recorded/observed-call surfaces where advertised. The [Service guide](did-service.md) covers typed Service, SchnorrJubjub method, nested JWK method, digest and relation APIs. This two-scenario tutorial does not rerun every adopted export.
 
-Original application acceptance is tied to native ledger8.0.3. Separate finite ledger8.1 transaction interchange receipts do not establish general runtime interchangeability, a continuous8.1 chain or network finality. Constructor data is deployed in proof gates; constructor execution itself remains unproved.
+Original application acceptance is tied to native ledger8.0.3. The current generated crate uses the ledger8.1.3 graph; this retained tutorial receipt does not rerun the complete application on that graph. Separate finite ledger8.1 transaction interchange receipts do not establish general runtime interchangeability, a continuous8.1 chain or network finality. Constructor data is deployed in proof gates; constructor execution itself remains unproved.
 
 For a new source revision, inspect generated capability metadata again. Typed arguments do not imply source authorization/version/membership rules will succeed. Use the matching source closure and application semantics when diagnosing a refusal.
 

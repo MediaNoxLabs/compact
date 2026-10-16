@@ -276,7 +276,9 @@ fn identical_if_arms_keep_one_condition_and_one_arm() {
         return_value: StateReturn::Unit,
     });
     let stateful = render(&contract).unwrap();
-    assert_eq!(stateful.matches(".observed(").count(), 1);
+    let (native, recorded) = stateful.split_once("pub mod recorded {").unwrap();
+    assert_eq!(native.matches(".observed(").count(), 1);
+    assert_eq!(recorded.matches(".observed(").count(), 1);
     assert!(stateful.contains("private_transcript_outputs"));
 }
 

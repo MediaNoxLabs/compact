@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "issue": 614,
+  "baseline_commit": "a0d54faa6734b5f21fd6de63d1d254915a5c9bf5",
+  "scope": "Exact two cfg(test) additions only; complete old audited-local bodies preserved, original49 authorities unchanged. inputs.rs excluded to avoid self-reference.",
+  "owners": {
+    "tools/compact-rust-backend/src/recorded/audited_local.rs": {
+      "previous_sha256": "ff0717f8cd31d1b9e092bba2d45f558e06d2cfa7c1fc4ee63fbead1822b0a96d",
+      "current_sha256": "cae1e76dcaf3270d780c54be32cf7ef7c18aae68457eb57eb0155f6686335803",
+      "predecessor_reconstruction": [
+        {
+          "current": "#[cfg(test)]\nfn uncoerced<",
+          "previous": "fn uncoerced<"
+        },
+        {
+          "current": "#[cfg(test)]\npub(super) fn render(",
+          "previous": "pub(super) fn render("
+        }
+      ]
+    }
+  }
+}

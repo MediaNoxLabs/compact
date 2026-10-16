@@ -29,6 +29,14 @@ Acceptance intentionally supports one full-value wallet input for receive and on
 
 The output `result.json` carries exact sealed transaction and proven offer references, offer fingerprint, coin commitment/index, checkpoint digest, raw node profile and build provenance. Wallet finalization must preserve the shielded offer and placement exactly. Runtime observation checks establish internal consistency only; adapter finality/event checks and node history/nullifier/freshness validation remain required.
 
+## Current decoder compatibility
+
+The current codec and reference fixtures use ledger 8.1.3. The production builder
+rejects every live node/indexer pairing until explicit validation establishes a
+new profile. The old node8.0.2/codec8.0.3 profile is historical only. Offline
+`cfg(test)` fixtures are marked `offline-ledger-8.1.3-fixture` / `offline-not-live`
+and cannot enable a CLI checkpoint.
+
 ## Offline checks
 
 The isolated consumer includes default handoff/decoding/profile tests. The explicit proof test uses actual upstream fee funding, an initially empty shielded tree, real deployment, generated bootstrap, receive and release, default strict ledger admission and encrypted wallet recovery. It is test-only fixture evidence, not a live-chain report.

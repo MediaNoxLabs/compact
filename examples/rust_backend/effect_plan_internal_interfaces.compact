@@ -1,0 +1,25 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+struct Piece { bytes: Opaque<"Uint8Array">; value: Field; }
+export struct Result { chosen: Opaque<"Uint8Array">; original: Opaque<"Uint8Array">; value: Field; }
+witness trace(): Field;
+circuit touch(input: [Opaque<"Uint8Array">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]): [Opaque<"Uint8Array">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field] {
+  calls.increment(1);
+  trace();
+  return input;
+}
+circuit project(input: [Opaque<"Uint8Array">, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field]): Piece {
+  calls.increment(1);
+  trace();
+  return Piece { bytes: input[0], value: input[11] };
+}
+export circuit run(input: Opaque<"Uint8Array">, selected: Boolean): Result {
+  const initial = [input, 1 as Field, 2 as Field, 3 as Field, 4 as Field, 5 as Field, 6 as Field, 7 as Field, 8 as Field, 9 as Field, 10 as Field, 11 as Field];
+  const kept = touch(initial);
+  const chosen = disclose(selected) ? touch(kept) : kept;
+  const value = project(chosen);
+  return Result { chosen: value.bytes, original: kept[0], value: value.value };
+}

@@ -96,3 +96,105 @@ fn witness_reads_current_typed_counter() {
     let after = private_round(write.context, &ReadRound).unwrap();
     assert_oracle_output(&after, &oracle["after"]);
 }
+
+// Qualify newly recorded witness-only exports against the retained TS oracle.
+mod recording_parity {
+    use super::*;
+    use compact_rust_witness_ledger_counter_fixture::ledger_contract as contract;
+    use midnight_compact_runtime as runtime;
+    use std::cell::RefCell;
+
+    struct Logged<'a>(&'a RefCell<Vec<u64>>);
+    impl Witnesses<u64> for Logged<'_> {
+        fn read_round(
+            &self,
+            context: WitnessContext<'_, u64, LedgerView<'_>>,
+        ) -> (u64, CounterValue) {
+            self.0.borrow_mut().push(*context.private_state);
+            Witnesses::read_round(&ReadRound, context)
+        }
+    }
+    fn same_execution<T: std::fmt::Debug + PartialEq>(
+        native: &CircuitResult<u64, T>,
+        actual: &CircuitResult<u64, T>,
+    ) {
+        assert_eq!(native.result, actual.result);
+        assert_eq!(native.context.private_state, actual.context.private_state);
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            actual.context.query.state.get_ref()
+        );
+        assert_eq!(native.context.query.effects, actual.context.query.effects);
+        assert_eq!(native.gas_cost, actual.gas_cost);
+        assert_eq!(
+            native.private_transcript_outputs,
+            actual.private_transcript_outputs
+        );
+    }
+
+    #[test]
+    fn recorded_and_observed_witness_reads_match_native_and_ts() {
+        let oracle: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../runtime-rs/tests/fixtures/witness-ledger-counter-ts-output.json"
+        ))
+        .unwrap();
+        for (populated, key) in [(false, "before"), (true, "after")] {
+            let private = if populated { 8_u64 } else { 7_u64 };
+            let context = initial_state(ConstructorContext::new(private))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default());
+            let context = if populated {
+                increment_round(context).unwrap().context
+            } else {
+                context
+            };
+            let state = runtime::ledger::ContractState::new(
+                context.query.state.get_ref().clone(),
+                Default::default(),
+                Default::default(),
+            );
+            let context = || {
+                runtime::context::CircuitContext::from_contract_state(
+                    private,
+                    ContractAddress::default(),
+                    &state,
+                )
+            };
+            let native_calls = RefCell::new(Vec::new());
+            let native = private_round(context(), &Logged(&native_calls)).unwrap();
+            assert_eq!(*native_calls.borrow(), [private]);
+            assert_oracle_output(&native, &oracle[key]);
+            let recorded_calls = RefCell::new(Vec::new());
+            let recorded =
+                contract::recorded::private_round(context(), &Logged(&recorded_calls)).unwrap();
+            assert_eq!(*recorded_calls.borrow(), [private]);
+            same_execution(&native, &recorded.execution);
+            assert_oracle_output(&recorded.execution, &oracle[key]);
+            // Witness ledger queries are metered privately; they do not invent public VM ops.
+            assert!(recorded.public.verify_ops().is_empty());
+            #[cfg(feature = "ledger-transaction")]
+            {
+                use runtime::transaction::{Observation, ObservedContractState};
+                let observed = ObservedContractState::new(
+                    ContractAddress::default(),
+                    state.clone(),
+                    Observation {
+                        transaction_hash: [0; 32],
+                        block_hash: [1; 32],
+                        block_height: 1,
+                    },
+                );
+                let observed_calls = RefCell::new(Vec::new());
+                let contract = contract::Contract::from(Logged(&observed_calls));
+                let call = contract
+                    .recording()
+                    .private_round_call(&observed, private)
+                    .unwrap();
+                assert_eq!(*observed_calls.borrow(), [private]);
+                same_execution(&native, &call.recorded().execution);
+                assert_oracle_output(&call.recorded().execution, &oracle[key]);
+                assert!(call.recorded().public.verify_ops().is_empty());
+            }
+        }
+    }
+}

@@ -33,9 +33,34 @@ fn original_did_digest_gets_recorded_and_observed_api() {
             .source
             .contains("pub fn verifySchnorrJubjubDigestSignature<")
     );
-    assert!(
-        rendered
-            .source
-            .contains("record_lookup(frame, __compact_recorded_map_key)")
+    // Check the declared map operation, independently of emitter temporaries.
+    // This is a syntax regression guard; execution is covered by DID consumers.
+    struct DigestLookup(usize);
+    impl syn::visit_mut::VisitMut for DigestLookup {
+        fn visit_expr_method_call_mut(&mut self, call: &mut syn::ExprMethodCall) {
+            if call.method == "record_lookup"
+                && let syn::Expr::Path(receiver) = call.receiver.as_ref()
+                && receiver
+                    .path
+                    .segments
+                    .iter()
+                    .map(|s| s.ident.to_string())
+                    .eq(["crate", "ledger_slots", "schnorrJubjubVerificationMethods"])
+            {
+                assert_eq!(call.args.len(), 2);
+                assert!(
+                    matches!(call.args.first(), Some(syn::Expr::Path(arg)) if arg.path.is_ident("frame"))
+                );
+                self.0 += 1;
+            }
+            syn::visit_mut::visit_expr_method_call_mut(self, call);
+        }
+    }
+    let mut syntax = syn::parse_file(&rendered.source).unwrap();
+    let mut lookup = DigestLookup(0);
+    syn::visit_mut::VisitMut::visit_file_mut(&mut lookup, &mut syntax);
+    assert_eq!(
+        lookup.0, 1,
+        "recorded digest lookup must use its declared map"
     );
 }

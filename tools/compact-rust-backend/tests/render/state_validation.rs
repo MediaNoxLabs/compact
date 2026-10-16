@@ -56,8 +56,10 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(source.contains("pub mod recorded"));
     assert!(source.contains("pub fn recording(&self) -> &recorded::Contract"));
     assert!(source.contains("&self.recording"));
-    assert!(source.contains("crate::ledger_slots::round.record_increment(frame, 1u16)?"));
-    assert!(source.contains("Ok(frame.finish(()))"));
+    let compact: String = source.chars().filter(|c| !c.is_whitespace()).collect();
+    assert!(compact.contains("crate::ledger_slots::round.record_increment(frame,"));
+    assert!(source.contains(".value() as u16"));
+    assert!(source.contains("Ok(frame.finish("));
     assert!(source.contains("pub fn increment_call<'observed, Private>("));
     assert!(source.contains("runtime::transaction::RecordedCall::new("));
     assert!(source.contains("\"increment\","));
@@ -83,7 +85,10 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(
         render(&contract)
             .unwrap()
-            .contains("crate::ledger_slots::round.record_decrement(frame, 1u16)?")
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>()
+            .contains("crate::ledger_slots::round.record_decrement(frame,")
     );
     contract.stateful_circuits[0].actions[0] = StateAction::CounterReset {
         field: "round".into(),

@@ -354,9 +354,16 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     syn::parse_file(&shared).unwrap();
     assert_eq!(
         shared.matches("fn __compact_recorded_body_inner<").count(),
-        1
+        0
     );
-    assert_eq!(shared.matches("__compact_recorded_body_inner").count(), 3);
+    // Scalar Unit roots now inline the checked helper body. Verify each real
+    // caller retains its witnessed write, independently of the shared symbol.
+    for caller in ["outer", "outer_again"] {
+        let body = super::lifecycle_recording::generated_body(&shared, "recorded", caller);
+        assert_eq!(body.matches("try_witness_metered").count(), 1, "{body}");
+        assert_eq!(body.matches("record_write").count(), 1, "{body}");
+        assert!(body.find("try_witness_metered").unwrap() < body.find("record_write").unwrap());
+    }
 
     let mut name_collision = contract.stateful_circuits[1].clone();
     name_collision.name = "__compact_recorded_body_inner".into();

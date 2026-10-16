@@ -15,25 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Resolve the published ledger fixture directory without cloning a moving branch.
+"""Resolve static fixtures from the exact official ledger git cohort.
 
-Cargo fetch verifies the registry archive against Cargo.lock. This additional
-check binds the resolved package, VCS identity and static files to the audited
-ledger version. Large proving keys/parameters still use the upstream provider
-and its compiled hashes; this directory is not an offline proving cache.
+Cargo.lock, Cargo metadata, checkout HEAD, tracked manifest bytes and pinned
+fixture digests must agree. Proving keys still use the official provider and
+its pinned identities; this resolver never manufactures or caches proofs.
 """
 
 import argparse
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tomllib
 
-VERSION = "8.0.3"
-SOURCE = "registry+https://github.com/rust-lang/crates.io-index"
-CHECKSUM = "78ab921a746fc8cceb4d9f4f68800e29cdd038dbd3486f6675428b79ebe04ded"
-REVISION = "615be91b079ed8df4026c1fd75352ea6d49de1a4"
+VERSION = "8.1.3"
+REVISION = "b5d3e965a18e4cac17fac4f38446fc55c524439a"
+GIT = "https://github.com/midnightntwrk/midnight-ledger"
+SOURCE = f"git+{GIT}?rev={REVISION}#{REVISION}"
 FIXTURE_HASHES = {
     "spend.bzkir": "904181287e75b0fb596ba5fcc116c882ee5d28e3115304c93ebd913722ce5841",
     "spend.verifier": "3f1569ebcab0655c5c145b28947c74edc4e3f5c6b276e4404b661cf0905b49d3",
@@ -54,17 +54,31 @@ def resolve(metadata, lock):
     package, entry = packages[0], locked[0]
     for item in (package, entry):
         require(item["version"] == VERSION and item["source"] == SOURCE,
-                "ledger version/source differs from audited registry package")
-    require(entry["checksum"] == CHECKSUM, "ledger Cargo.lock checksum mismatch")
+                "ledger version/source differs from audited git package")
     manifest = Path(package["manifest_path"])
     require(manifest.is_absolute(), "metadata manifest path must be absolute")
     crate = manifest.parent.resolve(strict=True)
-    identity = tomllib.loads(manifest.read_text())["package"]
-    require(identity["name"] == "midnight-ledger" and identity["version"] == VERSION,
+    require(not any(c in str(crate) for c in "\r\n"), "unsafe environment path")
+    checkout = crate.parent
+    require(crate.name == "ledger" and not manifest.is_symlink(),
             "resolved manifest identity mismatch")
-    vcs = json.loads((crate / ".cargo_vcs_info.json").read_text())
-    require(vcs["git"]["sha1"] == REVISION and vcs["path_in_vcs"] == "ledger",
-            "published ledger VCS identity mismatch")
+    def git(*args):
+        return subprocess.run(["git", "-C", str(checkout), *args],
+                              check=True, capture_output=True).stdout
+    require(git("rev-parse", "HEAD").decode().strip() == REVISION,
+            "ledger checkout VCS identity mismatch")
+    require(Path(git("rev-parse", "--show-toplevel").decode().strip()).resolve() == checkout,
+            "ledger checkout root mismatch")
+    identity = tomllib.loads(manifest.read_text())["package"]
+    workspace = checkout / "Cargo.toml"
+    require(identity["name"] == "midnight-ledger"
+            and identity["version"] == {"workspace": True}
+            and tomllib.loads(workspace.read_text())["workspace"]["package"]["version"] == VERSION,
+            "resolved manifest identity mismatch")
+    for relative in ("Cargo.toml", "ledger/Cargo.toml"):
+        path = checkout / relative
+        require(not path.is_symlink() and path.read_bytes() == git("show", f"{REVISION}:{relative}"),
+                f"ledger tracked manifest differs from pinned source: {relative}")
     static = crate / "static"
     require(not any(c in str(static) for c in "\r\n"), "unsafe environment path")
     for name, digest in FIXTURE_HASHES.items():
@@ -77,7 +91,7 @@ def resolve(metadata, lock):
     return {
         "format": "compact-ledger-test-static/v1",
         "package": "midnight-ledger", "version": VERSION, "source": SOURCE,
-        "cargo_checksum": CHECKSUM, "vcs_revision": REVISION,
+        "vcs_revision": REVISION,
         "static_directory": str(static), "fixture_sha256": FIXTURE_HASHES,
         "upstream_prover_sha256": PROVER_HASH,
         "scope": "External test resolver base; upstream provider supplies and verifies proving material",
@@ -102,7 +116,7 @@ def main(argv=None):
                 print(f"MIDNIGHT_LEDGER_TEST_STATIC_DIR={record['static_directory']}", file=output)
         print(record["static_directory"])
         return 0
-    except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+    except (OSError, ValueError, KeyError, TypeError, IndexError, subprocess.CalledProcessError) as error:
         print(f"ledger static fixture resolution failed: {error}", file=sys.stderr)
         return 1
 

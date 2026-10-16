@@ -3448,11 +3448,11 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/lifecycle.json",
-      "sha256": "4fceca6be347ba70a0ce77150605062ad0fc9db5dcb41e665ae9ce2708182121"
+      "sha256": "cf05647f226dc2d7bbad7191d38858ac315629cb38a5cb3dea93407abfe00273"
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/pure.json",
-      "sha256": "2e844065d420145de43a0d5e56d51efd5bf48903b5019f97146532bd5d93285d"
+      "sha256": "f0634240c2c621651e81d597fc6599d131d4519599345f65e8c412ee0675e108"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/codec.rs",
@@ -3480,7 +3480,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/point-lifecycle.json",
-      "sha256": "454658d839fca3a8a63c07e9cb519ee731709e50a6c55fe28b696265e6f44fd0"
+      "sha256": "bdc3401d4a8a8764eca570b5c8cc63590e432c7f3b2d8362fb78819798692fb1"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/point_calls.rs",
@@ -3496,7 +3496,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/alias-lifecycle.json",
-      "sha256": "204f093f7fdd9e32ae4113085e1ce6c038fb1c34afd8c42f86f99aac995fe10a"
+      "sha256": "557796e7f83983359503fef7a56d3e23aac1166c2ef2cde3e95d9d1ca9c7edad"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/alias_calls.rs",
@@ -3512,7 +3512,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/service-lifecycle.json",
-      "sha256": "9977afc53914a4c7600fb18f81e6c147b82100a082ea1d1a8a1dd04003f85bea"
+      "sha256": "d976d448e1ae0296776ee963750fce87d0eb0ae34790b222f1cd48c7ad0433e6"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/service_calls.rs",
@@ -3528,7 +3528,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/schnorr-method-lifecycle.json",
-      "sha256": "9cd073ec1ac158a6bf09cbc449b6b86175a35688f2068f9a1be18b6e746a6628"
+      "sha256": "d0fa7c4e3377723edcfe102406425c948e49dc5402c0d5951ad0c28ebdfe53b8"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/schnorr_method_calls.rs",
@@ -3544,7 +3544,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/oracle/jwk-method-lifecycle.json",
-      "sha256": "4c8693684a1f4f126d356c9a9a38949ab598f5a41529bf7e2c5e6e4f94044909"
+      "sha256": "56df9bcd03854ba683cf13e3ae9693e01e2f1b77521fb6f58a57a81856a6e1ed"
     },
     {
       "path": "tests-rust-backend/did-adoption/support/jwk_method_calls.rs",
@@ -3556,7 +3556,7 @@
     },
     {
       "path": "tests-rust-backend/did-adoption/tests/provenance.rs",
-      "sha256": "28a3d1bb62c115661400db2962ad8b0fe8c4b0e63e9910e4af78e2d9ac03d4db"
+      "sha256": "9f58adc080ead6dd610f6aa052c179589b0e1c6f56c382e5bf05a5471acbd9a6"
     },
     {
       "path": "tests-rust-backend/did-adoption/tests/digest_recording.rs",
@@ -3565,6 +3565,14 @@
     {
       "path": "tests-rust-backend/did-adoption/tests/relation_recording.rs",
       "sha256": "6d874bc9bf9f99d3e5dcdacfdecf9d0ee82a1f10a623a1bccb88292f8af072d6"
+    },
+    {
+      "path": "tests-rust-backend/support/reviewed_capture.rs",
+      "sha256": "482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b"
+    },
+    {
+      "path": "tests-rust-backend/did-adoption/oracle/reviewed-rust-binding.json",
+      "sha256": "d6df649998d71901cdb7b473399e972d7553e85c6eb0340469a1cde5e10fceae"
     }
   ],
   "amendment_0259": {
@@ -3715,5 +3723,20 @@
       "Strict proofs and the public ledger8.1 bridge remain separate acceptance receipts.",
       "Original constructor execution remains unproved."
     ]
+  },
+  "amendment_0434": {
+    "scope": "Fresh execution of all seven retained DID TypeScript capture scripts against byte-identical generated DID JavaScript. Complete cases/scenarios remain equal; provenance now binds the ABI52 generated Rust consumer. Historical amendments remain unchanged.",
+    "generated_javascript_sha256": "9ae8d78cef694d99d985ac416e3bf17e5969125201a435d1c3332e5f60664338",
+    "runtime_javascript_previous_sha256": "f6b1b8b0d4ecfd6458706fd3969babbb988879dd9c39618cc137c463a151781b",
+    "runtime_javascript_current_sha256": "db88e0bf0c11d081fcd8ba05ee7390cad8238be4c17dddc7da092219585c7cb7",
+    "runtime_source_unchanged": true,
+    "runtime_version": "0.16.101",
+    "onchain_runtime_v3_version": "3.0.0",
+    "limitation": "Rebuilt runtime JavaScript is not byte-identical to the historical build; unchanged runtime source hashes and full semantic recapture equality are recorded separately. No new proof or branch coverage claim."
+  },
+  "unit_algebra_generation_review": {
+    "scope": "Original TS captures are immutable. The separate reviewed Rust binding authenticates their complete hashes, historical Rust hashes and current generated consumer. Unchanged provenance stays strict.",
+    "binding": "tests-rust-backend/did-adoption/oracle/reviewed-rust-binding.json",
+    "new_ts_execution": false
   }
 }

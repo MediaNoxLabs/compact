@@ -31,18 +31,18 @@
       # NOTE: if this is an internal release (uses -alpha, -beta, or -rc) do NOT update the package.json in runtime
       # since npm can only access public releases. For the compact-runtime release nix will pull in the correct
       # version from this url.
-      url = "github:midnightntwrk/midnight-ledger/ledger-8.0.3"; # zkir-v2
+      url = "github:midnightntwrk/midnight-ledger/ledger-8.1.3"; # zkir-v2
       inputs.zkir.follows = "zkir";
     };
     onchain-runtime-v3 = {
       # dependency for compact-runtime release
       # all notes for the zkir input applies to onchain-runtime input too.
-      url = "github:midnightntwrk/midnight-ledger/ledger-8";
+      url = "github:midnightntwrk/midnight-ledger/ledger-8.1.3";
       inputs.zkir.follows = "zkir";
     };
     zkir-wasm = {
       # dependency for test-center
-      url = "github:midnightntwrk/midnight-ledger/ledger-8.0.3";
+      url = "github:midnightntwrk/midnight-ledger/ledger-8.1.3";
       inputs.zkir.follows = "zkir";
     };
     zkir-v3 = {
@@ -94,6 +94,16 @@
         sources = (import ./_sources/generated.nix) {inherit (pkgs) fetchgit fetchurl fetchFromGitHub;};
         nanopass = sources.nanopass.src;
         rough-draft = sources.rough-draft.src;
+        onchain-runtime-npm-compat = import ./nix/compat/npm-scope-compat.nix {
+          inherit pkgs;
+          profile = "onchain-runtime-v3";
+          upstream = onchain-runtime-v3.packages.${system}.onchain-runtime-wasm;
+        };
+        zkir-v2-npm-compat = import ./nix/compat/npm-scope-compat.nix {
+          inherit pkgs;
+          profile = "zkir-v2";
+          upstream = zkir-wasm.packages.${system}.zkir-wasm;
+        };
         runtime-version = (__fromJSON (__readFile ./runtime/package.json)).version;
         vscode-extension-version = (__fromJSON (__readFile ./editor-support/vsc/compact/package.json)).version;
         nix2container = inputs.n2c.packages.${system}.nix2container;
@@ -147,6 +157,8 @@
           overlays.pretzel-fetcher = (import pretzel/fetcher.nix).overlay;
           overlays.pretzel-js = lib.pretzel-js.overlay;
           packages.pretzel-dry-install = dry-install.package;
+          packages.onchain-runtime-npm-scope-compat = onchain-runtime-npm-compat.package;
+          packages.zkir-v2-npm-scope-compat = zkir-v2-npm-compat.package;
           packages.runtime = let
             inclusive-src = inclusive.lib.inclusive ./. [
               ./runtime
@@ -174,11 +186,8 @@
             };
 
             nixDependenciesMap = {
-              "@midnight-ntwrk/onchain-runtime-v3" = let
-                pkg = onchain-runtime-v3.packages.${system}.onchain-runtime-wasm;
-              in {
-                tarPath = "${pkg}/lib/midnight-onchain-runtime-v3-${pkg.version}.tgz";
-                libPath = "${pkg}/lib/node_modules/@midnight-ntwrk/onchain-runtime-v3";
+              "@midnight-ntwrk/onchain-runtime-v3" = {
+                inherit (onchain-runtime-npm-compat) tarPath libPath;
               };
             };
           };
@@ -191,11 +200,8 @@
             src = ./test-center;
 
             nixDependenciesMap = {
-              "@midnight-ntwrk/zkir-v2" = let
-                pkg = zkir-wasm.packages.${system}.zkir-wasm;
-              in {
-                tarPath = "${pkg}/lib/midnight-zkir-v2-${pkg.version}.tgz";
-                libPath = "${pkg}/lib/node_modules/@midnight-ntwrk/zkir-v2";
+              "@midnight-ntwrk/zkir-v2" = {
+                inherit (zkir-v2-npm-compat) tarPath libPath;
               };
               "@midnight-ntwrk/zkir-v3" = let
                 pkg = zkir-v3-wasm.packages.${system}.zkir-v3-wasm;
@@ -231,7 +237,10 @@
               ./tools/compact-rust-backend/README.md
               ./tools/compact-rust-backend/src
             ];
-            cargoLock.lockFile = ./tools/compact-rust-backend/Cargo.lock;
+            cargoLock = {
+              lockFile = ./tools/compact-rust-backend/Cargo.lock;
+              outputHashes."midnight-base-crypto-1.0.2" = "sha256-iNrhLPBGrWxeospwl8eW4TtYNlk+vY5Y564OTRjwBoM=";
+            };
             cargoBuildFlags = [ "--bin" "compactc" ];
             # Compiler-backed gates run in build-compiler.yml against the full
             # workspace; this derivation packages just the public command.
@@ -263,7 +272,7 @@
 
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";
-            version = "0.31.134"; # NB: also update compiler-version in compiler/compiler-version.ss
+            version = "0.31.135"; # NB: also update compiler-version in compiler/compiler-version.ss
             src = inclusive.lib.inclusive ./. [
               ./compiler
               ./examples
@@ -590,6 +599,7 @@
             packages = [
               pkgs.nodejs
               pkgs.yarn
+              pkgs.python3
               pkgs.alejandra
               packages.runtime.package
               packages.runtime.node-modules
@@ -608,6 +618,7 @@
             packages = [
               pkgs.nodejs
               pkgs.yarn
+              pkgs.python3
               pkgs.binaryen
               packages.runtime.package
               packages.runtime.node-modules
@@ -626,6 +637,7 @@
             packages = [
               packages.compactc
               pkgs.yarn
+              pkgs.python3
               zkir.packages.${system}.zkir
               packages.zkir-v3-bin
             ];
@@ -650,6 +662,7 @@
               packages.zkir-v3-bin
               pkgs.nodejs
               pkgs.yarn
+              pkgs.python3
             ];
             shellHook = runtime-shell-hook;
           };

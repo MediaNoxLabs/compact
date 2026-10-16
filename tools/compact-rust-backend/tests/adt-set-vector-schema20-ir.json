@@ -1,0 +1,347 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "c",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "vector",
+          "length": 2,
+          "element": {
+            "kind": "field"
+          }
+        }
+      },
+      "source": {
+        "file": "set_vector.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "getVector",
+      "internal": true,
+      "parameters": [
+      ],
+      "result": {
+        "kind": "vector",
+        "length": 2,
+        "element": {
+          "kind": "field"
+        }
+      },
+      "body": {
+        "kind": "vector",
+        "element": {
+          "kind": "field"
+        },
+        "elements": [
+          {
+            "kind": "field_literal",
+            "value": "2"
+          },
+          {
+            "kind": "field_literal",
+            "value": "12"
+          }
+        ]
+      },
+      "source": {
+        "file": "set_vector.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "test",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "zero",
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              },
+              "value": {
+                "kind": "default",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "one",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "getVector",
+                  "arguments": [
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_is_empty",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Structure should be empty"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 0"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "zero"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 1"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "zero"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 0 should have value 1"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "one"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 2"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "one"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 1 should be member"
+                },
+                {
+                  "kind": "set_remove",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "zero"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 1"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "one"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 1 should be member"
+                },
+                {
+                  "kind": "set_reset",
+                  "field": "c",
+                  "index": 0
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 0"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_is_empty",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Structure should be empty"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "set_vector.compact",
+        "line": 24,
+        "column": 1
+      }
+    }
+  ]
+}

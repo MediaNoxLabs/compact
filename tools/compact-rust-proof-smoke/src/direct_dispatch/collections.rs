@@ -26,6 +26,17 @@ use crate::{
     adt_set_vector, check_conditional_set_proof, opaque_string_map, opaque_string_set, vector_map,
 };
 
+pub(super) fn map_remaining_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --map-remaining-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    crate::positional_maps::run_remaining(Path::new(&root))
+}
+
 pub(super) fn opaque_string_set(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {
@@ -38,6 +49,20 @@ pub(super) fn opaque_string_set(
     opaque_string_set::run(Path::new(&root))
 }
 
+pub(super) fn opaque_string_set_member(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --opaque-string-set-member <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --opaque-string-set-member <proof-output>".into(),
+        );
+    }
+    opaque_string_set::run_member(Path::new(&root))
+}
+
 pub(super) fn opaque_string_map(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {
@@ -48,6 +73,20 @@ pub(super) fn opaque_string_map(
         return Err("usage: compact-rust-proof-smoke --opaque-string-map <proof-output>".into());
     }
     opaque_string_map::run(Path::new(&root))
+}
+
+pub(super) fn opaque_string_map_ensure(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --opaque-string-map-ensure <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --opaque-string-map-ensure <proof-output>".into(),
+        );
+    }
+    opaque_string_map::run_ensure(Path::new(&root))
 }
 
 pub(super) fn conditional_set(
@@ -84,6 +123,20 @@ pub(super) fn adt_set_vector(
         return Err("usage: compact-rust-proof-smoke --adt-set-vector <proof-output>".into());
     }
     adt_set_vector::run(Path::new(&root))
+}
+
+pub(super) fn adt_set_vector_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --adt-set-vector-strict <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --adt-set-vector-strict <proof-output>".into(),
+        );
+    }
+    adt_set_vector::run_strict(Path::new(&root))
 }
 
 pub(super) fn adt_list_vector_field_4(
@@ -136,6 +189,20 @@ pub(super) fn adt_list_field(
     adt_list_field::run(Path::new(&root))
 }
 
+pub(super) fn adt_list_field_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --adt-list-field-strict <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --adt-list-field-strict <proof-output>".into(),
+        );
+    }
+    adt_list_field::run_strict(Path::new(&root))
+}
+
 pub(super) fn vector_map(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {
@@ -158,5 +225,196 @@ pub(super) fn vector_map(
         Ok(Ok(())) => Ok(()),
         Ok(Err(error)) => Err(error.into()),
         Err(_) => Err("vector map proof thread panicked".into()),
+    }
+}
+
+/// Selected Map source; use generated constructor data and actual strict funding.
+pub(super) fn map_effects(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --map-effects <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("map-effects-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::map_effects::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Map effect proof thread panicked".into()),
+    }
+}
+
+/// Selected Unit source; use generated constructor data and actual strict funding.
+pub(super) fn unit_composition(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --unit-composition <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("unit-composition-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::unit_composition::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Unit composition proof thread panicked".into()),
+    }
+}
+
+/// Selected aligned-hash source; use generated constructor data and actual strict funding.
+pub(super) fn aligned_hashes(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --aligned-hashes <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("aligned-hashes-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::aligned_hashes::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Aligned hash proof thread panicked".into()),
+    }
+}
+
+pub(super) fn exact_hash_input(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --exact-hash-input <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("exact-hash-input-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::exact_hash_input::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Exact hash input proof thread panicked".into()),
+    }
+}
+
+pub(super) fn aligned_witness_results(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --aligned-witness-results <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("aligned-witness-results-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::aligned_witness_results::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Aligned witness results proof thread panicked".into()),
+    }
+}
+
+pub(super) fn jubjub_negation(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --jubjub-negation <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("jubjub-negation-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::jubjub_negation::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub negation proof thread panicked".into()),
+    }
+}
+
+pub(super) fn unit_value_operations(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --unit-value-operations <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("unit-value-operations-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::unit_value_operations::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Unit value operations proof thread panicked".into()),
+    }
+}
+
+pub(super) fn map_value_products(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --map-value-products <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("map-value-products-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            super::super::map_value_products::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("map-value-products proof thread panicked".into()),
+    }
+}
+
+/// Exact original map source with proof verification and strict funded application.
+pub(super) fn vector_map_strict(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let usage = "usage: compact-rust-proof-smoke --vector-map-strict <proof-output>";
+    let root = arguments.next().ok_or(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("vector-map-strict-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || vector_map::strict::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("vector map strict proof thread panicked".into()),
     }
 }

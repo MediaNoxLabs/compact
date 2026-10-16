@@ -1,0 +1,11 @@
+# Broad Unit composition source fixture
+
+A genuine Compact source combines a pure Boolean guard, two ordered witnesses, a twice-called stateful Counter helper, a Map insertion of a named product, and a Boolean Cell write. Its declared root input is `(key: OpaqueString, enabled: Boolean, selected: Boolean)`; the test checks that exact order in prepared FAB input. Its return is Unit.
+
+The frozen #579 compiler already admits this entire source through `selector.unit-composition`; its effect-algebra candidate also succeeds. This fixture is a compatibility control and does not, by itself, demonstrate production selector retirement. Source, complete IR, baseline owner trace, and frontend provenance are preserved separately.
+
+Three runtime tests exercise 16 explicit same-source TS configurations: ten successes and six refusals. Selected successes cover new, existing, empty, and Unicode/interior-NUL keys. The lazy branch skips all four Boolean answer configurations and both provider refusals. Disabled pure guards, false witness answers, and provider failures stop at the precise callback prefix. Counter reads inside the callbacks distinguish first@0 from second@1; successful private state advances from5 to7 and final Counter is2.
+
+Success checks compare native, recorded, observed, and independent manual slot execution; final state/effects/private transcript; execution gas; verify-op replay and independently measured replay gas; and prepared original input/Unit output encoding. The isolated official TS capture records exact configuration identity, runtime/source/generated hashes, query costs including witness reads, and serialized preimage size. No test result or TS capture alone claims proof generation, deployment, or transaction application; the selected proof gate is separate.
+
+The six unselected successful cases have no public ledger transcript. Native, recorded, and observed execution succeed, but the Rust transaction adapter correctly refuses preparation with typed `PrepareCallError::EmptyTranscript`. Their TS preimage/FAB is compared against independently assembled original input, not a successfully prepared Rust call. Only the four selected success cases claim successful preparation; no runtime policy was changed. The capture labels this as a Rust expectation, not a TS measurement.

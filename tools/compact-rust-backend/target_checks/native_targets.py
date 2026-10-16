@@ -172,10 +172,10 @@ def _check_native_key_witnesses(
     native_export = native_capability["circuits"][0]
     assert native_export["name"] == "test1"
     assert native_export["proof_required"] is False
-    assert native_export["recorded"] is False
-    assert native_export["observed_call"] is False
+    assert native_export["recorded"] is True
+    assert native_export["observed_call"] is True
     assert native_export["recording_status"] == "not_applicable"
-    assert native_export["recording_unavailable"]["ir_node"] == "StateAction::NativeWitnessCall"
+    assert "recording_unavailable" not in native_export
     native_source = (native_contract / "lib.rs").read_text()
     assert "context.own_coin_public_key()?" in native_source
     assert "pub fn test1<Private>(" in native_source

@@ -93,3 +93,7 @@ fn nested_map_shape_query_is_typed_and_replayable() {
     );
     assert_eq!(replay.context.effects, native.context.query.effects);
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "observed/preparation.rs"]
+mod observed_preparation;

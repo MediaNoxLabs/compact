@@ -328,7 +328,9 @@ fn fallible_funded(
     ledger.zswap = Sp::new(state.post_block_update(Timestamp::from_secs(0)));
     assert_eq!(ledger.zswap.first_free, 2);
     let history = history.qualify(*indices.get(&hc).unwrap());
-    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+    let wallet = midnight_zswap::local::State::<DefaultDB>::new()
+        .apply(&keys, &seed)
+        .expect("valid seed offer updates the test wallet");
     let (_, wallet_input) = wallet
         .spend(
             &mut rng,

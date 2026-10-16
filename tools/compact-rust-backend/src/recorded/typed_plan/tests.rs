@@ -528,8 +528,8 @@ fn witness_eligibility_is_local_but_counts_all_audited_branches() {
     let mut field: crate::ir::Contract = serde_json::from_value(field).unwrap();
     field.schema_version = crate::ir::SCHEMA_VERSION;
     assert!(!admitted(&field, 0));
-    // The legacy profile still rejects witnesses; the terminal-return
-    // domain now admits this fully typed zero-argument Field witness.
+    // The legacy profile still rejects witnesses; checked composition
+    // admits this fully typed zero-argument Field witness.
     let rendered = crate::render_with_capabilities(&field).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     let source: String = rendered
@@ -594,8 +594,10 @@ fn witness_eligibility_is_local_but_counts_all_audited_branches() {
     let capabilities = crate::render_with_capabilities(&counters)
         .unwrap()
         .capabilities;
-    assert!(!capabilities.circuits[0].recorded);
-    assert!(!capabilities.circuits[2].recorded);
+    // The frozen oracle keeps its effect-count restrictions. Current composition
+    // validates the declared witness in both selected and unselected branches.
+    assert!(capabilities.circuits[0].recorded && capabilities.circuits[0].observed_call);
+    assert!(capabilities.circuits[2].recorded && capabilities.circuits[2].observed_call);
 }
 
 #[test]

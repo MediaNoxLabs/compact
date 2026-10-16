@@ -14,8 +14,11 @@
 // limitations under the License.
 //! Closed typed Cell/Counter Unit composition; shared Plan owns evaluation.
 use super::*;
+#[cfg(test)]
 use relation_root_preflight::RelationPermit;
 
+// Shared Plan retains the policy representation; only the test oracle constructs it.
+#[cfg_attr(not(test), allow(dead_code))]
 #[derive(Clone, Copy)]
 pub(super) enum AuditedCall<'a> {
     PureValue(&'a PureCircuit),
@@ -54,6 +57,7 @@ pub(super) fn observed_value_type(ty: &Type) -> bool {
         _ => false,
     }
 }
+#[cfg(test)]
 pub(super) fn value_type(ty: &Type) -> bool {
     match ty {
         Type::OpaqueString | Type::Enum { .. } => true,
@@ -87,12 +91,14 @@ pub(super) fn string_key_map(declaration: &LedgerFieldKind) -> bool {
 // Mutation accepts nonempty flat named products of previously audited scalar
 // values. The declared struct name/field order remain exact typed data, never
 // an admission dispatch key.
+#[cfg(test)]
 pub(super) fn flat_string_point_product(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. }
         if !fields.is_empty() && fields.iter().all(|field|
             matches!(field.ty, Type::OpaqueString | Type::JubjubPoint)))
 }
 
+#[cfg(test)]
 pub(super) fn flat_string_point_map(declaration: &LedgerFieldKind) -> bool {
     matches!(declaration, LedgerFieldKind::Map { key: Type::OpaqueString, value }
         if flat_string_point_product(value))
@@ -124,6 +130,7 @@ pub(super) fn slot_path(field: &LedgerField) -> bool {
     path.first() == Some(&field.index) && (1..=2).contains(&path.len())
 }
 /// Failure evidence stays private: capability JSON retains its existing schema.
+#[cfg(test)]
 #[derive(Debug)]
 pub(in crate::recorded) struct CompositionRejection {
     pub(super) gap: RecordingGap,
@@ -131,12 +138,14 @@ pub(in crate::recorded) struct CompositionRejection {
     precision: RejectionPrecision,
     phase: RejectionPhase,
 }
+#[cfg(test)]
 #[derive(Debug, PartialEq, Eq)]
 enum RejectionPrecision {
     ConcreteNode,
     EnclosingAction,
     Obligation,
 }
+#[cfg(test)]
 #[derive(Debug, PartialEq, Eq)]
 enum RejectionPhase {
     PolicyAudit,
@@ -144,6 +153,7 @@ enum RejectionPhase {
     FinalObligation,
 }
 
+#[cfg(test)]
 impl CompositionRejection {
     /// Refine only the same root action's coarse legacy refusal. Never inspect
     /// diagnostic path/detail text, or override an earlier concrete error.
@@ -179,6 +189,7 @@ impl CompositionRejection {
     }
 }
 
+#[cfg(test)]
 struct Audit<'a> {
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
@@ -199,6 +210,7 @@ struct Audit<'a> {
     root_action: usize,
     failure: Option<CompositionRejection>,
 }
+#[cfg(test)]
 impl Audit<'_> {
     fn slot(&self, name: &str, index: u8) -> Option<&LedgerField> {
         self.ledger
@@ -558,6 +570,7 @@ impl Audit<'_> {
     }
     fn declaration_rejection(&mut self, name: &str, path: &str, detail: &str) {
         self.reject(RecordingGap {
+            resource: None,
             code: super::super::RecordingGapCode::RecordingUnavailable,
             ir_node: "CircuitDeclaration".to_owned(),
             path: path.to_owned(),
@@ -694,6 +707,7 @@ impl Audit<'_> {
     }
 }
 
+#[cfg(test)]
 pub(super) fn lower_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -883,8 +897,11 @@ mod tests;
 #[path = "composition/relation_composition_tests.rs"]
 mod adr295_preflight;
 
+#[cfg(test)]
 mod selected_set_preflight;
 
+#[cfg(test)]
 mod nested_map_preflight;
 
+#[cfg(test)]
 mod relation_root_preflight;

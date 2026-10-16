@@ -1,6 +1,6 @@
 # Original DID Service developer guide
 
-The fixture under `examples/rust_backend/did_adoption/` pins the unchanged `midnight-did` **v0.7.0** source and import closure. The generated Rust crate is `tests-rust-backend/did-adoption`; its `lib.rs` is generated from that source, not hand edited. The compiler/runtime profile is IR schema 20 / ABI 50 on pinned Rust ledger 8.0.3; upstream JS source requests ledger 8.1, so this guide describes the locally tested profile rather than a general cross-version promise.
+The fixture under `examples/rust_backend/did_adoption/` pins the unchanged `midnight-did` **v0.7.0** source and import closure. The generated Rust crate is `tests-rust-backend/did-adoption`; its `lib.rs` is generated from that source, not hand edited. The original acceptance profile was IR schema 20 / ABI 50 on pinned Rust ledger 8.0.3; upstream JS source requests ledger 8.1, so this guide describes the locally tested profile rather than a general cross-version promise.
 
 ## Generated Service surface
 
@@ -115,7 +115,7 @@ The function names and argument order above were checked against the unedited ge
 
 ## Current scope
 
-All12 original DID recorded exports are locally accepted. Native Rust pins ledger8.0.3. Independent ledger8.1 public transaction snapshots cover all12 exports, including eleven new relation snapshots with66 JS roundtrips and132 malformed refusals. Those snapshots are independently initialized, not a continuous8.1 chain. Constructor data is deployed; constructor execution remains unproved. This is not live-network acceptance or general compatibility with arbitrary later ledger/compiler versions.
+All12 original DID recorded exports are locally accepted. Those retained application receipts use ledger8.0.3. Current native Rust pins ledger8.1.3 with ABI52; consult [current versions](versions-and-targets.md) for separate upgrade qualification. Independent ledger8.1 public transaction snapshots cover all12 exports, including eleven new relation snapshots with66 JS roundtrips and132 malformed refusals. Those snapshots are independently initialized, not a continuous8.1 chain. Constructor data is deployed; constructor execution remains unproved. This is not live-network acceptance or general compatibility with arbitrary later ledger/compiler versions.
 
 Nested product Maps, selected relation Sets and read-only nested JWK lookups are admitted by their checked profiles. This does not make arbitrary effect graphs recordable. Inspect the capability manifest for each newly compiled source and distinguish native generation, recording, replay and proof applicability. Full current evidence: “DID and minimal-reproducer local acceptance — 2026-10-07” (historical vault reference; not bundled here) and “Joined relation and release delivery — 2026-10-07” (historical vault reference; not bundled here).
 

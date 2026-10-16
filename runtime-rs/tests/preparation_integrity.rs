@@ -131,3 +131,53 @@ fn identity_and_empty_transcript_guards_precede_replay_mismatches() {
         }
     }
 }
+
+#[test]
+fn exact_private_outputs_refuse_noncanonical_atoms_before_replay() {
+    use midnight_compact_runtime::{OpaqueBytes, exact_private_output};
+    let mut call = recorded();
+    call.execution.private_transcript_outputs = vec![
+        AlignedValue::from(Field::from(1)),
+        exact_private_output((Field::from(2), OpaqueBytes(vec![9, 0]))),
+    ];
+    alter_effects(&mut call);
+    let error = prepare_call(call, spec()).err().unwrap();
+    assert!(matches!(
+        error,
+        PrepareCallError::NonCanonicalPrivateOutput {
+            output_index: 1,
+            atom_index: 1
+        }
+    ));
+    assert_eq!(
+        error.to_string(),
+        "private output 1 atom 1 is not in canonical form"
+    );
+
+    let mut canonical = recorded();
+    canonical.execution.private_transcript_outputs =
+        vec![exact_private_output(OpaqueBytes(vec![9, 0, 1]))];
+    assert!(prepare_call(canonical, spec()).is_ok());
+}
+
+#[test]
+fn existing_empty_and_identity_priorities_precede_noncanonical_private_outputs() {
+    use midnight_compact_runtime::{OpaqueBytes, exact_private_output};
+    for empty in [false, true] {
+        let mut call = if empty {
+            RecordingFrame::new(context()).finish(true)
+        } else {
+            recorded()
+        };
+        call.execution
+            .private_transcript_outputs
+            .push(exact_private_output(OpaqueBytes(vec![0])));
+        call.execution.context = call.execution.context.with_coin_public_key_bytes([9; 32]);
+        let error = prepare_call(call, spec()).err().unwrap();
+        if empty {
+            assert!(matches!(error, PrepareCallError::EmptyTranscript));
+        } else {
+            assert!(matches!(error, PrepareCallError::CoinPublicKeyMismatch));
+        }
+    }
+}

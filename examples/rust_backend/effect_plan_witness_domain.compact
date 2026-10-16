@@ -1,0 +1,28 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export struct Packet { first: Field; values: Vector<2, Field>; pair: [Field, Boolean]; large: Uint<160>; }
+export ledger marker: Field;
+export ledger blob: Opaque<"Uint8Array">;
+witness bytes(): Opaque<"Uint8Array">;
+witness vector(): Vector<2, Field>;
+witness tuple(): [Field, Boolean];
+witness wide(): Uint<160>;
+witness packet(): Packet;
+constructor() { marker = 0; blob = default<Opaque<"Uint8Array">>; }
+export circuit run(selected: Boolean): Boolean {
+  marker = 1;
+  const payload = bytes();
+  blob = disclose(payload);
+  if (disclose(selected)) {
+    const values = vector();
+    const pair = tuple();
+    const large = wide();
+    const object = packet();
+    marker = disclose(transientHash<Vector<2, Field>>(values));
+    return disclose(payload == payload && values == values && pair == object.pair && large == object.large && object == object);
+  } else {
+    return disclose(payload == payload);
+  }
+}

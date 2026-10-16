@@ -131,6 +131,7 @@ pub(in crate::recorded) fn closed_guarded_struct_pure_steps(
 // A mixed-width product assertion lives in a pure Unit circuit because
 // the stateful source cannot inline ordering comparisons. Admit only its
 // exact two-Uint32, multiply-by-four, less-equal body before Counter-one.
+#[cfg(test)]
 pub(in crate::recorded) fn closed_guarded_unsigned_product_steps(
     circuit: &StatefulCircuit,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,

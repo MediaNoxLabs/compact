@@ -18,6 +18,11 @@ use compact_rust_zerocash_oracle_fixture::ledger_contract as contract;
 #[path = "../../../tests-rust-backend/zerocash-oracle/support.rs"]
 mod support;
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    // Complete source binding precedes state construction, deployment and key reads.
+    counter_scenario::validate_ir(
+        &std::fs::read(root.join("contract/compact-rust-ir.json"))?,
+        compact_rust_zerocash_oracle_fixture::RETAINED_IR,
+    )?;
     for historical in [false, true] {
         let (seeded, path) = support::seeded(historical)?;
         let private = seeded.private_state.clone();
@@ -66,6 +71,23 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             return Err("spend native/recorded mismatch".into());
         }
         let expected = native.context.query.state.get_ref().clone();
+        // Both application lanes must preserve the exact recipient ciphertext
+        // and commitment index, in addition to the complete expected state.
+        use compact_rust_zerocash_oracle_fixture::ledger_slots;
+        if ledger_slots::ciphertexts.inspect(&expected)?
+            != support::ciphertext(
+                &support::destination().encryption,
+                &support::coin(if historical { 7 } else { 5 }),
+            )
+            || ledger_slots::commitments
+                .inspect(&expected)?
+                .first_free()?
+                .value()
+                != if historical { 3 } else { 2 }
+        {
+            return Err("recipient ciphertext/commitment mismatch".into());
+        }
+
         let manual = check_generated_trace(
             root,
             "spend",
@@ -83,23 +105,57 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("spend observed-call mismatch".into());
         }
-        check_transaction(root, "spend", deploy, prepared, &mut rng, |applied| {
-            if applied.data.get_ref() != &expected {
-                return Err("applied spend state mismatch".into());
-            }
-            let view = contract::PublicStateView::from(applied);
-            if view.ciphertexts()?
-                != support::ciphertext(
-                    &support::destination().encryption,
-                    &support::coin(if historical { 7 } else { 5 }),
-                )
-                || view.commitments()?.first_free()?.value() != if historical { 3 } else { 2 }
-            {
-                return Err("recipient ciphertext/commitment mismatch".into());
-            }
-            Ok(())
-        })?;
-        println!("Zerocash spend historical={historical} verified and ledger-applied");
+        if !historical {
+            // Seeded contract data is the same pre-call snapshot used by native
+            // and recorded execution. This contract's commitments are its own
+            // ledger data; no official Zswap offer is invented for this test.
+            opaque_public::apply_funded(root, "spend", prepared, deploy, &expected, rng, 0x5601)?;
+            println!(
+                "Zerocash current-root spend: funded default-strict ledger-8 application passed"
+            );
+        } else {
+            check_transaction(root, "spend", deploy, prepared, &mut rng, |applied| {
+                if applied.data.get_ref() != &expected {
+                    return Err("applied spend state mismatch".into());
+                }
+                let view = contract::PublicStateView::from(applied);
+                if view.ciphertexts()?
+                    != support::ciphertext(
+                        &support::destination().encryption,
+                        &support::coin(if historical { 7 } else { 5 }),
+                    )
+                    || view.commitments()?.first_free()?.value() != if historical { 3 } else { 2 }
+                {
+                    return Err("recipient ciphertext/commitment mismatch".into());
+                }
+                Ok(())
+            })?;
+            println!(
+                "Zerocash historical-root spend: relaxed-balancing diagnostic application passed"
+            );
+        }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod source_binding_tests {
+    use super::*;
+
+    #[test]
+    fn complete_fixture_accepts_exact_source_and_rejects_missing_or_changed_circuit() {
+        let source = compact_rust_zerocash_oracle_fixture::RETAINED_IR;
+        counter_scenario::validate_ir(source.as_bytes(), source).unwrap();
+        let value: serde_json::Value = serde_json::from_str(source).unwrap();
+        let mut missing = value.clone();
+        missing["stateful_circuits"].as_array_mut().unwrap().pop();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&missing).unwrap(), source).is_err()
+        );
+        let mut changed = value;
+        changed["stateful_circuits"][0]["name"] = "different_source_circuit".into();
+        assert!(
+            counter_scenario::validate_ir(&serde_json::to_vec(&changed).unwrap(), source).is_err()
+        );
+    }
 }

@@ -1,0 +1,64 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger marker: Field;
+export ledger count: Counter;
+constructor(amount: Uint<16>) {
+  { const amount = 2 as Uint<16>; count.increment(amount); }
+  for (const amount of [3 as Uint<16>, 4]) { count.increment(amount); }
+  count.increment(disclose(amount));
+}
+export circuit shadow(value: Bytes<32>, other: Bytes<32>): [] {
+  { const value = disclose(other); kernel.claimZswapNullifier(value); }
+  return kernel.claimZswapCoinSpend(disclose(value));
+}
+export circuit local_return(value: Field): Field {
+  const result = value + 1;
+  marker = disclose(result);
+  return result;
+}
+export circuit siblings(value: Field): Field {
+  { const value = 2 as Field; marker = value; }
+  { const value = 3 as Field; marker = value; }
+  return value;
+}
+export circuit nested(value: Field): Field {
+  { const value = 2 as Field;
+    { const value = 3 as Field; marker = value; }
+    marker = value;
+  }
+  return value;
+}
+export circuit suffix(value: Field, value_Compact1: Field, value_Compact2: Field, tmp_1: Field): Field {
+  { const value = value_Compact1; marker = disclose(value); }
+  { const value_Compact1 = tmp_1; marker = disclose(value_Compact1); }
+  return value + value_Compact2 + tmp_1;
+}
+export circuit counter_scopes(amount: Uint<16>): Uint<64> {
+  { const amount = 2 as Uint<16>; count.increment(amount); }
+  count.increment(disclose(amount));
+  return count.read();
+}
+pure circuit step(value: Field, item: Field): Field {
+  { const value = item; assert(value == item, "inner fold binding"); }
+  return value + item;
+}
+export pure circuit folded(value: Field): Field {
+  return fold(step, value, [1 as Field, 2]);
+}
+export circuit read_marker(): Field { return marker; }
+export circuit read_count(): Uint<64> { return count.read(); }
+export pure circuit dollars($value: Field, _value: Field): Field {
+  const $local = $value;
+  const _local = _value;
+  return $local + _local;
+}
+module Aliases {
+  export pure circuit same(value: Field, other: Field): Field {
+    { const value = other; assert(value == other, "alias local"); }
+    return value;
+  }
+}
+import { same as alias_a, same as alias_b } from Aliases;
+export { alias_a, alias_b };

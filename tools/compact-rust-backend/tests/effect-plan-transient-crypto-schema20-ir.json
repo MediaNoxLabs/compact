@@ -1,0 +1,501 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "stored",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "effect_plan_transient_crypto.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "result",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_transient_crypto.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "opening",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_transient_crypto.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Receipt",
+        "fields": [
+          {
+            "name": "digest",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "hash",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "commitment",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Receipt",
+            "fields": [
+              {
+                "name": "digest",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "hash",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "commitment",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "upgrade_from_transient",
+              "value": {
+                "kind": "cell_read",
+                "field": "result",
+                "index": 1
+              }
+            },
+            {
+              "kind": "parameter",
+              "name": "hashed"
+            },
+            {
+              "kind": "cell_read",
+              "field": "result",
+              "index": 1
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "stored",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "input"
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "degraded",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "degrade_to_transient",
+                "value": {
+                  "kind": "cell_read",
+                  "field": "stored",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "hashed",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "transient_hash",
+                      "value": {
+                        "kind": "tuple",
+                        "elements": [
+                          {
+                            "kind": "parameter",
+                            "name": "degraded"
+                          },
+                          {
+                            "kind": "parameter",
+                            "name": "seed"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "committed",
+                          "ty": {
+                            "kind": "field"
+                          },
+                          "value": {
+                            "kind": "if",
+                            "condition": {
+                              "kind": "parameter",
+                              "name": "selected"
+                            },
+                            "then": {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "transient_commit",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "hashed"
+                                },
+                                "opening": {
+                                  "kind": "witness_call",
+                                  "name": "opening",
+                                  "arguments": [
+                                    {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "parameter",
+                                        "name": "seed"
+                                      },
+                                      "ty": {
+                                        "kind": "field"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            "otherwise": {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "hashed"
+                              },
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "cell_write",
+                            "field": "result",
+                            "index": 1,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "committed"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_transient_crypto.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "products",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "ProductReceipt",
+        "fields": [
+          {
+            "name": "hash",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "commitment",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "values",
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              },
+              "value": {
+                "kind": "vector",
+                "element": {
+                  "kind": "field"
+                },
+                "elements": [
+                  {
+                    "kind": "parameter",
+                    "name": "seed"
+                  },
+                  {
+                    "kind": "add",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "seed"
+                    },
+                    "right": {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "ProductReceipt",
+              "fields": [
+                {
+                  "name": "hash",
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                {
+                  "name": "commitment",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "transient_hash",
+                "value": {
+                  "kind": "parameter",
+                  "name": "values"
+                }
+              },
+              {
+                "kind": "transient_commit",
+                "value": {
+                  "kind": "parameter",
+                  "name": "values"
+                },
+                "opening": {
+                  "kind": "parameter",
+                  "name": "seed"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "result",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "seed"
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_transient_crypto.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_4",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            },
+            "value": {
+              "kind": "default",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "stored",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_4"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_5",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "result",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_5"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_transient_crypto.compact",
+      "line": 10,
+      "column": 1
+    }
+  }
+}

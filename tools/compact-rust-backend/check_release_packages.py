@@ -76,7 +76,15 @@ def compatibility_record() -> dict[str, object]:
     for name, version in expected_dependencies.items():
         dependency = dependencies.get(name)
         actual = dependency.get("version") if isinstance(dependency, dict) else dependency
-        if actual != version:
+        source = record.get("ledger_git_sources", {}).get(name)
+        selected_source = {key: dependency.get(key) for key in ("git", "rev")} if isinstance(dependency, dict) else {}
+        source_matches = selected_source == source if source else not any(selected_source.values())
+        if isinstance(dependency, dict):
+            forbidden = {"branch", "tag", "registry", "registry-index", "workspace", "package"}
+            source_matches = source_matches and not forbidden.intersection(dependency)
+            expected_path = "../runtime-rs-macros" if name == record["macros_package"] else None
+            source_matches = source_matches and dependency.get("path") == expected_path
+        if actual != version or not source_matches:
             raise RuntimeError(f"runtime compatibility dependency mismatch: {name}")
     return record
 

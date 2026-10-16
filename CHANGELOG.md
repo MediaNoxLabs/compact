@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.135, language 0.23.105, runtime 0.16.102]
+
+### Added
+
+- Lower Rust recording through typed effects, composition checking and
+  independent plan validation. Supported operations compose without a
+  whole-contract shape admission fallback; unsupported operations report
+  checked refusals at the failed node.
+
+### Changed
+
+- Align the native Rust dependency graph with official ledger8.1.3 and pin
+  the TypeScript runtime's onchain dependency to 3.1.2. Version the changed
+  TypeScript runtime package as 0.16.102; the Compact language remains 0.23.105.
+- Generated Rust requires runtime ABI52 and compatibility schema2. Use the
+  matching compiler/runtime/macros source pair. Rust crate versions remain
+  0.2.0 in this source; a coordinated crate-version and consumer-lock migration
+  is required before registry publication of this changed API cohort.
+- Set the Rust backend MSRV check to 1.89, matching its declared minimum and
+  locked dependencies. The independent toolchain-manager CLI retains its
+  separately inherited Rust1.88 minimum.
+
 ## [Toolchain 0.31.134, language 0.23.105, runtime 0.16.101]
 
 ### Fixed

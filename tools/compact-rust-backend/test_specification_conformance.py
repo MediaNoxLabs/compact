@@ -302,6 +302,10 @@ class GateTests(unittest.TestCase):
 
 
 class RepositoryBaselineTests(unittest.TestCase):
+    def setUp(self):
+        import conformance_baseline_archive as archive
+        self.enterContext(archive.repository_baseline_root(archive.selected_test_root()))
+
     def test_checked_in_baseline_matches_current_sources_and_mappings(self):
         baseline = gate.load_json(Path(gate.__file__).with_suffix(".json").read_text())
         result = gate.check(gate.ROOT, baseline["grammar_inventory"], baseline)

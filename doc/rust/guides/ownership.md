@@ -1,6 +1,6 @@
 # Rust backend ownership and engineer navigation
 
-Current architecture map, 2026-10-07, reconciled against `5efa91c2`. R030-01 checked domains and R030-05 component decomposition are accepted within their documented scope. This page identifies current owners and remaining design limits; it does not reopen accepted work or claim all internal profiles have one representation. Publish reviewed guidance under `doc/rust/` at closeout; preserve previous maps as history.
+The detailed ADR component notes below retain the 2026-10-07 map at `5efa91c2`. The current recording-effect route is listed first; its checked composition replaces the older whole-contract admission path. R030-01 checked domains and R030-05 component decomposition are accepted within their documented scope. This page identifies current owners and remaining design limits; it does not reopen accepted work or claim all internal profiles have one representation. Publish reviewed guidance under `doc/rust/` at closeout; preserve previous maps as history.
 
 ## Follow a contract through the system
 
@@ -27,7 +27,21 @@ flowchart TD
 
 Rust and TypeScript consume the same language/ledger semantics. The Rust backend owns its typed lowering, AST construction, generated API and runtime adapters. Upstream ledger/zk code remains the owner of canonical field/curve operations, aligned representations, VM operations, cost model and transaction rules. A second local interpretation of those rules needs its own justification and differential evidence.
 
-## Where to make a change
+## Current recording-effect owners
+
+| Concern | Current owner | Review obligation |
+|---|---|---|
+| Shared expression classification and semantics | `pure_semantics/expression/source.rs`, `pure_semantics/expression.rs` | Classify each IR variant; preserve child order and explicit refusal |
+| Shared native syntax and body checking | `pure_native/sink.rs`, `pure_semantics/body_check.rs` | Use the same semantic fold; body checking does not emit native syntax |
+| Production recording selection | `recorded/profile_selection.rs::select_checked_observed` | Native-first validation; no legacy/profile acceptance fallback |
+| Recording effect composition | `recorded/effect_plan.rs` and its lowering modules | Produce typed values, effects and blocks with original provenance |
+| Independent plan validation | `recorded/effect_plan/validate.rs` | Construct the private CheckedPlan only after validation |
+| Rendering and optional sharing | `recorded/effect_plan/render.rs`, `recorded/helpers.rs` | Consume a checked plan; sharing must not change acceptance |
+| Checked upstream VM immediates | `runtime-rs/src/ledger/vm.rs` | Convert newly built immediate values fallibly; preserve stored state |
+
+Backend paths in this table are under `tools/compact-rust-backend/src/`. See [checked recording](checked-recording.md) for the extension workflow and [checked recording guide](checked-recording.md) for finite family/evidence coverage. Runtime and compiler source changes need their own affected checks; old test-profile names do not authorize production recording.
+
+## Historical 0.3.0 component map
 
 All paths below are repository-relative navigation references.
 

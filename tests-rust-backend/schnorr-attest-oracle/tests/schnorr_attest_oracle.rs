@@ -385,3 +385,7 @@ fn malformed_schnorr_reduction_and_identity_announcement_fail_recording() {
         .to_string();
     assert_eq!(error, reference["closed"]["error"].as_str().unwrap());
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "qualification/mod.rs"]
+mod qualification;

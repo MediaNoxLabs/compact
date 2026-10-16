@@ -80,6 +80,7 @@ POSITIVE_SOURCE_MANIFESTS = (
     TEST_CENTER_CORACLE_SOURCE_MANIFEST, SHIELDED_RECEIVE_SOURCE_MANIFEST,
     SHIELDED_SEND_SOURCE_MANIFEST, SHIELDED_MERGE_SOURCE_MANIFEST)
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
+REGISTRY_BASELINE = Path(__file__).with_name("parity_registry_baseline.json")
 COMPILED_PACKAGE_ROOTS = {
     "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact",
 }
@@ -202,7 +203,7 @@ def source_paths(root: Path, extra_dirs: list[Path] | None = None) -> list[Path]
         paths.update(root / item["source"] for item in manifest["fixtures"])
     if root.resolve() == ROOT.resolve():
         import fixture_inventory
-        paths.update(fixture_inventory.fixture_map(root))
+        paths.update(row.source for row in fixture_inventory.source_registry(root))
     scope = positive_scope(root)
     if scope:
         paths.update(root / item["source"] for item in scope["positive_sources"])
@@ -275,6 +276,15 @@ def identity_key(row: dict) -> str:
 
 def baseline_rows(rows: list[dict]) -> list[dict]:
     return [row_identity(row) for row in sorted(rows, key=identity_key)]
+
+
+def default_baseline_rows() -> list[dict]:
+    """Join additive registry declarations without rewriting historical rows."""
+    historical = json.loads(DEFAULT_BASELINE.read_text())
+    additions = json.loads(REGISTRY_BASELINE.read_text())
+    if {row["source"] for row in historical} & {row["source"] for row in additions}:
+        raise ValueError("additive registry baseline overlaps historical declaration authority")
+    return baseline_rows([*historical, *additions])
 
 
 def sha256_file(path: Path) -> str | None:
@@ -556,11 +566,13 @@ def main() -> int:
             args.write_baseline.write_text(json.dumps(identities, indent=2) + "\n")
         failure = False
         baseline = args.baseline
+        use_default_baselines = False
         if baseline is None and not args.no_baseline and not args.write_baseline \
                 and root == ROOT and not args.source_dir and not args.only and DEFAULT_BASELINE.is_file():
             baseline = DEFAULT_BASELINE
+            use_default_baselines = True
         if baseline:
-            previous = json.loads(baseline.read_text())
+            previous = default_baseline_rows() if use_default_baselines else json.loads(baseline.read_text())
             if len(previous) != len({identity_key(row) for row in previous}):
                 raise ValueError(f"duplicate identities in baseline: {baseline}")
             before = {identity_key(row): row for row in previous}

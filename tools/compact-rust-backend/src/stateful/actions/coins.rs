@@ -18,12 +18,14 @@
 //! The traversal owns lexical scope and scheduling. This domain only appends
 //! the selected action's statements and updates its explicit effect state.
 
+use super::ActionOutput;
 use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
 use crate::ir::{
     LedgerField, LedgerFieldKind, PureCircuit, StateAction, StatefulCircuit, Type,
     WitnessDeclaration,
 };
-use crate::stateful::expression::render_state_expression;
+use crate::source_diagnostics::{Owner, RefusalObserver, RefusalSite};
+use crate::stateful::{NativeExpressionContext, render_state_expression_observed};
 use crate::{RenderError, ident};
 use proc_macro2::Span;
 use std::collections::HashMap;
@@ -43,6 +45,37 @@ pub(super) fn lower(
     next_temp: &mut usize,
     uses_witness: &mut bool,
 ) -> Result<(), RenderError> {
+    let environment = NativeExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    lower_observed(
+        action,
+        parameters,
+        &environment,
+        ActionOutput {
+            statements,
+            next_temp,
+            uses_witness,
+        },
+    )
+}
+
+pub(super) fn lower_observed(
+    action: &StateAction,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: ActionOutput<'_>,
+) -> Result<(), RenderError> {
+    let ActionOutput {
+        statements,
+        next_temp,
+        uses_witness,
+    } = output;
+    let ledger_fields = environment.ledger_fields;
     match action {
         StateAction::SetInsertCoin {
             field,
@@ -56,9 +89,13 @@ pub(super) fn lower(
             coin,
             recipient,
         } => {
-            let declaration = ledger_fields
-                .get(field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let declaration = ledger_fields.get(field.as_str()).ok_or_else(|| {
+                refused(
+                    RefusalSite::field(Owner::Action(action), "field"),
+                    environment.observer,
+                );
+                RenderError::UnknownLedgerField(field.clone())
+            })?;
             let expected = qualified_coin_type();
             let cell_write = matches!(action, StateAction::CellWriteCoin { .. });
             let expected_kind = if cell_write {
@@ -67,23 +104,25 @@ pub(super) fn lower(
                 LedgerFieldKind::Set { ty: expected }
             };
             if declaration.declaration != expected_kind || declaration.index != *index {
+                refused(
+                    RefusalSite::node(Owner::Action(action)),
+                    environment.observer,
+                );
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
             let mut operands = Vec::new();
             let mut query_effect = false;
-            let (coin_value, coin_ty, coin_witness) = render_state_expression(
+            let (coin_value, coin_ty, coin_witness) = render_state_expression_observed(
                 coin,
                 parameters,
-                witnesses,
                 &mut operands,
                 next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
                 &mut query_effect,
+                environment,
             )?;
             let expected_coin = shielded_coin_type();
             if coin_ty != expected_coin {
+                refused(RefusalSite::node(Owner::Expr(coin)), environment.observer);
                 return Err(RenderError::TypeMismatch {
                     expected: expected_coin,
                     actual: coin_ty,
@@ -93,19 +132,21 @@ pub(super) fn lower(
                 syn::Ident::new(&format!("__compact_coin_{}", next_temp), Span::call_site());
             *next_temp += 1;
             operands.push(syn::parse_quote!(let #coin_name = #coin_value;));
-            let (recipient_value, recipient_ty, recipient_witness) = render_state_expression(
-                recipient,
-                parameters,
-                witnesses,
-                &mut operands,
-                next_temp,
-                circuits,
-                stateful_circuits,
-                ledger_fields,
-                &mut query_effect,
-            )?;
+            let (recipient_value, recipient_ty, recipient_witness) =
+                render_state_expression_observed(
+                    recipient,
+                    parameters,
+                    &mut operands,
+                    next_temp,
+                    &mut query_effect,
+                    environment,
+                )?;
             let expected_recipient = shielded_recipient_type();
             if recipient_ty != expected_recipient {
+                refused(
+                    RefusalSite::node(Owner::Expr(recipient)),
+                    environment.observer,
+                );
                 return Err(RenderError::TypeMismatch {
                     expected: expected_recipient,
                     actual: recipient_ty,
@@ -124,7 +165,7 @@ pub(super) fn lower(
                 statements.push(syn::parse_quote!(let mut context = context;));
             }
             statements.extend(operands);
-            let slot = ident(&declaration.id)?;
+            let slot = ledger_ident(declaration, environment.observer)?;
             let method = ident(if cell_write {
                 "write_coin"
             } else {
@@ -152,3 +193,23 @@ pub(super) fn lower(
     }
     Ok(())
 }
+
+fn ledger_ident(
+    declaration: &LedgerField,
+    observer: Option<&dyn RefusalObserver>,
+) -> Result<syn::Ident, RenderError> {
+    ident(&declaration.id).inspect_err(|_| {
+        if let Some(observer) = observer {
+            observer.refused(RefusalSite::field(Owner::Ledger(declaration), "id"));
+        }
+    })
+}
+
+fn refused(site: RefusalSite<'_>, observer: Option<&dyn RefusalObserver>) {
+    if let Some(observer) = observer {
+        observer.refused(site);
+    }
+}
+
+#[cfg(test)]
+mod guard_tests;

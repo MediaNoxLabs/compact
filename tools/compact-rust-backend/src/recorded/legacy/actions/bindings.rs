@@ -66,6 +66,7 @@ pub(in crate::recorded) fn append_binding_steps(
     steps: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
     visiting: &mut HashSet<String>,
+    failure_precision: &mut LegacyActionPrecision,
 ) -> Result<RecordingOutcome<()>, RenderError> {
     match action {
         whole @ StateAction::Let {
@@ -186,6 +187,8 @@ pub(in crate::recorded) fn append_binding_steps(
             }
             let mut scoped = locals.clone();
             for (binding_index, binding) in bindings.iter().enumerate() {
+                // A later checked refusal may not replace this earlier binding.
+                *failure_precision = LegacyActionPrecision::BindingValue(binding_index);
                 if binding.ty == Type::OpaqueString
                     && let Expr::Parameter { name } = &binding.value
                     && parameters
@@ -567,7 +570,9 @@ pub(in crate::recorded) fn append_binding_steps(
                     return Ok(unavailable_action(action, path));
                 }
             }
-            append_steps(
+            *failure_precision = LegacyActionPrecision::Concrete;
+            let mut child_precision = LegacyActionPrecision::Concrete;
+            let outcome = append_steps(
                 nested_action,
                 &format!("{path}.action"),
                 &scoped,
@@ -580,8 +585,12 @@ pub(in crate::recorded) fn append_binding_steps(
                 steps,
                 next_temp,
                 visiting,
-                &mut LegacyActionPrecision::Concrete,
-            )
+                &mut child_precision,
+            )?;
+            if matches!(&outcome, RecordingOutcome::Unsupported(_)) {
+                failure_precision.inherit_binding(child_precision);
+            }
+            Ok(outcome)
         }
         _ => Ok(unavailable_action(action, path)),
     }

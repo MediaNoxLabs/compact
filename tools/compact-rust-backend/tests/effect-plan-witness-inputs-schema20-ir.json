@@ -1,0 +1,829 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_witness_inputs.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "consume",
+      "parameters": [
+        {
+          "name": "bytes",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        },
+        {
+          "name": "text",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "pair",
+          "ty": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "opaque_bytes"
+              },
+              {
+                "kind": "opaque_string"
+              }
+            ]
+          }
+        },
+        {
+          "name": "items",
+          "ty": {
+            "kind": "vector",
+            "length": 2,
+            "element": {
+              "kind": "opaque_bytes"
+            }
+          }
+        },
+        {
+          "name": "product",
+          "ty": {
+            "kind": "struct",
+            "name": "Product",
+            "fields": [
+              {
+                "name": "payload",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Payload",
+                  "fields": [
+                    {
+                      "name": "text",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "opaque_bytes"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "pair",
+                "ty": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "opaque_bytes"
+                    },
+                    {
+                      "kind": "opaque_string"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "items",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "opaque_bytes"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "effect_plan_witness_inputs.compact",
+        "line": 13,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "touchBytes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        }
+      ],
+      "result": {
+        "kind": "opaque_bytes"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_6",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "2",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_6"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_witness_inputs.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "touchText",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "opaque_string"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "value"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_5",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "3",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_5"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_witness_inputs.compact",
+        "line": 25,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "text",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "bytes",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Accepted",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "pair",
+              "ty": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "opaque_bytes"
+                  },
+                  {
+                    "kind": "opaque_string"
+                  }
+                ]
+              },
+              "value": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "parameter",
+                    "name": "bytes"
+                  },
+                  {
+                    "kind": "parameter",
+                    "name": "text"
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "items",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "opaque_bytes"
+                  }
+                },
+                "value": {
+                  "kind": "vector",
+                  "element": {
+                    "kind": "opaque_bytes"
+                  },
+                  "elements": [
+                    {
+                      "kind": "parameter",
+                      "name": "bytes"
+                    },
+                    {
+                      "kind": "parameter",
+                      "name": "bytes"
+                    }
+                  ]
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "product",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Product",
+                    "fields": [
+                      {
+                        "name": "payload",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Payload",
+                          "fields": [
+                            {
+                              "name": "text",
+                              "ty": {
+                                "kind": "opaque_string"
+                              }
+                            },
+                            {
+                              "name": "bytes",
+                              "ty": {
+                                "kind": "opaque_bytes"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "pair",
+                        "ty": {
+                          "kind": "tuple",
+                          "elements": [
+                            {
+                              "kind": "opaque_bytes"
+                            },
+                            {
+                              "kind": "opaque_string"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "items",
+                        "ty": {
+                          "kind": "vector",
+                          "length": 2,
+                          "element": {
+                            "kind": "opaque_bytes"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "struct_literal",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Product",
+                      "fields": [
+                        {
+                          "name": "payload",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Payload",
+                            "fields": [
+                              {
+                                "name": "text",
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              },
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "pair",
+                          "ty": {
+                            "kind": "tuple",
+                            "elements": [
+                              {
+                                "kind": "opaque_bytes"
+                              },
+                              {
+                                "kind": "opaque_string"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "items",
+                          "ty": {
+                            "kind": "vector",
+                            "length": 2,
+                            "element": {
+                              "kind": "opaque_bytes"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "fields": [
+                      {
+                        "kind": "struct_literal",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Payload",
+                          "fields": [
+                            {
+                              "name": "text",
+                              "ty": {
+                                "kind": "opaque_string"
+                              }
+                            },
+                            {
+                              "name": "bytes",
+                              "ty": {
+                                "kind": "opaque_bytes"
+                              }
+                            }
+                          ]
+                        },
+                        "fields": [
+                          {
+                            "kind": "parameter",
+                            "name": "text"
+                          },
+                          {
+                            "kind": "parameter",
+                            "name": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "pair"
+                      },
+                      {
+                        "kind": "parameter",
+                        "name": "items"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "body": {
+                "kind": "sequence",
+                "steps": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "witness_call",
+                      "name": "consume",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "call",
+                            "name": "touchBytes",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "bytes"
+                                },
+                                "ty": {
+                                  "kind": "opaque_bytes"
+                                }
+                              }
+                            ]
+                          },
+                          "ty": {
+                            "kind": "opaque_bytes"
+                          }
+                        },
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "call",
+                            "name": "touchText",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "text"
+                                },
+                                "ty": {
+                                  "kind": "opaque_string"
+                                }
+                              }
+                            ]
+                          },
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        },
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "pair"
+                          },
+                          "ty": {
+                            "kind": "tuple",
+                            "elements": [
+                              {
+                                "kind": "opaque_bytes"
+                              },
+                              {
+                                "kind": "opaque_string"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "items"
+                          },
+                          "ty": {
+                            "kind": "vector",
+                            "length": 2,
+                            "element": {
+                              "kind": "opaque_bytes"
+                            }
+                          }
+                        },
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "product"
+                          },
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Product",
+                            "fields": [
+                              {
+                                "name": "payload",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "Payload",
+                                  "fields": [
+                                    {
+                                      "name": "text",
+                                      "ty": {
+                                        "kind": "opaque_string"
+                                      }
+                                    },
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "opaque_bytes"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "pair",
+                                "ty": {
+                                  "kind": "tuple",
+                                  "elements": [
+                                    {
+                                      "kind": "opaque_bytes"
+                                    },
+                                    {
+                                      "kind": "opaque_string"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "items",
+                                "ty": {
+                                  "kind": "vector",
+                                  "length": 2,
+                                  "element": {
+                                    "kind": "opaque_bytes"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "message": "first callback refused"
+                  },
+                  {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "selected"
+                    },
+                    "then": {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "witness_call",
+                        "name": "consume",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "bytes"
+                            },
+                            "ty": {
+                              "kind": "opaque_bytes"
+                            }
+                          },
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "text"
+                            },
+                            "ty": {
+                              "kind": "opaque_string"
+                            }
+                          },
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "pair"
+                            },
+                            "ty": {
+                              "kind": "tuple",
+                              "elements": [
+                                {
+                                  "kind": "opaque_bytes"
+                                },
+                                {
+                                  "kind": "opaque_string"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "items"
+                            },
+                            "ty": {
+                              "kind": "vector",
+                              "length": 2,
+                              "element": {
+                                "kind": "opaque_bytes"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "product"
+                            },
+                            "ty": {
+                              "kind": "struct",
+                              "name": "Product",
+                              "fields": [
+                                {
+                                  "name": "payload",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "Payload",
+                                    "fields": [
+                                      {
+                                        "name": "text",
+                                        "ty": {
+                                          "kind": "opaque_string"
+                                        }
+                                      },
+                                      {
+                                        "name": "bytes",
+                                        "ty": {
+                                          "kind": "opaque_bytes"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "pair",
+                                  "ty": {
+                                    "kind": "tuple",
+                                    "elements": [
+                                      {
+                                        "kind": "opaque_bytes"
+                                      },
+                                      {
+                                        "kind": "opaque_string"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "items",
+                                  "ty": {
+                                    "kind": "vector",
+                                    "length": 2,
+                                    "element": {
+                                      "kind": "opaque_bytes"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "message": "second callback refused"
+                    },
+                    "otherwise": {
+                      "kind": "unit"
+                    }
+                  }
+                ],
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Accepted",
+                    "fields": [
+                      {
+                        "name": "value",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_4",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_4"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_witness_inputs.compact",
+        "line": 29,
+        "column": 1
+      }
+    }
+  ]
+}

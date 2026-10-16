@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -116,13 +116,20 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_key_0 = true;
+            let __compact_effect_0: runtime::Field = runtime::Field::from_le_bytes(&[
+                42u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            ])
+            .expect("validated Compact Field literal");
+            let __compact_effect_1: bool = true;
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
-                __compact_recorded_key_0,
-                runtime::Field::from(42u128),
+                __compact_effect_1,
+                __compact_effect_0,
             )?;
-            Ok(frame.finish(()))
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
         }
         pub fn lookup_true<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -131,9 +138,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
-                crate::ledger_slots::table.record_lookup(frame, true)?;
-            Ok(frame.finish(observed))
+            let __compact_effect_0: bool = true;
+            let (frame, __compact_effect_1): (_, runtime::Field) =
+                crate::ledger_slots::table.record_lookup(frame, __compact_effect_0)?;
+            Ok(frame.finish(__compact_effect_1))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

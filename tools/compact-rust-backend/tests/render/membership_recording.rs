@@ -15,13 +15,14 @@
 
 //! Witness-admitted membership, reveal, historic spend, and signature profiles.
 
+use super::lifecycle_recording::generated_body;
 use compact_rust_backend::ir::{
     Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, SCHEMA_VERSION, StateAction, Type,
 };
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
 #[test]
-fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
+fn witness_merkle_composition_keeps_types_and_source_order_without_profile_shape_gates() {
     let source = include_str!("../election-schema13-ir.json");
     let mut contract: Contract = serde_json::from_str(source).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -49,8 +50,8 @@ fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
     let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
     renamed.schema_version = SCHEMA_VERSION;
     assert!(available(&renamed, "admit_member"));
-    let mut wrong_argument = contract.clone();
-    let circuit = wrong_argument
+    let mut literal_argument = contract.clone();
+    let circuit = literal_argument
         .stateful_circuits
         .iter_mut()
         .find(|circuit| circuit.name == "add_voter")
@@ -75,7 +76,33 @@ fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
         value: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
         ty: Type::Bytes { length: 32 },
     };
-    assert!(!available(&wrong_argument, "add_voter"));
+    // A declared Bytes32 literal is a valid witness argument. The old organizer
+    // required the exact circuit parameter, a provenance shape the source need not use.
+    assert!(available(&literal_argument, "add_voter"));
+    let mut malformed_argument = literal_argument.clone();
+    let circuit = malformed_argument
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "add_voter")
+        .unwrap();
+    let StateAction::Sequence { actions } = &mut circuit.actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Assert {
+        condition: Expr::If { condition, .. },
+        ..
+    } = &mut actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::StructField { value, .. } = condition.as_mut() else {
+        unreachable!()
+    };
+    let Expr::WitnessCall { arguments, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    arguments[0] = Expr::Boolean { value: false };
+    assert!(render_with_capabilities(&malformed_argument).is_err());
     let mut reordered = contract.clone();
     let circuit = reordered
         .stateful_circuits
@@ -86,9 +113,19 @@ fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
         unreachable!()
     };
     actions.swap(0, 1);
-    assert!(!available(&reordered, "add_voter"));
-    let mut wrong_depth = contract;
-    let field = wrong_depth
+    // Reordering these well-typed source actions changes when checks run. The
+    // compiler records that source order instead of imposing the organizer recipe.
+    assert!(available(&reordered, "add_voter"));
+    let mut wrong_path = contract.clone();
+    wrong_path
+        .ledger_fields
+        .iter_mut()
+        .find(|f| f.id == "eligible_voters")
+        .unwrap()
+        .path = vec![6, 99];
+    assert!(render_with_capabilities(&wrong_path).is_err());
+    let mut changed_depth = contract;
+    let field = changed_depth
         .ledger_fields
         .iter_mut()
         .find(|field| field.id == "eligible_voters")
@@ -97,10 +134,12 @@ fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
         unreachable!()
     };
     *depth = 9;
-    // Other source path consumers may reject the contract before recording.
-    if let Ok(rendered) = render_with_capabilities(&wrong_depth) {
+    // add_voter observes only the witness presence bit, not its path. A valid
+    // tree depth is independent here; other path-consuming exports may reject
+    // the whole source first. This is no proof of membership for a changed path.
+    if let Ok(rendered) = render_with_capabilities(&changed_depth) {
         assert!(
-            !rendered
+            rendered
                 .capabilities
                 .circuits
                 .iter()
@@ -109,6 +148,17 @@ fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
                 .recorded
         );
     }
+    let LedgerFieldKind::MerkleTree { depth, .. } = &mut changed_depth
+        .ledger_fields
+        .iter_mut()
+        .find(|f| f.id == "eligible_voters")
+        .unwrap()
+        .declaration
+    else {
+        unreachable!()
+    };
+    *depth = 1;
+    assert!(render_with_capabilities(&changed_depth).is_err());
 }
 
 #[test]
@@ -137,7 +187,7 @@ fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
     let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
     renamed.schema_version = SCHEMA_VERSION;
     assert!(available(&renamed, "create_item"));
-    // A valid native branch is deliberately outside the closed hash expression subset.
+    // A certified pure branch now composes with the typed Merkle insertion.
     let mut branch = contract.clone();
     let helper = branch
         .circuits
@@ -149,7 +199,7 @@ fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
         then: Box::new(helper.body.clone()),
         otherwise: Box::new(helper.body.clone()),
     };
-    assert!(!available(&branch, "zerocash_mint"));
+    assert!(available(&branch, "zerocash_mint"));
     let mut wrong_witness = contract.clone();
     wrong_witness
         .witnesses
@@ -169,7 +219,7 @@ fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
 }
 
 #[test]
-fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
+fn typed_membership_composes_certified_pure_guards_within_its_interface_domain() {
     let source = include_str!("../election-schema13-ir.json");
     let mut contract: Contract = serde_json::from_str(source).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -214,8 +264,34 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
         }],
         value: Box::new(helper.body.clone()),
     };
-    assert!(!available(&effectful, "vote$commit"));
-    assert!(!available(&effectful, "vote$reveal"));
+    // The explicit membership interface admits this enum root; a typed pure
+    // assertion composes without matching the former commitment recipe.
+    assert!(available(&effectful, "vote$commit"));
+    let rendered = render_with_capabilities(&effectful).unwrap();
+    let helper = generated_body(&rendered.source, "pure_circuits", "ballot_repr");
+    assert!(helper.contains("AssertionFailed") && helper.contains("extra guard"));
+    let commit = generated_body(&rendered.source, "recorded", "vote_commit");
+    assert!(
+        commit.find("pure_circuits :: ballot_repr").unwrap()
+            < commit.find("record_insert").unwrap()
+    );
+    // The zero-argument reveal root can compose a certified pure assertion.
+    // Whole-callee typing and cycle checks still apply to the entire helper body.
+    assert!(available(&effectful, "vote$reveal"));
+    let mut ill_typed_guard = effectful.clone();
+    let helper = ill_typed_guard
+        .circuits
+        .iter_mut()
+        .find(|c| c.name == "ballot_repr")
+        .unwrap();
+    let Expr::Sequence { steps, .. } = &mut helper.body else {
+        unreachable!()
+    };
+    let Expr::Assert { condition, .. } = &mut steps[0] else {
+        unreachable!()
+    };
+    **condition = Expr::FieldLiteral { value: "1".into() };
+    assert!(render_with_capabilities(&ill_typed_guard).is_err());
     let mut recursive = contract.clone();
     let helper = recursive
         .circuits
@@ -253,7 +329,7 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
 }
 
 #[test]
-fn typed_reveal_plan_rejects_unproven_counter_mutations_and_wrong_slots() {
+fn typed_reveal_composes_counter_decrements_and_rejects_invalid_operands_and_slots() {
     fn available(value: &serde_json::Value) -> bool {
         let mut contract: Contract = serde_json::from_value(value.clone()).unwrap();
         contract.schema_version = SCHEMA_VERSION;
@@ -299,7 +375,28 @@ fn typed_reveal_plan_rejects_unproven_counter_mutations_and_wrong_slots() {
         "counter_increment",
         "counter_decrement",
     );
-    assert!(!available(&decrement));
+    // Counter decrement is an existing checked effect. Its source semantics
+    // (including possible runtime underflow) do not depend on a tally profile.
+    assert!(available(&decrement));
+    let mut missing_operand: Contract = serde_json::from_value(decrement).unwrap();
+    missing_operand.schema_version = SCHEMA_VERSION;
+    missing_operand
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "vote$reveal")
+        .unwrap()
+        .actions
+        .insert(
+            0,
+            StateAction::CounterDecrement {
+                field: "tally_yes".into(),
+                index: 3,
+                amount: CounterAmount::Parameter {
+                    name: "missing_amount".into(),
+                },
+            },
+        );
+    assert!(render_with_capabilities(&missing_operand).is_err());
     let mut wrong_slot: Contract = serde_json::from_value(source).unwrap();
     wrong_slot.schema_version = SCHEMA_VERSION;
     wrong_slot
@@ -353,7 +450,15 @@ fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
         }],
         value: Box::new(helper.body.clone()),
     };
-    assert!(!available(&effectful, "spend"));
+    assert!(available(&effectful, "spend"));
+    let rendered = render_with_capabilities(&effectful).unwrap();
+    let helper = generated_body(&rendered.source, "pure_circuits", "merkleTreePathEntryRoot");
+    assert!(helper.contains("AssertionFailed") && helper.contains("extra guard"));
+    let spend = generated_body(&rendered.source, "recorded", "spend");
+    assert!(
+        spend.find("pure_circuits :: merkleTreePathRoot").unwrap()
+            < spend.find("record_check_root").unwrap()
+    );
     let mut wrong_slot = contract;
     wrong_slot
         .ledger_fields
@@ -383,12 +488,20 @@ fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
         }
     }
     replace(&mut json);
-    let unsupported: Contract = serde_json::from_value(json).unwrap();
-    assert!(!available(&unsupported, "spend"));
+    // Removal is a typed Set effect. The compiler must preserve this changed
+    // program, without claiming it still implements the original spend policy.
+    let removal: Contract = serde_json::from_value(json).unwrap();
+    assert!(available(&removal, "spend"));
+    let rendered = render_with_capabilities(&removal).unwrap();
+    let spend = generated_body(&rendered.source, "recorded", "spend");
+    assert!(spend.contains("ledger_slots :: nullifiers . record_remove"));
+    assert!(!spend.contains("ledger_slots :: nullifiers . record_insert"));
+    // The independent Merkle insertion remains part of this changed program.
+    assert!(spend.contains("ledger_slots :: commitments . record_insert"));
 }
 
 #[test]
-fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sources() {
+fn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("../schnorr-attestation-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -404,7 +517,18 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
                 .recorded
         );
     }
-    assert!(reported.source.contains(".call_local(|context|"));
+    let verification = generated_body(&reported.source, "recorded", "verifyAttestation");
+    for operation in [
+        "ledger_slots :: open . record_read",
+        "ledger_slots :: attestorKey . record_read",
+        "runtime :: transient_hash",
+        "try_witness_metered",
+        "runtime :: ec_mul_generator",
+        "runtime :: ec_mul",
+        "runtime :: ec_add",
+    ] {
+        assert!(verification.contains(operation), "missing {operation}");
+    }
 
     let mut effectful = contract.clone();
     let helper = effectful
@@ -417,15 +541,21 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
         index: 1,
         amount: CounterAmount::Literal { value: 1 },
     });
+    // The changed source adds a real public effect. Checked composition must
+    // retain it; this is no longer an unsupported local-helper shape.
+    let effectful = render_with_capabilities(&effectful).unwrap();
     assert!(
-        !render_with_capabilities(&effectful)
-            .unwrap()
+        effectful
             .capabilities
             .circuits
             .iter()
             .find(|c| c.name == "verifyAttestation")
             .unwrap()
             .recorded
+    );
+    assert!(
+        generated_body(&effectful.source, "recorded", "verifyAttestation")
+            .contains("ledger_slots :: acceptedCount . record_increment")
     );
 
     let mut read_opening = contract.clone();
@@ -450,9 +580,9 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
             }),
         },
     });
+    let read_opening = render_with_capabilities(&read_opening).unwrap();
     assert!(
-        !render_with_capabilities(&read_opening)
-            .unwrap()
+        read_opening
             .capabilities
             .circuits
             .iter()
@@ -460,6 +590,9 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
             .unwrap()
             .recorded
     );
+    let verification = generated_body(&read_opening.source, "recorded", "verifyAttestation");
+    assert!(verification.contains("ledger_slots :: hidden . record_read"));
+    assert!(verification.contains("runtime :: transient_commit"));
 
     let mut wrong_key = contract.clone();
     let key = wrong_key
@@ -479,7 +612,7 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
         .actions
         .remove(0);
     // The legacy audited-local profile still refuses this shape (its module test).
-    // Unit composition admits the actual key read and audited local verifier,
+    // Checked composition admits the actual key read and local verifier,
     // without inventing the removed source guard.
     assert!(
         render_with_capabilities(&missing_guard)

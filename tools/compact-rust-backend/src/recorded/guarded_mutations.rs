@@ -21,11 +21,13 @@
 
 use std::collections::HashMap;
 
+#[cfg(test)]
+use crate::expression_with_calls;
 use crate::ir::{
     Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn, StatefulCircuit,
     Type, WitnessDeclaration,
 };
-use crate::{RenderError, expression_with_calls, ident, retained_value, rust_type};
+use crate::{RenderError, ident, retained_value, rust_type};
 
 pub(super) fn closed_organizer_gate_steps(
     circuit: &StatefulCircuit,
@@ -290,6 +292,7 @@ pub(super) fn closed_organizer_gate_steps(
     ]))
 }
 
+#[cfg(test)]
 struct AuthorizedContinuation<'a> {
     actions: &'a [StateAction],
     steps: Vec<syn::Stmt>,
@@ -297,6 +300,7 @@ struct AuthorizedContinuation<'a> {
 
 /// Shared closed authority prefix. The continuation receives the unconsumed
 /// source actions only after witness/hash/Cell provenance has been checked.
+#[cfg(test)]
 fn closed_authority_prefix<'a>(
     circuit: &StatefulCircuit,
     source_actions: &'a [StateAction],
@@ -461,6 +465,7 @@ fn closed_authority_prefix<'a>(
 /// A typed authority witness/hash and enum phase guard before a single optional
 /// opaque Cell write. Every binding and ledger access is checked by provenance;
 /// names carry no semantic meaning in this closed proof-supported shape.
+#[cfg(test)]
 pub(super) fn closed_authorized_optional_write_steps(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -595,6 +600,7 @@ pub(super) fn closed_authorized_optional_write_steps(
 
 /// Closed optional-presence gate followed by a pure enum decision tree. Calling
 /// the existing pure emitter keeps enum variant semantics in one implementation.
+#[cfg(test)]
 pub(super) fn closed_authorized_enum_advance_steps(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -759,6 +765,7 @@ pub(super) fn closed_authorized_enum_advance_steps(
 
 /// A negative optional-path witness guard followed by the shared authority
 /// prefix, enum phase assertion and one typed Bytes32 Merkle insertion.
+#[cfg(test)]
 pub(super) fn closed_witness_admitted_merkle_insert_steps(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,

@@ -24,6 +24,7 @@ use crate::ir::{
     LedgerField, NativeWitnessBuiltin, PureCircuit, StateAction, StatefulCircuit, Type,
     WitnessDeclaration,
 };
+use crate::stateful::expression::NativeExpressionContext;
 use std::collections::HashMap;
 
 mod cells_counters;
@@ -47,6 +48,47 @@ pub(super) fn lower(
     next_temp: &mut usize,
     uses_witness: &mut bool,
 ) -> Result<(), RenderError> {
+    let environment = NativeExpressionContext {
+        witnesses,
+        circuits,
+        stateful_circuits,
+        ledger_fields,
+        observer: None,
+    };
+    lower_observed(
+        action,
+        parameters,
+        &environment,
+        ActionOutput {
+            statements,
+            next_temp,
+            uses_witness,
+        },
+    )
+}
+
+pub(super) struct ActionOutput<'output> {
+    pub(super) statements: &'output mut Vec<syn::Stmt>,
+    pub(super) next_temp: &'output mut usize,
+    pub(super) uses_witness: &'output mut bool,
+}
+
+/// Route one original action; Counter/Cell, collections, coins and Merkle retain borrowed source observation.
+pub(super) fn lower_observed(
+    action: &StateAction,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    environment: &NativeExpressionContext<'_, '_>,
+    output: ActionOutput<'_>,
+) -> Result<(), RenderError> {
+    let ActionOutput {
+        statements,
+        next_temp,
+        uses_witness,
+    } = output;
+    let ledger_fields = environment.ledger_fields;
+    let witnesses = environment.witnesses;
+    let circuits = environment.circuits;
+    let stateful_circuits = environment.stateful_circuits;
     match action {
         StateAction::NativeWitnessCall {
             builtin: NativeWitnessBuiltin::OwnPublicKey,
@@ -55,17 +97,30 @@ pub(super) fn lower(
         | StateAction::PureCall { .. }
         | StateAction::CircuitCall { .. }
         | StateAction::Assert { .. } => {
-            effects::lower(
-                action,
-                parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                stateful_circuits,
-                statements,
-                next_temp,
-                uses_witness,
-            )?;
+            if environment.observer.is_some() {
+                effects::lower_observed(
+                    action,
+                    parameters,
+                    environment,
+                    ActionOutput {
+                        statements,
+                        next_temp,
+                        uses_witness,
+                    },
+                )
+            } else {
+                effects::lower(
+                    action,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    statements,
+                    next_temp,
+                    uses_witness,
+                )
+            }?;
         }
         StateAction::Let { .. } | StateAction::Sequence { .. } | StateAction::If { .. } => {
             unreachable!("control actions were expanded before rendering")
@@ -74,17 +129,30 @@ pub(super) fn lower(
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::CellWrite { .. } => {
-            cells_counters::lower(
-                action,
-                parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                stateful_circuits,
-                statements,
-                next_temp,
-                uses_witness,
-            )?;
+            if environment.observer.is_some() {
+                cells_counters::lower_observed(
+                    action,
+                    parameters,
+                    environment,
+                    ActionOutput {
+                        statements,
+                        next_temp,
+                        uses_witness,
+                    },
+                )
+            } else {
+                cells_counters::lower(
+                    action,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    statements,
+                    next_temp,
+                    uses_witness,
+                )
+            }?;
         }
         StateAction::ListPushFront { .. }
         | StateAction::ListPopFront { .. }
@@ -96,20 +164,46 @@ pub(super) fn lower(
         | StateAction::MapInsertDefault { .. }
         | StateAction::MapRemove { .. }
         | StateAction::MapReset { .. } => {
-            collections::lower(action, parameters, ledger_fields, circuits, statements)?;
+            if environment.observer.is_some() {
+                collections::lower_observed(
+                    action,
+                    parameters,
+                    environment,
+                    ActionOutput {
+                        statements,
+                        next_temp,
+                        uses_witness,
+                    },
+                )
+            } else {
+                collections::lower(action, parameters, ledger_fields, circuits, statements)
+            }?;
         }
         StateAction::SetInsertCoin { .. } | StateAction::CellWriteCoin { .. } => {
-            coins::lower(
-                action,
-                parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                stateful_circuits,
-                statements,
-                next_temp,
-                uses_witness,
-            )?;
+            if environment.observer.is_some() {
+                coins::lower_observed(
+                    action,
+                    parameters,
+                    environment,
+                    ActionOutput {
+                        statements,
+                        next_temp,
+                        uses_witness,
+                    },
+                )
+            } else {
+                coins::lower(
+                    action,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    statements,
+                    next_temp,
+                    uses_witness,
+                )
+            }?;
         }
         StateAction::HistoricMerkleResetHistory { .. }
         | StateAction::HistoricMerkleResetToDefault { .. }
@@ -124,18 +218,46 @@ pub(super) fn lower(
         | StateAction::MerkleInsertHashIndex { .. }
         | StateAction::HistoricMerkleInsertIndexDefault { .. }
         | StateAction::MerkleInsertIndexDefault { .. } => {
-            merkle::lower(
-                action,
-                parameters,
-                ledger_fields,
-                witnesses,
-                circuits,
-                stateful_circuits,
-                statements,
-                next_temp,
-                uses_witness,
-            )?;
+            if environment.observer.is_some() {
+                merkle::lower_observed(
+                    action,
+                    parameters,
+                    environment,
+                    ActionOutput {
+                        statements,
+                        next_temp,
+                        uses_witness,
+                    },
+                )
+            } else {
+                merkle::lower(
+                    action,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    statements,
+                    next_temp,
+                    uses_witness,
+                )
+            }?;
         }
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod diagnostic_tests;
+
+#[cfg(test)]
+mod workers;
+
+#[cfg(test)]
+mod collection_diagnostic_tests;
+
+#[cfg(test)]
+mod coin_merkle_diagnostic_tests;
+
+#[cfg(test)]
+mod effect_diagnostic_tests;

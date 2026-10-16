@@ -1,0 +1,25 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger calls: Counter;
+export struct Hashes { x: Field; y: Field; transient: Field; committed: Field; }
+export struct Payload { text: Opaque<"string">; bytes: Opaque<"Uint8Array">; }
+export struct Envelope { payload: Payload; nonce: Field; samples: Vector<2, Opaque<"Uint8Array">>; }
+witness bytes(): Opaque<"Uint8Array">;
+witness permit(): Boolean;
+constructor() {}
+export circuit witnessed(fallback: Opaque<"Uint8Array">, selected: Boolean): Hashes {
+  calls.increment(1);
+  const value = disclose(selected) ? bytes() : fallback;
+  const point = hashToCurve<Opaque<"Uint8Array">>(value);
+  const transient = transientHash<Opaque<"Uint8Array">>(value);
+  const committed = transientCommit<Opaque<"Uint8Array">>(value, 7);
+  assert(permit(), "denied");
+  return Hashes { x: disclose(jubjubPointX(point)), y: disclose(jubjubPointY(point)), transient: disclose(transient), committed: disclose(committed) };
+}
+export circuit nested(value: Envelope): Hashes {
+  calls.increment(1);
+  const point = hashToCurve<Envelope>(value);
+  return Hashes { x: jubjubPointX(point), y: jubjubPointY(point), transient: transientHash<Envelope>(value), committed: transientCommit<Envelope>(value, 7) };
+}

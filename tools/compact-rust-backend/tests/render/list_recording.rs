@@ -260,7 +260,7 @@ fn enum_list_head_value_records_only_with_matching_typed_head() {
 }
 
 #[test]
-fn field_vector_list_head_value_records_without_admitting_other_vector_elements() {
+fn field_and_boolean_vector_heads_record_with_declared_slot_authority() {
     fn contract_for(element: Type) -> Contract {
         let vector = Type::Vector {
             element: Box::new(element),
@@ -318,12 +318,37 @@ fn field_vector_list_head_value_records_without_admitting_other_vector_elements(
     assert!(field.source.contains("record_head::<crate::types::Maybe"));
 
     let boolean = render_with_capabilities(&contract_for(Type::Boolean)).unwrap();
-    assert!(!boolean.capabilities.circuits[0].recorded);
-    assert!(!boolean.capabilities.circuits[0].observed_call);
+    assert!(
+        boolean.capabilities.circuits[0].recorded && boolean.capabilities.circuits[0].observed_call
+    );
+    assert!(
+        boolean
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_head::<crate::types::Maybe")
+    );
+    let mut wrong_slot = contract_for(Type::Boolean);
+    let StateAction::Assert {
+        condition: Expr::Equal { left, .. },
+        ..
+    } = &mut wrong_slot.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::StructField { value, .. } = left.as_mut() else {
+        unreachable!()
+    };
+    let Expr::ListHead { index, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(render(&wrong_slot).is_err());
 }
 
 #[test]
-fn literal_bytes_list_head_records_only_with_exact_length_and_excludes_opaque() {
+fn bytes_and_opaque_list_heads_record_with_exact_type_and_length() {
     fn contract_for(element: Type, value: Expr) -> Contract {
         let maybe = Type::Struct {
             name: "Maybe".into(),
@@ -389,7 +414,16 @@ fn literal_bytes_list_head_records_only_with_exact_length_and_excludes_opaque() 
     };
     let positive = render_with_capabilities(&contract_for(bytes.clone(), literal)).unwrap();
     assert!(positive.capabilities.circuits[0].recorded);
-    assert!(positive.source.contains("__compact_recorded_bytes_"));
+    let body = super::lifecycle_recording::generated_body(&positive.source, "recorded", "test");
+    // generated_body is parsed Rust printed as tokens, not rustfmt source.
+    assert!(body.contains(&quote::quote!(runtime::FixedBytes<4>).to_string()));
+    let literal = body
+        .find(&quote::quote!(runtime::FixedBytes::new).to_string())
+        .unwrap();
+    let head = body
+        .find(&quote::quote!(record_head::<crate::types::Maybe, _, _>).to_string())
+        .unwrap();
+    assert!(literal < head);
     assert!(
         positive
             .source
@@ -408,11 +442,28 @@ fn literal_bytes_list_head_records_only_with_exact_length_and_excludes_opaque() 
     ));
 
     let opaque = Type::OpaqueString;
-    let unsupported =
-        render_with_capabilities(&contract_for(opaque.clone(), Expr::Default { ty: opaque }))
-            .unwrap();
-    assert!(!unsupported.capabilities.circuits[0].recorded);
-    assert!(!unsupported.capabilities.circuits[0].observed_call);
+    let supported = render_with_capabilities(&contract_for(
+        opaque.clone(),
+        Expr::Default { ty: opaque.clone() },
+    ))
+    .unwrap();
+    assert!(
+        supported.capabilities.circuits[0].recorded
+            && supported.capabilities.circuits[0].observed_call
+    );
+    assert!(
+        supported
+            .source
+            .split("pub mod recorded")
+            .nth(1)
+            .unwrap()
+            .contains("record_head::<crate::types::Maybe")
+    );
+    let wrong_type = contract_for(opaque, Expr::Boolean { value: true });
+    assert!(matches!(
+        render(&wrong_type),
+        Err(RenderError::TypeMismatch { .. })
+    ));
 }
 
 #[test]

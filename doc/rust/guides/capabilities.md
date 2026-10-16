@@ -2,6 +2,14 @@
 
 Evidence checkpoint: 2026-10-07. All twelve adopted DID stateful exports now advertise recorded and observed-call APIs. A fresh report generated from the unchanged DID source with the reviewed5efa91c2 toolchain confirms all twelve as `available`. The earlier unavailable relation example below is explicitly historical; [Capability guide execution receipt — 2026-10-07](../evidence/0.3.0/capability-k1/receipt.json) retains that older report and checker execution.
 
+## Current recording and proof dimensions
+
+The dated DID examples below preserve their original source checkpoint. On the current recording-effect branch, recording availability and proof applicability are separate. A nonproof stateful export can have `recorded: true` and `observed_call: true` with `proof_required: false` and `recording_status: "not_applicable"`.
+
+For example, current native Zswap `produce`, `consume` and `witness_order` expose both APIs while remaining nonproof. `flow` and `read_coin` remain proof-required. The exact three-row change was independently reviewed and qualified by the unchanged transfer proof commands; it is not a proof claim for the three nonproof exports.
+
+Choose the Boolean APIs your application needs independently of proof applicability. The checker later in this page deliberately requires **proof-applicable observed APIs**; it is not a general check for every recordable circuit. See the [checked recording guide](checked-recording.md) for stage evidence and the [source diagnostic guide](checked-recording.md).
+
 ## Start with the generated report
 
 Generate the crate with the compiler and matching runtime source selected for your project:
@@ -130,7 +138,7 @@ Historically, the checker passed the digest row and refused the relation row at 
 |---|---|
 | Typed IR schema **20** | This branch's private frontend-to-Rust interchange; checks compiler/backend agreement |
 | Capability schema **3** | Finalized exported-stateful API/proof metadata |
-| Runtime ABI **50** | Generated Rust/runtime compatibility contract |
+| Runtime ABI **50** at the retained checkpoint; **52** currently | Generated Rust/runtime compatibility contract |
 | Milestone **0.3.0** | Delivery/release planning label |
 
 These are separate project version domains, not a single Compact language version or a public standard called “schema-20”. The backend library initially creates an unclassified schema-2 capability draft; the CLI joins frontend proof metadata and emits finalized schema3. Application checks should consume the finalized report.

@@ -93,3 +93,7 @@ fn constructed_points_match_typescript_and_invalid_coordinates_are_rejected() {
         );
     }
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "jubjub_construct/recording.rs"]
+mod recording;

@@ -93,6 +93,197 @@ pub(super) fn effectful_return(
     }
 }
 
+pub(super) fn effect_plan_counter(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-counter <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-counter-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_counter::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Counter effect proof thread panicked".into()),
+    }
+}
+
+pub(super) fn effect_plan_counter_only(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-counter-only <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-counter-only-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_counter_only::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Counter-only proof thread panicked".into()),
+    }
+}
+
+pub(super) fn effect_plan_jubjub(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-jubjub <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-jubjub-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_jubjub::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
+pub(super) fn effect_plan_stateful_calls(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str =
+        "usage: compact-rust-proof-smoke --effect-plan-stateful-calls <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-stateful-calls-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_stateful_calls::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Stateful calls proof thread panicked".into()),
+    }
+}
+
+pub(super) fn guarded_point_read(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --guarded-point-read <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("guarded-point-read-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::guarded_point_read::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
+pub(super) fn guarded_point_nested(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --guarded-point-nested <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("guarded-point-nested-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::guarded_point_read::run_nested(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
+pub(super) fn guarded_point_vm(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --guarded-point-vm <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("guarded-point-vm".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::guarded_point_read::run_vm(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Jubjub proof thread panicked".into()),
+    }
+}
+
+pub(super) fn effect_plan_wide_source(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-wide-source <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-wide-source-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_wide_source::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("effect plan wide source proof thread panicked".into()),
+    }
+}
+
+#[cfg(feature = "experimental-recording-plan")]
+pub(super) fn effect_plan_prototype(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-prototype <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-prototype-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_prototype::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("effect plan prototype proof thread panicked".into()),
+    }
+}
+
 pub(super) fn root_let_action_return(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<(), Box<dyn Error>> {
@@ -460,4 +651,87 @@ pub(super) fn conditional_struct_member(
         );
     }
     check_closed_ternary_struct_member_proof(Path::new(&root))
+}
+
+pub(super) fn effect_plan_pure_calls(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-pure-calls <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-pure-calls-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_pure_calls::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Stateful calls proof thread panicked".into()),
+    }
+}
+
+pub(super) fn effect_plan_rich_values(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    const USAGE: &str = "usage: compact-rust-proof-smoke --effect-plan-rich-values <proof-output>";
+    let root = arguments.next().ok_or(USAGE)?;
+    if arguments.next().is_some() {
+        return Err(USAGE.into());
+    }
+    let proof = std::thread::Builder::new()
+        .name("effect-plan-rich-values-proof".into())
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            crate::effect_plan_rich_values::run(Path::new(&root)).map_err(|e| e.to_string())
+        })?;
+    match proof.join() {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(error.into()),
+        Err(_) => Err("Stateful calls proof thread panicked".into()),
+    }
+}
+
+pub(super) fn effect_plan_unsigned_arithmetic(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments.next().ok_or(
+        "usage: compact-rust-proof-smoke --effect-plan-unsigned-arithmetic <proof-output>",
+    )?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --effect-plan-unsigned-arithmetic <proof-output>"
+                .into(),
+        );
+    }
+    crate::effect_plan_unsigned_arithmetic::run(Path::new(&root))
+}
+
+pub(super) fn effect_plan_transient_crypto(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --effect-plan-transient-crypto <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke --effect-plan-transient-crypto <proof-output>".into(),
+        );
+    }
+    crate::effect_plan_transient_crypto::run(Path::new(&root))
+}
+
+pub(super) fn effect_plan_merkle(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<(), Box<dyn Error>> {
+    let root = arguments
+        .next()
+        .ok_or("usage: compact-rust-proof-smoke --effect-plan-merkle <proof-output>")?;
+    if arguments.next().is_some() {
+        return Err("usage: compact-rust-proof-smoke --effect-plan-merkle <proof-output>".into());
+    }
+    crate::effect_plan_merkle::run(Path::new(&root))
 }

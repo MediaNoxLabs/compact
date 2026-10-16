@@ -20,17 +20,23 @@ use std::collections::HashMap;
 use crate::ir::{SourceLocation, StatefulCircuit};
 use crate::{RenderError, located};
 
+/// Output adapter: no lexical or name-support decisions occur here.
+pub(crate) fn checked_ident(name: &crate::pure_semantics::identifier::CheckedName) -> syn::Ident {
+    let span = proc_macro2::Span::call_site();
+    if name.is_raw() {
+        syn::Ident::new_raw(name.text(), span)
+    } else {
+        syn::Ident::new(name.text(), span)
+    }
+}
+
 pub(crate) fn ident(name: &str) -> Result<syn::Ident, RenderError> {
-    let rust_name = name.replace('$', "_");
-    syn::parse_str::<syn::Ident>(&rust_name)
-        .or_else(|_| syn::parse_str::<syn::Ident>(&format!("r#{rust_name}")))
-        .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
+    crate::pure_semantics::identifier::check_name(name).map(|name| checked_ident(&name))
 }
 
 /// The name by which Rust resolves an identifier, without its optional raw prefix.
 pub(crate) fn semantic_identifier(name: &str) -> Result<String, RenderError> {
-    let rendered = ident(name)?.to_string();
-    Ok(rendered.strip_prefix("r#").unwrap_or(&rendered).to_owned())
+    crate::pure_semantics::identifier::check_name(name).map(|name| name.into_text())
 }
 
 pub(crate) fn validate_circuit_function_namespace<'a>(

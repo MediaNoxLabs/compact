@@ -1,0 +1,26 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+
+import CompactStandardLibrary;
+struct Holder { point: JubjubPoint; marker: Field; }
+struct Empty {}
+export struct Receipt { direct: Boolean; aggregate: Boolean; }
+export ledger stored: Boolean;
+constructor() { stored = false; }
+
+export circuit points(left: JubjubPoint, right: JubjubPoint, leftMarker: Field, rightMarker: Field, selected: Boolean): Receipt {
+  const a = Holder { point: left, marker: leftMarker };
+  const b = Holder { point: right, marker: rightMarker };
+  const same = left == right;
+  stored = disclose(same);
+  if (disclose(selected)) { stored = disclose(a == b); }
+  return Receipt { direct: disclose(same), aggregate: stored };
+}
+
+export circuit emptyLocals(): Receipt {
+  const a = default<Empty>;
+  const b = Empty {};
+  stored = disclose(a == b);
+  return Receipt { direct: disclose(a == b), aggregate: stored };
+}

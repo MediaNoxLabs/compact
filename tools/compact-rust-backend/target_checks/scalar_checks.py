@@ -40,11 +40,11 @@ def check_wide_add(
     generated = (output / "contract/lib.rs").read_text()
     assert "runtime::add_wide_unsigned" in generated
     assert "runtime::narrow_wide_uint" in generated
-    assert "RUST_RUNTIME_ABI == 50" in generated
+    assert "RUST_RUNTIME_ABI == 52" in generated
     report = json.loads((output / "contract/rust-capabilities.json").read_text())
     assert len(report["circuits"]) == 1
     row = report["circuits"][0]
-    assert not row["recorded"] and not row["observed_call"]
+    assert row["recorded"] and row["observed_call"]
     assert not row["proof_required"] and row["recording_status"] == "not_applicable"
     original = capture([compiler, "--target", "rust", "--skip-zk", str(root / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=root, capture_output=True, text=True)
     assert original.returncode == 0, original.stderr

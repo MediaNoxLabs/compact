@@ -207,7 +207,7 @@ pub(super) fn capture_if_requested(
         "format": "compact-did-public-interchange/v2",
         "scenario": scenario,
         "case": case,
-        "producer_ledger": "8.0.3",
+        "producer_ledger": "8.1.3",
         "operation": operation,
         "network_id": before.network_id,
         "whitelist": null,

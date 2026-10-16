@@ -1,0 +1,312 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "text",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      "source": {
+        "file": "opaque_cell_inputs.compact",
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "id": "blob",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "opaque_bytes"
+        }
+      },
+      "source": {
+        "file": "opaque_cell_inputs.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "id": "envelope",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Envelope",
+          "fields": [
+            {
+              "name": "payload",
+              "ty": {
+                "kind": "struct",
+                "name": "Payload",
+                "fields": [
+                  {
+                    "name": "text",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "opaque_bytes"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "marker",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "opaque_cell_inputs.compact",
+        "line": 9,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "setText",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "text",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "opaque_cell_inputs.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "name": "setBytes",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "blob",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "opaque_cell_inputs.compact",
+        "line": 16,
+        "column": 1
+      }
+    },
+    {
+      "name": "setEnvelope",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Envelope",
+            "fields": [
+              {
+                "name": "payload",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Payload",
+                  "fields": [
+                    {
+                      "name": "text",
+                      "ty": {
+                        "kind": "opaque_string"
+                      }
+                    },
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "opaque_bytes"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "marker",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "envelope",
+          "index": 2,
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "opaque_cell_inputs.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "t",
+        "ty": {
+          "kind": "opaque_string"
+        }
+      },
+      {
+        "name": "b",
+        "ty": {
+          "kind": "opaque_bytes"
+        }
+      },
+      {
+        "name": "e",
+        "ty": {
+          "kind": "struct",
+          "name": "Envelope",
+          "fields": [
+            {
+              "name": "payload",
+              "ty": {
+                "kind": "struct",
+                "name": "Payload",
+                "fields": [
+                  {
+                    "name": "text",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  },
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "opaque_bytes"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "marker",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "text",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "t"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "blob",
+        "index": 1,
+        "value": {
+          "kind": "parameter",
+          "name": "b"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "envelope",
+        "index": 2,
+        "value": {
+          "kind": "parameter",
+          "name": "e"
+        }
+      }
+    ],
+    "source": {
+      "file": "opaque_cell_inputs.compact",
+      "line": 10,
+      "column": 1
+    }
+  }
+}

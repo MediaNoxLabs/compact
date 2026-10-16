@@ -1,0 +1,616 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "stored",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_stateful_calls.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "receipt",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "effect_plan_stateful_calls.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "nextValue",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_stateful_calls.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "update",
+      "parameters": [
+        {
+          "name": "collision",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "right",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "permit",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "stored",
+        "index": 0
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "witness_call",
+                      "name": "nextValue",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "add",
+                            "left": {
+                              "kind": "add",
+                              "left": {
+                                "kind": "parameter",
+                                "name": "collision"
+                              },
+                              "right": {
+                                "kind": "parameter",
+                                "name": "right"
+                              }
+                            },
+                            "right": {
+                              "kind": "parameter",
+                              "name": "before"
+                            }
+                          },
+                          "ty": {
+                            "kind": "field"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "stored",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "value"
+                      }
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "permit"
+                      },
+                      "message": "helper failed after write"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "effect_plan_stateful_calls.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "first",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "second",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "permit",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "effectful",
+        "body": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "collision",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "parameter",
+                "name": "first"
+              }
+            }
+          ],
+          "result": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "pair",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "update",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "witness_call",
+                        "name": "nextValue",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "first"
+                            },
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "witness_call",
+                        "name": "nextValue",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "second"
+                            },
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "boolean",
+                        "value": true
+                      },
+                      "ty": {
+                        "kind": "boolean"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "result": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "nested",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "call",
+                    "name": "update",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "call",
+                          "name": "update",
+                          "arguments": [
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "pair"
+                              },
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "first"
+                              },
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "boolean",
+                                "value": true
+                              },
+                              "ty": {
+                                "kind": "boolean"
+                              }
+                            }
+                          ]
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "second"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "boolean",
+                          "value": true
+                        },
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "result": {
+                "kind": "conditional",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_28",
+                          "ty": {
+                            "kind": "field"
+                          },
+                          "value": {
+                            "kind": "call",
+                            "name": "update",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "nested"
+                                },
+                                "ty": {
+                                  "kind": "field"
+                                }
+                              },
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "collision"
+                                },
+                                "ty": {
+                                  "kind": "field"
+                                }
+                              },
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "permit"
+                                },
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "cell_write",
+                        "field": "receipt",
+                        "index": 1,
+                        "value": {
+                          "kind": "parameter",
+                          "name": "tmp_28"
+                        }
+                      }
+                    }
+                  ],
+                  "result": {
+                    "kind": "value",
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "cell_read",
+                        "field": "receipt",
+                        "index": 1
+                      },
+                      "right": {
+                        "kind": "parameter",
+                        "name": "collision"
+                      }
+                    }
+                  }
+                },
+                "otherwise": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_29",
+                          "ty": {
+                            "kind": "field"
+                          },
+                          "value": {
+                            "kind": "call",
+                            "name": "update",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "second"
+                                },
+                                "ty": {
+                                  "kind": "field"
+                                }
+                              },
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "nested"
+                                },
+                                "ty": {
+                                  "kind": "field"
+                                }
+                              },
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "permit"
+                                },
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "cell_write",
+                        "field": "receipt",
+                        "index": 1,
+                        "value": {
+                          "kind": "parameter",
+                          "name": "tmp_29"
+                        }
+                      }
+                    }
+                  ],
+                  "result": {
+                    "kind": "value",
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "cell_read",
+                        "field": "receipt",
+                        "index": 1
+                      },
+                      "right": {
+                        "kind": "parameter",
+                        "name": "collision"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_stateful_calls.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_26",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "stored",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_26"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_27",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "receipt",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_27"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "effect_plan_stateful_calls.compact",
+      "line": 9,
+      "column": 1
+    }
+  }
+}

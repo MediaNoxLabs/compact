@@ -14,8 +14,10 @@
 // limitations under the License.
 
 use serde_json::Value;
-use sha2::{Digest, Sha256};
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{collections::BTreeSet, path::Path};
+
+#[path = "../../support/reviewed_capture.rs"]
+mod reviewed_capture;
 #[test]
 fn reviewed_source_capture_and_assertions_have_exact_identities() {
     let capture: Value = serde_json::from_str(include_str!("../oracle/cases.json")).unwrap();
@@ -40,7 +42,6 @@ fn reviewed_source_capture_and_assertions_have_exact_identities() {
         ])
     );
     assert_eq!(rows.len(), ids.len());
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let provenance = capture["provenance"].as_array().unwrap();
     assert_eq!(provenance.len(), 9);
     assert_eq!(
@@ -64,10 +65,6 @@ fn reviewed_source_capture_and_assertions_have_exact_identities() {
         let path = row["path"].as_str().unwrap();
         assert!(!Path::new(path).is_absolute());
         assert!(!path.split('/').any(|part| part == ".."));
-        assert_eq!(
-            hex::encode(Sha256::digest(fs::read(root.join(path)).unwrap())),
-            row["sha256"],
-            "stale {path}"
-        );
     }
+    reviewed_capture::verify(env!("CARGO_MANIFEST_DIR"), "cases.json");
 }

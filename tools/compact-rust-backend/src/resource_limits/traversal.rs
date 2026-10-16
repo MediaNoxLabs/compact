@@ -16,6 +16,7 @@
 //! Exhaustive borrowed IR traversal. Additions to IR shapes require a visitor review.
 use super::{LimitError, Scan, Visit};
 use crate::ir::*;
+use crate::source_diagnostics::{Owner, RefusalSite};
 #[derive(Clone, Copy)]
 pub(super) enum Node<'a> {
     SourceLocation(&'a SourceLocation),
@@ -41,8 +42,43 @@ pub(super) enum Node<'a> {
     Expr(&'a Expr),
     ComparisonOperator(&'a ComparisonOperator),
     Text(&'a str),
+    AssertMessage(&'a Expr, &'a str),
+}
+impl<'a> Node<'a> {
+    pub(super) fn origin_site(self) -> RefusalSite<'a> {
+        let owner = match self {
+            Self::Contract(value) => Owner::Contract(value),
+            Self::TypeAlias(value) => Owner::Alias(value),
+            Self::Constructor(value) => Owner::Constructor(value),
+            Self::ConstructorStep(value) => Owner::ConstructorStep(value),
+            Self::WitnessDeclaration(value) => Owner::Witness(value),
+            Self::LedgerField(value) => Owner::Ledger(value),
+            Self::LedgerFieldKind(value) => Owner::LedgerKind(value),
+            Self::StatefulCircuit(value) => Owner::Stateful(value),
+            Self::PureCircuit(value) => Owner::Pure(value),
+            Self::Parameter(value) => Owner::Parameter(value),
+            Self::LocalBinding(value) => Owner::Binding(value),
+            Self::Type(value) => Owner::Type(value),
+            Self::StructField(value) => Owner::StructField(value),
+            Self::Expr(value) => Owner::Expr(value),
+            Self::StateAction(value) => Owner::Action(value),
+            Self::StateReturn(value) => Owner::StateReturn(value),
+            Self::ReturnPlan(value) => Owner::ReturnPlan(value),
+            Self::CounterAmount(value) => Owner::CounterAmount(value),
+            Self::SourceLocation(value) => Owner::SourcePoint(value),
+            Self::AssertMessage(owner, _) => {
+                return RefusalSite::field(Owner::Expr(owner), "message");
+            }
+            Self::NativeWitnessBuiltin(_)
+            | Self::KernelClaimKind(_)
+            | Self::ComparisonOperator(_)
+            | Self::Text(_) => return RefusalSite::unavailable(),
+        };
+        RefusalSite::node(owner)
+    }
 }
 pub(super) fn children<'a>(visit: Visit<'a>, scan: &mut Scan<'a>) -> Result<(), LimitError> {
+    scan.current_site = visit.node.origin_site();
     let Visit {
         node,
         depth: visit_depth,
@@ -50,7 +86,7 @@ pub(super) fn children<'a>(visit: Visit<'a>, scan: &mut Scan<'a>) -> Result<(), 
         ..
     } = visit;
     match node {
-        Node::Text(s) => scan.text(s)?,
+        Node::Text(s) | Node::AssertMessage(_, s) => scan.text(s)?,
         Node::SourceLocation(value) => {
             let SourceLocation { file, line, column } = value;
             scan.push(Node::Text(file), visit_depth + 1, owner)?;
@@ -1040,7 +1076,7 @@ pub(super) fn children<'a>(visit: Visit<'a>, scan: &mut Scan<'a>) -> Result<(), 
             }
             Expr::Assert { condition, message } => {
                 scan.push(Node::Expr(condition), visit_depth + 1, owner)?;
-                scan.push(Node::Text(message), visit_depth + 1, owner)?;
+                scan.push(Node::AssertMessage(value, message), visit_depth + 1, owner)?;
             }
             Expr::Equal { left, right } => {
                 scan.push(Node::Expr(left), visit_depth + 1, owner)?;

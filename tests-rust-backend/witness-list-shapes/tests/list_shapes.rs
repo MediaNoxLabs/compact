@@ -578,3 +578,222 @@ fn rejected_list_query_propagates_through_generated_result() {
         Err(CompactError::LedgerQueryRejected(_))
     ));
 }
+
+// Every newly recorded witness result is checked on the actual typed list domain.
+mod recording_parity {
+    use super::*;
+    use compact_rust_witness_list_shapes_fixture::ledger_contract as contract;
+    use std::cell::RefCell;
+
+    struct Logged<'a> {
+        witness: ListWitness,
+        calls: &'a RefCell<Vec<(&'static str, u64)>>,
+    }
+    macro_rules! delegate {
+        ($method:ident) => {
+            fn $method(
+                &self,
+                context: WitnessContext<'_, u64, LedgerView<'_>>,
+            ) -> Result<(u64, bool), CompactError> {
+                self.calls
+                    .borrow_mut()
+                    .push((stringify!($method), *context.private_state));
+                TryWitnesses::$method(&self.witness, context)
+            }
+        };
+    }
+    impl TryWitnesses<u64> for Logged<'_> {
+        delegate!(inspect_flags);
+        delegate!(inspect_counts);
+        delegate!(inspect_tags);
+        delegate!(inspect_choices);
+        delegate!(inspect_packets);
+    }
+    fn same_execution<T: std::fmt::Debug + PartialEq>(
+        native: &CircuitResult<u64, T>,
+        actual: &CircuitResult<u64, T>,
+    ) {
+        assert_eq!(native.result, actual.result);
+        assert_eq!(native.context.private_state, actual.context.private_state);
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            actual.context.query.state.get_ref()
+        );
+        assert_eq!(native.context.query.effects, actual.context.query.effects);
+        assert_eq!(native.gas_cost, actual.gas_cost);
+        assert_eq!(
+            native.private_transcript_outputs,
+            actual.private_transcript_outputs
+        );
+    }
+
+    #[test]
+    fn five_recorded_and_observed_list_witnesses_match_native_and_ts() {
+        let oracle: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../runtime-rs/tests/fixtures/witness-list-shapes.json"
+        ))
+        .unwrap();
+        for populated in [false, true] {
+            let mut seed = initial_state(ConstructorContext::new(0_u64))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default());
+            if populated {
+                seed = push_flag(seed, true).unwrap().context;
+                seed = push_count(seed, BoundedUint::<65535>::new(42).unwrap())
+                    .unwrap()
+                    .context;
+                seed = push_tag(seed, FixedBytes::new([1, 2, 3])).unwrap().context;
+                seed = push_choice(seed, Choice::no).unwrap().context;
+                seed = push_packet(
+                    seed,
+                    Packet {
+                        tag: FixedBytes::new([4, 5, 6]),
+                        count: BoundedUint::<65535>::new(7).unwrap(),
+                    },
+                )
+                .unwrap()
+                .context;
+            }
+            let state = runtime::ledger::ContractState::new(
+                seed.query.state.get_ref().clone(),
+                Default::default(),
+                Default::default(),
+            );
+            let expected = &oracle[if populated { "after" } else { "before" }];
+            let native_calls = RefCell::new(Vec::new());
+            let recorded_calls = RefCell::new(Vec::new());
+            #[cfg(feature = "ledger-transaction")]
+            let observed_calls = RefCell::new(Vec::new());
+            macro_rules! qualify {
+                ($method:ident, $observed:ident, $callback:ident, $field:literal, $offset:expr) => {{
+                    let private = $offset + if populated { 5_u64 } else { 0_u64 };
+                    let context = || {
+                        runtime::context::CircuitContext::from_contract_state(
+                            private,
+                            ContractAddress::default(),
+                            &state,
+                        )
+                    };
+                    let native = contract::$method(
+                        context(),
+                        &Logged {
+                            witness: ListWitness { populated },
+                            calls: &native_calls,
+                        },
+                    )
+                    .unwrap();
+                    let recorded = contract::recorded::$method(
+                        context(),
+                        &Logged {
+                            witness: ListWitness { populated },
+                            calls: &recorded_calls,
+                        },
+                    )
+                    .unwrap();
+                    same_execution(&native, &recorded.execution);
+                    assert_result(&native, &expected[$field], populated);
+                    assert_result(&recorded.execution, &expected[$field], populated);
+                    assert!(recorded.public.verify_ops().is_empty());
+                    #[cfg(feature = "ledger-transaction")]
+                    {
+                        use runtime::transaction::{Observation, ObservedContractState};
+                        let observed = ObservedContractState::new(
+                            ContractAddress::default(),
+                            state.clone(),
+                            Observation {
+                                transaction_hash: [0; 32],
+                                block_hash: [1; 32],
+                                block_height: 1,
+                            },
+                        );
+                        let contract = Contract::from(Logged {
+                            witness: ListWitness { populated },
+                            calls: &observed_calls,
+                        });
+                        let call = contract.recording().$observed(&observed, private).unwrap();
+                        same_execution(&native, &call.recorded().execution);
+                        assert_result(&call.recorded().execution, &expected[$field], populated);
+                        assert!(call.recorded().public.verify_ops().is_empty());
+                    }
+                }};
+            }
+            qualify!(read_flags, read_flags_call, inspect_flags, "flags", 0);
+            qualify!(read_counts, read_counts_call, inspect_counts, "counts", 1);
+            qualify!(read_tags, read_tags_call, inspect_tags, "tags", 2);
+            qualify!(
+                read_choices,
+                read_choices_call,
+                inspect_choices,
+                "choices",
+                3
+            );
+            qualify!(
+                read_packets,
+                read_packets_call,
+                inspect_packets,
+                "packets",
+                4
+            );
+            let expected_calls: Vec<_> = [
+                "inspect_flags",
+                "inspect_counts",
+                "inspect_tags",
+                "inspect_choices",
+                "inspect_packets",
+            ]
+            .into_iter()
+            .enumerate()
+            .map(|(index, name)| (name, index as u64 + if populated { 5 } else { 0 }))
+            .collect();
+            assert_eq!(*native_calls.borrow(), expected_calls);
+            assert_eq!(*recorded_calls.borrow(), expected_calls);
+            #[cfg(feature = "ledger-transaction")]
+            assert_eq!(*observed_calls.borrow(), expected_calls);
+        }
+    }
+
+    #[test]
+    fn every_recorded_list_witness_preserves_query_rejection_and_single_callback() {
+        macro_rules! rejects {
+            ($method:ident, $callback:literal) => {{
+                let context = || {
+                    let mut context = initial_state(ConstructorContext::new(0_u64))
+                        .unwrap()
+                        .into_circuit_context(ContractAddress::default());
+                    context.gas_limit = Some(RunningCost::ZERO);
+                    context
+                };
+                let native_calls = RefCell::new(Vec::new());
+                let recorded_calls = RefCell::new(Vec::new());
+                let native = contract::$method(
+                    context(),
+                    &Logged {
+                        witness: ListWitness { populated: false },
+                        calls: &native_calls,
+                    },
+                )
+                .err()
+                .expect("native rejects query");
+                let recorded = contract::recorded::$method(
+                    context(),
+                    &Logged {
+                        witness: ListWitness { populated: false },
+                        calls: &recorded_calls,
+                    },
+                )
+                .err()
+                .expect("recorded rejects query");
+                assert!(matches!(native, CompactError::LedgerQueryRejected(_)));
+                assert!(matches!(recorded, CompactError::LedgerQueryRejected(_)));
+                assert_eq!(native.to_string(), recorded.to_string());
+                assert_eq!(*native_calls.borrow(), [($callback, 0)]);
+                assert_eq!(*recorded_calls.borrow(), [($callback, 0)]);
+            }};
+        }
+        rejects!(read_flags, "inspect_flags");
+        rejects!(read_counts, "inspect_counts");
+        rejects!(read_tags, "inspect_tags");
+        rejects!(read_choices, "inspect_choices");
+        rejects!(read_packets, "inspect_packets");
+    }
+}

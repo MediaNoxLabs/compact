@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "issue": 583,
+  "baseline_commit": "beee517b4cb1c446b36840807a1a83b193b1c05f",
+  "claim": "Authenticate encoding-only generated witness call selection. Actual admission predicates, source routes and selector order remain unchanged. Reconstruct only the prior shared-source fingerprint after validating the live complete source. No retirement.",
+  "prior_aligned_manifest_sha256": "22ee8d9c3a4b46175d66ddbfbed99a3c2c5243f3c44734942293eefadb192cdf",
+  "owner": "tools/compact-rust-backend/src/recorded/typed_plan/effects.rs",
+  "previous_sha256": "72174159a525738409d05610e997c1b5757045638336a69e9c6e6f0e3bbd1429",
+  "current_sha256": "9ffb60cb4d315c3d4408642eb978b88ad0c5bb1dded6776fd26a0ff78a73dd02",
+  "witness_admission_prefix_sha256": "260e4be9236b2c89d131b2fee700819615a89a44ad27386748a8ef3ca78ce15d",
+  "current_selector": {
+    "ordered_calls": [
+      "typed_plan::lower_unit_composition_checked"
+    ],
+    "function_sha256": "55050283c0525fd949780b55d2e7bf4b659e05452fdbd593763c4e9e9a095351"
+  },
+  "rendering_replacements": [
+    {
+      "current": "                let frame_method = crate::hash_input::witness_method(&declaration.result);\n",
+      "previous": ""
+    },
+    {
+      "current": "frame.#frame_method(",
+      "previous": "frame.try_witness_metered("
+    }
+  ],
+  "new_retired_routes": []
+}

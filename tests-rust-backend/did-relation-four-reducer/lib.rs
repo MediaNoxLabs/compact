@@ -28,6 +28,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum Relation {
         Undefined,
@@ -40,7 +41,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -58,7 +59,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -413,202 +414,216 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Relation = __compact_param_0;
-            let __compact_plan_1: runtime::OpaqueString = (__compact_param_1).clone();
-            let __compact_plan_2: bool = __compact_param_2;
-            let __compact_plan_3: crate::types::Relation = crate::types::Relation::Undefined;
-            let __compact_plan_4: bool = __compact_plan_0 != __compact_plan_3;
-            if !__compact_plan_4 {
+            let __compact_effect_0: crate::types::Relation = __compact_param_0;
+            let __compact_effect_1: runtime::OpaqueString = __compact_param_1;
+            let __compact_effect_2: bool = __compact_param_2;
+            let __compact_effect_3: crate::types::Relation = crate::types::Relation::Undefined;
+            let __compact_effect_4: bool = __compact_effect_0 != __compact_effect_3;
+            if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed(
                     "undefined relation".to_owned(),
                 ));
             }
-            let __compact_plan_5: crate::types::Relation = __compact_plan_0;
-            let __compact_plan_6: runtime::OpaqueString = (__compact_plan_1).clone();
-            let __compact_plan_7: crate::types::Relation = crate::types::Relation::Authentication;
-            let __compact_plan_8: bool = __compact_plan_5 == __compact_plan_7;
-            let (frame, __compact_plan_23): (_, bool) = if __compact_plan_8 {
-                let (frame, __compact_plan_9): (_, bool) = crate::ledger_slots::authentication
-                    .record_member(frame, (__compact_plan_6).clone())?;
-                (frame, __compact_plan_9)
-            } else {
-                let __compact_plan_10: crate::types::Relation = crate::types::Relation::Agreement;
-                let __compact_plan_11: bool = __compact_plan_5 == __compact_plan_10;
-                let (frame, __compact_plan_22): (_, bool) = if __compact_plan_11 {
-                    let (frame, __compact_plan_12): (_, bool) = crate::ledger_slots::agreement
-                        .record_member(frame, (__compact_plan_6).clone())?;
-                    (frame, __compact_plan_12)
+            let __compact_effect_5: () = ();
+            let (frame, __compact_effect_25): (_, bool) = {
+                let __compact_effect_6: crate::types::Relation = __compact_effect_0;
+                let __compact_effect_7: runtime::OpaqueString = (__compact_effect_1).clone();
+                let __compact_effect_8: crate::types::Relation =
+                    crate::types::Relation::Authentication;
+                let __compact_effect_9: bool = __compact_effect_6 == __compact_effect_8;
+                let (frame, __compact_effect_24): (_, bool) = if __compact_effect_9 {
+                    let (frame, __compact_effect_10): (_, bool) =
+                        crate::ledger_slots::authentication
+                            .record_member(frame, (__compact_effect_7).clone())?;
+                    (frame, __compact_effect_10)
                 } else {
-                    let __compact_plan_13: crate::types::Relation =
-                        crate::types::Relation::Invocation;
-                    let __compact_plan_14: bool = __compact_plan_5 == __compact_plan_13;
-                    let (frame, __compact_plan_21): (_, bool) = if __compact_plan_14 {
-                        let (frame, __compact_plan_15): (_, bool) = crate::ledger_slots::invocation
-                            .record_member(frame, (__compact_plan_6).clone())?;
-                        (frame, __compact_plan_15)
+                    let __compact_effect_11: crate::types::Relation =
+                        crate::types::Relation::Agreement;
+                    let __compact_effect_12: bool = __compact_effect_6 == __compact_effect_11;
+                    let (frame, __compact_effect_23): (_, bool) = if __compact_effect_12 {
+                        let (frame, __compact_effect_13): (_, bool) =
+                            crate::ledger_slots::agreement
+                                .record_member(frame, (__compact_effect_7).clone())?;
+                        (frame, __compact_effect_13)
                     } else {
-                        let __compact_plan_16: crate::types::Relation =
-                            crate::types::Relation::Delegation;
-                        let __compact_plan_17: bool = __compact_plan_5 == __compact_plan_16;
-                        let (frame, __compact_plan_20): (_, bool) = if __compact_plan_17 {
-                            let (frame, __compact_plan_18): (_, bool) =
-                                crate::ledger_slots::delegation
-                                    .record_member(frame, (__compact_plan_6).clone())?;
-                            (frame, __compact_plan_18)
+                        let __compact_effect_14: crate::types::Relation =
+                            crate::types::Relation::Invocation;
+                        let __compact_effect_15: bool = __compact_effect_6 == __compact_effect_14;
+                        let (frame, __compact_effect_22): (_, bool) = if __compact_effect_15 {
+                            let (frame, __compact_effect_16): (_, bool) =
+                                crate::ledger_slots::invocation
+                                    .record_member(frame, (__compact_effect_7).clone())?;
+                            (frame, __compact_effect_16)
                         } else {
-                            let __compact_plan_19: bool = false;
-                            (frame, __compact_plan_19)
+                            let __compact_effect_17: crate::types::Relation =
+                                crate::types::Relation::Delegation;
+                            let __compact_effect_18: bool =
+                                __compact_effect_6 == __compact_effect_17;
+                            let (frame, __compact_effect_21): (_, bool) = if __compact_effect_18 {
+                                let (frame, __compact_effect_19): (_, bool) =
+                                    crate::ledger_slots::delegation
+                                        .record_member(frame, (__compact_effect_7).clone())?;
+                                (frame, __compact_effect_19)
+                            } else {
+                                let __compact_effect_20: bool = false;
+                                (frame, __compact_effect_20)
+                            };
+                            (frame, __compact_effect_21)
                         };
-                        (frame, __compact_plan_20)
+                        (frame, __compact_effect_22)
                     };
-                    (frame, __compact_plan_21)
+                    (frame, __compact_effect_23)
                 };
-                (frame, __compact_plan_22)
+                (frame, __compact_effect_24)
             };
-            let __compact_plan_24: bool = __compact_plan_23;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_2 {
-                let (frame, __compact_plan_27): (_, bool) = if __compact_plan_24 {
-                    let __compact_plan_25: bool = false;
-                    (frame, __compact_plan_25)
+            let (frame, __compact_effect_89): (_, ()) = if __compact_effect_2 {
+                let (frame, __compact_effect_28): (_, bool) = if __compact_effect_25 {
+                    let __compact_effect_26: bool = false;
+                    (frame, __compact_effect_26)
                 } else {
-                    let __compact_plan_26: bool = true;
-                    (frame, __compact_plan_26)
+                    let __compact_effect_27: bool = true;
+                    (frame, __compact_effect_27)
                 };
-                if !__compact_plan_27 {
+                if !__compact_effect_28 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "already present".to_owned(),
                     ));
                 }
-                let __compact_plan_28: crate::types::Relation = __compact_plan_0;
-                let __compact_plan_29: runtime::OpaqueString = (__compact_plan_1).clone();
-                let __compact_plan_30: crate::types::Relation =
-                    crate::types::Relation::Authentication;
-                let __compact_plan_31: bool = __compact_plan_28 == __compact_plan_30;
-                #[allow(
-                    clippy::let_and_return,
-                    reason = "uniform branch frames preserve ordered recording steps"
-                )]
-                let frame = if __compact_plan_31 {
-                    let frame = crate::ledger_slots::authentication
-                        .record_insert(frame, (__compact_plan_29).clone())?;
-                    frame
-                } else {
-                    let __compact_plan_32: crate::types::Relation =
-                        crate::types::Relation::Agreement;
-                    let __compact_plan_33: bool = __compact_plan_28 == __compact_plan_32;
-                    #[allow(
-                        clippy::let_and_return,
-                        reason = "uniform branch frames preserve ordered recording steps"
-                    )]
-                    let frame = if __compact_plan_33 {
-                        let frame = crate::ledger_slots::agreement
-                            .record_insert(frame, (__compact_plan_29).clone())?;
-                        frame
+                let __compact_effect_29: () = ();
+                let (frame, __compact_effect_57): (_, ()) = {
+                    let __compact_effect_30: crate::types::Relation = __compact_effect_0;
+                    let __compact_effect_31: runtime::OpaqueString = (__compact_effect_1).clone();
+                    let __compact_effect_32: crate::types::Relation =
+                        crate::types::Relation::Authentication;
+                    let __compact_effect_33: bool = __compact_effect_30 == __compact_effect_32;
+                    let (frame, __compact_effect_55): (_, ()) = if __compact_effect_33 {
+                        let frame = crate::ledger_slots::authentication
+                            .record_insert(frame, (__compact_effect_31).clone())?;
+                        let __compact_effect_34: () = ();
+                        let __compact_effect_35: () = ();
+                        (frame, __compact_effect_35)
                     } else {
-                        let __compact_plan_34: crate::types::Relation =
-                            crate::types::Relation::Invocation;
-                        let __compact_plan_35: bool = __compact_plan_28 == __compact_plan_34;
-                        #[allow(
-                            clippy::let_and_return,
-                            reason = "uniform branch frames preserve ordered recording steps"
-                        )]
-                        let frame = if __compact_plan_35 {
-                            let frame = crate::ledger_slots::invocation
-                                .record_insert(frame, (__compact_plan_29).clone())?;
-                            frame
+                        let __compact_effect_36: crate::types::Relation =
+                            crate::types::Relation::Agreement;
+                        let __compact_effect_37: bool = __compact_effect_30 == __compact_effect_36;
+                        let (frame, __compact_effect_53): (_, ()) = if __compact_effect_37 {
+                            let frame = crate::ledger_slots::agreement
+                                .record_insert(frame, (__compact_effect_31).clone())?;
+                            let __compact_effect_38: () = ();
+                            let __compact_effect_39: () = ();
+                            (frame, __compact_effect_39)
                         } else {
-                            let __compact_plan_36: crate::types::Relation =
-                                crate::types::Relation::Delegation;
-                            let __compact_plan_37: bool = __compact_plan_28 == __compact_plan_36;
-                            #[allow(
-                                clippy::let_and_return,
-                                reason = "uniform branch frames preserve ordered recording steps"
-                            )]
-                            let frame = if __compact_plan_37 {
-                                let frame = crate::ledger_slots::delegation
-                                    .record_insert(frame, (__compact_plan_29).clone())?;
-                                frame
+                            let __compact_effect_40: crate::types::Relation =
+                                crate::types::Relation::Invocation;
+                            let __compact_effect_41: bool =
+                                __compact_effect_30 == __compact_effect_40;
+                            let (frame, __compact_effect_51): (_, ()) = if __compact_effect_41 {
+                                let frame = crate::ledger_slots::invocation
+                                    .record_insert(frame, (__compact_effect_31).clone())?;
+                                let __compact_effect_42: () = ();
+                                let __compact_effect_43: () = ();
+                                (frame, __compact_effect_43)
                             } else {
-                                frame
+                                let __compact_effect_44: crate::types::Relation =
+                                    crate::types::Relation::Delegation;
+                                let __compact_effect_45: bool =
+                                    __compact_effect_30 == __compact_effect_44;
+                                let (frame, __compact_effect_49): (_, ()) = if __compact_effect_45 {
+                                    let frame = crate::ledger_slots::delegation
+                                        .record_insert(frame, (__compact_effect_31).clone())?;
+                                    let __compact_effect_46: () = ();
+                                    let __compact_effect_47: () = ();
+                                    (frame, __compact_effect_47)
+                                } else {
+                                    let __compact_effect_48: () = ();
+                                    (frame, __compact_effect_48)
+                                };
+                                let __compact_effect_50: () = ();
+                                (frame, __compact_effect_50)
                             };
-                            frame
+                            let __compact_effect_52: () = ();
+                            (frame, __compact_effect_52)
                         };
-                        frame
+                        let __compact_effect_54: () = ();
+                        (frame, __compact_effect_54)
                     };
-                    frame
+                    let __compact_effect_56: () = ();
+                    (frame, __compact_effect_56)
                 };
-                frame
+                let __compact_effect_58: () = ();
+                (frame, __compact_effect_58)
             } else {
-                if !__compact_plan_24 {
+                if !__compact_effect_25 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "missing relation".to_owned(),
                     ));
                 }
-                let __compact_plan_38: crate::types::Relation = __compact_plan_0;
-                let __compact_plan_39: runtime::OpaqueString = (__compact_plan_1).clone();
-                let __compact_plan_40: crate::types::Relation =
-                    crate::types::Relation::Authentication;
-                let __compact_plan_41: bool = __compact_plan_38 == __compact_plan_40;
-                #[allow(
-                    clippy::let_and_return,
-                    reason = "uniform branch frames preserve ordered recording steps"
-                )]
-                let frame = if __compact_plan_41 {
-                    let frame = crate::ledger_slots::authentication
-                        .record_remove(frame, (__compact_plan_39).clone())?;
-                    frame
-                } else {
-                    let __compact_plan_42: crate::types::Relation =
-                        crate::types::Relation::Agreement;
-                    let __compact_plan_43: bool = __compact_plan_38 == __compact_plan_42;
-                    #[allow(
-                        clippy::let_and_return,
-                        reason = "uniform branch frames preserve ordered recording steps"
-                    )]
-                    let frame = if __compact_plan_43 {
-                        let frame = crate::ledger_slots::agreement
-                            .record_remove(frame, (__compact_plan_39).clone())?;
-                        frame
+                let __compact_effect_59: () = ();
+                let (frame, __compact_effect_87): (_, ()) = {
+                    let __compact_effect_60: crate::types::Relation = __compact_effect_0;
+                    let __compact_effect_61: runtime::OpaqueString = (__compact_effect_1).clone();
+                    let __compact_effect_62: crate::types::Relation =
+                        crate::types::Relation::Authentication;
+                    let __compact_effect_63: bool = __compact_effect_60 == __compact_effect_62;
+                    let (frame, __compact_effect_85): (_, ()) = if __compact_effect_63 {
+                        let frame = crate::ledger_slots::authentication
+                            .record_remove(frame, (__compact_effect_61).clone())?;
+                        let __compact_effect_64: () = ();
+                        let __compact_effect_65: () = ();
+                        (frame, __compact_effect_65)
                     } else {
-                        let __compact_plan_44: crate::types::Relation =
-                            crate::types::Relation::Invocation;
-                        let __compact_plan_45: bool = __compact_plan_38 == __compact_plan_44;
-                        #[allow(
-                            clippy::let_and_return,
-                            reason = "uniform branch frames preserve ordered recording steps"
-                        )]
-                        let frame = if __compact_plan_45 {
-                            let frame = crate::ledger_slots::invocation
-                                .record_remove(frame, (__compact_plan_39).clone())?;
-                            frame
+                        let __compact_effect_66: crate::types::Relation =
+                            crate::types::Relation::Agreement;
+                        let __compact_effect_67: bool = __compact_effect_60 == __compact_effect_66;
+                        let (frame, __compact_effect_83): (_, ()) = if __compact_effect_67 {
+                            let frame = crate::ledger_slots::agreement
+                                .record_remove(frame, (__compact_effect_61).clone())?;
+                            let __compact_effect_68: () = ();
+                            let __compact_effect_69: () = ();
+                            (frame, __compact_effect_69)
                         } else {
-                            let __compact_plan_46: crate::types::Relation =
-                                crate::types::Relation::Delegation;
-                            let __compact_plan_47: bool = __compact_plan_38 == __compact_plan_46;
-                            #[allow(
-                                clippy::let_and_return,
-                                reason = "uniform branch frames preserve ordered recording steps"
-                            )]
-                            let frame = if __compact_plan_47 {
-                                let frame = crate::ledger_slots::delegation
-                                    .record_remove(frame, (__compact_plan_39).clone())?;
-                                frame
+                            let __compact_effect_70: crate::types::Relation =
+                                crate::types::Relation::Invocation;
+                            let __compact_effect_71: bool =
+                                __compact_effect_60 == __compact_effect_70;
+                            let (frame, __compact_effect_81): (_, ()) = if __compact_effect_71 {
+                                let frame = crate::ledger_slots::invocation
+                                    .record_remove(frame, (__compact_effect_61).clone())?;
+                                let __compact_effect_72: () = ();
+                                let __compact_effect_73: () = ();
+                                (frame, __compact_effect_73)
                             } else {
-                                frame
+                                let __compact_effect_74: crate::types::Relation =
+                                    crate::types::Relation::Delegation;
+                                let __compact_effect_75: bool =
+                                    __compact_effect_60 == __compact_effect_74;
+                                let (frame, __compact_effect_79): (_, ()) = if __compact_effect_75 {
+                                    let frame = crate::ledger_slots::delegation
+                                        .record_remove(frame, (__compact_effect_61).clone())?;
+                                    let __compact_effect_76: () = ();
+                                    let __compact_effect_77: () = ();
+                                    (frame, __compact_effect_77)
+                                } else {
+                                    let __compact_effect_78: () = ();
+                                    (frame, __compact_effect_78)
+                                };
+                                let __compact_effect_80: () = ();
+                                (frame, __compact_effect_80)
                             };
-                            frame
+                            let __compact_effect_82: () = ();
+                            (frame, __compact_effect_82)
                         };
-                        frame
+                        let __compact_effect_84: () = ();
+                        (frame, __compact_effect_84)
                     };
-                    frame
+                    let __compact_effect_86: () = ();
+                    (frame, __compact_effect_86)
                 };
-                frame
+                let __compact_effect_88: () = ();
+                (frame, __compact_effect_88)
             };
-            Ok(frame.finish(()))
+            let __compact_effect_90: () = ();
+            Ok(frame.finish(__compact_effect_90))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -635,6 +650,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&id)?;
                 let input = runtime::fab::AlignedValue::concat(&[
                     runtime::fab::AlignedValue::from(relation),
                     runtime::fab::AlignedValue::from((id).clone()),

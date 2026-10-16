@@ -1,0 +1,464 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_inequality.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "left",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "effect_plan_inequality.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "right",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "effect_plan_inequality.compact",
+        "line": 10,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "compare",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Outcome",
+        "fields": [
+          {
+            "name": "different",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Outcome",
+            "fields": [
+              {
+                "name": "different",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "not_equal",
+              "left": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "right": {
+                "kind": "parameter",
+                "name": "b"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_17",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_17"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_inequality.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "witnessed",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Outcome",
+        "fields": [
+          {
+            "name": "different",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "different",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "not_equal",
+                    "left": {
+                      "kind": "witness_call",
+                      "name": "left",
+                      "arguments": [
+                      ]
+                    },
+                    "right": {
+                      "kind": "witness_call",
+                      "name": "right",
+                      "arguments": [
+                      ]
+                    }
+                  },
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "boolean",
+                    "value": false
+                  },
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "Outcome",
+              "fields": [
+                {
+                  "name": "different",
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "parameter",
+                "name": "different"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_16",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_16"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_inequality.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "name": "owned",
+      "parameters": [
+        {
+          "name": "a",
+          "ty": {
+            "kind": "struct",
+            "name": "Payload",
+            "fields": [
+              {
+                "name": "text",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "opaque_bytes"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "struct",
+            "name": "Payload",
+            "fields": [
+              {
+                "name": "text",
+                "ty": {
+                  "kind": "opaque_string"
+                }
+              },
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "opaque_bytes"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "OwnedResult",
+        "fields": [
+          {
+            "name": "different",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "original",
+            "ty": {
+              "kind": "struct",
+              "name": "Payload",
+              "fields": [
+                {
+                  "name": "text",
+                  "ty": {
+                    "kind": "opaque_string"
+                  }
+                },
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "opaque_bytes"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "different",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "not_equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "a"
+                },
+                "right": {
+                  "kind": "parameter",
+                  "name": "b"
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "OwnedResult",
+              "fields": [
+                {
+                  "name": "different",
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                },
+                {
+                  "name": "original",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Payload",
+                    "fields": [
+                      {
+                        "name": "text",
+                        "ty": {
+                          "kind": "opaque_string"
+                        }
+                      },
+                      {
+                        "name": "bytes",
+                        "ty": {
+                          "kind": "opaque_bytes"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "parameter",
+                "name": "different"
+              },
+              {
+                "kind": "parameter",
+                "name": "a"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_15",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_15"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_inequality.compact",
+        "line": 22,
+        "column": 1
+      }
+    }
+  ]
+}

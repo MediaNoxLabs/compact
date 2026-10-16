@@ -1,0 +1,5097 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "flag",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 115,
+        "column": 1
+      }
+    },
+    {
+      "id": "fieldCell",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 116,
+        "column": 1
+      }
+    },
+    {
+      "id": "wideCell",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "unsigned",
+          "max": "18446744073709551615"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 117,
+        "column": 1
+      }
+    },
+    {
+      "id": "vecCell",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "vector",
+          "length": 2,
+          "element": {
+            "kind": "field"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 118,
+        "column": 1
+      }
+    },
+    {
+      "id": "ops",
+      "index": 4,
+      "path": [
+        4
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 119,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "echoField",
+      "parameters": [
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 113,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "some",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": true
+          },
+          {
+            "kind": "parameter",
+            "name": "value"
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "idf",
+      "parameters": [
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "x"
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 121,
+        "column": 1
+      }
+    },
+    {
+      "name": "constAnnotatedBothLiteral",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "unsigned",
+              "max": "255"
+            },
+            "value": {
+              "kind": "unsigned_cast",
+              "max": "255",
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "2",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "parameter",
+          "name": "x"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 125,
+        "column": 1
+      }
+    },
+    {
+      "name": "constUnannotatedSeqLifted",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "unsigned",
+              "max": "255"
+            },
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_subtract",
+                  "max": "255",
+                  "left": {
+                    "kind": "parameter",
+                    "name": "a"
+                  },
+                  "right": {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "255"
+                  }
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "255"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "a"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "255"
+                }
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "parameter",
+          "name": "x"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 130,
+        "column": 1
+      }
+    },
+    {
+      "name": "returnTailMixed",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "x",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "parameter",
+          "name": "c"
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "unsigned_literal",
+            "value": "5",
+            "max": "255"
+          },
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "x"
+          },
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 135,
+        "column": 1
+      }
+    },
+    {
+      "name": "returnTailNested",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "d",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "255",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "c"
+          },
+          "then": {
+            "kind": "coerce",
+            "value": {
+              "kind": "unsigned_cast",
+              "max": "4",
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "d"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "2",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                }
+              }
+            },
+            "ty": {
+              "kind": "unsigned",
+              "max": "4"
+            }
+          },
+          "otherwise": {
+            "kind": "coerce",
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "d"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "3",
+                  "max": "4"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "4"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "4",
+                  "max": "4"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "4"
+                }
+              }
+            },
+            "ty": {
+              "kind": "unsigned",
+              "max": "4"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 139,
+        "column": 1
+      }
+    },
+    {
+      "name": "assertArg",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "x",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "body": {
+        "kind": "sequence",
+        "steps": [
+          {
+            "kind": "assert",
+            "condition": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "compare",
+                "operator": "greater",
+                "left": {
+                  "kind": "parameter",
+                  "name": "x"
+                },
+                "right": {
+                  "kind": "unsigned_literal",
+                  "value": "1",
+                  "max": "255"
+                }
+              },
+              "otherwise": {
+                "kind": "compare",
+                "operator": "greater",
+                "left": {
+                  "kind": "parameter",
+                  "name": "x"
+                },
+                "right": {
+                  "kind": "unsigned_literal",
+                  "value": "2",
+                  "max": "255"
+                }
+              }
+            },
+            "message": "ternary assert"
+          }
+        ],
+        "value": {
+          "kind": "unit"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 143,
+        "column": 1
+      }
+    },
+    {
+      "name": "arithOperand",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "n",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "18446744073709551615",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "256",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "256",
+            "value": {
+              "kind": "parameter",
+              "name": "n"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "256",
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "1",
+                  "max": "1"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "1"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "0",
+                  "max": "1"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "1"
+                }
+              }
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 147,
+        "column": 1
+      }
+    },
+    {
+      "name": "cmpOperand",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "x",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "equal",
+        "left": {
+          "kind": "parameter",
+          "name": "x"
+        },
+        "right": {
+          "kind": "unsigned_cast",
+          "max": "255",
+          "value": {
+            "kind": "if",
+            "condition": {
+              "kind": "parameter",
+              "name": "c"
+            },
+            "then": {
+              "kind": "coerce",
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "1"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "1"
+              }
+            },
+            "otherwise": {
+              "kind": "coerce",
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "0",
+                "max": "1"
+              },
+              "ty": {
+                "kind": "unsigned",
+                "max": "1"
+              }
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 151,
+        "column": 1
+      }
+    },
+    {
+      "name": "callArgPure",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "call",
+        "name": "idf",
+        "arguments": [
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "parameter",
+              "name": "c"
+            },
+            "then": {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            },
+            "otherwise": {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "b"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 155,
+        "column": 1
+      }
+    },
+    {
+      "name": "callArgCtor",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "call",
+        "name": "some",
+        "arguments": [
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "parameter",
+              "name": "c"
+            },
+            "then": {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "a"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            },
+            "otherwise": {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "b"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 159,
+        "column": 1
+      }
+    },
+    {
+      "name": "structMember",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Box",
+        "fields": [
+          {
+            "name": "f",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Box",
+          "fields": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "field_cast",
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "1",
+                  "max": "2"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "2"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "2",
+                  "max": "2"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "2"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 163,
+        "column": 1
+      }
+    },
+    {
+      "name": "structValuedArms",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "s1",
+          "ty": {
+            "kind": "struct",
+            "name": "Box",
+            "fields": [
+              {
+                "name": "f",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "s2",
+          "ty": {
+            "kind": "struct",
+            "name": "Box",
+            "fields": [
+              {
+                "name": "f",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Box",
+        "fields": [
+          {
+            "name": "f",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "parameter",
+          "name": "c"
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "s1"
+          },
+          "ty": {
+            "kind": "struct",
+            "name": "Box",
+            "fields": [
+              {
+                "name": "f",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "s2"
+          },
+          "ty": {
+            "kind": "struct",
+            "name": "Box",
+            "fields": [
+              {
+                "name": "f",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 167,
+        "column": 1
+      }
+    },
+    {
+      "name": "vectorElement",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "vector",
+        "length": 2,
+        "element": {
+          "kind": "field"
+        }
+      },
+      "body": {
+        "kind": "vector",
+        "element": {
+          "kind": "field"
+        },
+        "elements": [
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "parameter",
+              "name": "c"
+            },
+            "then": {
+              "kind": "coerce",
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "2"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            },
+            "otherwise": {
+              "kind": "coerce",
+              "value": {
+                "kind": "field_literal",
+                "value": "2"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "parameter",
+              "name": "c"
+            },
+            "then": {
+              "kind": "coerce",
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "3",
+                "max": "4"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            },
+            "otherwise": {
+              "kind": "coerce",
+              "value": {
+                "kind": "field_literal",
+                "value": "4"
+              },
+              "ty": {
+                "kind": "field"
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 171,
+        "column": 1
+      }
+    },
+    {
+      "name": "nativeArg",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "jubjub_point"
+      },
+      "body": {
+        "kind": "hash_to_curve",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "c"
+          },
+          "then": {
+            "kind": "parameter",
+            "name": "a"
+          },
+          "otherwise": {
+            "kind": "parameter",
+            "name": "b"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 175,
+        "column": 1
+      }
+    },
+    {
+      "name": "fieldTypedArms",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "f1",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "f2",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "parameter",
+          "name": "c"
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "f1"
+          },
+          "ty": {
+            "kind": "field"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "f2"
+          },
+          "ty": {
+            "kind": "field"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 179,
+        "column": 1
+      }
+    },
+    {
+      "name": "enumValued",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "enum",
+        "name": "Color",
+        "variants": [
+          "red",
+          "green",
+          "blue"
+        ]
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "parameter",
+          "name": "c"
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "Color",
+              "variants": [
+                "red",
+                "green",
+                "blue"
+              ]
+            },
+            "variant": "red"
+          },
+          "ty": {
+            "kind": "enum",
+            "name": "Color",
+            "variants": [
+              "red",
+              "green",
+              "blue"
+            ]
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "Color",
+              "variants": [
+                "red",
+                "green",
+                "blue"
+              ]
+            },
+            "variant": "green"
+          },
+          "ty": {
+            "kind": "enum",
+            "name": "Color",
+            "variants": [
+              "red",
+              "green",
+              "blue"
+            ]
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 183,
+        "column": 1
+      }
+    },
+    {
+      "name": "literalAboveI32",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "unsigned",
+              "max": "18446744073709551615"
+            },
+            "value": {
+              "kind": "unsigned_cast",
+              "max": "18446744073709551615",
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "3000000000",
+                    "max": "3000000000"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "3000000000"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "0",
+                    "max": "3000000000"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "3000000000"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "parameter",
+          "name": "x"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 187,
+        "column": 1
+      }
+    },
+    {
+      "name": "literalAboveU64",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "340282366920938463463374607431768211455"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "x",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            },
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "340282366920938463463374607431768211455",
+                  "max": "340282366920938463463374607431768211455"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "0",
+                  "max": "340282366920938463463374607431768211455"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "parameter",
+          "name": "x"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 192,
+        "column": 1
+      }
+    },
+    {
+      "name": "differingUintWidths",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "4294967295"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "parameter",
+          "name": "c"
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "unsigned_cast",
+            "max": "4294967295",
+            "value": {
+              "kind": "parameter",
+              "name": "a"
+            }
+          },
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "b"
+          },
+          "ty": {
+            "kind": "unsigned",
+            "max": "4294967295"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 197,
+        "column": 1
+      }
+    },
+    {
+      "name": "uintArmIntoField",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "field_cast",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "c"
+          },
+          "then": {
+            "kind": "coerce",
+            "value": {
+              "kind": "parameter",
+              "name": "a"
+            },
+            "ty": {
+              "kind": "unsigned",
+              "max": "255"
+            }
+          },
+          "otherwise": {
+            "kind": "coerce",
+            "value": {
+              "kind": "parameter",
+              "name": "b"
+            },
+            "ty": {
+              "kind": "unsigned",
+              "max": "255"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 201,
+        "column": 1
+      }
+    },
+    {
+      "name": "pick",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "compare",
+          "operator": "greater",
+          "left": {
+            "kind": "parameter",
+            "name": "c"
+          },
+          "right": {
+            "kind": "unsigned_literal",
+            "value": "5",
+            "max": "255"
+          }
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "unsigned_subtract",
+            "max": "255",
+            "left": {
+              "kind": "parameter",
+              "name": "c"
+            },
+            "right": {
+              "kind": "unsigned_literal",
+              "value": "10",
+              "max": "255"
+            }
+          },
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "parameter",
+            "name": "c"
+          },
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 208,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerReturnTail",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "field_cast",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "c"
+          },
+          "then": {
+            "kind": "coerce",
+            "value": {
+              "kind": "unsigned_literal",
+              "value": "1",
+              "max": "2"
+            },
+            "ty": {
+              "kind": "unsigned",
+              "max": "2"
+            }
+          },
+          "otherwise": {
+            "kind": "coerce",
+            "value": {
+              "kind": "unsigned_literal",
+              "value": "2",
+              "max": "2"
+            },
+            "ty": {
+              "kind": "unsigned",
+              "max": "2"
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 257,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerCallCtor",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "call",
+        "name": "some",
+        "arguments": [
+          {
+            "kind": "field_cast",
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "1",
+                  "max": "2"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "2"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "2",
+                  "max": "2"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "2"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 261,
+        "column": 1
+      }
+    },
+    {
+      "name": "nativeVectorElemTernary",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "body": {
+        "kind": "persistent_hash",
+        "value": {
+          "kind": "vector",
+          "element": {
+            "kind": "field"
+          },
+          "elements": [
+            {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "field_literal",
+                  "value": "1"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "0",
+                  "max": "1"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            },
+            {
+              "kind": "field_literal",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 336,
+        "column": 1
+      }
+    },
+    {
+      "name": "largeLiteralArithOperand",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "n",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "340282366920938463463374607431768211455"
+      },
+      "body": {
+        "kind": "unsigned_cast",
+        "max": "340282366920938463463374607431768211455",
+        "value": {
+          "kind": "unsigned_add",
+          "max": "18446744076709551615",
+          "left": {
+            "kind": "unsigned_cast",
+            "max": "18446744076709551615",
+            "value": {
+              "kind": "parameter",
+              "name": "n"
+            }
+          },
+          "right": {
+            "kind": "unsigned_cast",
+            "max": "18446744076709551615",
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "parameter",
+                "name": "c"
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "3000000000",
+                  "max": "3000000000"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "3000000000"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "unsigned_literal",
+                  "value": "3000000000",
+                  "max": "3000000000"
+                },
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "3000000000"
+                }
+              }
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 344,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "walkerConstAnnotated",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "x",
+              "ty": {
+                "kind": "unsigned",
+                "max": "255"
+              },
+              "value": {
+                "kind": "unsigned_cast",
+                "max": "255",
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "c"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "2"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "2"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "2"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "2"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_52",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "x"
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_52"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 212,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerCompareEq",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "x",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "b",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "x"
+                },
+                "right": {
+                  "kind": "unsigned_cast",
+                  "max": "255",
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "1"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "1"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "0",
+                        "max": "1"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "1"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_51",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "b"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "field_literal",
+                      "value": "1"
+                    },
+                    "ty": {
+                      "kind": "field"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "field_literal",
+                      "value": "0"
+                    },
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_51"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 217,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerCallPure",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_50",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "idf",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "field_cast",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "c"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "1",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "2",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        }
+                      }
+                    },
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_50"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 222,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerStructMember",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "b",
+              "ty": {
+                "kind": "struct",
+                "name": "Box",
+                "fields": [
+                  {
+                    "name": "f",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Box",
+                  "fields": [
+                    {
+                      "name": "f",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "field_cast",
+                    "value": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "c"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_49",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "b"
+                  },
+                  "field": "f",
+                  "index": 0
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_49"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 226,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerWrite",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_48",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "x"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "field_literal",
+                    "value": "0"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_48"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 231,
+        "column": 1
+      }
+    },
+    {
+      "name": "witnessArg",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "w",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "echoField",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "field_cast",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "c"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "1",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "2",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        }
+                      }
+                    },
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "w"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 235,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamIncrement",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_47",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "65535"
+                    },
+                    "value": {
+                      "kind": "unsigned_cast",
+                      "max": "65535",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "f"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "3",
+                            "max": "4"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "4"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "4",
+                            "max": "4"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "4"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "counter_increment",
+                  "field": "ops",
+                  "index": 4,
+                  "amount": {
+                    "kind": "parameter",
+                    "name": "tmp_47"
+                  }
+                }
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_46",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    },
+                    "value": {
+                      "kind": "unsigned_cast",
+                      "max": "18446744073709551615",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "f"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "10",
+                            "max": "20"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "20"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "20",
+                            "max": "20"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "20"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "wideCell",
+                  "index": 2,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_46"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 240,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamCompareEq",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "b",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "equal",
+                  "left": {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "1"
+                  },
+                  "right": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "f"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "1"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "1"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "0",
+                        "max": "1"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "1"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_45",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "b"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "field_literal",
+                        "value": "0"
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  }
+                }
+              ],
+              "action": {
+                "kind": "cell_write",
+                "field": "fieldCell",
+                "index": 1,
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_45"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 246,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamWrite",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_44",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_cast",
+                "max": "65535",
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "c"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "2"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "2"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "2"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "2"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "ops",
+            "index": 4,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_44"
+            }
+          }
+        },
+        {
+          "kind": "cell_write",
+          "field": "fieldCell",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "x"
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 252,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerVectorElement",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_43",
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              },
+              "value": {
+                "kind": "vector",
+                "element": {
+                  "kind": "field"
+                },
+                "elements": [
+                  {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "field_literal",
+                        "value": "2"
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "3",
+                        "max": "4"
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "field_literal",
+                        "value": "4"
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "vecCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_43"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 265,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerNativeArg",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "p",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "hash_to_curve",
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "2"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "2",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_42",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "jubjub_point_x",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "p"
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_42"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 269,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerNestedIf",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "d",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "x",
+              "ty": {
+                "kind": "unsigned",
+                "max": "4"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_cast",
+                    "max": "4",
+                    "value": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "d"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      }
+                    }
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "4"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "d"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "3",
+                        "max": "4"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "4"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "4",
+                        "max": "4"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "4"
+                      }
+                    }
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "4"
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_41",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "x"
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_41"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 274,
+        "column": 1
+      }
+    },
+    {
+      "name": "walkerInlineWrite",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_40",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_cast",
+                "max": "65535",
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "c"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "2"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "2"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "2"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "2"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "ops",
+            "index": 4,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_40"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 279,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamCallPure",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_39",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "idf",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "field_cast",
+                        "value": {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "parameter",
+                            "name": "f"
+                          },
+                          "then": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "1",
+                              "max": "2"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "2"
+                            }
+                          },
+                          "otherwise": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "2",
+                              "max": "2"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "2"
+                            }
+                          }
+                        }
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_39"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 283,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamVectorElement",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_38",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                },
+                "value": {
+                  "kind": "vector",
+                  "element": {
+                    "kind": "field"
+                  },
+                  "elements": [
+                    {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "f"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "field_literal",
+                          "value": "2"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "f"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "3",
+                          "max": "4"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "field_literal",
+                          "value": "4"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "vecCell",
+              "index": 3,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_38"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 288,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamNativeArg",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "p",
+                "ty": {
+                  "kind": "jubjub_point"
+                },
+                "value": {
+                  "kind": "hash_to_curve",
+                  "value": {
+                    "kind": "field_cast",
+                    "value": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "f"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_37",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "jubjub_point_x",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "p"
+                    }
+                  }
+                }
+              ],
+              "action": {
+                "kind": "cell_write",
+                "field": "fieldCell",
+                "index": 1,
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_37"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 293,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamStructMember",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "b",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Box",
+                  "fields": [
+                    {
+                      "name": "f",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Box",
+                    "fields": [
+                      {
+                        "name": "f",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "field_cast",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "f"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "1",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "2",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "tmp_36",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "b"
+                    },
+                    "field": "f",
+                    "index": 0
+                  }
+                }
+              ],
+              "action": {
+                "kind": "cell_write",
+                "field": "fieldCell",
+                "index": 1,
+                "value": {
+                  "kind": "parameter",
+                  "name": "tmp_36"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 299,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamCallWitness",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "w",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "echoField",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "field_cast",
+                        "value": {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "parameter",
+                            "name": "f"
+                          },
+                          "then": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "1",
+                              "max": "2"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "2"
+                            }
+                          },
+                          "otherwise": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "2",
+                              "max": "2"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "2"
+                            }
+                          }
+                        }
+                      },
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "w"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 305,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamConstAnnotated",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "x",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "65535"
+                },
+                "value": {
+                  "kind": "unsigned_cast",
+                  "max": "65535",
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "f"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "2"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "2",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "2"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "counter_increment",
+                  "field": "ops",
+                  "index": 4,
+                  "amount": {
+                    "kind": "parameter",
+                    "name": "x"
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_35",
+                      "ty": {
+                        "kind": "field"
+                      },
+                      "value": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "cell_write",
+                    "field": "fieldCell",
+                    "index": 1,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_35"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 311,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamAssertEq",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "f"
+                  },
+                  "then": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "1"
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "1"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "2"
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "2"
+                    }
+                  }
+                },
+                "message": "stream ternary assert"
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_34",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "fieldCell",
+                  "index": 1,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_34"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 318,
+        "column": 1
+      }
+    },
+    {
+      "name": "streamNestedIf",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "x",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "4"
+                },
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "f"
+                  },
+                  "then": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_cast",
+                      "max": "4",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "f"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "1",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "2",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        }
+                      }
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "4"
+                    }
+                  },
+                  "otherwise": {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "f"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "3",
+                          "max": "4"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "4"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "4",
+                          "max": "4"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "4"
+                        }
+                      }
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "4"
+                    }
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_33",
+                      "ty": {
+                        "kind": "field"
+                      },
+                      "value": {
+                        "kind": "field_cast",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "x"
+                        }
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "cell_write",
+                    "field": "fieldCell",
+                    "index": 1,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_33"
+                    }
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_32",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "65535"
+                      },
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "65535"
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "counter_increment",
+                    "field": "ops",
+                    "index": 4,
+                    "amount": {
+                      "kind": "parameter",
+                      "name": "tmp_32"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 324,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "c",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      {
+        "name": "d",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      {
+        "name": "x",
+        "ty": {
+          "kind": "field"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "a",
+            "ty": {
+              "kind": "unsigned",
+              "max": "255"
+            },
+            "value": {
+              "kind": "unsigned_cast",
+              "max": "255",
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "2",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "y",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "x"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "field_literal",
+                    "value": "0"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              }
+            }
+          ],
+          "step": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "b",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Box",
+                  "fields": [
+                    {
+                      "name": "f",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "Box",
+                    "fields": [
+                      {
+                        "name": "f",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "field_cast",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "c"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "1",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "2",
+                            "max": "2"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "2"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "step": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "z",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "4"
+                  },
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_cast",
+                        "max": "4",
+                        "value": {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "parameter",
+                            "name": "d"
+                          },
+                          "then": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "1",
+                              "max": "2"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "2"
+                            }
+                          },
+                          "otherwise": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "2",
+                              "max": "2"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "2"
+                            }
+                          }
+                        }
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "4"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "d"
+                        },
+                        "then": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "3",
+                            "max": "4"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "4"
+                          }
+                        },
+                        "otherwise": {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "unsigned_literal",
+                            "value": "4",
+                            "max": "4"
+                          },
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "4"
+                          }
+                        }
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "4"
+                      }
+                    }
+                  }
+                }
+              ],
+              "step": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "p",
+                    "ty": {
+                      "kind": "jubjub_point"
+                    },
+                    "value": {
+                      "kind": "hash_to_curve",
+                      "value": {
+                        "kind": "field_cast",
+                        "value": {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "parameter",
+                            "name": "c"
+                          },
+                          "then": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "3",
+                              "max": "4"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "4"
+                            }
+                          },
+                          "otherwise": {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "4",
+                              "max": "4"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "4"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "step": {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "r",
+                      "ty": {
+                        "kind": "field"
+                      },
+                      "value": {
+                        "kind": "call",
+                        "name": "idf",
+                        "arguments": [
+                          {
+                            "kind": "field_cast",
+                            "value": {
+                              "kind": "if",
+                              "condition": {
+                                "kind": "parameter",
+                                "name": "c"
+                              },
+                              "then": {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "unsigned_literal",
+                                  "value": "7",
+                                  "max": "8"
+                                },
+                                "ty": {
+                                  "kind": "unsigned",
+                                  "max": "8"
+                                }
+                              },
+                              "otherwise": {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "unsigned_literal",
+                                  "value": "8",
+                                  "max": "8"
+                                },
+                                "ty": {
+                                  "kind": "unsigned",
+                                  "max": "8"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "step": {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "cmp",
+                        "ty": {
+                          "kind": "boolean"
+                        },
+                        "value": {
+                          "kind": "equal",
+                          "left": {
+                            "kind": "unsigned_literal",
+                            "value": "0",
+                            "max": "1"
+                          },
+                          "right": {
+                            "kind": "if",
+                            "condition": {
+                              "kind": "parameter",
+                              "name": "c"
+                            },
+                            "then": {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "unsigned_literal",
+                                "value": "1",
+                                "max": "1"
+                              },
+                              "ty": {
+                                "kind": "unsigned",
+                                "max": "1"
+                              }
+                            },
+                            "otherwise": {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "unsigned_literal",
+                                "value": "0",
+                                "max": "1"
+                              },
+                              "ty": {
+                                "kind": "unsigned",
+                                "max": "1"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ],
+                    "step": {
+                      "kind": "sequence",
+                      "steps": [
+                        {
+                          "kind": "assert",
+                          "condition": {
+                            "kind": "if",
+                            "condition": {
+                              "kind": "parameter",
+                              "name": "c"
+                            },
+                            "then": {
+                              "kind": "equal",
+                              "left": {
+                                "kind": "parameter",
+                                "name": "x"
+                              },
+                              "right": {
+                                "kind": "parameter",
+                                "name": "x"
+                              }
+                            },
+                            "otherwise": {
+                              "kind": "equal",
+                              "left": {
+                                "kind": "parameter",
+                                "name": "x"
+                              },
+                              "right": {
+                                "kind": "parameter",
+                                "name": "x"
+                              }
+                            }
+                          },
+                          "message": "ctor ternary assert"
+                        },
+                        {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_31",
+                              "ty": {
+                                "kind": "field"
+                              },
+                              "value": {
+                                "kind": "add",
+                                "left": {
+                                  "kind": "add",
+                                  "left": {
+                                    "kind": "add",
+                                    "left": {
+                                      "kind": "add",
+                                      "left": {
+                                        "kind": "add",
+                                        "left": {
+                                          "kind": "add",
+                                          "left": {
+                                            "kind": "parameter",
+                                            "name": "y"
+                                          },
+                                          "right": {
+                                            "kind": "struct_field",
+                                            "value": {
+                                              "kind": "parameter",
+                                              "name": "b"
+                                            },
+                                            "field": "f",
+                                            "index": 0
+                                          }
+                                        },
+                                        "right": {
+                                          "kind": "field_cast",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "z"
+                                          }
+                                        }
+                                      },
+                                      "right": {
+                                        "kind": "jubjub_point_x",
+                                        "value": {
+                                          "kind": "parameter",
+                                          "name": "p"
+                                        }
+                                      }
+                                    },
+                                    "right": {
+                                      "kind": "field_cast",
+                                      "value": {
+                                        "kind": "parameter",
+                                        "name": "a"
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "parameter",
+                                    "name": "r"
+                                  }
+                                },
+                                "right": {
+                                  "kind": "field_cast",
+                                  "value": {
+                                    "kind": "if",
+                                    "condition": {
+                                      "kind": "parameter",
+                                      "name": "cmp"
+                                    },
+                                    "then": {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "unsigned_literal",
+                                        "value": "1",
+                                        "max": "1"
+                                      },
+                                      "ty": {
+                                        "kind": "unsigned",
+                                        "max": "1"
+                                      }
+                                    },
+                                    "otherwise": {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "unsigned_literal",
+                                        "value": "0",
+                                        "max": "1"
+                                      },
+                                      "ty": {
+                                        "kind": "unsigned",
+                                        "max": "1"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "step": {
+                            "kind": "cell_write",
+                            "field": "fieldCell",
+                            "index": 1,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "tmp_31"
+                            }
+                          }
+                        },
+                        {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_30",
+                              "ty": {
+                                "kind": "unsigned",
+                                "max": "18446744073709551615"
+                              },
+                              "value": {
+                                "kind": "unsigned_cast",
+                                "max": "18446744073709551615",
+                                "value": {
+                                  "kind": "if",
+                                  "condition": {
+                                    "kind": "parameter",
+                                    "name": "c"
+                                  },
+                                  "then": {
+                                    "kind": "coerce",
+                                    "value": {
+                                      "kind": "unsigned_literal",
+                                      "value": "10",
+                                      "max": "20"
+                                    },
+                                    "ty": {
+                                      "kind": "unsigned",
+                                      "max": "20"
+                                    }
+                                  },
+                                  "otherwise": {
+                                    "kind": "coerce",
+                                    "value": {
+                                      "kind": "unsigned_literal",
+                                      "value": "20",
+                                      "max": "20"
+                                    },
+                                    "ty": {
+                                      "kind": "unsigned",
+                                      "max": "20"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "step": {
+                            "kind": "cell_write",
+                            "field": "wideCell",
+                            "index": 2,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "tmp_30"
+                            }
+                          }
+                        },
+                        {
+                          "kind": "let",
+                          "bindings": [
+                            {
+                              "name": "tmp_29",
+                              "ty": {
+                                "kind": "vector",
+                                "length": 2,
+                                "element": {
+                                  "kind": "field"
+                                }
+                              },
+                              "value": {
+                                "kind": "vector",
+                                "element": {
+                                  "kind": "field"
+                                },
+                                "elements": [
+                                  {
+                                    "kind": "if",
+                                    "condition": {
+                                      "kind": "parameter",
+                                      "name": "c"
+                                    },
+                                    "then": {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "unsigned_literal",
+                                        "value": "1",
+                                        "max": "2"
+                                      },
+                                      "ty": {
+                                        "kind": "field"
+                                      }
+                                    },
+                                    "otherwise": {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "field_literal",
+                                        "value": "2"
+                                      },
+                                      "ty": {
+                                        "kind": "field"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "kind": "if",
+                                    "condition": {
+                                      "kind": "parameter",
+                                      "name": "c"
+                                    },
+                                    "then": {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "unsigned_literal",
+                                        "value": "3",
+                                        "max": "4"
+                                      },
+                                      "ty": {
+                                        "kind": "field"
+                                      }
+                                    },
+                                    "otherwise": {
+                                      "kind": "coerce",
+                                      "value": {
+                                        "kind": "field_literal",
+                                        "value": "4"
+                                      },
+                                      "ty": {
+                                        "kind": "field"
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "step": {
+                            "kind": "cell_write",
+                            "field": "vecCell",
+                            "index": 3,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "tmp_29"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "ternary_cond_oracle.compact",
+      "line": 348,
+      "column": 1
+    }
+  }
+}

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub fn add128(
         a: runtime::BoundedUint<340282366920938463463374607431768211455>,
         b: runtime::BoundedUint<340282366920938463463374607431768211455>,
@@ -125,7 +125,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -171,10 +171,10 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
-        >(Default::default())]);
+        >(Default::default())?]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -258,19 +258,175 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn witnessed<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<
+                Private,
+                runtime::WideUint<1u128, 340282366920938463463374607431768211455u128>,
+            >,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: bool = __compact_param_0;
+            let (frame, __compact_effect_10): (
+                _,
+                runtime::WideUint<1u128, 340282366920938463463374607431768211455u128>,
+            ) = if __compact_effect_0 {
+                let __compact_effect_1: runtime::BoundedUint<255> =
+                    <runtime::BoundedUint<255>>::new(1u128)?;
+                let (frame, __compact_effect_2): (
+                    _,
+                    runtime::BoundedUint<340282366920938463463374607431768211455>,
+                ) = frame.try_witness_metered(|context, meter| {
+                    witnesses.next_value(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_1,
+                    )
+                })?;
+                let __compact_effect_3: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                > = <runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                >>::from_le_bytes(&(__compact_effect_2).value().to_le_bytes())?;
+                let __compact_effect_4: runtime::BoundedUint<255> =
+                    <runtime::BoundedUint<255>>::new(2u128)?;
+                let (frame, __compact_effect_5): (
+                    _,
+                    runtime::BoundedUint<340282366920938463463374607431768211455>,
+                ) = frame.try_witness_metered(|context, meter| {
+                    witnesses.next_value(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_effect_4,
+                    )
+                })?;
+                let __compact_effect_6: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                > = <runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211454u128,
+                >>::from_le_bytes(&(__compact_effect_5).value().to_le_bytes())?;
+                let __compact_effect_7: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                > = runtime::add_wide_unsigned::<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                    _,
+                    _,
+                >(__compact_effect_3, __compact_effect_6)?;
+                let __compact_effect_8: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                > = <runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                >>::from_le_bytes((__compact_effect_7).as_le_bytes())?;
+                (frame, __compact_effect_8)
+            } else {
+                let __compact_effect_9: runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                > = <runtime::WideUint<
+                    1u128,
+                    340282366920938463463374607431768211455u128,
+                >>::from_le_bytes(
+                    &[
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                        0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+                    ],
+                )?;
+                (frame, __compact_effect_9)
+            };
+            Ok(frame.finish(__compact_effect_10))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn witnessed<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                selected: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    runtime::WideUint<1u128, 340282366920938463463374607431768211455u128>,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                witnessed(context, self.witnesses, selected)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn witnessed_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                selected: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    runtime::WideUint<1u128, 340282366920938463463374607431768211455u128>,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(selected);
+                let recorded = self.witnessed(observed.circuit_context(private_state), selected)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "witnessed",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -289,6 +445,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::witnessed(context, &self.witnesses, selected)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

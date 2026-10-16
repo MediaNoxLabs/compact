@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Jwk {
         pub curve: crate::types::Curve,
@@ -40,6 +41,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Method {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -54,6 +56,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum Curve {
         Ed25519,
@@ -63,7 +66,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -75,7 +78,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -229,6 +232,23 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn seed<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::Method,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_effect_0: crate::types::Method = __compact_param_0;
+            let __compact_effect_1: runtime::OpaqueString = (__compact_effect_0.id).clone();
+            let frame = crate::ledger_slots::methods.record_insert(
+                frame,
+                (__compact_effect_1).clone(),
+                (__compact_effect_0).clone(),
+            )?;
+            let __compact_effect_2: () = ();
+            let __compact_effect_3: () = ();
+            Ok(frame.finish(__compact_effect_3))
+        }
         pub fn check<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::OpaqueString,
@@ -236,71 +256,98 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let __compact_plan_1: bool = __compact_param_1;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_1 {
-                let (frame, __compact_plan_2): (_, bool) = crate::ledger_slots::methods
-                    .record_member(frame, (__compact_plan_0).clone())?;
-                if !__compact_plan_2 {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let (frame, __compact_effect_24): (_, ()) = if __compact_effect_1 {
+                let (frame, __compact_effect_2): (_, bool) = crate::ledger_slots::methods
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                if !__compact_effect_2 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "missing method".to_owned(),
                     ));
                 }
-                let (frame, __compact_plan_3): (_, crate::types::Method) =
+                let __compact_effect_3: () = ();
+                let (frame, __compact_effect_4): (_, crate::types::Method) =
                     crate::ledger_slots::methods
-                        .record_lookup(frame, (__compact_plan_0).clone())?;
-                let __compact_plan_4: crate::types::Method = __compact_plan_3;
-                let __compact_plan_5: crate::types::Jwk =
-                    (((__compact_plan_4).clone()).publicKeyJwk).clone();
-                let __compact_plan_6: crate::types::Curve = (__compact_plan_5).curve;
-                let __compact_plan_7: crate::types::Curve = crate::types::Curve::X25519;
-                let __compact_plan_8: bool = __compact_plan_6 == __compact_plan_7;
-                if !__compact_plan_8 {
+                        .record_lookup(frame, (__compact_effect_0).clone())?;
+                let __compact_effect_5: crate::types::Jwk =
+                    (__compact_effect_4.publicKeyJwk).clone();
+                let __compact_effect_6: crate::types::Curve = __compact_effect_5.curve;
+                let __compact_effect_7: crate::types::Curve = crate::types::Curve::X25519;
+                let __compact_effect_8: bool = __compact_effect_6 == __compact_effect_7;
+                if !__compact_effect_8 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "wrong curve".to_owned(),
                     ));
                 }
-                frame
+                let __compact_effect_9: () = ();
+                let __compact_effect_10: () = ();
+                (frame, __compact_effect_10)
             } else {
-                let (frame, __compact_plan_9): (_, bool) = crate::ledger_slots::methods
-                    .record_member(frame, (__compact_plan_0).clone())?;
-                let (frame, __compact_plan_12): (_, bool) = if __compact_plan_9 {
-                    let __compact_plan_10: bool = false;
-                    (frame, __compact_plan_10)
+                let (frame, __compact_effect_11): (_, bool) = crate::ledger_slots::methods
+                    .record_member(frame, (__compact_effect_0).clone())?;
+                let (frame, __compact_effect_14): (_, bool) = if __compact_effect_11 {
+                    let __compact_effect_12: bool = false;
+                    (frame, __compact_effect_12)
                 } else {
-                    let __compact_plan_11: bool = true;
-                    (frame, __compact_plan_11)
+                    let __compact_effect_13: bool = true;
+                    (frame, __compact_effect_13)
                 };
-                let (frame, __compact_plan_19): (_, bool) = if __compact_plan_12 {
-                    let __compact_plan_13: bool = true;
-                    (frame, __compact_plan_13)
+                let (frame, __compact_effect_21): (_, bool) = if __compact_effect_14 {
+                    let __compact_effect_15: bool = true;
+                    (frame, __compact_effect_15)
                 } else {
-                    let (frame, __compact_plan_14): (_, crate::types::Method) =
+                    let (frame, __compact_effect_16): (_, crate::types::Method) =
                         crate::ledger_slots::methods
-                            .record_lookup(frame, (__compact_plan_0).clone())?;
-                    let __compact_plan_15: crate::types::Jwk =
-                        ((__compact_plan_14).publicKeyJwk).clone();
-                    let __compact_plan_16: crate::types::Curve = (__compact_plan_15).curve;
-                    let __compact_plan_17: crate::types::Curve = crate::types::Curve::X25519;
-                    let __compact_plan_18: bool = __compact_plan_16 != __compact_plan_17;
-                    (frame, __compact_plan_18)
+                            .record_lookup(frame, (__compact_effect_0).clone())?;
+                    let __compact_effect_17: crate::types::Jwk =
+                        (__compact_effect_16.publicKeyJwk).clone();
+                    let __compact_effect_18: crate::types::Curve = __compact_effect_17.curve;
+                    let __compact_effect_19: crate::types::Curve = crate::types::Curve::X25519;
+                    let __compact_effect_20: bool = __compact_effect_18 != __compact_effect_19;
+                    (frame, __compact_effect_20)
                 };
-                if !__compact_plan_19 {
+                if !__compact_effect_21 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "wrong signing curve".to_owned(),
                     ));
                 }
-                frame
+                let __compact_effect_22: () = ();
+                let __compact_effect_23: () = ();
+                (frame, __compact_effect_23)
             };
-            Ok(frame.finish(()))
+            let __compact_effect_25: () = ();
+            Ok(frame.finish(__compact_effect_25))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn seed<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                method: crate::types::Method,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::seed(context, method)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn seed_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                method: crate::types::Method,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                runtime::ledger::CellValue::validate_cell_value(&(method).id)?;
+                runtime::ledger::CellValue::validate_cell_value(&((method).publicKeyJwk).x)?;
+                let input = runtime::fab::AlignedValue::from((method).clone());
+                let recorded = self.seed(observed.circuit_context(private_state), method)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "seed", input,
+                ))
+            }
             pub fn check<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -321,6 +368,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&id)?;
                 let input = runtime::fab::AlignedValue::from(((id).clone(), agreement));
                 let recorded =
                     self.check(observed.circuit_context(private_state), id, agreement)?;

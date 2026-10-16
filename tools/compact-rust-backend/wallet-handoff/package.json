@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@midnight-ntwrk/ledger-v8": "8.0.3"
+    "@midnight-ntwrk/ledger-v8": "8.1.3"
   }
 }

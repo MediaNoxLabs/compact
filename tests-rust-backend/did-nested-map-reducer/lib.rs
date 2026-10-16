@@ -27,6 +27,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Jwk {
         pub kty: crate::types::KeyKind,
@@ -40,6 +41,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactStructRepr,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub struct Method {
         pub id: ::midnight_compact_runtime::OpaqueString,
@@ -54,6 +56,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum KeyKind {
         A,
@@ -63,7 +66,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn allowed(method: crate::types::Method) -> Result<(), runtime::CompactError> {
         if !((((method.clone()).jwk).clone()).kty == crate::types::KeyKind::A) {
             return Err(runtime::CompactError::AssertionFailed("kind".to_owned()));
@@ -82,7 +85,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -252,13 +255,6 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_bump<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
-            Ok((frame, ()))
-        }
         pub fn upsert<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: crate::types::Method,
@@ -266,64 +262,62 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Method = (__compact_param_0).clone();
-            let __compact_plan_1: bool = __compact_param_1;
-            let __compact_plan_2: crate::types::Method = (__compact_plan_0).clone();
-            crate::pure_circuits::allowed(__compact_plan_2)?;
-            #[allow(
-                clippy::let_and_return,
-                reason = "uniform branch frames preserve ordered recording steps"
-            )]
-            let frame = if __compact_plan_1 {
-                let __compact_plan_3: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_4: runtime::OpaqueString = __compact_plan_3;
-                let (frame, __compact_plan_5): (_, bool) = crate::ledger_slots::methods
-                    .record_member(frame, (__compact_plan_4).clone())?;
-                if !__compact_plan_5 {
+            let __compact_effect_0: crate::types::Method = __compact_param_0;
+            let __compact_effect_1: bool = __compact_param_1;
+            let __compact_effect_2: () =
+                crate::pure_circuits::allowed((__compact_effect_0).clone())?;
+            let (frame, __compact_effect_16): (_, ()) = if __compact_effect_1 {
+                let __compact_effect_3: runtime::OpaqueString = (__compact_effect_0.id).clone();
+                let (frame, __compact_effect_4): (_, bool) = crate::ledger_slots::methods
+                    .record_member(frame, (__compact_effect_3).clone())?;
+                if !__compact_effect_4 {
                     return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
                 }
-                let __compact_plan_6: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_7: runtime::OpaqueString = __compact_plan_6;
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::methods
-                    .record_remove(frame, (__compact_plan_7).clone())?;
-                frame
+                    .record_remove(frame, (__compact_effect_6).clone())?;
+                let __compact_effect_7: () = ();
+                let __compact_effect_8: () = ();
+                (frame, __compact_effect_8)
             } else {
-                let __compact_plan_8: runtime::OpaqueString =
-                    (((__compact_plan_0).clone()).id).clone();
-                let __compact_plan_9: runtime::OpaqueString = __compact_plan_8;
-                let (frame, __compact_plan_10): (_, bool) = crate::ledger_slots::methods
-                    .record_member(frame, (__compact_plan_9).clone())?;
-                let (frame, __compact_plan_13): (_, bool) = if __compact_plan_10 {
-                    let __compact_plan_11: bool = false;
-                    (frame, __compact_plan_11)
+                let __compact_effect_9: runtime::OpaqueString = (__compact_effect_0.id).clone();
+                let (frame, __compact_effect_10): (_, bool) = crate::ledger_slots::methods
+                    .record_member(frame, (__compact_effect_9).clone())?;
+                let (frame, __compact_effect_13): (_, bool) = if __compact_effect_10 {
+                    let __compact_effect_11: bool = false;
+                    (frame, __compact_effect_11)
                 } else {
-                    let __compact_plan_12: bool = true;
-                    (frame, __compact_plan_12)
+                    let __compact_effect_12: bool = true;
+                    (frame, __compact_effect_12)
                 };
-                if !__compact_plan_13 {
+                if !__compact_effect_13 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "duplicate".to_owned(),
                     ));
                 }
-                frame
+                let __compact_effect_14: () = ();
+                let __compact_effect_15: () = ();
+                (frame, __compact_effect_15)
             };
-            let __compact_plan_14: runtime::OpaqueString =
-                (((__compact_plan_0).clone()).id).clone();
-            let __compact_plan_15: runtime::OpaqueString = __compact_plan_14;
+            let __compact_effect_17: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::methods.record_insert(
                 frame,
-                (__compact_plan_15).clone(),
-                (__compact_plan_0).clone(),
+                (__compact_effect_17).clone(),
+                (__compact_effect_0).clone(),
             )?;
-            let __compact_plan_16: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_17: runtime::BoundedUint<65535> = __compact_plan_16;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_17).value() as u16)?;
-            Ok(frame.finish(()))
+            let __compact_effect_18: () = ();
+            let (frame, __compact_effect_22): (_, ()) = {
+                let __compact_effect_19: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_19).value() as u16)?;
+                let __compact_effect_20: () = ();
+                let __compact_effect_21: () = ();
+                (frame, __compact_effect_21)
+            };
+            let __compact_effect_23: () = ();
+            Ok(frame.finish(__compact_effect_23))
         }
         pub fn remove<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -331,21 +325,27 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: runtime::OpaqueString = (__compact_param_0).clone();
-            let (frame, __compact_plan_1): (_, bool) =
-                crate::ledger_slots::methods.record_member(frame, (__compact_plan_0).clone())?;
-            if !__compact_plan_1 {
+            let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
+            let (frame, __compact_effect_1): (_, bool) =
+                crate::ledger_slots::methods.record_member(frame, (__compact_effect_0).clone())?;
+            if !__compact_effect_1 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
+            let __compact_effect_2: () = ();
             let frame =
-                crate::ledger_slots::methods.record_remove(frame, (__compact_plan_0).clone())?;
-            let __compact_plan_2: runtime::BoundedUint<65535> =
-                runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum");
-            let __compact_plan_3: runtime::BoundedUint<65535> = __compact_plan_2;
-            let frame = crate::ledger_slots::count
-                .record_increment(frame, (__compact_plan_3).value() as u16)?;
-            Ok(frame.finish(()))
+                crate::ledger_slots::methods.record_remove(frame, (__compact_effect_0).clone())?;
+            let __compact_effect_3: () = ();
+            let (frame, __compact_effect_7): (_, ()) = {
+                let __compact_effect_4: runtime::BoundedUint<65535> =
+                    <runtime::BoundedUint<65535>>::new(1u128)?;
+                let frame = crate::ledger_slots::count
+                    .record_increment(frame, (__compact_effect_4).value() as u16)?;
+                let __compact_effect_5: () = ();
+                let __compact_effect_6: () = ();
+                (frame, __compact_effect_6)
+            };
+            let __compact_effect_8: () = ();
+            Ok(frame.finish(__compact_effect_8))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -370,6 +370,8 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&(method).id)?;
+                runtime::ledger::CellValue::validate_cell_value(&((method).jwk).x)?;
                 let input = runtime::fab::AlignedValue::from(((method).clone(), update));
                 let recorded =
                     self.upsert(observed.circuit_context(private_state), method, update)?;
@@ -395,6 +397,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
+                runtime::ledger::CellValue::validate_cell_value(&id)?;
                 let input = runtime::fab::AlignedValue::from((id).clone());
                 let recorded = self.remove(observed.circuit_context(private_state), id)?;
                 Ok(runtime::transaction::RecordedCall::new(

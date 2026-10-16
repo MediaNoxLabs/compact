@@ -26,9 +26,9 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use std::cell::RefCell;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct Echo {
-    observed: RefCell<Vec<(u64, bool)>>,
+    observed: std::rc::Rc<RefCell<Vec<(u64, bool)>>>,
 }
 
 impl Witnesses<u64> for Echo {
@@ -282,3 +282,7 @@ fn witnessed_assertion_guards_ledger_write() {
         }
     }
 }
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "recording/mod.rs"]
+mod recording;

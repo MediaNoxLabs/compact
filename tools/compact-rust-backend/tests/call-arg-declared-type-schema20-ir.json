@@ -1,0 +1,1659 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "opening",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "id": "commitCell",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 38,
+        "column": 1
+      }
+    },
+    {
+      "id": "hashCell",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 39,
+        "column": 1
+      }
+    },
+    {
+      "id": "fieldCell",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 40,
+        "column": 1
+      }
+    },
+    {
+      "id": "armCell",
+      "index": 4,
+      "path": [
+        4
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 41,
+        "column": 1
+      }
+    },
+    {
+      "id": "condCell",
+      "index": 5,
+      "path": [
+        5
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 42,
+        "column": 1
+      }
+    },
+    {
+      "id": "flag",
+      "index": 6,
+      "path": [
+        6
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 43,
+        "column": 1
+      }
+    },
+    {
+      "id": "asserts",
+      "index": 7,
+      "path": [
+        7
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 44,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "sumWitness",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "vector",
+            "length": 2,
+            "element": {
+              "kind": "field"
+            }
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 47,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "idf",
+      "parameters": [
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "x"
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 49,
+        "column": 1
+      }
+    },
+    {
+      "name": "sumVec",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "vector",
+            "length": 2,
+            "element": {
+              "kind": "field"
+            }
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "transient_hash",
+        "value": {
+          "kind": "parameter",
+          "name": "v"
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 55,
+        "column": 1
+      }
+    },
+    {
+      "name": "sumTup",
+      "parameters": [
+        {
+          "name": "t",
+          "ty": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "field"
+              },
+              {
+                "kind": "field"
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "transient_hash",
+        "value": {
+          "kind": "parameter",
+          "name": "t"
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 59,
+        "column": 1
+      }
+    },
+    {
+      "name": "vecFromPureBody",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "call",
+        "name": "sumVec",
+        "arguments": [
+          {
+            "kind": "vector",
+            "element": {
+              "kind": "field"
+            },
+            "elements": [
+              {
+                "kind": "field_literal",
+                "value": "0"
+              },
+              {
+                "kind": "field_literal",
+                "value": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 79,
+        "column": 1
+      }
+    },
+    {
+      "name": "fieldOnlyFromPureBody",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "call",
+        "name": "idf",
+        "arguments": [
+          {
+            "kind": "field_literal",
+            "value": "819310549611346726241370945440405716213240158234039660170669895299022906775"
+          }
+        ]
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 83,
+        "column": 1
+      }
+    },
+    {
+      "name": "tupleIntoVec",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "t",
+            "ty": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "field"
+                },
+                {
+                  "kind": "field"
+                }
+              ]
+            },
+            "value": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "field_literal",
+                  "value": "3"
+                },
+                {
+                  "kind": "field_literal",
+                  "value": "4"
+                }
+              ]
+            }
+          }
+        ],
+        "body": {
+          "kind": "call",
+          "name": "sumVec",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "t"
+              },
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 89,
+        "column": 1
+      }
+    },
+    {
+      "name": "vecIntoTuple",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "v",
+            "ty": {
+              "kind": "vector",
+              "length": 2,
+              "element": {
+                "kind": "field"
+              }
+            },
+            "value": {
+              "kind": "vector",
+              "element": {
+                "kind": "field"
+              },
+              "elements": [
+                {
+                  "kind": "field_literal",
+                  "value": "3"
+                },
+                {
+                  "kind": "field_literal",
+                  "value": "4"
+                }
+              ]
+            }
+          }
+        ],
+        "body": {
+          "kind": "call",
+          "name": "sumTup",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "parameter",
+                "name": "v"
+              },
+              "ty": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "field"
+                  },
+                  {
+                    "kind": "field"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 94,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "commitSmall",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_19",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "persistent_commit",
+                "value": {
+                  "kind": "field_literal",
+                  "value": "5"
+                },
+                "opening": {
+                  "kind": "cell_read",
+                  "field": "opening",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "commitCell",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_19"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 65,
+        "column": 1
+      }
+    },
+    {
+      "name": "commitU128",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_18",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "persistent_commit",
+                "value": {
+                  "kind": "field_literal",
+                  "value": "1267650600228229401496703205376"
+                },
+                "opening": {
+                  "kind": "cell_read",
+                  "field": "opening",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "commitCell",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_18"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 69,
+        "column": 1
+      }
+    },
+    {
+      "name": "commitFieldOnly",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_17",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "persistent_commit",
+                "value": {
+                  "kind": "field_literal",
+                  "value": "819310549611346726241370945440405716213240158234039660170669895299022906775"
+                },
+                "opening": {
+                  "kind": "cell_read",
+                  "field": "opening",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "commitCell",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_17"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 73,
+        "column": 1
+      }
+    },
+    {
+      "name": "pureBodyVec",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_16",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "vecFromPureBody",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_16"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 99,
+        "column": 1
+      }
+    },
+    {
+      "name": "pureBodyFieldOnly",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_15",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "fieldOnlyFromPureBody",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_15"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 103,
+        "column": 1
+      }
+    },
+    {
+      "name": "bridgeTupleIntoVec",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_14",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "tupleIntoVec",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_14"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 107,
+        "column": 1
+      }
+    },
+    {
+      "name": "bridgeVecIntoTuple",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_13",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "vecIntoTuple",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_13"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 111,
+        "column": 1
+      }
+    },
+    {
+      "name": "storeVec",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "vector",
+            "length": 2,
+            "element": {
+              "kind": "field"
+            }
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_12",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "sumVec",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "v"
+                    },
+                    "ty": {
+                      "kind": "vector",
+                      "length": 2,
+                      "element": {
+                        "kind": "field"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_12"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 118,
+        "column": 1
+      }
+    },
+    {
+      "name": "sumVecPlusCell",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "vector",
+            "length": 2,
+            "element": {
+              "kind": "field"
+            }
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "add",
+          "left": {
+            "kind": "call",
+            "name": "sumVec",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "v"
+                },
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              }
+            ]
+          },
+          "right": {
+            "kind": "cell_read",
+            "field": "armCell",
+            "index": 4
+          }
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 122,
+        "column": 1
+      }
+    },
+    {
+      "name": "vecDiffers",
+      "parameters": [
+        {
+          "name": "v",
+          "ty": {
+            "kind": "vector",
+            "length": 2,
+            "element": {
+              "kind": "field"
+            }
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "not_equal",
+          "left": {
+            "kind": "transient_hash",
+            "value": {
+              "kind": "parameter",
+              "name": "v"
+            }
+          },
+          "right": {
+            "kind": "cell_read",
+            "field": "fieldCell",
+            "index": 3
+          }
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 126,
+        "column": 1
+      }
+    },
+    {
+      "name": "witnessConst",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "w",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "sumWitness",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "tuple",
+                      "elements": [
+                        {
+                          "kind": "field_literal",
+                          "value": "0"
+                        },
+                        {
+                          "kind": "field_literal",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    "ty": {
+                      "kind": "vector",
+                      "length": 2,
+                      "element": {
+                        "kind": "field"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "w"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 131,
+        "column": 1
+      }
+    },
+    {
+      "name": "witnessBare",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "witness_call",
+            "name": "sumWitness",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field_literal",
+                      "value": "0"
+                    },
+                    {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_11",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "field_literal",
+                "value": "7"
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_11"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 136,
+        "column": 1
+      }
+    },
+    {
+      "name": "pureFromImpure",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "p",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "sumVec",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "tuple",
+                      "elements": [
+                        {
+                          "kind": "field_literal",
+                          "value": "0"
+                        },
+                        {
+                          "kind": "field_literal",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    "ty": {
+                      "kind": "vector",
+                      "length": 2,
+                      "element": {
+                        "kind": "field"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "p"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 142,
+        "column": 1
+      }
+    },
+    {
+      "name": "impureConst",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "r",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "call",
+                "name": "sumVecPlusCell",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "tuple",
+                      "elements": [
+                        {
+                          "kind": "field_literal",
+                          "value": "0"
+                        },
+                        {
+                          "kind": "field_literal",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    "ty": {
+                      "kind": "vector",
+                      "length": 2,
+                      "element": {
+                        "kind": "field"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "r"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 148,
+        "column": 1
+      }
+    },
+    {
+      "name": "impureBare",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "circuit_call",
+          "name": "storeVec",
+          "arguments": [
+            {
+              "kind": "coerce",
+              "value": {
+                "kind": "tuple",
+                "elements": [
+                  {
+                    "kind": "field_literal",
+                    "value": "0"
+                  },
+                  {
+                    "kind": "field_literal",
+                    "value": "1"
+                  }
+                ]
+              },
+              "ty": {
+                "kind": "vector",
+                "length": 2,
+                "element": {
+                  "kind": "field"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 153,
+        "column": 1
+      }
+    },
+    {
+      "name": "impureInIfArm",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "cell_read",
+            "field": "flag",
+            "index": 6
+          },
+          "then": {
+            "kind": "circuit_call",
+            "name": "storeVec",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field_literal",
+                      "value": "0"
+                    },
+                    {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 157,
+        "column": 1
+      }
+    },
+    {
+      "name": "inlinedAssert",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "call",
+            "name": "vecDiffers",
+            "arguments": [
+              {
+                "kind": "coerce",
+                "value": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field_literal",
+                      "value": "0"
+                    },
+                    {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              }
+            ]
+          },
+          "message": "vector hash is not zero"
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_10",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "asserts",
+            "index": 7,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_10"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 166,
+        "column": 1
+      }
+    },
+    {
+      "name": "hashPersistentVec",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_9",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "persistent_hash",
+                "value": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field_literal",
+                      "value": "0"
+                    },
+                    {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "hashCell",
+            "index": 2,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_9"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 172,
+        "column": 1
+      }
+    },
+    {
+      "name": "hashTransientVec",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_8",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "transient_hash",
+                "value": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field_literal",
+                      "value": "0"
+                    },
+                    {
+                      "kind": "field_literal",
+                      "value": "1"
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "fieldCell",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_8"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "call_arg_declared_type.compact",
+        "line": 176,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "opening",
+        "index": 0,
+        "value": {
+          "kind": "bytes_literal",
+          "bytes": [
+            99,
+            97,
+            108,
+            108,
+            45,
+            97,
+            114,
+            103,
+            45,
+            100,
+            101,
+            99,
+            108,
+            97,
+            114,
+            101,
+            100,
+            45,
+            116,
+            121,
+            112,
+            101,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "flag",
+        "index": 6,
+        "value": {
+          "kind": "boolean",
+          "value": true
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_7",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_cast",
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "call",
+                  "name": "vecDiffers",
+                  "arguments": [
+                    {
+                      "kind": "vector",
+                      "element": {
+                        "kind": "field"
+                      },
+                      "elements": [
+                        {
+                          "kind": "field_literal",
+                          "value": "0"
+                        },
+                        {
+                          "kind": "field_literal",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "2",
+                    "max": "2"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "2"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "condCell",
+          "index": 5,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_7"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "call_arg_declared_type.compact",
+      "line": 180,
+      "column": 1
+    }
+  }
+}

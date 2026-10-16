@@ -15,22 +15,79 @@ The latter two execute canonical ledger-8 VM queries and contribute their cost
 to Rust circuit results. TypeScript currently reports zero wrapper gas for
 witness-only VM queries; the Rust result sums the observed query costs.
 
-## Effectful return recording
+## Current recording architecture
 
-The bounded Field Cell profile records an ordered return body containing lexical
-bindings, reads/writes, and conditional Field returns. Conditions execute after
-preceding effects; only the selected branch consumes witnesses or emits VM
-operations. Field witnesses, Field addition/equality, and literal unsigned locals
-explicitly cast to Field preserve their declared types. Each branch returns the
-updated recording frame with its typed result. Both branches are audited before
-recording is advertised; unsupported effects and types remain explicit gaps.
+The default recorder lowers supported typed operations and composition into a checked plan. Ordinary roots use the checked route; Effectful roots retain their earlier checked boundary. Unsupported operations return checked refusals; invalid plans are fatal. The former StartFunding and generic/profile fallback paths are test history. They do not accept rejected production plans. Profile names describe retained examples and tests, not formal algebraic theorems or production admission authority.
 
-`effectful_return_oracle.compact` has independent TypeScript/native/recorded
-transcript, state, private-output, query-gas and replay-gas parity, plus both-branch
-proof verification and ledger application under the existing unbalanced smoke
-policy. This does not establish funded transaction admission or recording parity
-for arbitrary effectful returns. The earlier single-slot root-Let profile keeps
-its separate admission rules. IR schema 20 and runtime ABI 46 are unchanged.
+Pure expressions use one shared semantic fold. `NativeSink` produces Rust syntax; `BodyCheckSink` checks the same body rules without constructing native syntax. Current runtime ABI is **52**, private IR **20**, finalized capability schema **3** and private origin transport **3**. Native ledger is **8.1.3**, pinned to official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`; generated consumers require Rust 1.89. See [current versions and retained receipts](../../doc/rust/guides/versions-and-targets.md).
+
+Read the [current extension and diagnostics guide](../../doc/rust/guides/checked-recording.md). The following development checkpoints preserve their original support and ABI claims; their earlier fallback/profile descriptions are historical.
+
+The authenticated historical-law tooling and retirement publication are retained
+in a separate review slice. This core extraction does not include or claim that
+qualification; its local parity gate preserves source-consumer joins and current
+emission checks. A complete epic closure requires the separate historical gate.
+
+## Historical Effectful return checkpoint
+
+`StateReturn::Effectful` roots now lower directly through the checked recording
+effect algebra. Supported scalar values, lexical scopes, branches, Cell reads
+and writes, Counter read/increment/decrement/reset/less-than operations,
+assertions and Field-returning witnesses compose
+without the former whole-body Field Cell recognizer. Local wide unsigned
+literals, equality and Field coercion use the existing bound domain below
+`2^248`; wide ABI surfaces, arithmetic and explicit wide FieldCast remain outside
+this fragment. Unsupported operations retain precise IR-node/path diagnostics.
+
+Only the selected branch executes effects. Native validation and resource
+preflight still run first, and invalid checked plans are hard compiler errors.
+Unsupported algebra may try the independent start-funding family. The retired
+family's old recognizer exists only in a test reference; ordinary-return profiles
+and other recording families still have their separate admission mechanisms.
+
+The frontend identifies terminal contract-storage mutations from their ledger
+path and operation class. Counter-only branches can therefore reach this algebra
+without a Cell write. See the
+[Counter-only source fixture](../../tests-rust-backend/effect-plan-counter-only-source/README.md).
+Value wrappers around the entire conditional and some lexical normalization
+remain separate frontend work ([#516](https://github.com/MediaNoxLabs/compact/issues/516)).
+
+`effectful_return_oracle.compact` retains independent TS/native/recorded controls.
+The two compositional source examples and the standalone wide-source fixture
+have separate local proof routes using the existing unbalanced smoke policy.
+These are finite cases, not arbitrary-language or funded-network qualification.
+Recorded and observed-call availability does not guarantee preparation for every
+input: empty public traces still meet the runtime's `EmptyTranscript` boundary.
+
+IR schema 20 and runtime ABI 50 are unchanged. Existing generated method
+signatures are preserved, while more Effectful circuits can now expose recording
+methods by default. Default unsupported diagnostics can change from generic
+return refusals to precise algebra gaps. The `experimental-recording-plan`
+compiler feature now enables extra test cohorts; it does not control production
+admission for this path. See the
+[recording migration guide](../../examples/rust_backend/effect_plan_prototype/README.md).
+
+## Typed Jubjub recording values
+
+Point-result circuits can use the checked effect algebra at the former Jubjub
+selector priority. The plan represents `jubjubScalarFromNative`, `ecMulGenerator`,
+`ecMul` and `ecAdd` as typed operations and reuses the existing ledger8 runtime
+adapters. Point parameters, locals, results and declared Cell reads/writes compose
+with the supported scalar operations and Unit-valued branches. Operand order,
+fallible multiplication and terminal lexical scope are preserved.
+
+The production one-write Jubjub shape recognizer is retired; its old grammar is
+retained only as a test oracle. Earlier selector priorities remain unchanged,
+and unsupported plans may reach independent later families. Invalid checked
+plans abort compilation. Point-valued conditionals, point equality, point witness
+signatures and additional curve operators remain outside this algebra fragment.
+
+The [source fixture](../../tests-rust-backend/effect-plan-jubjub-source/README.md)
+separates old-family inclusion from new multi-write/branch/read compositions.
+The existing Field-witness generator also gains a recorded API, but its empty
+public trace still meets the runtime's `EmptyTranscript` preparation boundary.
+Recording availability alone does not promise transaction preparation.
+IR20 and runtime ABI50 remain unchanged.
 
 ## Stateful assertion recording
 

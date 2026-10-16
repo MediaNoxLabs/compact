@@ -1,0 +1,1810 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "c",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "set_qualified_coin_info.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+    {
+      "name": "right",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "ContractAddress",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Either",
+        "fields": [
+          {
+            "name": "is_left",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "left",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "right",
+            "ty": {
+              "kind": "struct",
+              "name": "ContractAddress",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Either",
+          "fields": [
+            {
+              "name": "is_left",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "left",
+              "ty": {
+                "kind": "struct",
+                "name": "ZswapCoinPublicKey",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "right",
+              "ty": {
+                "kind": "struct",
+                "name": "ContractAddress",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": false
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "parameter",
+            "name": "value"
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 42,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "test_QualifiedShieldedCoinInfo",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "qcoin",
+              "ty": {
+                "kind": "struct",
+                "name": "QualifiedShieldedCoinInfo",
+                "fields": [
+                  {
+                    "name": "nonce",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "color",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "340282366920938463463374607431768211455"
+                    }
+                  },
+                  {
+                    "name": "mt_index",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "QualifiedShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    },
+                    {
+                      "name": "mt_index",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "bytes_literal",
+                    "bytes": [
+                      110,
+                      111,
+                      110,
+                      99,
+                      101,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "kind": "bytes_literal",
+                    "bytes": [
+                      99,
+                      111,
+                      108,
+                      111,
+                      114,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "340282366920938463463374607431768211455"
+                  },
+                  {
+                    "kind": "unsigned_literal",
+                    "value": "0",
+                    "max": "18446744073709551615"
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "qcoin2",
+                "ty": {
+                  "kind": "struct",
+                  "name": "QualifiedShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    },
+                    {
+                      "name": "mt_index",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "18446744073709551615"
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "QualifiedShieldedCoinInfo",
+                    "fields": [
+                      {
+                        "name": "nonce",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "name": "color",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "name": "value",
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "340282366920938463463374607431768211455"
+                        }
+                      },
+                      {
+                        "name": "mt_index",
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "18446744073709551615"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "bytes_literal",
+                      "bytes": [
+                        110,
+                        111,
+                        110,
+                        99,
+                        101,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                      ]
+                    },
+                    {
+                      "kind": "bytes_literal",
+                      "bytes": [
+                        99,
+                        111,
+                        108,
+                        111,
+                        114,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                      ]
+                    },
+                    {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "340282366920938463463374607431768211455"
+                    },
+                    {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_is_empty",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Structure should be empty"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 0"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "qcoin"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 1"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "qcoin"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key qcoin should be member"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "qcoin2"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 2"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "qcoin2"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key qcoin2 should be member"
+                },
+                {
+                  "kind": "set_remove",
+                  "field": "c",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "qcoin"
+                  }
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 1"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_member",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "qcoin2"
+                      }
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Key 1 should be member"
+                },
+                {
+                  "kind": "set_reset",
+                  "field": "c",
+                  "index": 0
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_size",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "unsigned_literal",
+                      "value": "0",
+                      "max": "18446744073709551615"
+                    }
+                  },
+                  "message": "Size should be 0"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "set_is_empty",
+                      "field": "c",
+                      "index": 0
+                    },
+                    "right": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "Structure should be empty"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "set_qualified_coin_info.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "test_ShieldedCoinInfo",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "coin",
+              "ty": {
+                "kind": "struct",
+                "name": "ShieldedCoinInfo",
+                "fields": [
+                  {
+                    "name": "nonce",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "color",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "340282366920938463463374607431768211455"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "bytes_literal",
+                    "bytes": [
+                      110,
+                      111,
+                      110,
+                      99,
+                      101,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "kind": "bytes_literal",
+                    "bytes": [
+                      99,
+                      111,
+                      108,
+                      111,
+                      114,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "kind": "unsigned_literal",
+                    "value": "1",
+                    "max": "340282366920938463463374607431768211455"
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "coin2",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ShieldedCoinInfo",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "color",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "340282366920938463463374607431768211455"
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "ShieldedCoinInfo",
+                    "fields": [
+                      {
+                        "name": "nonce",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "name": "color",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "name": "value",
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "340282366920938463463374607431768211455"
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "bytes_literal",
+                      "bytes": [
+                        110,
+                        111,
+                        110,
+                        99,
+                        101,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                      ]
+                    },
+                    {
+                      "kind": "bytes_literal",
+                      "bytes": [
+                        99,
+                        111,
+                        108,
+                        111,
+                        114,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                      ]
+                    },
+                    {
+                      "kind": "unsigned_literal",
+                      "value": "2",
+                      "max": "340282366920938463463374607431768211455"
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "qcoin",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "QualifiedShieldedCoinInfo",
+                    "fields": [
+                      {
+                        "name": "nonce",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "name": "color",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "name": "value",
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "340282366920938463463374607431768211455"
+                        }
+                      },
+                      {
+                        "name": "mt_index",
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "18446744073709551615"
+                        }
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "struct_literal",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "QualifiedShieldedCoinInfo",
+                      "fields": [
+                        {
+                          "name": "nonce",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "color",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "340282366920938463463374607431768211455"
+                          }
+                        },
+                        {
+                          "name": "mt_index",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          }
+                        }
+                      ]
+                    },
+                    "fields": [
+                      {
+                        "kind": "bytes_literal",
+                        "bytes": [
+                          110,
+                          111,
+                          110,
+                          99,
+                          101,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      {
+                        "kind": "bytes_literal",
+                        "bytes": [
+                          99,
+                          111,
+                          108,
+                          111,
+                          114,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "340282366920938463463374607431768211455"
+                      },
+                      {
+                        "kind": "unsigned_literal",
+                        "value": "0",
+                        "max": "18446744073709551615"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "action": {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "qcoin2",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "QualifiedShieldedCoinInfo",
+                      "fields": [
+                        {
+                          "name": "nonce",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "color",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "340282366920938463463374607431768211455"
+                          }
+                        },
+                        {
+                          "name": "mt_index",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "struct_literal",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "QualifiedShieldedCoinInfo",
+                        "fields": [
+                          {
+                            "name": "nonce",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          },
+                          {
+                            "name": "color",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          },
+                          {
+                            "name": "value",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "340282366920938463463374607431768211455"
+                            }
+                          },
+                          {
+                            "name": "mt_index",
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "18446744073709551615"
+                            }
+                          }
+                        ]
+                      },
+                      "fields": [
+                        {
+                          "kind": "bytes_literal",
+                          "bytes": [
+                            110,
+                            111,
+                            110,
+                            99,
+                            101,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        },
+                        {
+                          "kind": "bytes_literal",
+                          "bytes": [
+                            99,
+                            111,
+                            108,
+                            111,
+                            114,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        },
+                        {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "340282366920938463463374607431768211455"
+                        },
+                        {
+                          "kind": "unsigned_literal",
+                          "value": "0",
+                          "max": "18446744073709551615"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_is_empty",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "Structure should be empty"
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_size",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "unsigned_literal",
+                          "value": "0",
+                          "max": "18446744073709551615"
+                        }
+                      },
+                      "message": "Size should be 0"
+                    },
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_41",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Either",
+                            "fields": [
+                              {
+                                "name": "is_left",
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              },
+                              {
+                                "name": "left",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ZswapCoinPublicKey",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "right",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ContractAddress",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          },
+                          "value": {
+                            "kind": "call",
+                            "name": "right",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "kernel_self",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "ContractAddress",
+                                    "fields": [
+                                      {
+                                        "name": "bytes",
+                                        "ty": {
+                                          "kind": "bytes",
+                                          "length": 32
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ContractAddress",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "set_insert_coin",
+                        "field": "c",
+                        "index": 0,
+                        "coin": {
+                          "kind": "parameter",
+                          "name": "coin"
+                        },
+                        "recipient": {
+                          "kind": "parameter",
+                          "name": "tmp_41"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_size",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "18446744073709551615"
+                        }
+                      },
+                      "message": "Size should be 1"
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_member",
+                          "field": "c",
+                          "index": 0,
+                          "value": {
+                            "kind": "parameter",
+                            "name": "qcoin"
+                          }
+                        },
+                        "right": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "Key coin should be member"
+                    },
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_40",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "Either",
+                            "fields": [
+                              {
+                                "name": "is_left",
+                                "ty": {
+                                  "kind": "boolean"
+                                }
+                              },
+                              {
+                                "name": "left",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ZswapCoinPublicKey",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "right",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ContractAddress",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          },
+                          "value": {
+                            "kind": "call",
+                            "name": "right",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "kernel_self",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "ContractAddress",
+                                    "fields": [
+                                      {
+                                        "name": "bytes",
+                                        "ty": {
+                                          "kind": "bytes",
+                                          "length": 32
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "ContractAddress",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "set_insert_coin",
+                        "field": "c",
+                        "index": 0,
+                        "coin": {
+                          "kind": "parameter",
+                          "name": "coin2"
+                        },
+                        "recipient": {
+                          "kind": "parameter",
+                          "name": "tmp_40"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_size",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "18446744073709551615"
+                        }
+                      },
+                      "message": "Size should be 2"
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_member",
+                          "field": "c",
+                          "index": 0,
+                          "value": {
+                            "kind": "parameter",
+                            "name": "qcoin2"
+                          }
+                        },
+                        "right": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "Key coin2 should be member"
+                    },
+                    {
+                      "kind": "set_remove",
+                      "field": "c",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "qcoin"
+                      }
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_size",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "18446744073709551615"
+                        }
+                      },
+                      "message": "Size should be 1"
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_member",
+                          "field": "c",
+                          "index": 0,
+                          "value": {
+                            "kind": "parameter",
+                            "name": "qcoin2"
+                          }
+                        },
+                        "right": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "Key coin2 should be member"
+                    },
+                    {
+                      "kind": "set_reset",
+                      "field": "c",
+                      "index": 0
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_size",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "unsigned_literal",
+                          "value": "0",
+                          "max": "18446744073709551615"
+                        }
+                      },
+                      "message": "Size should be 0"
+                    },
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "set_is_empty",
+                          "field": "c",
+                          "index": 0
+                        },
+                        "right": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "Structure should be empty"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "set_qualified_coin_info.compact",
+        "line": 44,
+        "column": 1
+      }
+    }
+  ]
+}

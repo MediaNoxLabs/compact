@@ -22,8 +22,40 @@ use compact_rust_backend::ir::{
 };
 use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
+// Inspect only the requested recorded function, excluding native and observed APIs.
+fn recorded_function(source: &str, name: &str) -> String {
+    use quote::ToTokens;
+    fn find(items: &[syn::Item], name: &str) -> Option<String> {
+        for item in items {
+            if let syn::Item::Mod(module) = item
+                && let Some((_, items)) = &module.content
+            {
+                if module.ident == "recorded" {
+                    return items.iter().find_map(|item| match item {
+                        syn::Item::Fn(function) if function.sig.ident == name => {
+                            Some(function.block.to_token_stream().to_string())
+                        }
+                        _ => None,
+                    });
+                }
+                if let Some(found) = find(items, name) {
+                    return Some(found);
+                }
+            }
+        }
+        None
+    }
+    find(&syn::parse_file(source).unwrap().items, name).expect("recorded function")
+}
+fn assert_scoped_witness_write(source: &str, name: &str) {
+    let body = recorded_function(source, name);
+    assert_eq!(body.matches("try_witness_metered").count(), 1, "{name}");
+    assert_eq!(body.matches("record_write").count(), 1, "{name}");
+    assert!(body.find("try_witness_metered").unwrap() < body.find("record_write").unwrap());
+}
+
 #[test]
-fn recorded_field_returning_helper_is_shared_across_callers() {
+fn recorded_field_returning_helpers_compose_once_in_each_caller() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![LedgerField {
         source: None,
@@ -87,14 +119,17 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
         source
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        3
+        0
     );
     assert!(source.contains("pub fn outerA<Private"));
     assert!(source.contains("pub fn outerB<Private"));
+    for name in ["outerA", "outerB"] {
+        assert_scoped_witness_write(&source, name);
+    }
 
     contract.stateful_circuits[0].parameters = vec![
         Parameter {
@@ -140,17 +175,20 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
         source
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        3
+        0
     );
-    assert!(source.contains("__compact_param_0: runtime::Field"));
-    assert!(source.contains("__compact_param_1: runtime::Field"));
+    for name in ["outerA", "outerB"] {
+        assert_scoped_witness_write(&source, name);
+        assert_eq!(recorded_function(&source, name).matches(" + ").count(), 2);
+    }
 
     // The compiler lowers `value = innerValue(1, 2) + 3` to a Field
-    // action binding with an expression-nested call. Reuse the same body.
+    // action binding with an expression-nested call. Its checked scoped body
+    // still observes the witness once before the caller writes the result.
     let mut nested = contract.stateful_circuits[1].clone();
     nested.name = "outerNested".into();
     let StateAction::Let { bindings, .. } = &mut nested.actions[0] else {
@@ -173,13 +211,14 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
         source
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         source.matches("__compact_recorded_body_innerValue").count(),
-        4
+        0
     );
     assert!(source.contains("pub fn outerNested<Private"));
+    assert_scoped_witness_write(&source, "outerNested");
 
     contract
         .stateful_circuits
@@ -189,13 +228,13 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
         nested_only
             .matches("fn __compact_recorded_body_innerValue<")
             .count(),
-        1
+        0
     );
     assert_eq!(
         nested_only
             .matches("__compact_recorded_body_innerValue")
             .count(),
-        2
+        0
     );
 
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
@@ -210,7 +249,9 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
     };
     let multiplied = render(&contract).unwrap();
     assert!(multiplied.contains("pub mod recorded"));
-    assert!(multiplied.contains("__compact_recorded_product_"));
+    let body = recorded_function(&multiplied, "outerNested");
+    assert_eq!(body.matches(" * ").count(), 1);
+    assert!(body.contains("record_write"));
 
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::Add {
@@ -291,11 +332,50 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
         field: "round".into(),
         index: 0,
     };
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    // Statement calls discard the result, not the Counter observation.
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert_eq!(rendered.capabilities.circuits.len(), 1);
+    assert_eq!(rendered.capabilities.circuits[0].name, "outer");
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert_eq!(
+        recorded_function(&rendered.source, "outer")
+            .matches("record_read")
+            .count(),
+        1
+    );
+
+    // Scalar defaults are checked even in nested discarded steps.
+    contract.stateful_circuits[0]
+        .actions
+        .push(StateAction::Expression {
+            value: Expr::Default { ty: Type::Boolean },
+        });
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    // A native-valid unsupported VectorFoldCall child refuses a later nested step.
+    contract.stateful_circuits[0]
+        .actions
+        .push(StateAction::Expression {
+            value: Expr::PersistentCommit {
+                value: Box::new(super::support::unsupported_commit_input()),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            },
+        });
+    super::support::register_unsupported_fold(&mut contract);
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(!rendered.capabilities.circuits[0].observed_call);
+    assert!(
+        rendered.capabilities.circuits[0]
+            .recording_unavailable
+            .is_some()
+    );
 }
 
 #[test]
-fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
+fn pure_field_calls_preserve_unit_and_record_ordinary_hashed_returns() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -365,10 +445,12 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
-    assert!(rendered
-        .source
-        .contains("let __compact_recorded_pure_field_0: runtime::Field = crate::pure_circuits::literalField()?;"));
-    assert!(rendered.source.contains("record_write(frame"));
+    let recorded = recorded_function(&rendered.source, "writeLiteral");
+    assert_eq!(recorded.matches("pure_circuits :: literalField").count(), 1);
+    assert!(
+        recorded.find("pure_circuits :: literalField").unwrap()
+            < recorded.find("record_write").unwrap()
+    );
 
     contract.stateful_circuits[0].result = Type::Field;
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
@@ -379,9 +461,13 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
     };
     let returned = render_with_capabilities(&contract).unwrap();
     assert!(returned.capabilities.circuits[0].recorded);
-    assert!(returned
-        .source
-        .contains("let __compact_recorded_pure_return_1: runtime::Field = crate::pure_circuits::literalField()?;"));
+    let recorded = returned.source.split_once("pub mod recorded").unwrap().1;
+    assert_eq!(
+        recorded
+            .matches("crate::pure_circuits::literalField()?")
+            .count(),
+        2
+    );
 
     contract.stateful_circuits[0].actions = vec![StateAction::CellWrite {
         field: "value".into(),
@@ -392,6 +478,48 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
     contract.circuits[1].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "5".into() }),
     };
+    let hashed = render_with_capabilities(&contract).unwrap();
+    assert!(hashed.capabilities.circuits[0].recorded);
+    assert!(hashed.capabilities.circuits[0].observed_call);
+    assert!(
+        hashed
+            .source
+            .split_once("pub mod recorded")
+            .unwrap()
+            .1
+            .contains("crate::pure_circuits::literalField()?")
+    );
+
+    // Both certified helpers and direct fixed-FAB hashes are available.
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: contract.circuits[1].body.clone(),
+    };
+    assert!(
+        render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::TransientHash {
+            value: Box::new(Expr::Default {
+                ty: Type::OpaqueString,
+            }),
+        },
+    };
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(defaulted.capabilities.circuits[0].recorded);
+    assert!(defaulted.capabilities.circuits[0].observed_call);
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::TransientHash {
+            value: Box::new(Expr::PersistentCommit {
+                value: Box::new(super::support::unsupported_commit_input()),
+                opening: Box::new(Expr::BytesLiteral { bytes: vec![0; 32] }),
+            }),
+        },
+    };
+    super::support::register_unsupported_fold(&mut contract);
     let rejected = render_with_capabilities(&contract).unwrap();
     assert!(!rejected.capabilities.circuits[0].recorded);
     assert_eq!(
@@ -400,12 +528,20 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
             .as_ref()
             .unwrap()
             .ir_node,
-        "StateReturn::Expression"
+        "Expr::VectorFoldCall"
+    );
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "return_value.value.value.value"
     );
 }
 
 #[test]
-fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
+fn typed_pair_hash_call_composes_certified_bodies_and_rejects_invalid_calls() {
     let vector = Type::Vector {
         element: Box::new(Type::Field),
         length: 2,
@@ -523,21 +659,55 @@ fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
             .all(|c| c.recorded && c.observed_call)
     );
     assert!(
-        rendered
+        !rendered
             .source
-            .contains("fn __compact_recorded_body_storeVector")
+            .contains("fn __compact_recorded_body_storeVector"),
+        "checked callers inline the body, so no unused definition is emitted"
     );
     assert!(rendered.source.contains("pure_circuits::hashVector("));
-    assert!(rendered.source.contains("__compact_recorded_pair_arg_"));
+    let body =
+        super::lifecycle_recording::generated_body(&rendered.source, "recorded", "conditional");
+    assert!(body.contains("record_read") && body.contains("record_write"));
+    assert!(body.contains("hashVector"));
 
     contract.circuits[0].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "7".into() }),
     };
-    let rejected = render_with_capabilities(&contract).unwrap();
-    assert!(rejected.capabilities.circuits.iter().all(|c| !c.recorded));
-    assert!(rejected.capabilities.circuits.iter().all(|c| {
-        c.recording_unavailable
-            .as_ref()
-            .is_some_and(|gap| gap.ir_node == "Expr::Call")
-    }));
+    // The former recipe required hashing the vector formal. A certified pure
+    // helper may instead hash a Field literal while the local vector call stays typed.
+    let composed = render_with_capabilities(&contract).unwrap();
+    assert!(
+        composed
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+
+    // An invalid source may be rejected globally or lose recorded admission;
+    // neither outcome may expose an executable recorded entry.
+    let rejects = |contract: &Contract| match render_with_capabilities(contract) {
+        Err(_) => true,
+        Ok(rendered) => rendered.capabilities.circuits.iter().all(|c| !c.recorded),
+    };
+    let mut wrong_argument = contract.clone();
+    wrong_argument.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    assert!(rejects(&wrong_argument));
+    let mut recursive = contract.clone();
+    recursive.stateful_circuits[0]
+        .actions
+        .push(StateAction::CircuitCall {
+            name: "storeVector".into(),
+            arguments: vec![Expr::Parameter { name: "v".into() }],
+        });
+    assert!(rejects(&recursive));
+    let mut wrong_slot = contract.clone();
+    let StateAction::Let { action, .. } = &mut wrong_slot.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::CellWrite { index, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    *index = 99;
+    assert!(rejects(&wrong_slot));
 }

@@ -11,7 +11,21 @@ current checkpoint, builder and orchestration contract. The later `d5dd3f2e`
 header-maintenance revision is distinct from the live receipt's source revision;
 its final local/package gates must retain their own exact-head evidence.
 
-## Accepted local evidence and limits
+## Current ledger 8.1.3 scope
+
+The current decoder and offline fixtures use ledger 8.1.3. No live node/indexer
+pairing is qualified for this codec. `assertNodeProfile` and the production Rust
+builder refuse live checkpoints, including the historical pairing below when
+its codec is relabeled. Enabling live use requires explicit compatibility
+validation and a reviewed profile; changing a version string is insufficient.
+
+Checkpoint unit tests explicitly inject an offline profile verifier and label
+its output `offline-ledger-8.1.3-fixture` / `offline-not-live`. The live runner
+uses the refusing default. A supplied verifier is a caller-owned trust policy,
+not evidence of node compatibility. Rust accepts offline fixtures only under
+`cfg(test)`.
+
+## Retained historical live evidence and limits
 
 The private run receipt is
 `target/rust-live-e671db3b-devnet/shielded-run-628d1c03/receipt.json` in the
@@ -40,16 +54,16 @@ insertion qualifies as live evidence.
 Use this directory's pinned dependencies (`npm ci` in an isolated checkout), then:
 
 ```sh
-node --test provenance.test.mjs shielded-handoff.test.mjs shielded-projection.test.mjs
+node --test checkpoint.test.mjs provenance.test.mjs shielded-handoff.test.mjs shielded-projection.test.mjs shielded-check.test.mjs
 ```
 
 When reusing an existing dependency installation without modifying it, set
 `COMPACT_LEDGER_V8_MODULE` to its absolute `@midnight-ntwrk/ledger-v8` JavaScript
-entry point. The lockfile pins ledger-v8 8.0.3. The projection test uses actual
+entry point. The lockfile pins ledger-v8 8.1.3. The projection test uses actual
 upstream output/input objects; the same input succeeds against complete state
 and fails against filtered state with an unknown-root error.
 
-Compile with a current ABI49 compiler and its matching runtime:
+Compile with the current compiler and its matching runtime:
 
 ```sh
 compactc --target rust --rust-require-recording --skip-zk shielded.compact /tmp/shielded-acceptance

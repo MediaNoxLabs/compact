@@ -115,3 +115,64 @@ fn witnessed_crypto_natives_preserve_values_and_transcript_order() {
         &oracle["persistentCommit"],
     );
 }
+
+#[test]
+fn current_recorded_hash_and_commitment_preserve_witness_outputs() {
+    use compact_rust_witness_hash_fixture::ledger_contract::recorded;
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-hash.json"
+    ))
+    .unwrap();
+    let value = Field::from(2_u64);
+    for (name, native, recorded) in [
+        (
+            "hash",
+            hash_echo(context(), &Echo, value).unwrap(),
+            recorded::hash_echo(context(), &Echo, value).unwrap(),
+        ),
+        (
+            "commit",
+            commit_echo(context(), &Echo, value).unwrap(),
+            recorded::commit_echo(context(), &Echo, value).unwrap(),
+        ),
+    ] {
+        assert_oracle(
+            &recorded.execution,
+            hex::encode(recorded.execution.result.as_le_bytes()),
+            &oracle[name],
+        );
+        assert_eq!(recorded.execution.result, native.result);
+        assert_eq!(
+            recorded.execution.context.query.state,
+            native.context.query.state
+        );
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            native.context.query.effects
+        );
+        assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+        assert_eq!(
+            recorded.execution.context.private_state,
+            native.context.private_state
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs,
+            native.private_transcript_outputs
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, native.context.query.state);
+        assert_eq!(replay.context.effects, native.context.query.effects);
+    }
+}
+
+#[cfg(feature = "ledger-transaction")]
+#[path = "witness_hash/recording.rs"]
+mod recording;

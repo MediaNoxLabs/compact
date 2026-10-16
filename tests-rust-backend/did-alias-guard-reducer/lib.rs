@@ -28,6 +28,7 @@ pub mod types {
         ::core::cmp::Eq,
         ::midnight_compact_runtime::CompactCellValue,
         ::midnight_compact_runtime::CompactEnum,
+        ::midnight_compact_runtime::CompactHashInput,
     )]
     pub enum Mutation {
         Undefined,
@@ -38,7 +39,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub(crate) fn defined(m: crate::types::Mutation) -> Result<(), runtime::CompactError> {
         if !(if m == crate::types::Mutation::Insert {
             true
@@ -80,7 +81,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 50);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -113,10 +114,10 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::try_constructor_cell::<
             bool,
             runtime::ledger::DefaultDB,
-        >(Default::default())]);
+        >(Default::default())?]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -187,24 +188,23 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        fn __compact_recorded_body_update<Private>(
-            frame: runtime::recording::RecordingFrame<Private>,
-        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
-        {
-            let frame = crate::ledger_slots::active.record_write(frame, true)?;
-            Ok((frame, ()))
-        }
         pub fn run<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: crate::types::Mutation,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Mutation = __compact_param_0;
-            crate::pure_circuits::defined(__compact_plan_0)?;
-            let __compact_plan_1: bool = true;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_plan_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::Mutation = __compact_param_0;
+            let __compact_effect_1: () = crate::pure_circuits::defined(__compact_effect_0)?;
+            let (frame, __compact_effect_5): (_, ()) = {
+                let __compact_effect_2: bool = true;
+                let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
+                let __compact_effect_3: () = ();
+                let __compact_effect_4: () = ();
+                (frame, __compact_effect_4)
+            };
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_6))
         }
         pub fn local_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -212,11 +212,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Mutation = __compact_param_0;
-            crate::pure_circuits::localGuard(__compact_plan_0)?;
-            let __compact_plan_1: bool = true;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_plan_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::Mutation = __compact_param_0;
+            let __compact_effect_1: () = crate::pure_circuits::localGuard(__compact_effect_0)?;
+            let (frame, __compact_effect_5): (_, ()) = {
+                let __compact_effect_2: bool = true;
+                let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
+                let __compact_effect_3: () = ();
+                let __compact_effect_4: () = ();
+                (frame, __compact_effect_4)
+            };
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_6))
         }
         pub fn transitive_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -224,11 +230,17 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_plan_0: crate::types::Mutation = __compact_param_0;
-            crate::pure_circuits::transitiveGuard(__compact_plan_0)?;
-            let __compact_plan_1: bool = true;
-            let frame = crate::ledger_slots::active.record_write(frame, __compact_plan_1)?;
-            Ok(frame.finish(()))
+            let __compact_effect_0: crate::types::Mutation = __compact_param_0;
+            let __compact_effect_1: () = crate::pure_circuits::transitiveGuard(__compact_effect_0)?;
+            let (frame, __compact_effect_5): (_, ()) = {
+                let __compact_effect_2: bool = true;
+                let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
+                let __compact_effect_3: () = ();
+                let __compact_effect_4: () = ();
+                (frame, __compact_effect_4)
+            };
+            let __compact_effect_6: () = ();
+            Ok(frame.finish(__compact_effect_6))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

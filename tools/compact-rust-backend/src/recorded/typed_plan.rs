@@ -17,38 +17,65 @@
 //! Actual value types and branch-local frames preserve scope and effect order.
 
 use super::*;
-use crate::coin_shapes::{qualified_coin_type, shielded_coin_type, shielded_recipient_type};
-use crate::ir::{KernelClaimKind, ReturnPlan};
+use crate::coin_shapes::shielded_coin_type;
+#[cfg(test)]
+use crate::coin_shapes::{qualified_coin_type, shielded_recipient_type};
+use crate::ir::{KernelClaimKind, ReturnPlan, contract_address_type};
 mod actions;
 mod admission;
 mod aggregates;
 mod arithmetic;
 mod composition;
+#[cfg(test)]
+mod context_query_reference;
 mod control;
 mod crypto;
 mod declarations;
+#[cfg(test)]
+mod effectful_reference;
 mod effects;
+#[cfg(test)]
+pub(super) use effectful_reference::lower_effectful;
 mod evaluation;
 mod evidence;
 mod leaves;
 mod observations;
 use admission::AdmissionPolicy;
+#[cfg(test)]
 pub(super) use composition::CompositionRejection;
+
+#[cfg(test)]
+pub(super) fn unit_composition_parameter_type(ty: &Type) -> bool {
+    composition::value_type(ty)
+}
+
 use declarations::Declarations;
 use evaluation::EvaluationState;
 use evidence::EffectEvidence;
+#[cfg(test)]
+mod composite_reference;
+#[cfg(test)]
 mod field_observations;
 mod funded_mint;
 mod guarded_deposit;
 mod immediate_send;
+#[cfg(test)]
+mod jubjub_reference;
 mod jubjub_values;
 mod phase_reset;
 mod reset_payout;
 mod shielded_merge;
 mod shielded_payout;
+#[cfg(test)]
+mod shielded_receive_reference;
 mod start_funding;
 mod terminal_returns;
+#[cfg(test)]
+mod terminal_returns_reference;
 mod unit_actions;
+#[cfg(test)]
+mod unit_actions_reference;
+#[cfg(test)]
 mod voting_commit;
 
 #[derive(Clone)]
@@ -63,14 +90,25 @@ type Scope = HashMap<String, TypedValue>;
 // intents without composite-value helper routing; phase_reset is independent.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CompositeDomain {
+    #[cfg_attr(not(test), allow(dead_code))]
     None,
+    // Constructed only by the frozen composite oracle; shared policy matches stay intact.
+    #[cfg_attr(not(test), allow(dead_code))]
     Values,
+    #[cfg_attr(not(test), allow(dead_code))]
     Intents,
+    #[cfg_attr(not(test), allow(dead_code))]
     ShieldedReceive,
+    // Constructed only by the frozen send oracle; shared policy matches remain.
+    #[cfg_attr(not(test), allow(dead_code))]
     ShieldedSend,
+    #[cfg_attr(not(test), allow(dead_code))]
     ImmediateShieldedSend,
+    #[cfg_attr(not(test), allow(dead_code))]
     ShieldedPayout,
+    #[cfg_attr(not(test), allow(dead_code))]
     ActionfulShieldedPayout,
+    #[cfg_attr(not(test), allow(dead_code))]
     ResetShieldedPayout,
     ShieldedMerge(shielded_merge::Inputs),
     GuardedShieldedDeposit,
@@ -80,6 +118,8 @@ enum CompositeDomain {
     FieldObservations,
     TerminalReturns,
     JubjubValues,
+    // Constructed only by the retained whole-Unit oracle.
+    #[cfg_attr(not(test), allow(dead_code))]
     UnitComposition,
 }
 impl CompositeDomain {
@@ -1139,16 +1179,6 @@ fn optional_string(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [present, value] if present.ty == Type::Boolean && value.ty == Type::OpaqueString))
 }
 
-fn contract_address_type() -> Type {
-    Type::Struct {
-        name: "ContractAddress".into(),
-        fields: vec![crate::ir::StructField {
-            name: "bytes".into(),
-            ty: Type::Bytes { length: 32 },
-        }],
-    }
-}
-
 fn wrapped_bytes32(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [member] if member.ty == (Type::Bytes { length: 32 })))
 }
@@ -1162,176 +1192,11 @@ fn cell_type(ty: &Type) -> bool {
     ) || optional_string(ty)
 }
 
-pub(super) struct TypedPlan {
-    pub steps: Vec<syn::Stmt>,
-    pub result: syn::Expr,
-}
-
-// Bounded admission is separate from the existing single-slot root-Let profile.
-fn effectful_value(value: &Expr, witnesses: &HashMap<&str, &WitnessDeclaration>) -> bool {
-    match value {
-        Expr::Parameter { .. }
-        | Expr::FieldLiteral { .. }
-        | Expr::Boolean { .. }
-        | Expr::UnsignedLiteral { .. }
-        | Expr::CellRead { .. } => true,
-        Expr::Add { left, right } | Expr::Equal { left, right } => {
-            effectful_value(left, witnesses) && effectful_value(right, witnesses)
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => {
-            effectful_value(condition, witnesses)
-                && effectful_value(then, witnesses)
-                && effectful_value(otherwise, witnesses)
-        }
-        Expr::Let { bindings, body } => {
-            effectful_bindings(bindings, witnesses) && effectful_value(body, witnesses)
-        }
-        Expr::Coerce {
-            value,
-            ty: Type::Field | Type::Boolean,
-        } => effectful_value(value, witnesses),
-        Expr::FieldCast { value } => effectful_value(value, witnesses),
-        Expr::WitnessCall { name, arguments } => witnesses.get(name.as_str()).is_some_and(|w| {
-            w.result == Type::Field
-                && w.parameters.iter().all(|p| p.ty == Type::Field)
-                && arguments.iter().all(|a| effectful_value(a, witnesses))
-        }),
-        _ => false,
-    }
-}
-fn effectful_bindings(
-    bindings: &[LocalBinding],
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
-) -> bool {
-    bindings.iter().all(|b| {
-        (matches!(b.ty, Type::Field | Type::Boolean)
-            || matches!(
-                (&b.ty, &b.value),
-                (Type::Unsigned { .. }, Expr::UnsignedLiteral { .. })
-            ))
-            && effectful_value(&b.value, witnesses)
-    })
-}
-fn effectful_action(action: &StateAction, witnesses: &HashMap<&str, &WitnessDeclaration>) -> bool {
-    match action {
-        StateAction::CellWrite { value, .. } => effectful_value(value, witnesses),
-        StateAction::Sequence { actions } => actions.iter().all(|a| effectful_action(a, witnesses)),
-        StateAction::Let { bindings, action } => {
-            effectful_bindings(bindings, witnesses) && effectful_action(action, witnesses)
-        }
-        _ => false,
-    }
-}
-fn effectful_body(
-    body: &ReturnPlan,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
-    branches: &mut usize,
-) -> bool {
-    match body {
-        ReturnPlan::Value { value } => effectful_value(value, witnesses),
-        ReturnPlan::Let { bindings, result } => {
-            effectful_bindings(bindings, witnesses) && effectful_body(result, witnesses, branches)
-        }
-        ReturnPlan::Sequence { actions, result } => {
-            actions.iter().all(|a| effectful_action(a, witnesses))
-                && effectful_body(result, witnesses, branches)
-        }
-        ReturnPlan::Conditional {
-            condition,
-            then,
-            otherwise,
-        } => {
-            *branches += 1;
-            effectful_value(condition, witnesses)
-                && effectful_body(then, witnesses, branches)
-                && effectful_body(otherwise, witnesses, branches)
-        }
-    }
-}
-
-pub(super) fn lower_effectful<'a>(
-    circuit: &StatefulCircuit,
-    ledger: &'a HashMap<&'a str, &'a LedgerField>,
-    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
-    pure: &'a HashMap<&'a str, &'a PureCircuit>,
-) -> Option<TypedPlan> {
-    let StateReturn::Effectful { body } = &circuit.return_value else {
-        return None;
-    };
-    let mut branches = 0;
-    if !circuit.actions.is_empty()
-        || circuit.result != Type::Field
-        || !circuit.parameters.iter().all(|p| p.ty == Type::Field)
-        || !effectful_body(body, witnesses, &mut branches)
-        || branches == 0
-    {
-        return None;
-    }
-    let mut plan = Plan {
-        declarations: Declarations {
-            ledger,
-            witnesses,
-            pure,
-            stateful_circuits: None,
-        },
-        evidence: EffectEvidence::default(),
-        admission: AdmissionPolicy {
-            field_cell_slot: None,
-            effectful_field_cells: true,
-            read_only_assertions: false,
-            unit_actions: false,
-            phase_reset: false,
-            composite_domain: CompositeDomain::None,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
-        },
-        evaluation: EvaluationState {
-            next: 0,
-            context_query: false,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
-        },
-    };
-    let scope = circuit
-        .parameters
-        .iter()
-        .enumerate()
-        .map(|(i, p)| {
-            let name = syn::Ident::new(&format!("__compact_param_{i}"), Span::call_site());
-            (
-                p.name.clone(),
-                TypedValue {
-                    ty: p.ty.clone(),
-                    value: syn::parse_quote!(#name),
-                },
-            )
-        })
-        .collect();
-    let mut steps = Vec::new();
-    let result = plan.return_plan(body, &scope, &mut steps)?;
-    if result.ty != circuit.result
-        || plan.evidence.cell_reads == 0
-        || plan.evidence.cell_writes == 0
-        || plan.evidence.cell_writes != plan.evidence.field_cell_writes
-        || plan.evidence.optional_cells != 0
-        || plan.evidence.opaque_cells != 0
-    {
-        return None;
-    }
-    Some(TypedPlan {
-        steps,
-        result: result.value,
-    })
-}
+pub(super) use super::recording_plan::{TypedPlan, shielded_send_result};
 
 // Read-only assertion bodies have their own admission boundary. General calls,
 // writes, cryptographic effects and non-Boolean witness results remain outside it.
+#[cfg(test)]
 fn assertion_value(
     value: &Expr,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
@@ -1387,6 +1252,7 @@ fn assertion_value(
         _ => false,
     }
 }
+#[cfg(test)]
 fn assertion_type(ty: &Type) -> bool {
     matches!(ty, Type::Unit | Type::Boolean)
         || matches!(ty, Type::Unsigned { max } if max == "255" || max == "18446744073709551615")
@@ -1452,179 +1318,14 @@ fn context_query_value(
         _ => false,
     }
 }
+#[cfg(test)]
 pub(super) fn lower_context_query<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
 ) -> Option<TypedPlan> {
-    if !circuit.parameters.is_empty()
-        || !circuit.actions.is_empty()
-        || circuit.result != (Type::Bytes { length: 32 })
-    {
-        return None;
-    }
-    let StateReturn::Expression { value } = &circuit.return_value else {
-        return None;
-    };
-    if !context_query_value(value, pure, &mut HashSet::new(), true) {
-        return None;
-    }
-    let mut plan = Plan {
-        declarations: Declarations {
-            ledger,
-            witnesses,
-            pure,
-            stateful_circuits: None,
-        },
-        evidence: EffectEvidence::default(),
-        admission: AdmissionPolicy {
-            field_cell_slot: None,
-            effectful_field_cells: false,
-            read_only_assertions: false,
-            unit_actions: false,
-            phase_reset: false,
-            composite_domain: CompositeDomain::None,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
-        },
-        evaluation: EvaluationState {
-            next: 0,
-            context_query: true,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
-        },
-    };
-    let mut steps = Vec::new();
-    let result = plan.expression(value, &Scope::new(), &mut steps)?;
-    (result.ty == circuit.result
-        && plan.evidence.kernel_self_reads > 0
-        && plan.evidence.witness_calls == 0)
-        .then_some(TypedPlan {
-            steps,
-            result: result.value,
-        })
-}
-
-fn composite_type(ty: &Type, intents: bool) -> bool {
-    match ty {
-        Type::Unit if intents => true,
-        Type::Boolean | Type::Bytes { length: 32 } => true,
-        Type::Unsigned { max } => matches!(
-            crate::unsigned_maximum(max),
-            Ok(crate::UnsignedMaximum::Small(_))
-        ),
-        Type::Struct { fields, .. } => {
-            !fields.is_empty()
-                && fields
-                    .iter()
-                    .all(|field| composite_type(&field.ty, intents))
-        }
-        _ => false,
-    }
-}
-fn composite_value(
-    value: &Expr,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
-    circuits: &HashMap<&str, &StatefulCircuit>,
-    visiting: &mut HashSet<String>,
-    intents: bool,
-) -> bool {
-    match value {
-        Expr::CreateZswapInput { coin } if intents => {
-            composite_value(coin, witnesses, circuits, visiting, intents)
-        }
-        Expr::CreateZswapOutput { coin, recipient } if intents => [coin, recipient]
-            .iter()
-            .all(|v| composite_value(v, witnesses, circuits, visiting, intents)),
-        Expr::KernelClaim { value, .. } if intents => {
-            composite_value(value, witnesses, circuits, visiting, intents)
-        }
-        Expr::Parameter { .. } | Expr::Boolean { .. } => true,
-        Expr::UnsignedLiteral { max, .. } => {
-            composite_type(&Type::Unsigned { max: max.clone() }, intents)
-        }
-        Expr::KernelSelf { ty } => *ty == contract_address_type(),
-        Expr::Default {
-            ty: ty @ Type::Struct { .. },
-        } => composite_type(ty, intents),
-        Expr::StructLiteral { ty, fields } => {
-            composite_type(ty, intents)
-                && fields
-                    .iter()
-                    .all(|field| composite_value(field, witnesses, circuits, visiting, intents))
-        }
-        Expr::Coerce { value, ty } => {
-            composite_type(ty, intents)
-                && composite_value(value, witnesses, circuits, visiting, intents)
-        }
-        Expr::UnsignedCast { value, max } => {
-            composite_type(&Type::Unsigned { max: max.clone() }, intents)
-                && composite_value(value, witnesses, circuits, visiting, intents)
-        }
-        Expr::If {
-            condition,
-            then,
-            otherwise,
-        } => [condition, then, otherwise]
-            .iter()
-            .all(|v| composite_value(v, witnesses, circuits, visiting, intents)),
-        Expr::Let { bindings, body } => {
-            bindings.iter().all(|binding| {
-                composite_type(&binding.ty, intents)
-                    && composite_value(&binding.value, witnesses, circuits, visiting, intents)
-            }) && composite_value(body, witnesses, circuits, visiting, intents)
-        }
-        Expr::WitnessCall { name, arguments } => witnesses.get(name.as_str()).is_some_and(|w| {
-            w.result
-                == (Type::Unsigned {
-                    max: u64::MAX.to_string(),
-                })
-                && w.parameters
-                    .iter()
-                    .all(|p| p.ty == (Type::Unsigned { max: "255".into() }))
-                && arguments
-                    .iter()
-                    .all(|a| composite_value(a, witnesses, circuits, visiting, intents))
-        }),
-        Expr::Call { name, arguments } => {
-            if !arguments
-                .iter()
-                .all(|a| composite_value(a, witnesses, circuits, visiting, intents))
-                || !visiting.insert(name.clone())
-            {
-                return false;
-            }
-            let valid = circuits.get(name.as_str()).is_some_and(|callee| {
-                composite_circuit(callee, witnesses, circuits, visiting, intents)
-            });
-            visiting.remove(name);
-            valid
-        }
-        _ => false,
-    }
-}
-fn composite_circuit(
-    circuit: &StatefulCircuit,
-    witnesses: &HashMap<&str, &WitnessDeclaration>,
-    circuits: &HashMap<&str, &StatefulCircuit>,
-    visiting: &mut HashSet<String>,
-    intents: bool,
-) -> bool {
-    circuit.actions.is_empty()
-        && matches!(circuit.result, Type::Struct { .. })
-        && composite_type(&circuit.result, intents)
-        && circuit.parameters.iter().all(|p| {
-            p.ty == Type::Boolean
-                || (intents
-                    && (p.ty == shielded_coin_type()
-                        || p.ty == qualified_coin_type()
-                        || p.ty == shielded_recipient_type()
-                        || p.ty == (Type::Bytes { length: 32 })))
-        })
-        && matches!(&circuit.return_value, StateReturn::Expression { value } if composite_value(value,witnesses,circuits,visiting,intents))
+    context_query_reference::lower(circuit, ledger, witnesses, pure)
 }
 
 fn shielded_unit_signature(circuit: &StatefulCircuit) -> bool {
@@ -1733,6 +1434,7 @@ fn shielded_receive_action(
     }
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_receive<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -1740,77 +1442,10 @@ pub(super) fn lower_shielded_receive<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    if !shielded_unit_signature(circuit)
-        || !matches!(
-            circuit.actions.as_slice(),
-            [StateAction::CircuitCall { .. }]
-        )
-        || !circuit.actions.iter().all(|action| {
-            shielded_receive_action(
-                action,
-                pure,
-                circuits,
-                &mut HashSet::from([circuit.name.clone()]),
-            )
-        })
-    {
-        return None;
-    }
-    let mut plan = Plan {
-        declarations: Declarations {
-            ledger,
-            witnesses,
-            pure,
-            stateful_circuits: Some(circuits),
-        },
-        evidence: EffectEvidence::default(),
-        admission: AdmissionPolicy {
-            field_cell_slot: None,
-            effectful_field_cells: false,
-            read_only_assertions: false,
-            unit_actions: true,
-            phase_reset: false,
-            composite_domain: CompositeDomain::ShieldedReceive,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
-        },
-        evaluation: EvaluationState {
-            next: 0,
-            context_query: false,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
-        },
-    };
-    let parameter = &circuit.parameters[0];
-    let scope = Scope::from([(
-        parameter.name.clone(),
-        TypedValue {
-            ty: parameter.ty.clone(),
-            value: syn::parse_quote!(__compact_param_0),
-        },
-    )]);
-    let mut steps = Vec::new();
-    for action in &circuit.actions {
-        plan.action(action, &scope, &mut steps)?;
-    }
-    (plan.evidence.kernel_self_reads == 1
-        && plan.evidence.intent_effects == 1
-        && plan.evidence.intent_queries == 1
-        && plan.evidence.witness_calls == 0
-        && plan.evidence.cell_reads == 0
-        && plan.evidence.cell_writes == 0
-        && plan.evidence.tree_writes == 0
-        && plan.evidence.set_writes == 0
-        && plan.evidence.counter_reads == 0
-        && plan.evidence.counter_writes == 0)
-        .then_some(TypedPlan {
-            steps,
-            result: syn::parse_quote!(()),
-        })
+    shielded_receive_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_terminal_returns<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -1818,30 +1453,16 @@ pub(super) fn lower_terminal_returns<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    terminal_returns::lower(circuit, ledger, witnesses, pure, circuits)
+    terminal_returns_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 // A send result is a typed pair of the sent coin and optional change. The
 // admission predicate describes the public type, not a helper/source name.
-fn shielded_send_result(ty: &Type) -> bool {
-    let Type::Struct { fields, .. } = ty else {
-        return false;
-    };
-    let [change, sent] = fields.as_slice() else {
-        return false;
-    };
-    if change.name != "change" || sent.name != "sent" || sent.ty != shielded_coin_type() {
-        return false;
-    }
-    matches!(&change.ty, Type::Struct { fields, .. }
-        if matches!(fields.as_slice(), [present, value]
-            if present.name == "is_some" && present.ty == Type::Boolean
-                && value.name == "value" && value.ty == sent.ty))
-}
 
 // Inspect every expression, including unused locals, arguments and unselected
 // branches. The Plan verifies the exact types and evaluates the ordered body;
 // this audit closes admission over its deliberately smaller effect domain.
+#[cfg(test)]
 fn shielded_send_value(
     value: &Expr,
     pure: &HashMap<&str, &PureCircuit>,
@@ -1851,6 +1472,7 @@ fn shielded_send_value(
     shielded_send_value_checked(value, pure, circuits, visiting).is_ok()
 }
 
+#[cfg(test)]
 fn shielded_send_value_checked(
     value: &Expr,
     pure: &HashMap<&str, &PureCircuit>,
@@ -2103,6 +1725,7 @@ fn shielded_plan<'a>(
     }
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_send<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2113,6 +1736,7 @@ pub(super) fn lower_shielded_send<'a>(
     lower_shielded_send_checked(circuit, ledger, witnesses, pure, circuits).into_option()
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_send_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2193,6 +1817,7 @@ pub(super) fn lower_shielded_send_checked<'a>(
     }
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_merge<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2213,6 +1838,7 @@ pub(super) fn lower_start_funding<'a>(
     start_funding::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_shielded_payout<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2223,6 +1849,7 @@ pub(super) fn lower_shielded_payout<'a>(
     shielded_payout::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_phase_reset<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2233,6 +1860,7 @@ pub(super) fn lower_phase_reset<'a>(
     phase_reset::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_unit_actions<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2240,9 +1868,10 @@ pub(super) fn lower_unit_actions<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    unit_actions::lower(circuit, ledger, witnesses, pure, circuits)
+    unit_actions_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_composite<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2250,82 +1879,10 @@ pub(super) fn lower_composite<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    let audit = |intents| {
-        composite_circuit(
-            circuit,
-            witnesses,
-            circuits,
-            &mut HashSet::from([circuit.name.clone()]),
-            intents,
-        )
-    };
-    let domain = if audit(false) {
-        CompositeDomain::Values
-    } else if audit(true) {
-        CompositeDomain::Intents
-    } else if field_observations::audit(circuit, ledger, pure, circuits) {
-        CompositeDomain::FieldObservations
-    } else {
-        return None;
-    };
-    let mut plan = Plan {
-        declarations: Declarations {
-            ledger,
-            witnesses,
-            pure,
-            stateful_circuits: Some(circuits),
-        },
-        evidence: EffectEvidence::default(),
-        admission: AdmissionPolicy {
-            field_cell_slot: None,
-            effectful_field_cells: false,
-            read_only_assertions: false,
-            unit_actions: false,
-            phase_reset: false,
-            composite_domain: domain,
-            composition_calls: None,
-            composition_lookup_sites: HashSet::new(),
-            counter_hash_helpers: false,
-        },
-        evaluation: EvaluationState {
-            next: 0,
-            context_query: false,
-            scalar_arguments: false,
-            scalar_body_depth: 0,
-            active_calls: HashSet::new(),
-        },
-    };
-    let scope = circuit
-        .parameters
-        .iter()
-        .enumerate()
-        .map(|(index, p)| {
-            let name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
-            (
-                p.name.clone(),
-                TypedValue {
-                    ty: p.ty.clone(),
-                    value: syn::parse_quote!(#name),
-                },
-            )
-        })
-        .collect();
-    let StateReturn::Expression { value } = &circuit.return_value else {
-        return None;
-    };
-    let mut steps = Vec::new();
-    let result = plan.expression(value, &scope, &mut steps)?;
-    (result.ty == circuit.result
-        && (domain != CompositeDomain::Intents
-            || (plan.evidence.intent_effects > 0
-                && plan.evidence.kernel_self_reads + plan.evidence.intent_queries > 0))
-        && (domain != CompositeDomain::FieldObservations || plan.evidence.cell_reads > 0))
-        .then_some(TypedPlan {
-            steps,
-            result: result.value,
-        })
+    composite_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2591,6 +2148,7 @@ mod shielded_receive_tests;
 #[cfg(test)]
 mod shielded_send_tests;
 
+#[cfg(test)]
 pub(super) fn lower_immediate_shielded_send<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2602,6 +2160,7 @@ pub(super) fn lower_immediate_shielded_send<'a>(
 }
 
 /// Guarded receive, optional historical merge and typed Cell update policy.
+#[cfg(test)]
 pub(super) fn lower_guarded_deposit<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2612,6 +2171,7 @@ pub(super) fn lower_guarded_deposit<'a>(
     guarded_deposit::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_funded_mint<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2623,6 +2183,7 @@ pub(super) fn lower_funded_mint<'a>(
 }
 
 /// Historical payout followed by a closed literal-true reset helper.
+#[cfg(test)]
 pub(super) fn lower_reset_payout<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2633,6 +2194,7 @@ pub(super) fn lower_reset_payout<'a>(
     reset_payout::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_voting_commit<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2643,6 +2205,7 @@ pub(super) fn lower_voting_commit<'a>(
     voting_commit::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_unit_composition_checked<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2653,6 +2216,7 @@ pub(super) fn lower_unit_composition_checked<'a>(
     composition::lower_checked(circuit, ledger, witnesses, pure, circuits)
 }
 
+#[cfg(test)]
 pub(super) fn lower_jubjub_values<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2660,5 +2224,5 @@ pub(super) fn lower_jubjub_values<'a>(
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
-    jubjub_values::lower(circuit, ledger, witnesses, pure, circuits)
+    jubjub_reference::lower(circuit, ledger, witnesses, pure, circuits)
 }

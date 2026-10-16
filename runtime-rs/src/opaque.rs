@@ -48,6 +48,10 @@ impl From<OpaqueString> for Value {
 }
 
 impl CellValue for OpaqueString {
+    fn validate_cell_value(&self) -> Result<(), CompactError> {
+        validate_opaque_input(self.0.as_bytes())
+    }
+
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
         if value.0.len() != 1 {
             return Err(CompactError::InvalidLedgerCell(
@@ -113,6 +117,10 @@ impl From<OpaqueBytes> for Value {
 }
 
 impl CellValue for OpaqueBytes {
+    fn validate_cell_value(&self) -> Result<(), CompactError> {
+        validate_opaque_input(&self.0)
+    }
+
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
         if value.0.len() != 1 {
             return Err(CompactError::InvalidLedgerCell(
@@ -156,5 +164,17 @@ impl BinaryHashRepr for OpaqueBytes {
 
     fn binary_len(&self) -> usize {
         self.0.len()
+    }
+}
+
+// Official Vec<u8> -> FAB conversion normalizes trailing zeros. Fallible ledger
+// boundaries reject before that consuming conversion can discard caller data.
+fn validate_opaque_input(bytes: &[u8]) -> Result<(), CompactError> {
+    if bytes.last() == Some(&0) {
+        Err(CompactError::InvalidLedgerCell(
+            "opaque ledger input has trailing zero bytes".into(),
+        ))
+    } else {
+        Ok(())
     }
 }

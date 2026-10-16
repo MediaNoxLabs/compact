@@ -1,0 +1,587 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "calls",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next129",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "680564733841876926926749214863536422911"
+      },
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "next248",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+      },
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "name": "marker",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 10,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "cast129",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "unsigned",
+            "max": "680564733841876926926749214863536422911"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Converted",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Converted",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "field_cast",
+              "value": {
+                "kind": "parameter",
+                "name": "input"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_7",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_7"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "name": "cast248",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "unsigned",
+            "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Converted",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Converted",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "field_cast",
+              "value": {
+                "kind": "parameter",
+                "name": "input"
+              }
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_6",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_6"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "name": "witness129",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Checked",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "marker",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "input",
+              "ty": {
+                "kind": "unsigned",
+                "max": "680564733841876926926749214863536422911"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "next129",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "680564733841876926926749214863536422911"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "7",
+                    "max": "680564733841876926926749214863536422911"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "680564733841876926926749214863536422911"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "input"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "after",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "marker",
+                    "arguments": [
+                    ]
+                  }
+                }
+              ],
+              "body": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Checked",
+                  "fields": [
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "name": "marker",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "parameter",
+                    "name": "value"
+                  },
+                  {
+                    "kind": "parameter",
+                    "name": "after"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_5",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_5"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 19,
+        "column": 1
+      }
+    },
+    {
+      "name": "witness248",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Checked",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "marker",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "input",
+              "ty": {
+                "kind": "unsigned",
+                "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "selected"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "next248",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_literal",
+                    "value": "7",
+                    "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "452312848583266388373324160190187140051835877600158453279131187530910662655"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "input"
+                  }
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "after",
+                  "ty": {
+                    "kind": "field"
+                  },
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "marker",
+                    "arguments": [
+                    ]
+                  }
+                }
+              ],
+              "body": {
+                "kind": "struct_literal",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Checked",
+                  "fields": [
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "name": "marker",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                },
+                "fields": [
+                  {
+                    "kind": "parameter",
+                    "name": "value"
+                  },
+                  {
+                    "kind": "parameter",
+                    "name": "after"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_4",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              },
+              "value": {
+                "kind": "unsigned_literal",
+                "value": "1",
+                "max": "65535"
+              }
+            }
+          ],
+          "action": {
+            "kind": "counter_increment",
+            "field": "calls",
+            "index": 0,
+            "amount": {
+              "kind": "parameter",
+              "name": "tmp_4"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "effect_plan_wide_field_cast.compact",
+        "line": 26,
+        "column": 1
+      }
+    }
+  ]
+}

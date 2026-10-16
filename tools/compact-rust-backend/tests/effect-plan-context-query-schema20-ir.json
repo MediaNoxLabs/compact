@@ -1,0 +1,240 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+  ],
+  "witnesses": [
+    {
+      "name": "opening",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "effect_plan_context_query.compact",
+        "line": 15,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "direct_commit",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "persistent_commit",
+          "value": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "kernel_self",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "ContractAddress",
+                    "fields": [
+                      {
+                        "name": "bytes",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                },
+                "field": "bytes",
+                "index": 0
+              },
+              {
+                "kind": "bytes_literal",
+                "bytes": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  101,
+                  120,
+                  116,
+                  45,
+                  113,
+                  117,
+                  101,
+                  114,
+                  121,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          },
+          "opening": {
+            "kind": "struct_field",
+            "value": {
+              "kind": "kernel_self",
+              "ty": {
+                "kind": "struct",
+                "name": "ContractAddress",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            },
+            "field": "bytes",
+            "index": 0
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_context_query.compact",
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "name": "no_context",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "persistent_commit",
+          "value": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "bytes_literal",
+                "bytes": [
+                  108,
+                  101,
+                  102,
+                  116,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "kind": "bytes_literal",
+                "bytes": [
+                  114,
+                  105,
+                  103,
+                  104,
+                  116,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          },
+          "opening": {
+            "kind": "witness_call",
+            "name": "opening",
+            "arguments": [
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "effect_plan_context_query.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ]
+}

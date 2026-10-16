@@ -18,18 +18,25 @@
 
 #[path = "../bin_support/input.rs"]
 mod input;
+#[path = "../bin_support/staged_output.rs"]
+mod staged_output;
+use staged_output::StagedOutput;
+#[path = "../bin_support/source_diagnostic.rs"]
+mod source_diagnostic;
+#[path = "../bin_support/source_maps.rs"]
+mod source_maps;
 
 use std::env;
 use std::error::Error;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use std::process::{self, Command};
-use std::time::{SystemTime, UNIX_EPOCH};
 
-use compact_rust_backend::{compatibility, ir::Contract, render_with_proof_capabilities};
-use fs2::FileExt;
+use compact_rust_backend::{
+    ConfiguredFrontend, FrontendError, FrontendRequest, RenderOptions, compatibility, ir::Contract,
+};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
@@ -439,215 +446,6 @@ fn refresh_manifest(output: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Keep failed Rust-target runs out of the requested output directory.
-struct StagedOutput {
-    path: PathBuf,
-    published: bool,
-    _lock: fs::File,
-}
-
-fn interrupted_backup(name: &str, candidate: &OsStr) -> bool {
-    let prefix = format!(".{name}.compactc-stage-");
-    let Some(parts) = candidate
-        .to_str()
-        .and_then(|candidate| candidate.strip_prefix(&prefix))
-        .and_then(|candidate| candidate.strip_suffix("-previous"))
-    else {
-        return false;
-    };
-    let numbers = parts.split('-').collect::<Vec<_>>();
-    numbers.len() == 3
-        && numbers
-            .iter()
-            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
-}
-
-fn recover_interrupted_output(
-    output: &Path,
-    parent: &Path,
-    name: &str,
-) -> Result<(), Box<dyn Error>> {
-    let mut backups = Vec::new();
-    for entry in fs::read_dir(parent)? {
-        let entry = entry?;
-        if !interrupted_backup(name, &entry.file_name()) {
-            continue;
-        }
-        let path = entry.path();
-        let metadata = fs::symlink_metadata(&path)?;
-        if !metadata.is_dir() || metadata.file_type().is_symlink() {
-            return Err(format!(
-                "interrupted Rust output backup is not a directory: {}",
-                path.display()
-            )
-            .into());
-        }
-        backups.push(path);
-    }
-    if backups.len() > 1 {
-        return Err(format!(
-            "multiple interrupted Rust output backups for {}: {}",
-            output.display(),
-            backups
-                .iter()
-                .map(|path| path.display().to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-        )
-        .into());
-    }
-    match fs::symlink_metadata(output) {
-        Ok(metadata) if !metadata.is_dir() || metadata.file_type().is_symlink() => {
-            return Err(format!(
-                "Rust output must be a directory, not a file or symlink: {}",
-                output.display()
-            )
-            .into());
-        }
-        Ok(_) => {
-            if let Some(backup) = backups.first() {
-                eprintln!(
-                    "compactc: warning: previous Rust output remains at {} after an interrupted publication",
-                    backup.display()
-                );
-            }
-        }
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            if let Some(backup) = backups.first() {
-                fs::rename(backup, output)?;
-            }
-        }
-        Err(error) => return Err(error.into()),
-    }
-    Ok(())
-}
-
-impl StagedOutput {
-    fn new(output: &Path) -> Result<Self, Box<dyn Error>> {
-        let Some(Component::Normal(name)) = output.components().next_back() else {
-            return Err(
-                "Rust output must name a directory, not current or parent directory".into(),
-            );
-        };
-        let parent = output
-            .parent()
-            .filter(|parent| !parent.as_os_str().is_empty())
-            .unwrap_or_else(|| Path::new("."));
-        fs::create_dir_all(parent)?;
-        let name = name.to_string_lossy();
-        let lock_path = parent.join(format!(".{name}.compactc.lock"));
-        match fs::symlink_metadata(&lock_path) {
-            Ok(metadata) if !metadata.is_file() || metadata.file_type().is_symlink() => {
-                return Err(format!(
-                    "Rust output lock must be a regular file, not a directory or symlink: {}",
-                    lock_path.display()
-                )
-                .into());
-            }
-            Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
-            _ => {}
-        }
-        let lock = fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(&lock_path)?;
-        FileExt::lock_exclusive(&lock)?;
-        recover_interrupted_output(output, parent, &name)?;
-        let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-        for attempt in 0..100 {
-            let path = parent.join(format!(
-                ".{}.compactc-stage-{}-{nonce}-{attempt}",
-                name,
-                process::id()
-            ));
-            match fs::create_dir(&path) {
-                Ok(()) => {
-                    return Ok(Self {
-                        path,
-                        published: false,
-                        _lock: lock,
-                    });
-                }
-                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
-                Err(error) => return Err(error.into()),
-            }
-        }
-        Err("could not create a unique Rust output staging directory".into())
-    }
-
-    fn path(&self) -> &Path {
-        &self.path
-    }
-
-    fn publish(mut self, output: &Path) -> Result<(), Box<dyn Error>> {
-        match fs::symlink_metadata(output) {
-            Ok(metadata) => {
-                if !metadata.is_dir() || metadata.file_type().is_symlink() {
-                    return Err(format!(
-                        "Rust output changed to a file or symlink before publication: {}",
-                        output.display()
-                    )
-                    .into());
-                }
-                let backup = self.path.with_file_name(format!(
-                    "{}-previous",
-                    self.path
-                        .file_name()
-                        .expect("staged output has a filename")
-                        .to_string_lossy()
-                ));
-                match fs::symlink_metadata(&backup) {
-                    Ok(_) => {
-                        return Err(format!(
-                            "Rust output backup path already exists: {}",
-                            backup.display()
-                        )
-                        .into());
-                    }
-                    Err(error) if error.kind() != io::ErrorKind::NotFound => {
-                        return Err(error.into());
-                    }
-                    Err(_) => {}
-                }
-                fs::rename(output, &backup)?;
-                if let Err(error) = fs::rename(&self.path, output) {
-                    if let Err(restore) = fs::rename(&backup, output) {
-                        return Err(format!(
-                            "could not publish Rust output: {error}; previous output remains at {} (restore failed: {restore})",
-                            backup.display()
-                        )
-                        .into());
-                    }
-                    return Err(error.into());
-                }
-                self.published = true;
-                if let Err(error) = fs::remove_dir_all(&backup) {
-                    eprintln!(
-                        "compactc: warning: generated output is complete, but could not remove previous output at {}: {error}",
-                        backup.display()
-                    );
-                }
-            }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                fs::rename(&self.path, output)?;
-                self.published = true;
-            }
-            Err(error) => return Err(error.into()),
-        }
-        Ok(())
-    }
-}
-
-impl Drop for StagedOutput {
-    fn drop(&mut self) {
-        if !self.published {
-            let _ = fs::remove_dir_all(&self.path);
-        }
-    }
-}
-
 fn run() -> Result<i32, Box<dyn Error>> {
     let (targets, mut args) = select_targets(env::args_os().skip(1).collect())?;
     let compiler = scheme_compiler()?;
@@ -695,26 +493,39 @@ fn run() -> Result<i32, Box<dyn Error>> {
     let source = PathBuf::from(args[args.len() - 2].clone());
     let output = PathBuf::from(args[args.len() - 1].clone());
     let staging = StagedOutput::new(&output)?;
-    let output_index = args.len() - 1;
-    args[output_index] = staging.path().as_os_str().to_os_string();
-    let insert_at = args.len() - 2;
-    args.insert(insert_at, OsString::from("--emit-rust-ir"));
+    // The invocation owns an exclusive child inside our existing locked stage.
+    args.truncate(args.len() - 2);
     if !targets.ts {
-        args.insert(insert_at + 1, OsString::from("--skip-ts"));
+        args.push(OsString::from("--skip-ts"));
     }
-    let status = Command::new(compiler).args(&args).status()?;
-    if !status.success() {
-        return Ok(status.code().unwrap_or(1));
-    }
-
-    let contract_dir = staging.path().join("contract");
+    let artifacts = match ConfiguredFrontend::new(compiler.as_os_str()).invoke(FrontendRequest {
+        source: source.clone(),
+        arguments: args,
+        stage_parent: staging.path().to_path_buf(),
+    }) {
+        Ok(artifacts) => artifacts,
+        Err(FrontendError::ProcessExit { code }) => return Ok(code.unwrap_or(1)),
+        Err(error) => return Err(error.into()),
+    };
+    let invocation_contract = artifacts.output_dir().join("contract");
+    // Preserve the old IR-decode -> proof-info-decode -> native-check priority.
+    // These extra bounded parses perform no semantic admission or rendering.
     let ir: Contract = serde_json::from_slice(&input::read(fs::File::open(
-        contract_dir.join("compact-rust-ir.json"),
+        invocation_contract.join("compact-rust-ir.json"),
     )?)?)?;
+    drop(ir);
     let contract_info: Value = serde_json::from_slice(&input::read(fs::File::open(
-        staging.path().join("compiler/contract-info.json"),
+        artifacts.output_dir().join("compiler/contract-info.json"),
     )?)?)?;
-    let rendered = render_with_proof_capabilities(&ir, &contract_info)?;
+    drop(contract_info);
+    let issued = artifacts
+        .render(RenderOptions {
+            apply_frontend_proof_metadata: true,
+            // Keep the existing public recording predicate and error formatting below.
+            require_recording: false,
+        })
+        .map_err(|error| error as Box<dyn Error>)?;
+    let rendered = issued.rendered();
     if targets.require_recording {
         let unavailable = rendered
             .capabilities
@@ -750,14 +561,22 @@ fn run() -> Result<i32, Box<dyn Error>> {
             })
             .collect::<Vec<_>>();
         if !unavailable.is_empty() {
-            return Err(format!(
-                "--rust-require-recording failed:\n{}",
-                unavailable.join("\n")
-            )
-            .into());
+            return Err(Box::new(source_diagnostic::RecordingGateFailure {
+                message: format!(
+                    "--rust-require-recording failed:\n{}",
+                    unavailable.join("\n")
+                ),
+                notes: source_diagnostic::recording_notes(issued.recording_diagnostics()),
+            }));
         }
     }
-    fs::write(contract_dir.join("lib.rs"), rendered.source)?;
+    // Metadata protocol status and retained IR/origin/proof bytes are checked
+    // before entries move; this parent is empty and remains under its old lock.
+    let original_frontend = artifacts.output_dir().to_path_buf();
+    artifacts.promote_into(&issued, staging.path())?;
+    source_maps::rebase(staging.path(), &original_frontend, &output)?;
+    let contract_dir = staging.path().join("contract");
+    fs::write(contract_dir.join("lib.rs"), &rendered.source)?;
     fs::write(
         contract_dir.join("rust-capabilities.json"),
         serde_json::to_vec_pretty(&rendered.capabilities)?,
@@ -825,6 +644,7 @@ fn main() {
         Ok(code) => process::exit(code),
         Err(error) => {
             eprintln!("compactc: {error}");
+            source_diagnostic::failure("compactc", error.as_ref());
             process::exit(1);
         }
     }

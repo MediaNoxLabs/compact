@@ -53,3 +53,17 @@ python3 -B -m unittest discover \
 
 These controls are separate from the frozen original974-case registry. They
 exercise result corruption, exact accounting and source refusal.
+
+## Historical path-validation results
+
+The [historical results summary](historical-path-validation-benchmark.md) records
+a bounded investigation on a frozen, separately retained historical runner.
+Three paired representative processes measured a 10.34% median elapsed-time
+reduction. This is not a current-runner or full-suite speedup claim.
+
+The experimental patch, measurement driver, raw results and detailed review are
+retained in the midnight vault and local evidence archive. They are not shipped
+as runnable tooling in this checkout. The current runner is unchanged; the
+complete-suite command above still requires its explicitly selected historical
+inputs. Future changes to that machinery require qualification under the policy
+above.

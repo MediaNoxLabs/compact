@@ -23,11 +23,7 @@ description = "Typed Rust syntax backend for Compact"
 repository = "https://github.com/MediaNoxLabs/compact"
 homepage = "https://github.com/MediaNoxLabs/compact"
 readme = "README.md"
-include = [
-  "Cargo.toml", "README.md", "src/**", "tests/**", "fixtures/**",
-  "recording_admission_inventory.encoding-583.json",
-  "recording_admission_inventory.resource-diagnostics-597.json",
-]
+include = ["Cargo.toml", "README.md", "src/**", "tests/**", "fixtures/**", "recording_admission_inventory.encoding-583.json", "recording_admission_inventory.resource-diagnostics-597.json"]
 
 [features]
 # Compatibility switch retained for prototype property/resource test cohorts.

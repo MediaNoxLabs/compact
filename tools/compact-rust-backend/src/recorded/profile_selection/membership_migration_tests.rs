@@ -247,42 +247,43 @@ fn internal_helpers_keep_the_same_interface_and_checked_owner() {
     assert_eq!(rows[0]["helper"], true);
 }
 #[test]
-fn earlier_organizer_and_effectful_admission_remain_authoritative() {
+fn retired_organizer_and_effectful_admission_keep_checked_priority() {
     for (json, name, owner) in [
         (
             include_str!("../../../tests/welcome-organizer-schema13-ir.json"),
-            None,
+            "add_participant",
             "algebra.ordinary",
         ),
         (
             include_str!("../../../tests/effectful-return-schema20-ir.json"),
-            None,
+            "choose",
             "effectful.checked-migration",
         ),
     ] {
         let mut c: Contract = serde_json::from_str(json).unwrap();
         c.schema_version = crate::ir::SCHEMA_VERSION;
-        let name = name.unwrap_or_else(|| {
-            c.stateful_circuits
-                .iter()
-                .find(|r| !r.internal)
-                .unwrap()
-                .name
-                .as_str()
-        });
         let row = emitted(&c, name);
         assert_eq!(row["body_owner"], owner);
-        // The organizer was retired in #590. Its current ordinary
-        // owner runs once; the earlier effectful route still bypasses it.
-        let expected_ordinary_attempts = usize::from(owner == "algebra.ordinary");
+        // #590 retires the organizer recognizer. Checked ordinary admission owns the
+        // named participant root; the earlier effectful route still bypasses it.
+        let a = attempts(&row);
         assert_eq!(
-            attempts(&row)
-                .iter()
+            a.iter()
                 .filter(|&&route| route == "algebra.ordinary")
                 .count(),
-            expected_ordinary_attempts
+            usize::from(owner == "algebra.ordinary")
         );
-        assert!(!attempts(&row).contains(&"organizer.organizer"));
+        if owner == "algebra.ordinary" {
+            // Public emission also probes retained guards after selection.
+            // Only the checked selector must stop at its first admitted owner.
+            let selected: Vec<_> = a
+                .iter()
+                .copied()
+                .filter(|route| route.starts_with("algebra."))
+                .collect();
+            assert_eq!(selected, ["algebra.ordinary"]);
+        }
+        assert!(!a.iter().any(|route| route.starts_with("organizer.")));
     }
 }
 #[test]

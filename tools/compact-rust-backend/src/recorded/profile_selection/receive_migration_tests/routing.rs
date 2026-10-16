@@ -44,7 +44,7 @@ fn actual_receive_owner_is_once_and_stops_later_profiles() {
     assert!(!a.contains(&"algebra.voting-commit"));
 }
 #[test]
-fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
+fn earlier_membership_and_composite_owners_prevent_receive_attempts() {
     let mut organizer: Contract = serde_json::from_str(include_str!(
         "../../../../tests/welcome-organizer-schema13-ir.json"
     ))
@@ -53,10 +53,12 @@ fn earlier_organizer_and_composite_owner_prevent_receive_attempts() {
     let root = organizer
         .stateful_circuits
         .iter()
-        .find(|r| !r.internal)
+        .find(|r| r.name == "add_participant" && !r.internal)
         .unwrap();
     let row = legacy_selected_trace(&organizer, root);
     assert_eq!(row["body_owner"], "algebra.membership");
+    // Membership is first and stops selection after the organizer retirement.
+    assert_eq!(attempts(&row), ["algebra.membership"]);
     assert!(!attempts(&row).contains(&"algebra.shielded-receive"));
     let composite: Contract = serde_json::from_str(include_str!(
         "../../../../tests/field-observation-schema20-ir.json"

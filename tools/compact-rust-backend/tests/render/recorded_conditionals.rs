@@ -594,7 +594,10 @@ fn unsigned_ternary_comparison_records_typed_literal_and_parameter_arms() {
     contract.stateful_circuits[0]
         .parameters
         .retain(|p| p.name != "y");
-    assert!(render_with_capabilities(&contract).is_err());
+    assert!(matches!(
+        render_with_capabilities(&contract),
+        Err(compact_rust_backend::RenderError::UnknownParameter(name)) if name == "y"
+    ));
 }
 
 #[test]

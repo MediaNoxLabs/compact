@@ -506,28 +506,53 @@ fn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() 
         serde_json::from_str(include_str!("../schnorr-attestation-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let reported = render_with_capabilities(&contract).unwrap();
-    for name in ["verifyAttestation", "acceptAttestation"] {
-        assert!(
-            reported
-                .capabilities
-                .circuits
-                .iter()
-                .find(|c| c.name == name)
-                .unwrap()
-                .recorded
+    // The old local-helper renderer is retained as a test-only purity oracle.
+    // Public recording now inlines independently checked typed helper effects.
+    let assert_inline = |body: &str, increments: usize| {
+        let operations = [
+            "ledger_slots :: open . record_read",
+            "ledger_slots :: attestorKey . record_read",
+            "runtime :: transient_hash (",
+            "try_witness_metered",
+            "runtime :: ec_mul_generator (",
+            "runtime :: ec_mul (",
+            "runtime :: ec_add (",
+        ];
+        let positions: Vec<_> = operations
+            .into_iter()
+            .map(|operation| {
+                assert_eq!(body.matches(operation).count(), 1, "{operation}");
+                body.find(operation).unwrap()
+            })
+            .collect();
+        assert!(positions.windows(2).all(|pair| pair[0] < pair[1]));
+        assert_eq!(
+            body.matches("ledger_slots :: acceptedCount . record_increment")
+                .count(),
+            increments
         );
-    }
-    let verification = generated_body(&reported.source, "recorded", "verifyAttestation");
-    for operation in [
-        "ledger_slots :: open . record_read",
-        "ledger_slots :: attestorKey . record_read",
-        "runtime :: transient_hash",
-        "try_witness_metered",
-        "runtime :: ec_mul_generator",
-        "runtime :: ec_mul",
-        "runtime :: ec_add",
-    ] {
-        assert!(verification.contains(operation), "missing {operation}");
+        assert!(!body.contains("call_local"));
+    };
+    for name in ["verifyAttestation", "acceptAttestation"] {
+        let capability = reported
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == name)
+            .unwrap();
+        assert!(capability.recorded && capability.observed_call);
+        assert!(capability.recording_unavailable.is_none());
+        assert!(capability.observed_call_unavailable.is_none());
+        let body = generated_body(&reported.source, "recorded", name);
+        assert_inline(&body, if name == "acceptAttestation" { 1 } else { 0 });
+        if name == "acceptAttestation" {
+            assert!(
+                body.find("runtime :: ec_add (").unwrap()
+                    < body
+                        .find("ledger_slots :: acceptedCount . record_increment")
+                        .unwrap()
+            );
+        }
     }
 
     let mut effectful = contract.clone();
@@ -541,21 +566,24 @@ fn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() 
         index: 1,
         amount: CounterAmount::Literal { value: 1 },
     });
-    // The changed source adds a real public effect. Checked composition must
-    // retain it; this is no longer an unsupported local-helper shape.
+    // The helper's added public increment must execute once after verification.
     let effectful = render_with_capabilities(&effectful).unwrap();
+    let capability = effectful
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "verifyAttestation")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
+    assert!(capability.observed_call_unavailable.is_none());
+    let verification = generated_body(&effectful.source, "recorded", "verifyAttestation");
+    assert_inline(&verification, 1);
     assert!(
-        effectful
-            .capabilities
-            .circuits
-            .iter()
-            .find(|c| c.name == "verifyAttestation")
-            .unwrap()
-            .recorded
-    );
-    assert!(
-        generated_body(&effectful.source, "recorded", "verifyAttestation")
-            .contains("ledger_slots :: acceptedCount . record_increment")
+        verification.find("runtime :: ec_add (").unwrap()
+            < verification
+                .find("ledger_slots :: acceptedCount . record_increment")
+                .unwrap()
     );
 
     let mut read_opening = contract.clone();
@@ -580,19 +608,26 @@ fn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() 
             }),
         },
     });
+    // Read the real opening before the commitment; do not hide the read in a
+    // native call_local callback or mistake it for the original pure helper.
     let read_opening = render_with_capabilities(&read_opening).unwrap();
-    assert!(
-        read_opening
-            .capabilities
-            .circuits
-            .iter()
-            .find(|c| c.name == "verifyAttestation")
-            .unwrap()
-            .recorded
-    );
+    let capability = read_opening
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "verifyAttestation")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
+    assert!(capability.observed_call_unavailable.is_none());
     let verification = generated_body(&read_opening.source, "recorded", "verifyAttestation");
-    assert!(verification.contains("ledger_slots :: hidden . record_read"));
-    assert!(verification.contains("runtime :: transient_commit"));
+    assert_inline(&verification, 0);
+    let read = "ledger_slots :: hidden . record_read";
+    let commit = "runtime :: transient_commit (";
+    assert_eq!(verification.matches(read).count(), 1);
+    assert_eq!(verification.matches(commit).count(), 1);
+    assert!(verification.find("runtime :: ec_add (").unwrap() < verification.find(read).unwrap());
+    assert!(verification.find(read).unwrap() < verification.find(commit).unwrap());
 
     let mut wrong_key = contract.clone();
     let key = wrong_key
@@ -614,16 +649,26 @@ fn schnorr_helpers_compose_typed_public_effects_and_validate_declared_sources() 
     // The legacy audited-local profile still refuses this shape (its module test).
     // Checked composition admits the actual key read and local verifier,
     // without inventing the removed source guard.
-    assert!(
-        render_with_capabilities(&missing_guard)
-            .unwrap()
-            .capabilities
-            .circuits
-            .iter()
-            .find(|c| c.name == "verifyAttestation")
-            .unwrap()
-            .recorded
+    let missing_guard = render_with_capabilities(&missing_guard).unwrap();
+    let capability = missing_guard
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "verifyAttestation")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
+    assert!(capability.observed_call_unavailable.is_none());
+    let verification = generated_body(&missing_guard.source, "recorded", "verifyAttestation");
+    assert!(!verification.contains("ledger_slots :: open . record_read"));
+    assert_eq!(
+        verification
+            .matches("ledger_slots :: attestorKey . record_read")
+            .count(),
+        1
     );
+    assert_eq!(verification.matches("try_witness_metered").count(), 1);
+    assert!(!verification.contains("call_local"));
 
     let mut unknown = contract.clone();
     let helper = unknown

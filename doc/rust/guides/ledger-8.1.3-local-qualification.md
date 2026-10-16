@@ -43,8 +43,10 @@ receipt for its frozen `ab132650` epoch and external inputs. Its Git metadata
 incident remains disclosed; continuous metadata invariance is not claimed.
 It is not current language coverage or a formal proof. The [local #508 closure report](../recording-effect-algebra/closure-report.md)
 records the composed source/evidence joins, meaningful signed contribution
-history and separately recorded final acceptance. The [historical benchmark scope](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md)
-retains the exact opt-in artifact and measurement limits.
+history and separately recorded final acceptance. The [historical results summary](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md)
+records the three-case measurement and its limits. The experimental patch,
+measurement driver and detailed evidence remain archived outside this checkout;
+no path-validation optimization is enabled in the current runner.
 
 The ordinary full gate selects [explicit retained conformance baseline inputs](retained-conformance-baseline.md)
 for its one original repository-baseline law. Its historical positive result does

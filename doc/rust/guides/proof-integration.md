@@ -31,6 +31,15 @@ Names/types here stand for the particular generated circuit and caller-owned inp
 
 The retained 0.3.0 compatibility policy supports `ledger-transaction` within its exact recorded/proof evidence on native ledger8.0.3. Current source uses ledger8.1.3; its [local qualification guide](ledger-8.1.3-local-qualification.md) separates source selection from retained proof/application epochs. These documentation updates do not rerun every retained application. It does not qualify network deployment, arbitrary funded applications, browser proving or every possible composition. ADR0285/#409 subsequently passed its scoped external-consumer controls at4c8aebc3; the candidate and audit dispositions are recorded separately in [candidate qualification](candidate-qualification.md).
 
+## Historical tooling evidence
+
+The [historical path-validation results](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md)
+summarize a separately retained runner experiment. Its patch and measurement
+driver are not distributed in this checkout. The three-case elapsed-time result
+and frozen historical qualification do not establish current proof performance,
+proof verification or ledger application. Use the maintained proof harnesses
+above for those operations and preserve their circuit/key/runtime bindings.
+
 ## Admit encoded state and verifier inputs
 
 The `transaction` module exposes `EncodedSizeLimit::new(max_bytes)`, `ObservedContractState::decode_with_limit(address, bytes, observation, limit)` and `decode_verifier_key_with_limit(bytes, limit)`. Use `EncodedSizeLimit::default()` for the generous **64 MiB** opt-in preset, or `EncodedSizeLimit::new(max_bytes)` for a deployment-specific limit. `max_bytes()` exposes the selected budget. The preset has substantial headroom above the retained ledger8 state/verifier corpus; it is not a ledger protocol maximum. Larger legitimate states can use an explicit override. Apply transport acquisition limits before allocating the input slice. Legacy decoders do not automatically acquire this policy.

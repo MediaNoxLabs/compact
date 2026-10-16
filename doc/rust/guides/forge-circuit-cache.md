@@ -231,3 +231,20 @@ Complete final runner processes took 9.570s cold and 5.438s restored. These numb
 uncached qualification and created the snapshot. Helper job elapsed time also
 includes its source/tool/parameter checks, not just Forge preparation. No hosted
 cache transfer or hosted timing was measured.
+
+### CI cost controls
+
+The optional proof workflow filters pushes and pull requests to compiler/runtime,
+backend and proof inputs, fixtures, locked dependencies, Nix definitions and its
+own workflow. Compiler source inputs also include `third_party/compiler` and
+`srcMaps`. It does not encode temporary stack branch names. Documentation-only
+changes outside those inputs do not start the macOS lane; explicit dispatch remains
+available after GitHub registers the workflow. Required Rust-AST checks have no
+path filters.
+
+The Forge lane caches only Cargo registry/git downloads, public parameters and
+bounded stopped Forge snapshots. It no longer caches the entire macOS target
+directory or keys a build cache on every workspace Rust file. This reduces cache
+churn and storage pressure; the actual hosted time trade-off must be measured.
+The default Darwin Chez fix is already present in the AST line (`159d4bc51a`);
+the pinned compiler uses `chez = pkgs.chez` rather than the obsolete LLVM18 override.

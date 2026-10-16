@@ -8,9 +8,48 @@ on:
   workflow_dispatch:
   push:
     branches: [codex/rust-backend-ast]
+    paths:
+      - 'compiler/**'
+      - 'third_party/compiler/**'
+      - 'srcMaps/**'
+      - 'runtime-rs/**'
+      - 'runtime-rs-macros/**'
+      - 'testkit-rs/**'
+      - 'tools/compact-rust-backend/**'
+      - 'tools/compact-rust-proof-smoke/**'
+      - 'tests-rust-backend/**'
+      - 'examples/rust_backend/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '_sources/**'
+      - 'nix/**'
+      - '.github/actions/**'
+      - '.github/workflows/forge-local-ci.yml'
+
   pull_request:
-    # Exercise the second PR while it is stacked on the public-gates slice.
-    branches: [codex/rust-backend-ast, codex/rust-ast-public-gates]
+    # Optional proof qualification only for inputs that affect this lane.
+    # No temporary stack branch names; required checks stay unconditional.
+    paths:
+      - 'compiler/**'
+      - 'third_party/compiler/**'
+      - 'srcMaps/**'
+      - 'runtime-rs/**'
+      - 'runtime-rs-macros/**'
+      - 'testkit-rs/**'
+      - 'tools/compact-rust-backend/**'
+      - 'tools/compact-rust-proof-smoke/**'
+      - 'tests-rust-backend/**'
+      - 'examples/rust_backend/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '_sources/**'
+      - 'nix/**'
+      - '.github/actions/**'
+      - '.github/workflows/forge-local-ci.yml'
 
 permissions: {}
 concurrency:
@@ -73,15 +112,14 @@ jobs:
             echo "ZKIR=$zkir/bin/zkir"
           } >> "$GITHUB_ENV"
           echo "$zkir/bin" >> "$GITHUB_PATH"
-      - name: Cache build inputs separately from circuit material
+      - name: Cache dependency downloads separately from circuit material
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            ${{ env.CARGO_TARGET_DIR }}
-          key: forge-proof-build-${{ runner.os }}-${{ runner.arch }}-1.99.0-${{ hashFiles('Cargo.lock', 'Cargo.toml', '**/*.rs') }}
+          key: forge-proof-downloads-${{ runner.os }}-${{ runner.arch }}-1.99.0-${{ hashFiles('Cargo.lock') }}
       - name: Build proof consumer and authenticate official ledger fixtures
         run: |
           cargo build --locked -p compact-rust-proof-smoke

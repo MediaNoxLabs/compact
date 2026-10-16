@@ -30,3 +30,14 @@ JubjubPointX. Baseline generation is not a runtime or proof result. No new runti
 API, curve arithmetic, TS oracle capture, proof, network or universal curve
 coverage is claimed by these tests. Current execution receipts are kept in the
 milestone evidence outside this fixture.
+
+## Historical tool provenance labels
+
+The three `baseline_tools[].path` fields in `provenance.json` are opaque retained
+content identities, not executable locations or distributed binaries. This finite
+metadata projection preserves every tool hash and byte length, source/IR and
+baseline identity, generation exit status and original refusal/qualification
+limits. It is separate from the `files`-only oracle transformation. The original
+provenance SHA256 is `727440e87a89a5acf5641bf8f5b234cac9e33bf187823f2ca0701bbb3a7d2c50`;
+its exact bytes remain private historical evidence. No new source capture, native
+compilation or proof result is asserted by these labels.

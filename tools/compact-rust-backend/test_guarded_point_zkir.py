@@ -3,14 +3,17 @@
 # Copyright (C) 2026 Midnight Foundation
 # SPDX-License-Identifier: Apache-2.0
 
-"""Mutation controls over fresh baseline/candidate emission artifacts.
+"""Artifact-dependent mutation controls over baseline/candidate emission artifacts.
 
 Run guarded_point_zkir.py first, then this file with --artifacts OUTPUT. These
 mutations challenge the graph gate; official ZKIR VM/proof controls are separate.
+Ordinary discovery skips these ten cases when no artifacts are selected. Explicit
+CLI or full-gate artifact selection still executes all original assertions.
 """
 import argparse
 import copy
 import json
+import os
 from pathlib import Path
 import unittest
 
@@ -21,12 +24,19 @@ ARTIFACTS = None
 
 class GuardedPointGraphTests(unittest.TestCase):
     def setUp(self):
+        self.artifacts = ARTIFACTS
+        if self.artifacts is None:
+            selected = os.environ.get(gate.RETAINED_GRAPH_ENVIRONMENT)
+            if selected is None:
+                self.skipTest("manual graph artifacts required: use --artifacts or "
+                              + gate.RETAINED_GRAPH_ENVIRONMENT)
+            self.artifacts = self.enterContext(gate.retained_artifact_root(selected))
         self.before = self.load('baseline')
         self.after = self.load('candidate')
         self.expected = gate.EXPECTATIONS['nested/nested']
 
     def load(self, mode):
-        return json.loads((ARTIFACTS/mode/'nested/zkir/nested.zkir').read_text())
+        return json.loads((self.artifacts/mode/'nested/zkir/nested.zkir').read_text())
 
     def consumer(self):
         for index, instruction in enumerate(self.after['instructions']):

@@ -19,3 +19,6 @@ The [candidate follow-up receipts](../evidence/0.3.0/index.md#candidate-qualific
 ## Current candidate pointer
 
 [Candidate qualification](candidate-qualification.md) distinguishes bounded CI, full local validation and documentation publication.
+
+[Portable Python fixtures](retained-python-fixtures.md) explains the bundled historical
+baseline and explicitly selected manual graph controls.

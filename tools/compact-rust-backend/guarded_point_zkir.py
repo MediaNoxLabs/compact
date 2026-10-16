@@ -11,6 +11,7 @@ emission and SSA graphs only; official VM/proof checks are separate evidence.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import itertools
 import json
@@ -30,6 +31,31 @@ EXPECTATIONS = {
     'unconditional/unconditional': [],
     'field_pair/fields': [],
 }
+# Exact original historical descriptor subobject; no authority values changed.
+# Original canonical descriptor: 06e737e8c3114fecb42257f67fd12ac01f090899d19833ea5757a55bb1def170.
+RETAINED_GRAPH_ENVIRONMENT = "COMPACT_GUARDED_POINT_ROOT"
+RETAINED_GRAPH_AUTHORITY = {
+    "artifact_fingerprints": {
+        "baseline/nested/zkir/nested.zkir": "8159703d4b2301864e90917b33c0029b5d649fe265ff4dac3ec12353fb1b2288",
+        "candidate/nested/zkir/nested.zkir": "75b6a4ff5ee415a034eea2b0eb3877ad9cdcf1dbbaa37c3bda67f1db510698b3"
+    },
+    "source": {
+        "path": "tools/compact-rust-backend/tests/proof-regressions/guarded-point-read/nested.compact",
+        "sha256": "51ce4e4be6e910832962df8eff9b8922a2f46fc4708857ddac1ad9caa45a48b4"
+    },
+    "authority_fingerprints": {
+        "authority/manifest.json": "841f85421a833cb8eb2d61af22e985f6308553c6bf201c03a2cdc8d2a224031d",
+        "authority/emission-report.json": "a0e2735aa601ae292174da0af70f5e67d9fb51b177e08a805836120768a1cb9e",
+        "authority/source-binding.json": "35194b84336fa170428a493a2cf25429b2bfb12a8914b970c2e82898578d2ade",
+        "authority/qualification-final.json": "b13a414862aa75ddc1cbda2ab8417523f3e702213073810f9c429ed7fb7d673d"
+    },
+    "producer_identities": {
+        "baseline_compiler_sha256": "39163d12ebc956a185439bae71b2eda2308af6090cee5a5f00f29c24bfbd57e4",
+        "candidate_compiler_sha256": "129a2f1600e4fe5db1df354f85926c91871cd46296a619735622dcbfba5cc12d"
+    },
+    "qualification": "Authenticated retained finite graph replay; distinct original producer identities, not current fresh emission/proof."
+}
+
 # Deliberately fail closed on new opcodes, rather than guessing output arity or
 # treating every JSON integer as an SSA reference (pi_skip.count is not one).
 OPCODES = {
@@ -166,6 +192,52 @@ def check_graph(baseline, candidate, expected):
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def authenticate_retained_artifacts(artifacts, *, source_root=None):
+    """Authenticate only the original retained pair and its existing authority closure."""
+    if artifacts is None or not str(artifacts):
+        raise ValueError("explicit retained guarded-point inputs required: supply "
+                         "--guarded-point-artifacts or " + RETAINED_GRAPH_ENVIRONMENT)
+    artifacts = Path(artifacts)
+    require(artifacts.is_absolute(), "guarded-point artifact root must be absolute")
+    artifacts = artifacts.resolve(strict=True)
+    require(artifacts.is_dir(), "guarded-point artifact root must be a directory")
+    source_root = (Path(__file__).resolve().parents[2] if source_root is None
+                   else Path(source_root).resolve(strict=True))
+
+    def contained(root, relative):
+        path = (root / relative).resolve()
+        require(not Path(relative).is_absolute() and path.is_relative_to(root),
+                "guarded-point retained input escapes root: " + relative)
+        return path
+
+    authority = RETAINED_GRAPH_AUTHORITY
+    for table in ("artifact_fingerprints", "authority_fingerprints"):
+        for relative, expected in authority[table].items():
+            require(digest(contained(artifacts, relative)) == expected,
+                    "guarded-point retained input drift: " + relative)
+    source = authority["source"]
+    require(digest(contained(source_root, source["path"])) == source["sha256"],
+            "guarded-point current fixture drift")
+    return {"root": str(artifacts), "source_root": str(source_root),
+            "artifact_fingerprints": dict(authority["artifact_fingerprints"]),
+            "authority_fingerprints": dict(authority["authority_fingerprints"]),
+            "source": dict(source), "producer_identities": dict(authority["producer_identities"]),
+            "qualification": "Retained nested graph mutation controls; not fresh current "
+                             "emission, VM, proof or complete historical qualification."}
+
+
+@contextmanager
+def retained_artifact_root(artifacts, *, source_root=None):
+    """Keep each case's canonical inputs live through fixture cleanup."""
+    receipt = authenticate_retained_artifacts(artifacts, source_root=source_root)
+    selected = Path(receipt["root"])
+    selected_source = Path(receipt["source_root"])
+    try:
+        yield selected
+    finally:
+        authenticate_retained_artifacts(selected, source_root=selected_source)
 
 
 def compile_sources(compiler, output):

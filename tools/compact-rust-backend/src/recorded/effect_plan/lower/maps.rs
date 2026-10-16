@@ -50,7 +50,12 @@ impl Lowerer<'_> {
             Expr::MapMember { field, index, key } => MapQuery::Member(field, *index, key),
             Expr::MapLookup { field, index, key } => MapQuery::Lookup(field, *index, key),
             Expr::MapIsEmpty { field, index } => MapQuery::IsEmpty(field, *index),
-            _ => unreachable!("Map expression dispatch"),
+            _ => {
+                return Err(invalid(
+                    path,
+                    "Map expression dispatch requires a Map query",
+                ));
+            }
         };
         self.map_query(query, scope, bindings, path)
     }
@@ -105,7 +110,7 @@ impl Lowerer<'_> {
             | StateAction::MapRemove { field, index, .. }
             | StateAction::MapInsertDefault { field, index, .. }
             | StateAction::MapReset { field, index } => (field, *index),
-            _ => unreachable!("Map action dispatch"),
+            _ => return Err(invalid(path, "Map action dispatch requires a Map mutation")),
         };
         // Only removal is key-only. Reset deliberately retains the runtime V:CellValue bound.
         let scalar = !matches!(action, StateAction::MapRemove { .. });
@@ -141,7 +146,7 @@ impl Lowerer<'_> {
                     Operation::MapRemove { slot, key }
                 }
             }
-            _ => unreachable!("Map action dispatch"),
+            _ => return Err(invalid(path, "Map action dispatch requires a Map mutation")),
         };
         self.emit(operation, Type::Unit, bindings, path);
         Ok(())

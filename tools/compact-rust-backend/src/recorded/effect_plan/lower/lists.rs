@@ -21,7 +21,12 @@ impl Lowerer<'_> {
             Expr::ListLength { field, index } => (field, *index, Query::Length),
             Expr::ListIsEmpty { field, index } => (field, *index, Query::IsEmpty),
             Expr::ListHead { field, index, ty } => (field, *index, Query::Head(ty)),
-            _ => unreachable!("List expression dispatch"),
+            _ => {
+                return Err(invalid(
+                    path,
+                    "List expression dispatch requires a List query",
+                ));
+            }
         };
         self.list_query(field, index, query, path)
     }
@@ -71,7 +76,12 @@ impl Lowerer<'_> {
             StateAction::ListPushFront { field, index, .. }
             | StateAction::ListPopFront { field, index }
             | StateAction::ListReset { field, index } => (field, *index),
-            _ => unreachable!("List action dispatch"),
+            _ => {
+                return Err(invalid(
+                    path,
+                    "List action dispatch requires a List mutation",
+                ));
+            }
         };
         let (slot, element) = self.list_slot(field, index, path)?;
         let operation = match action {
@@ -84,7 +94,13 @@ impl Lowerer<'_> {
                 ListOperation::PushFront(value)
             }
             StateAction::ListPopFront { .. } => ListOperation::PopFront,
-            _ => ListOperation::Reset,
+            StateAction::ListReset { .. } => ListOperation::Reset,
+            _ => {
+                return Err(invalid(
+                    path,
+                    "List action dispatch requires a List mutation",
+                ));
+            }
         };
         self.emit(
             Operation::List { slot, operation },

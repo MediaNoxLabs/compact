@@ -34,7 +34,12 @@ impl Lowerer<'_> {
                 let amount = operand(amount, "amount", uint("18446744073709551615"))?;
                 Operation::KernelMintShielded { domain, amount }
             }
-            _ => unreachable!("kernel expression dispatch"),
+            _ => {
+                return Err(invalid(
+                    path,
+                    "kernel expression dispatch requires a kernel operation",
+                ));
+            }
         };
         Ok((operation, Type::Unit))
     }

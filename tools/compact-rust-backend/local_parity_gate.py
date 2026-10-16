@@ -40,6 +40,8 @@ sys.dont_write_bytecode = True
 import parity_inventory as inventory
 import fixture_inventory
 import source_consumer_gate
+import conformance_baseline_archive
+import guarded_point_zkir
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -487,6 +489,10 @@ def main() -> int:
     parser.add_argument("--expect-head", help="fail unless git HEAD has this SHA prefix")
     parser.add_argument("--skip-cargo", action="store_true",
                         help="focused mode: compile and compare fixtures without package tests")
+    parser.add_argument("--conformance-baseline-root", type=Path,
+                        help="full mode: retained 6e37443b inputs (bundled by default); not current coverage")
+    parser.add_argument("--guarded-point-artifacts", type=Path,
+                        help="full mode: explicit authenticated retained graph inputs; not fresh emission")
     args = parser.parse_args()
     receipt = {"format_version": 1, "status": "failed", "mode": "full" if args.full else "focused",
                "commands": [], "fixtures": [], "capabilities": [], "proof_cross_tab": []}
@@ -498,6 +504,17 @@ def main() -> int:
             raise GateError("set MIDNIGHT_LEDGER_TEST_STATIC_DIR to the ledger checkout's "
                             "ledger/static directory before --full; funded qualified-coin "
                             "proofs require the upstream fee funding fixture")
+        if args.full:
+            selected_baseline = (args.conformance_baseline_root
+                                 if args.conformance_baseline_root is not None
+                                 else conformance_baseline_archive.selected_test_root())
+            receipt["retained_conformance_baseline"] = conformance_baseline_archive.authenticate_archive(
+                selected_baseline)
+            selected_graph = (args.guarded_point_artifacts
+                              if args.guarded_point_artifacts is not None
+                              else os.environ.get(guarded_point_zkir.RETAINED_GRAPH_ENVIRONMENT))
+            receipt["retained_guarded_point_graph"] = guarded_point_zkir.authenticate_retained_artifacts(
+                selected_graph)
         if args.full:
             missing = [tool for tool in ("zkir", "zkir-v3") if shutil.which(tool) is None]
             if missing:
@@ -538,6 +555,9 @@ def main() -> int:
                             "CARGO_TERM_COLOR": "never",
                             "RUSTUP_TOOLCHAIN": "1.99.0"})
         receipt["cargo_target_dir"] = environment["CARGO_TARGET_DIR"]
+        if args.full:
+            environment[conformance_baseline_archive.ENVIRONMENT] = receipt["retained_conformance_baseline"]["root"]
+            environment[guarded_point_zkir.RETAINED_GRAPH_ENVIRONMENT] = receipt["retained_guarded_point_graph"]["root"]
         receipt["rust_toolchain"] = environment["RUSTUP_TOOLCHAIN"]
         receipt["build_inputs"] = build_input_receipt(environment)
         receipt["source_registry"] = {
@@ -727,6 +747,11 @@ def main() -> int:
                         raise GateError(f"executed consumer evidence changed during gate: {binding[key]}")
         receipt["working_tree_after"] = dirty_paths()
         finish_build_input_receipt(receipt, environment)
+        if args.full:
+            if conformance_baseline_archive.authenticate_archive(receipt["retained_conformance_baseline"]["root"]) != receipt["retained_conformance_baseline"]:
+                raise GateError("retained conformance baseline changed during gate")
+            if guarded_point_zkir.authenticate_retained_artifacts(receipt["retained_guarded_point_graph"]["root"]) != receipt["retained_guarded_point_graph"]:
+                raise GateError("retained guarded-point inputs changed during gate")
         receipt["status"] = "passed"
         print(f"local parity {receipt['mode']} passed: {len(selected)} fixtures, "
               f"{receipt['capability_summary']['proof_eligible_recorded']}/"

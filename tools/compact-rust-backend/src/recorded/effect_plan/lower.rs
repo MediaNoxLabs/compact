@@ -18,6 +18,8 @@ mod binary;
 mod borrowed_operations;
 mod calls;
 mod counters;
+#[cfg(test)]
+mod dispatch_tests;
 mod expressions;
 mod jubjub;
 mod kernel;

@@ -54,3 +54,10 @@ The optional [ProofLab fixture](local-proof-tests.md) reuses official Midnight p
 ## Current candidate status
 
 See [candidate qualification](candidate-qualification.md) for current bounded CI, full-gate and documentation status.
+
+## Optional local artifact cache
+
+[Forge circuit caching](forge-circuit-cache.md) is an explicit local opt-in.
+Ordinary compiler/test commands remain uncached. Use the exact qualified Forge
+build/profile; an arbitrary newer installed executable is not automatically
+accepted. Proofs, verification and assertions always execute.

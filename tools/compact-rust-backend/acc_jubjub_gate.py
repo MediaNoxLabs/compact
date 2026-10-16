@@ -28,6 +28,7 @@ from pathlib import Path
 import re
 import shutil
 
+import forge_circuits
 import local_parity_gate as common
 import did_primitive_reducer_gate as primitive
 import resolve_ledger_test_static as ledger_static
@@ -53,7 +54,7 @@ def source_inventory():
              "tools/compact-rust-backend/Cargo.toml",
              "tools/compact-rust-backend/test_acc_jubjub_gate.py",
              "tools/compact-rust-backend/test_local_parity_gate.py")]
-    files += [Path(__file__), Path(common.__file__), Path(primitive.__file__),
+    files += [Path(__file__), Path(common.__file__), Path(forge_circuits.__file__), Path(primitive.__file__),
               Path(ledger_static.__file__)]
     require(all(path.is_file() for path in files), "missing maintained qualification input")
     for folder in ("runtime-rs", "runtime-rs-macros", "testkit-rs",
@@ -109,7 +110,8 @@ def run_gate(directory, compiler, scheme, target, environment=None, *, command=c
             path = Path(env.get(key, ""))
             require(bool(env.get(key)) and path.is_absolute() and path.is_dir(),
                     f"{key} must be an absolute existing directory")
-        discovered = {name: shutil.which(name, path=env.get("PATH")) for name in ("zkir", "node", "rustup")}
+        discovered = {name: (forge_circuits.zkir_executable(env) if name == "zkir" else
+                             shutil.which(name, path=env.get("PATH"))) for name in ("zkir", "node", "rustup")}
         require(all(discovered.values()), "ACC Jubjub gate requires zkir, node and rustup")
         dust_paths = []
         for name, digest in ledger_static.FIXTURE_HASHES.items():
@@ -149,8 +151,11 @@ def run_gate(directory, compiler, scheme, target, environment=None, *, command=c
                     "CARGO_INCREMENTAL": "0", "RUSTUP_TOOLCHAIN": "1.99.0",
                     "PYTHONDONTWRITEBYTECODE": "1"})
 
+        env = forge_circuits.configure_environment(env, directory / "forge",
+                                                   real_zkir=components["zkir"]["snapshot"])
+        receipt["key_generation"] = forge_circuits.provenance(env)
         def execute(argv, label, stdout_path=None):
-            command([str(arg) for arg in argv], label, directory, receipt, env=env,
+            command(forge_circuits.command([str(arg) for arg in argv], env), label, directory, receipt, env=env,
                     stdout_path=stdout_path)
 
         node = components["node"]["snapshot"]

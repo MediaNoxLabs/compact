@@ -167,7 +167,7 @@
       "ADR0285_issue409": "Existing automatic-review stop remains unresolved; consumer-safety/cross-instance investigation is not resumed, qualified or closed by this policy or MSRV commands."
     }
   },
-  "status": "ledger 8.1.3 core integration qualified locally; #508 final historical, affected consumer and closure gates pending; retained 0.3.0 evidence is historical",
+  "status": "ledger8.1.3 source pairing and scoped local compiler/consumer qualification recorded; final contribution-stack/source/evidence acceptance pending; historical receipts retain their original epochs",
   "runtime_compatibility": {
     "schema_version": 2,
     "runtime_abi": 52,
@@ -255,10 +255,22 @@
     "live_status": "unqualified; refused by default",
     "historical_pairing": "node-0.22.3/indexer-4.0.1/ledger-8.0.2/codec-8.0.3; no promotion to current codec"
   },
-  "acceptance_scope": "Current source-pinned compiler/runtime and selected local proof/application checks are qualified at 535e4470/df7367fc; see ledger-8.1.3-local-qualification.md for exact scope. Retained 0.3.0 MSRV, consumer and application wire receipts keep their original epoch. No general network, platform, performance or publication acceptance.",
+  "acceptance_scope": "Current source selects official ledger8.1.3 revision b5d3e965a18e4cac17fac4f38446fc55c524439a, ABI52 and privateIR20. Retained proof/application, MSRV and consumer receipts keep their original source/tool/dependency epochs; this documentation is not fresh execution of them. No general network, platform, performance, proof, MSRV or publication acceptance.",
   "remaining_release_gate": [
     "current archive-only consumer qualification and affected ledger8.1.3 proof/application paths for #508 closure",
     "complete historical qualification, final source/evidence joins and independent #508 acceptance",
     "live node/indexer profile validation before any wallet live acceptance"
-  ]
+  ],
+  "current_publication_disposition": {
+    "kind": "Documentation reconciliation; not an additional qualification run.",
+    "source_pairing": "Official ledger8.1.3 at b5d3e965a18e4cac17fac4f38446fc55c524439a; runtimeABI52/privateIR20; declared Rustminimum1.89.",
+    "local_source_qualification": "The separately retained two-profile Nix/compiler and finite consumer-role receipts identify their actual source/tool/input epochs. Their accepted scoped results are not a rerun of all historical proof/application calls.",
+    "historical_status_fields": "Original feature_profiles checkpoint status strings and retained_0_3_0_checkpoint values remain historical; they are not the current contribution-stack blocker register.",
+    "proof_and_msrv_limits": "The ledger8.0.3 proof/tutorial and Rust1.88 receipts remain their original epochs. Selected later ledger8.1.3 proof/application receipts are separately scoped historical evidence. No new proof or MSRV execution follows from these docs.",
+    "remaining_acceptance": [
+      "Final composed source and evidence joins with meaningful signed contribution history.",
+      "Independent requirement acceptance; no overall goal508 closure asserted here.",
+      "Live node/indexer qualification before any network acceptance."
+    ]
+  }
 }

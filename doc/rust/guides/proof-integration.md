@@ -29,7 +29,16 @@ Names/types here stand for the particular generated circuit and caller-owned inp
 
 `runtime-rs/src/transaction/` owns observation, preparation, offers and transaction adapters. Supplied observations and local hashes do not establish chain finality. Constructor-derived data can be deployed without a proof of constructor execution. Actual circuit proof/application evidence must retain this distinction.
 
-The retained 0.3.0 compatibility policy supports `ledger-transaction` within its exact recorded/proof evidence on native ledger8.0.3. Current source uses ledger8.1.3; its [retained local proof checks](ledger-8.1.3-local-qualification.md) have separate source/material receipts and do not rerun every retained application. It does not qualify network deployment, arbitrary funded applications, browser proving or every possible composition. ADR0285/#409 subsequently passed its scoped external-consumer controls at4c8aebc3; the candidate and audit dispositions are recorded separately in [candidate qualification](candidate-qualification.md).
+The retained 0.3.0 compatibility policy supports `ledger-transaction` within its exact recorded/proof evidence on native ledger8.0.3. Current source uses ledger8.1.3; its [local qualification guide](ledger-8.1.3-local-qualification.md) separates source selection from retained proof/application epochs. These documentation updates do not rerun every retained application. It does not qualify network deployment, arbitrary funded applications, browser proving or every possible composition. ADR0285/#409 subsequently passed its scoped external-consumer controls at4c8aebc3; the candidate and audit dispositions are recorded separately in [candidate qualification](candidate-qualification.md).
+
+## Historical tooling evidence
+
+The [historical path-validation results](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md)
+summarize a separately retained runner experiment. Its patch and measurement
+driver are not distributed in this checkout. The three-case elapsed-time result
+and frozen historical qualification do not establish current proof performance,
+proof verification or ledger application. Use the maintained proof harnesses
+above for those operations and preserve their circuit/key/runtime bindings.
 
 ## Admit encoded state and verifier inputs
 

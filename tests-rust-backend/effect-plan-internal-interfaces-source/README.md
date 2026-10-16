@@ -16,8 +16,8 @@ The only Clippy allowance is generated tuple-signature type complexity: complete
 
 ## Evidence boundaries
 
-No new proof or TS parity claim is introduced. Random verifier keys in tests support preparation only. The pre-change whole generated output and capabilities are retained in `/tmp/rust040-internal-interfaces/retained-baseline/`, with source/IR/output hashes in `retained-baseline-receipt.json`; parent qualification compares final output against that baseline.
+No new proof or TS parity claim is introduced. Random verifier keys in tests support preparation only. Historical parent qualification compared the whole generated output and capabilities against a retained pre-change baseline, with source/IR/output hashes recorded in an external receipt. Those historical baseline files are not distributed with this fixture.
 
-An initial helper returned tuple projection `input[11]` directly as Field; the pinned frontend refused that stateful return shape. The final source wraps identical projections in named Piece. The original draft/log are preserved at `/tmp/rust040-internal-interfaces/direct-field-projection.*`; this separate limitation is not claimed fixed here.
+An initial helper returned tuple projection `input[11]` directly as Field; the pinned frontend refused that stateful return shape. The final source wraps identical projections in named Piece. The original draft and refusal log are retained as external historical evidence and are not distributed with this fixture; this separate limitation is not claimed fixed here.
 
 Local gate: `cargo test -p compact-rust-effect-plan-internal-interfaces-source-fixture --all-features --offline`.

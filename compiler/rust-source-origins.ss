@@ -4,7 +4,7 @@
 ;;; Copyright (C) 2026 Midnight Foundation
 ;;; SPDX-License-Identifier: Apache-2.0
 
-;;; EXTERNAL RAW2 CANDIDATE: not installed in the active compiler worktree.
+;;; Installed raw3 source-origin collector; semantic IR and admission are unchanged.
 ;;; Diagnostic metadata is deliberately outside the semantic JSON tree.  The
 ;;; weak keys do not retain speculative expression-ir results, and their values
 ;;; never refer back to the JSON keys.  Printing the semantic tree is unchanged.

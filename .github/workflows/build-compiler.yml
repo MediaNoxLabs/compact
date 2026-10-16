@@ -354,7 +354,21 @@ jobs:
 
       - name: Verify consumer toolchain inside Nix
         run: |
-          nix develop .#compiler --command python3 -c 'import shutil, subprocess; print(shutil.which("cargo")); versions = [subprocess.check_output([tool, "--version"], text=True).strip() for tool in ("cargo", "rustc")]; print(*versions, sep="; "); assert all(version.split()[1] == "1.99.0" for version in versions)'
+          # setup-python exports its own libpython search path. Keep that host
+          # runtime out of the Nix interpreter and retain crash diagnostics.
+          env -u LD_LIBRARY_PATH nix develop .#compiler --command python3 -X faulthandler -u - <<'PY'
+          import importlib, shutil, subprocess, sys
+          print("Nix Python:", sys.executable, sys.version)
+          sys.path.insert(0, "tools/compact-rust-backend")
+          for module in ("hashlib", "tomllib", "unittest.mock", "forge_circuits", "target_checks"):
+              importlib.import_module(module)
+              print("Imported:", module)
+          print(shutil.which("cargo"))
+          versions = [subprocess.check_output([tool, "--version"], text=True).strip()
+                      for tool in ("cargo", "rustc")]
+          print(*versions, sep="; ")
+          assert all(version.split()[1] == "1.99.0" for version in versions)
+          PY
 
       - name: Prepare verified built-in proof material
         run: |
@@ -368,12 +382,12 @@ jobs:
           df -h "$GITHUB_WORKSPACE"
           du -sh "$CARGO_TARGET_DIR"
           cargo fmt --all -- --check
-          nix develop .#compiler --command env COMPACTC=compactc COMPACT_RUST_WALLET_HANDOFF="$RUNNER_TEMP/compact-counter-wallet-handoff.bin" COMPACT_RUST_DEPLOY_HANDOFF="$RUNNER_TEMP/compact-counter-deploy-handoff.bin" python3 tools/compact-rust-backend/check_compactc_target.py --consumer --proof
+          env -u LD_LIBRARY_PATH nix develop .#compiler --command env COMPACTC=compactc COMPACT_RUST_WALLET_HANDOFF="$RUNNER_TEMP/compact-counter-wallet-handoff.bin" COMPACT_RUST_DEPLOY_HANDOFF="$RUNNER_TEMP/compact-counter-deploy-handoff.bin" python3 -X faulthandler -u tools/compact-rust-backend/check_compactc_target.py --consumer --proof
           nix develop .#compiler --command npm ci --prefix tools/compact-rust-backend/wallet-handoff --ignore-scripts
           nix develop .#compiler --command node tools/compact-rust-backend/check_wallet_handoff.mjs "$RUNNER_TEMP/compact-counter-deploy-handoff.bin" "$RUNNER_TEMP/compact-counter-wallet-handoff.bin" tools/compact-rust-backend/wallet-handoff/node_modules/@midnight-ntwrk/ledger-v8
-          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
+          env -u LD_LIBRARY_PATH nix develop .#compiler --command env COMPACTC=compactc python3 -X faulthandler -u tools/compact-rust-backend/check_fixture_outputs.py
           python3 tools/compact-rust-backend/check_oracle_acceptance.py
-          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_rejections.py
+          env -u LD_LIBRARY_PATH nix develop .#compiler --command env COMPACTC=compactc python3 -X faulthandler -u tools/compact-rust-backend/check_rejections.py
           df -h "$GITHUB_WORKSPACE"
           du -sh "$CARGO_TARGET_DIR"
           cargo test --workspace --exclude compact --locked
@@ -388,7 +402,7 @@ jobs:
 
       - name: Build generated Rust contracts from shared runtime archives
         run: |
-          nix develop .#compiler --command python3 tools/compact-rust-backend/check_archive_consumer.py --manifest target/rust-runtime-release.json
+          env -u LD_LIBRARY_PATH nix develop .#compiler --command python3 -X faulthandler -u tools/compact-rust-backend/check_archive_consumer.py --manifest target/rust-runtime-release.json
 
       - name: Retain Rust runtime packages and manifest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -58,6 +58,13 @@ def execute(argv, directory, phase, *, env=None, failure=False):
     result = subprocess.run(list(map(str, argv)), cwd=ROOT, env=env, capture_output=True, text=True)
     write(directory / (phase + '.command.json'), dict(argv=list(map(str, argv)), exit_code=result.returncode,
           wall_seconds=time.monotonic() - start, stdout=result.stdout, stderr=result.stderr))
+    if result.returncode != 0 and not failure:
+        # Hosted runners disappear after the job. Surface bounded diagnostics;
+        # the complete command receipt remains available for artifact upload.
+        for label, content in (('stdout', result.stdout), ('stderr', result.stderr)):
+            if content:
+                print(phase + ' ' + label + ' (last 8192 characters):\n' + content[-8192:],
+                      file=sys.stderr)
     require(result.returncode != 0 if failure else result.returncode == 0,
             phase + (' accepted corrupt verifier' if failure else ' failed; inspect retained log'))
     return result.stdout

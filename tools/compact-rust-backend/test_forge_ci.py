@@ -15,6 +15,8 @@
 
 """Orchestration boundaries; these fakes make no real-proof qualification claim."""
 import argparse
+import contextlib
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -289,6 +291,18 @@ class ForgeCiTests(unittest.TestCase):
         self.assertNotEqual(ci.load(self.root / 'failed-command.command.json')['exit_code'], 0)
         with self.assertRaisesRegex(ValueError, 'accepted corrupt verifier'):
             self.real_execute(['/usr/bin/true'], self.root, 'false-negative', failure=True)
+
+    def test_failed_command_surfaces_bounded_diagnostics_without_changing_receipt(self):
+        stderr = io.StringIO()
+        script = "import sys; print('prefix' + 'x' * 9000); print('actual failure', file=sys.stderr); sys.exit(7)"
+        with contextlib.redirect_stderr(stderr), self.assertRaisesRegex(ValueError, 'failed'):
+            self.real_execute([sys.executable, '-c', script], self.root, 'diagnostic')
+        log = ci.load(self.root / 'diagnostic.command.json')
+        self.assertEqual(log['exit_code'], 7)
+        self.assertTrue(log['stdout'].startswith('prefix'))
+        self.assertNotIn('prefix', stderr.getvalue())
+        self.assertIn('actual failure', stderr.getvalue())
+        self.assertLess(len(stderr.getvalue()), 8400)
 
 
 if __name__ == '__main__':

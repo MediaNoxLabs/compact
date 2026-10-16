@@ -34,7 +34,12 @@ impl Lowerer<'_> {
                 let recipient = operand(recipient, "recipient", shielded_recipient_type())?;
                 Operation::CreateZswapOutput { coin, recipient }
             }
-            _ => unreachable!("Zswap expression dispatch"),
+            _ => {
+                return Err(invalid(
+                    path,
+                    "Zswap expression dispatch requires a Zswap intent",
+                ));
+            }
         };
         Ok((operation, Type::Unit))
     }

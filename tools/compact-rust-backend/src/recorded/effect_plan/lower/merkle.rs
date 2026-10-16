@@ -175,7 +175,12 @@ impl Lowerer<'_> {
             HistoricMerkleResetHistory { field, index } => {
                 (field, *index, true, Mutation::ResetHistory)
             }
-            _ => unreachable!("Merkle action dispatch"),
+            _ => {
+                return Err(invalid(
+                    path,
+                    "Merkle action dispatch requires a Merkle mutation",
+                ));
+            }
         };
         let (slot, leaf_type) = self.merkle_slot(field, index, historic, path)?;
         let operation = match mutation {

@@ -128,7 +128,10 @@ impl Lowerer<'_> {
                 };
                 Ok((Operation::Tuple { elements: values }, ty))
             }
-            _ => unreachable!("aggregate dispatcher selects this expression family"),
+            _ => Err(invalid(
+                path,
+                "aggregate expression dispatch requires an aggregate value",
+            )),
         }
     }
 

@@ -9,7 +9,8 @@ on:
   push:
     branches: [codex/rust-backend-ast]
   pull_request:
-    branches: [codex/rust-backend-ast]
+    # Exercise the second PR while it is stacked on the public-gates slice.
+    branches: [codex/rust-backend-ast, codex/rust-ast-public-gates]
 
 permissions: {}
 concurrency:

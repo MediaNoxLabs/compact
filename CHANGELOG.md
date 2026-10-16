@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.134, language 0.23.105, runtime 0.16.101]
+
+### Fixed
+
+- In ZKIR v2, select the Jubjub subgroup identity for inactive `ecAdd` and
+  `ecMul` point operands. This prevents an untaken branch's zero-masked ledger
+  or witness point from being decoded as an invalid curve point. Active
+  operands, scalar inputs and public transcript constraints are preserved.
+  The shared circuit emitter serves both TypeScript and Rust targets. Affected
+  circuits have different ZKIR and require matching regenerated prover and
+  verifier artifacts; old keys must not be paired with the new circuits.
+  Unconditional point operations and the ZKIR v3 emitter are unchanged.
+
 ## [Toolchain 0.31.133, language 0.23.105, runtime 0.16.101]
 
 ### Added

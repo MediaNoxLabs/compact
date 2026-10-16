@@ -54,13 +54,15 @@ jobs:
             python3 tools/compact-rust-backend/check_compactc_target.py --consumer
 
   license-check:
-    name: Check if all files got headers
+    name: No new full-header violations
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout compactc repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -71,8 +73,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
 
-      - name: Validate license headers
+      - name: Reject new header violations on pull requests
+        if: github.event_name == 'pull_request'
+        env:
+          HEADER_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python scripts/check_header_regressions.py --base "$HEADER_BASE" \
+            --report "$RUNNER_TEMP/header-regressions.json"
+
+      - name: Validate full-tree headers on manual and scheduled qualification
+        if: github.event_name != 'pull_request'
         run: python add_headers.py --validate
+
+      - name: Upload explicit PR header-debt accounting
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: header-regressions-${{ github.sha }}
+          path: ${{ runner.temp }}/header-regressions.json
+          if-no-files-found: error
+          retention-days: 14
 
   build:
     name: Build and test compiler

@@ -26,3 +26,13 @@ The [capability and retirement book](../recording-effect-algebra/capability-and-
 historical baseline and explicitly selected manual graph controls.
 
 [Recording-effect closure](../recording-effect-algebra/closure-report.md) records the final local source, stage-separated qualification, original completion criteria and follow-ups. The candidate-qualification page above retains its 0.3.0 epoch.
+
+## Public regression and CI checks
+
+- [Required Rust-AST checks](required-checks.md): stable aggregate, core/MSRV and
+  public Python controls, with explicit branch-rule activation after merge.
+- [Qualification evidence inventory](../recording-effect-algebra/qualification-evidence-summary.md):
+  public source providers, bounded derivative acceptance summaries and withheld
+  historical constituents.
+- [Issue closeout map](../recording-effect-algebra/issue-closeout.md): delivered
+  work, separate follow-ups and conditions that remain open.

@@ -106,3 +106,22 @@ Use an eligible new PR event or an explicit dispatch where the workflow supports
 it. Manual dispatch registration may require the file on GitHub's default branch;
 new feature-branch workflows can run from a fresh PR event. A disabled workflow or
 an empty check list never counts as a passing gate.
+
+## Header regressions versus inherited header debt
+
+The AST line has pre-existing files that do not meet the repository's full license
+header template. Short SPDX notices are **not** accepted as replacements by this
+policy. Pull requests run `scripts/check_header_regressions.py` against the frozen
+PR base commit: it runs the original full-tree validator, reports all missing
+headers, and tolerates a violation only when the file's current bytes equal its
+base blob. New, renamed or modified violations fail. The receipt identifies every
+inherited path and digest; a passing PR result means **no new violations**, not
+full-tree compliance. All newly authored/modified Python files in these PRs carry
+the full template.
+
+The original `python3 add_headers.py --validate` remains unchanged and runs strictly
+for scheduled/manual Compiler Build qualification. It will still report inherited
+debt until that work is remediated; this is an explicit limitation tracked in
+[issue #659](https://github.com/betsudo/compact/issues/659).
+Retained and generated fixture bytes are not rewritten to make the gate green.
+Base objects are read with two batched Git calls rather than one process per file.

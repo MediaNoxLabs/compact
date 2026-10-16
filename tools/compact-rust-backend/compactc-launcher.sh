@@ -28,4 +28,16 @@ while [ -L "$launcher" ]; do
 done
 directory="$(cd -P -- "$(dirname -- "$launcher")" && pwd)"
 export PATH="$directory/../lib:$directory:$PATH"
+# A scoped local-test launcher may supply artifact preparation ahead of bundled
+# tools. Ordinary compiler installations have no dependency on that launcher.
+if [[ -n "${COMPACT_ZKIR_SHIM:-}" && "${COMPACT_ZKIR_MODE:-forge}" == forge ]]; then
+  case "$COMPACT_ZKIR_SHIM" in
+    /*/zkir) ;;
+    *) echo "COMPACT_ZKIR_SHIM must be an absolute zkir executable" >&2; exit 2 ;;
+  esac
+  [[ -f "$COMPACT_ZKIR_SHIM" && -x "$COMPACT_ZKIR_SHIM" ]] || {
+    echo "COMPACT_ZKIR_SHIM is not executable" >&2; exit 2;
+  }
+  export PATH="$(dirname -- "$COMPACT_ZKIR_SHIM"):$PATH"
+fi
 exec "$directory/compactc.bin" "$@"

@@ -2,6 +2,12 @@
 
 The table below retains the milestone 0.3.0 version checkpoint and target receipts. On the current recording-effect branch, runtime ABI is **52**, private IR is **20**, finalized capability reports are **3** and private origin transport is **3**. Native ledger is **8.1.3** at official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`, with compatibility schema **2** and declared Rust **1.89** minimum. The current local execution used Rust 1.99; the older 1.88 receipts below do not qualify this new dependency graph. See [ledger compatibility and retained qualification](ledger-8.1.3-local-qualification.md) for the exact ZK cohort and fresh local proof scope. No package publication or new platform qualification follows from these numbers. Installation snippets describe prerequisites; linked receipts identify actual execution.
 
+The current review-fix source selects compiler **0.31.135** and TypeScript runtime
+**0.16.102**, including the exact onchain-runtime3.1.2 dependency. These source
+versions are separate from the retained checkpoint below and do not relabel its
+execution receipts. The independent toolchain-manager CLI keeps its inherited
+Rust1.88 minimum; Rust backend owners declare Rust1.89 in their own manifests.
+
 ## Keep these version domains separate
 
 | Boundary | Retained 0.3.0 value | Meaning |
@@ -19,6 +25,15 @@ The table below retains the milestone 0.3.0 version checkpoint and target receip
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
 Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 52`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+
+### Before publishing the Rust crate cohort
+
+The backend, runtime and macros remain source version0.2.0 here, with ABI52 and
+the ledger8.1.3 graph. This is a changed API cohort, not a claim that the earlier
+ABI50 package contents are interchangeable. Before registry publication,
+coordinate a Rust0.3.0 crate release with the retained-consumer locks, registry
+manifests and release qualification. That migration is a separate follow-up;
+no registry availability or new Rust package release is asserted here.
 
 ## Obtain a matching source distribution
 

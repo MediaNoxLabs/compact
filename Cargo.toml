@@ -21,6 +21,8 @@ members = ["tests-rust-backend/ordinary-value-effects-source", "tests-rust-backe
 version = "0.5.1"
 authors = ["Midnight Foundation"]
 edition = "2024"
+# This default is inherited only by tools/compact, the independent toolchain CLI.
+# The Rust backend, runtime, macros and testkit declare their own MSRV of 1.89.
 rust-version = "1.88.0"
 description = "Manages multiple versions of the compact toolchain"
 homepage = "https://docs.midnight.network"

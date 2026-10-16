@@ -77,7 +77,7 @@ jobs:
             components: rustfmt, clippy
           - lane: MSRV backend and Jubjub consumer
             key: msrv
-            toolchain: 1.88.0
+            toolchain: 1.89.0
             components: ''
     env:
       RUSTUP_TOOLCHAIN: ${{ matrix.toolchain }}
@@ -169,7 +169,7 @@ jobs:
             -p midnight-compact-runtime-macros -p midnight-compact-testkit \
             -- -D warnings 2>&1 | tee "$RUST_CHECK_RECEIPTS/clippy.log"
 
-      - name: Compile backend and generated Jubjub consumer on Rust 1.88
+      - name: Compile backend and generated Jubjub consumer on Rust 1.89
         if: matrix.key == 'msrv'
         id: msrv_workspace
         run: |
@@ -177,7 +177,7 @@ jobs:
             -p compact-rust-backend -p compact-rust-jubjub-scalar-cell-fixture \
             2>&1 | tee "$RUST_CHECK_RECEIPTS/msrv-workspace.log"
 
-      - name: Compile standalone backend on Rust 1.88
+      - name: Compile standalone backend on Rust 1.89
         if: matrix.key == 'msrv'
         id: msrv_standalone
         run: |

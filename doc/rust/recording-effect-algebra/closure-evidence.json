@@ -1,0 +1,98 @@
+{
+  "format": "compact-recording-closure/v1",
+  "scope": "Local epic508 composed qualification; no universal language or formal-equivalence claim.",
+  "implementation": {
+    "head": "22a6f44cce66641c217ffd5caaf8146670b8ab57",
+    "tree": "1c8271947d41245aa6da5f6ea3de0d0bc02e997c",
+    "qualified_source_epoch": "43d7e2f0f1a14d8396ad8bcf33c6b55df841b1e0",
+    "source_manifest_sha256": "f47437a5f8d9dd380e74ad44abc718319615899fb667358d83033a7b700d9a8f",
+    "tracked_blob_count": 5586,
+    "document_commit_policy": "Closure documents descend from this implementation without executable changes. No self-referential final-head hash."
+  },
+  "retirement_counts": {
+    "original_boundaries": 84,
+    "retired": 69,
+    "semantic_obligations": 7,
+    "historical_artifacts": 8
+  },
+  "stage_policy": "Fresh affected checks and authenticated retained native/recording/replay/preparation/proof/application evidence stay separate. Capabilities are not proofs.",
+  "review_evidence": [
+    {
+      "label": "pr641-train-composition-affected-gates-independent-review.json",
+      "sha256": "32434dc473ad962457755055787356e87c0a32969d92766fe92e9ccbdc06be5e",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "pr641-train-python-terminal-independent-review.json",
+      "sha256": "20d4c1dea9104d023ac9f5b5981468b2ba94f2c9f70e32322210fb2817dc9356",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "159-contribution-history-and-stack-independent-audit.json",
+      "sha256": "bbb9cbe3e42f5e95d035aa5249e84659e3275e462c3b212a7031fccd37ca1373",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "159-review-draft-update-independent-review.json",
+      "sha256": "bb69f31860960d3740fe796b8faf445df5f33edb28ba4599f66fe4d0f0b06d81",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "GOAL508-159-TRAIN-REQUIREMENTS-CHECKLIST.md",
+      "sha256": "1ef3b145240c369d87ec78acade69bfce0543011da82c69acdb1d371ec6ef436",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "goal508-159-train-requirement-checklist-inputs.json",
+      "sha256": "5a939cbca127debfc8c461332f7db357f1bb5b4a0bfcee8bc89c08c880d8bf22",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "historical-terminal-independent-review.json",
+      "sha256": "15104c733d0e5656711e64bb278d6186c4cde0a7554109fbc8ad5f2657f967c0",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "wide-add-publication-post-adoption-independent-review.json",
+      "sha256": "ad3e2901b152610e7499fad369c659bb36f94af8cd48307946a1da51177c20fe",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    },
+    {
+      "label": "generated-output-restoration-post-adoption-independent-review.json",
+      "sha256": "ac1c0e82e43ab23ff4256aecf4243a7a458bcaadb09ed213a5bd10884984cdc5",
+      "availability": "Retained local evidence / midnight knowledge base; raw private evidence is not embedded."
+    }
+  ],
+  "new_execution": {
+    "rust_passes": 1829,
+    "rust_ignored": 7,
+    "python_authenticated_passes": 289,
+    "python_default_passes": 270,
+    "python_default_manual_method_ids": 19,
+    "python_default_skip_events": 20,
+    "scope": "Actual current composed source epoch; later source-identical ancestry change is not a new execution."
+  },
+  "retained_actual_checks": {
+    "shared_compiler_cases": 3881,
+    "shared_compiler_groups": 46,
+    "isolated_consumers": 257,
+    "isolated_commands": 772,
+    "consumer_input_hashes_reauthenticated": 606,
+    "runtime_hashes_reauthenticated": 59,
+    "historical_cases": 974,
+    "historical_report_sha256": "7cae10e33764e51486e9300d9c937a567ebb85ca8ec0cb92c3053ebc0ae0907b"
+  },
+  "private_replay_archive": {
+    "sha256": "31795590babd55a30ce8cf05175911d51f65511bac0b084e9721154c15e58754",
+    "payloads": 272,
+    "members": 274,
+    "owner_path_provenance_payloads": 31,
+    "availability": "Accepted local packaging; no public upload or outer-run reproduction claim."
+  },
+  "followups_outside_epic": [
+    "Coordinated Rust registry crate/version/consumer-lock release",
+    "Independent replacement of test-only recognizer oracles before removal",
+    "Transient-origin diagnostics proposal",
+    "Owner-deferred Forge integration"
+  ]
+}

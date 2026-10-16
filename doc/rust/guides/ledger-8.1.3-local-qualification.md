@@ -13,12 +13,12 @@ retain their original graph; they do not establish this graph's minimum version.
 
 ## Evidence scopes
 
-The original recording-effect candidate qualified selected real8.1.3 local
-proof/application paths and isolated public consumers. Those retained receipts
-belong to their original source/tool epochs, including535e4470/df7367fc. They are
-not relabeled as a new execution of this extracted branch. The selected cold/warm
-artifact experiments measured only Counter/Let and Jubjub fixtures; they do not
-establish general compiler performance or specification coverage.
+The source profile above is the current dependency selection. Original selected
+proof/application and public-consumer receipts retain their exact source, tool
+and dependency epochs. They are not relabeled as fresh execution of this
+publication cohort. Current local compiler and finite consumer-role qualification
+is recorded separately with its frozen inputs; it does not rerun all retained
+proof calls or establish general performance or specification coverage.
 
 This focused core extraction preserves compiler/runtime semantics and the
 ordinary proof gates. Its local validation and independent review are listed in
@@ -38,7 +38,24 @@ regenerate matching prover/verifier artifacts and qualify them before replacing
 any deployed verifier identity. ZKIR-v3 native/Keccak qualification remains separate
 from v2 ledger proof/application support.
 
-Historical source-law tooling and its authenticated predecessor receipts remain a
-separate review/qualification slice. Full epic closure requires that qualification
-and independent acceptance; a finite capability corpus is not full language or
-formal semantic coverage.
+The separate authenticated historical qualification has an accepted 974-case
+receipt for its frozen `ab132650` epoch and external inputs. Its Git metadata
+incident remains disclosed; continuous metadata invariance is not claimed.
+It is not current language coverage or a formal proof. The [local #508 closure report](../recording-effect-algebra/closure-report.md)
+records the composed source/evidence joins, meaningful signed contribution
+history and separately recorded final acceptance. The [historical results summary](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md)
+records the three-case measurement and its limits. The experimental patch,
+measurement driver and detailed evidence remain archived outside this checkout;
+no path-validation optimization is enabled in the current runner.
+
+The ordinary full gate selects [explicit retained conformance baseline inputs](retained-conformance-baseline.md)
+for its one original repository-baseline law. Its historical positive result does
+not relabel the current implementation as conformant or replace that separate
+historical qualification.
+
+Full qualification requires the [retained guarded-point graph inputs](../../../tools/compact-rust-backend/tests/proof-regressions/guarded-point-read/README.md#retained-inputs-during-ordinary-test-discovery).
+The full gate selects them with `--guarded-point-artifacts`; those ten mutation
+controls retain their original graph/source epoch, independently of fresh
+compiler emission and proof qualification.
+
+Without selected graph artifacts, ordinary discovery explicitly skips manual cases. The [portable-fixture guide](retained-python-fixtures.md) explains the default public baseline, invalid-input refusals and exact manual-input selection. Compiler0.31.135 / JSruntime0.16.102 source identities and scoped Rust1.89 checks are recorded in the closure report; this is not a whole-workspace MSRV or new proof claim.

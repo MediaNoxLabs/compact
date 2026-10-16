@@ -69,6 +69,33 @@ controls. Mutation tests reject wrong guards, wrong identity coordinates,
 changed active operands/scalars, and escaped transcript substitutions. These
 are emission checks, not proof execution.
 
+### Retained inputs during ordinary test discovery
+
+The existing replay kit's six-file `graph/` can supply the original nested pair
+and four authority files during ordinary unittest discovery:
+
+```sh
+COMPACT_GUARDED_POINT_ROOT=/absolute/path/to/retained-graph \
+  python3 -B -m unittest discover -s tools/compact-rust-backend \
+  -p test_guarded_point_zkir.py
+```
+
+This mode authenticates the exact original graph/authority hashes and retained
+nested source before and after each case. Every original mutation assertion
+executes against a newly loaded in-memory graph; inputs are never modified or
+replaced by a cached result. Missing, changed or escaped inputs fail. The full
+gate requires `--guarded-point-artifacts /absolute/path/to/retained-graph` and
+passes the same explicit selection to discovery.
+
+The ten original test IDs (including the historical "fresh" case name) are
+preserved. In this input mode they are **retained nested graph mutation controls**,
+not fresh current-compiler emission, all nine producer fixtures, official VM or
+proof execution, or the separate complete historical qualification. The exact
+original receipts can mention other historical logs: authenticating the six-file
+closure does not assert those other files were supplied or checked. Direct
+`--artifacts OUTPUT` keeps the original producer-output workflow above; no
+retained-input fallback is applied to that explicit selection.
+
 The Rust fixture packages `compact-rust-guarded-point-read-source-fixture` and
 `compact-rust-guarded-point-nested-source-fixture` bind the exact retained IR.
 The proof smoke commands `--guarded-point-read <artifacts>` and
@@ -78,3 +105,5 @@ nested guard combinations, through native execution, recording, the official
 preimage checker, proving, verification and ledger application. The smoke
 harness uses its existing unbalanced transaction policy; this is not production
 transaction qualification. No proof keys are committed.
+
+Current ordinary discovery reports manual graph cases as skipped when no artifacts are selected. Explicit invalid inputs fail. Full qualification requires authenticated graph inputs and executes the original controls; see the [portable-fixture guide](../../../../../doc/rust/guides/retained-python-fixtures.md). Retained graph evidence is not fresh current compiler emission or proof execution.

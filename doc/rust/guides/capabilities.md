@@ -8,7 +8,7 @@ The dated DID examples below preserve their original source checkpoint. On the c
 
 For example, current native Zswap `produce`, `consume` and `witness_order` expose both APIs while remaining nonproof. `flow` and `read_coin` remain proof-required. The exact three-row change was independently reviewed and qualified by the unchanged transfer proof commands; it is not a proof claim for the three nonproof exports.
 
-Choose the Boolean APIs your application needs independently of proof applicability. The checker later in this page deliberately requires **proof-applicable observed APIs**; it is not a general check for every recordable circuit. See the [checked recording guide](checked-recording.md) for stage evidence and the [source diagnostic guide](checked-recording.md).
+Choose the Boolean APIs your application needs independently of proof applicability. The checker later in this page deliberately requires **proof-applicable observed APIs**; it is not a general check for every recordable circuit. See the [current book](../recording-effect-algebra/capability-and-retirement-book.md) for stage evidence and the [source diagnostic guide](checked-recording.md).
 
 ## Start with the generated report
 
@@ -143,4 +143,4 @@ Historically, the checker passed the digest row and refused the relation row at 
 
 These are separate project version domains, not a single Compact language version or a public standard called “schema-20”. The backend library initially creates an unclassified schema-2 capability draft; the CLI joins frontend proof metadata and emits finalized schema3. Application checks should consume the finalized report.
 
-All new guides and ADRs remain in Obsidian until milestone closeout. Historical measurements and capability examples retain their exact source checkpoint.
+Published guides and ADRs live under `doc/rust/`. Planning notes and detailed local acceptance follow the [evidence availability policy](../recording-effect-algebra/evidence-availability.md). Historical measurements and capability examples retain their exact source checkpoint.

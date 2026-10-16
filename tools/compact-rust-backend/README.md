@@ -21,12 +21,7 @@ The default recorder lowers supported typed operations and composition into a ch
 
 Pure expressions use one shared semantic fold. `NativeSink` produces Rust syntax; `BodyCheckSink` checks the same body rules without constructing native syntax. Current runtime ABI is **52**, private IR **20**, finalized capability schema **3** and private origin transport **3**. Native ledger is **8.1.3**, pinned to official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`; generated consumers require Rust 1.89. See [current versions and retained receipts](../../doc/rust/guides/versions-and-targets.md).
 
-Read the [current extension and diagnostics guide](../../doc/rust/guides/checked-recording.md). The following development checkpoints preserve their original support and ABI claims; their earlier fallback/profile descriptions are historical.
-
-The authenticated historical-law tooling and retirement publication are retained
-in a separate review slice. This core extraction does not include or claim that
-qualification; its local parity gate preserves source-consumer joins and current
-emission checks. A complete epic closure requires the separate historical gate.
+Read the [current extension and diagnostics guide](../../doc/rust/guides/checked-recording.md) and [capability and retirement book](../../doc/rust/recording-effect-algebra/capability-and-retirement-book.md). The following development checkpoints preserve their original support and ABI claims; their earlier fallback/profile descriptions are historical. Detailed historical acceptance follows the [evidence availability policy](../../doc/rust/recording-effect-algebra/evidence-availability.md).
 
 ## Historical Effectful return checkpoint
 

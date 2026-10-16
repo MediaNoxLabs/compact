@@ -1,7 +1,7 @@
 # Local circuit artifacts with Midnight ZKIR Forge
 
 Local circuit tests can optionally reuse binary ZKIR, prover keys and verifier keys through
-[Midnight ZKIR Forge](https://github.com/input-output-hk/midnight-zkir-forge).
+[Midnight ZKIR Forge](https://github.com/betsudo/forge).
 Proof generation, verification, assertions, negative controls and fixture checks
 still execute on every run. Test outcomes and proofs are never cached.
 

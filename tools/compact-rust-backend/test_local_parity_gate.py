@@ -207,8 +207,14 @@ class WorkspaceTestPlanTests(unittest.TestCase):
                 if label == "did-proof-lifecycles":
                     raise gate.GateError("controlled stop after mandatory DID invocation")
             with patch.object(sys, "argv", ["gate", "--full", "--compiler", str(compiler),
-                    "--scheme", str(compiler), "--run-dir", str(root / "run")]), \
+                    "--scheme", str(compiler), "--run-dir", str(root / "run"),
+                    "--conformance-baseline-root", str(root),
+                    "--guarded-point-artifacts", str(root)]), \
                  patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": str(root)}), \
+                 patch.object(gate.conformance_baseline_archive, "authenticate_archive",
+                              return_value={"root": str(root)}), \
+                 patch.object(gate.guarded_point_zkir, "authenticate_retained_artifacts",
+                              return_value={"root": str(root)}), \
                  patch.object(gate.shutil, "which", return_value=str(compiler)), \
                  patch.object(did_proof_gate, "prerequisites", return_value={}), \
                  patch.object(gate, "select_sources", return_value=[]), \
@@ -236,6 +242,46 @@ class WorkspaceTestPlanTests(unittest.TestCase):
                 str(gate.ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
                 "--adt-set-qualified"])
             self.assertNotIn("--skip", by_label["did-proof-lifecycles"])
+
+    def test_missing_or_invalid_conformance_archive_refuses_before_tools_or_build(self):
+        for selected in ([], ["--conformance-baseline-root", str(gate.ROOT)]):
+            with self.subTest(selected=selected), tempfile.TemporaryDirectory() as temporary:
+                run_dir = Path(temporary) / "not-created"
+                missing_default = Path(temporary) / "missing-bundled-baseline"
+                with patch.object(sys, "argv", ["gate", "--full", "--run-dir", str(run_dir), *selected]), \
+                     patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": temporary}), \
+                     patch.object(gate.conformance_baseline_archive, "BUNDLED_ROOT", missing_default), \
+                     patch.object(gate.conformance_baseline_archive, "authenticate_archive",
+                                  wraps=gate.conformance_baseline_archive.authenticate_archive) as authenticate, \
+                     patch.object(gate.shutil, "which") as tools, \
+                     patch.object(gate, "stable_copy") as snapshot, \
+                     patch.object(gate, "run") as commands:
+                    os.environ.pop(gate.conformance_baseline_archive.ENVIRONMENT, None)
+                    self.assertEqual(gate.main(), 1)
+                authenticate.assert_called_once_with(missing_default if not selected else gate.ROOT)
+                tools.assert_not_called()
+                snapshot.assert_not_called()
+                commands.assert_not_called()
+                self.assertFalse(run_dir.exists())
+
+    def test_missing_or_invalid_guarded_point_inputs_refuse_before_tools_or_build(self):
+        for selected in ([], ["--guarded-point-artifacts", str(gate.ROOT)]):
+            with self.subTest(selected=selected), tempfile.TemporaryDirectory() as temporary:
+                run_dir = Path(temporary) / "not-created"
+                with patch.object(sys, "argv", ["gate", "--full", "--run-dir", str(run_dir),
+                        "--conformance-baseline-root", temporary, *selected]), \
+                     patch.dict(os.environ, {"MIDNIGHT_LEDGER_TEST_STATIC_DIR": temporary}), \
+                     patch.object(gate.conformance_baseline_archive, "authenticate_archive",
+                                  return_value={"root": temporary}), \
+                     patch.object(gate.shutil, "which") as tools, \
+                     patch.object(gate, "stable_copy") as snapshot, \
+                     patch.object(gate, "run") as commands:
+                    os.environ.pop(gate.guarded_point_zkir.RETAINED_GRAPH_ENVIRONMENT, None)
+                    self.assertEqual(gate.main(), 1)
+                tools.assert_not_called()
+                snapshot.assert_not_called()
+                commands.assert_not_called()
+                self.assertFalse(run_dir.exists())
 
     def test_generated_library_guard_falls_back_for_test_or_unknown_expansion(self):
         safe = '#[derive(Clone)]\npub fn f() { if !(true) { assert!(false); } }'

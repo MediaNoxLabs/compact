@@ -1,0 +1,1668 @@
+{
+  "provenance": {
+    "source": "examples/rust_backend/witness_effect_order.compact",
+    "sourceSha256": "d2b4b4b2ad94776aa27a4354e6c1fe9253b342e267fa4eb4bf05a3e9450f9a58",
+    "generatedSha256": "c3e057a1f058488c042ffaa0da2ac73c5de79d81684dec4cbf125a93ee62d055",
+    "runtimeSha256": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+    "compilerSha256": "3c3a9d4a011c8800988391aa064b87f36e0740c8688b32ff151bdaf21d8b8ca3",
+    "schemeSha256": "41441b9b25459793fd55be7fa7e0e61b64c10070cab3a801243c9b3d909dd0d4",
+    "nodeVersion": "v24.14.0"
+  },
+  "scope": "Native execution oracle; query programs are TS observations, not Rust recording or proof evidence.",
+  "rows": [
+    {
+      "name": "equal_result",
+      "choice": false,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": "42",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          [
+            42
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [],
+      "calls": {
+        "gate": 1,
+        "key": 0
+      },
+      "events": [
+        "gate"
+      ],
+      "queries": []
+    },
+    {
+      "name": "equal_result",
+      "choice": true,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": "42",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          [
+            42
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [],
+      "calls": {
+        "gate": 1,
+        "key": 0
+      },
+      "events": [
+        "gate"
+      ],
+      "queries": []
+    },
+    {
+      "name": "equal_result",
+      "choice": "error",
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 1,
+        "key": 0
+      },
+      "events": [
+        "gate"
+      ],
+      "queries": []
+    },
+    {
+      "name": "set_member",
+      "choice": 7,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": true,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            [
+              7
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "170000000",
+        "computeTime": "1252339959",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        7
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "member",
+            {
+              "popeq": {
+                "cached": true
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "170000000",
+            "computeTime": "1252339959",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_member",
+      "choice": 9,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": false,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          []
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "170000000",
+        "computeTime": "1252339959",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    9
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        9
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "member",
+            {
+              "popeq": {
+                "cached": true
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "170000000",
+            "computeTime": "1252339959",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_member",
+      "choice": "error",
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key"
+      ],
+      "queries": []
+    },
+    {
+      "name": "map_member",
+      "choice": 7,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": true,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            [
+              7
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "170000000",
+        "computeTime": "1252339959",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        7
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "member",
+            {
+              "popeq": {
+                "cached": true
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "170000000",
+            "computeTime": "1252339959",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "map_member",
+      "choice": 9,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": false,
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            [
+              9
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          []
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "170000000",
+        "computeTime": "1252339959",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    9
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        9
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "member",
+            {
+              "popeq": {
+                "cached": true
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "170000000",
+            "computeTime": "1252339959",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "map_member",
+      "choice": "error",
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key"
+      ],
+      "queries": []
+    },
+    {
+      "name": "map_lookup",
+      "choice": 7,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "result": "42",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "privateState": 8,
+      "privateOutputs": [
+        {
+          "value": [
+            [
+              7
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "value": [
+          [
+            42
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      "gas": {
+        "readTime": "255000000",
+        "computeTime": "1338889415",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      7
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  42
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          7
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "field"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "255000000",
+            "computeTime": "1338889415",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "map_lookup",
+      "choice": 9,
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "CompactError: Error: expected a cell, received null",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          9
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "field"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false
+              }
+            }
+          ],
+          "error": "Error: expected a cell, received null"
+        }
+      ]
+    },
+    {
+      "name": "map_lookup",
+      "choice": "error",
+      "zeroGas": false,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key"
+      ],
+      "queries": []
+    },
+    {
+      "name": "set_member",
+      "choice": 7,
+      "zeroGas": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "CompactError: Error: ran out of gas budget",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        7
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "member",
+            {
+              "popeq": {
+                "cached": true
+              }
+            }
+          ],
+          "error": "Error: ran out of gas budget"
+        }
+      ]
+    },
+    {
+      "name": "set_member",
+      "choice": "error",
+      "zeroGas": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key"
+      ],
+      "queries": []
+    },
+    {
+      "name": "map_member",
+      "choice": 7,
+      "zeroGas": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "CompactError: Error: ran out of gas budget",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        7
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "member",
+            {
+              "popeq": {
+                "cached": true
+              }
+            }
+          ],
+          "error": "Error: ran out of gas budget"
+        }
+      ]
+    },
+    {
+      "name": "map_member",
+      "choice": "error",
+      "zeroGas": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key"
+      ],
+      "queries": []
+    },
+    {
+      "name": "map_lookup",
+      "choice": 7,
+      "zeroGas": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "CompactError: Error: ran out of gas budget",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key",
+        "query"
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          7
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "field"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false
+              }
+            }
+          ],
+          "error": "Error: ran out of gas budget"
+        }
+      ]
+    },
+    {
+      "name": "map_lookup",
+      "choice": "error",
+      "zeroGas": true,
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a8c00080741000400080004000408080104040c90030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204100402000c412a410418040108001c000420080104042490030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204280402042c080104043014030401041008143408040804380403043c0004400801040444640304295410404010008010807410001040104010c412a41000044815020304ff0102010403040108040808010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104000001140304010410040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010800002c287365745f6d656d62657208500400045408010404589003043f805c7b08411aa3531f46293b37bc6cdb334fd5be5d12c6d0e05233cd3293157370002c286d61705f6d656d62657208600400046408010404688c03043e7cb0e11e1f7b96baa396e6a1c99e3fdaede1c4fdead5d57a29b860480a67419d002c286d61705f6c6f6f6b757008700400047408010404788c03043e7cb0f50a0af2b06e70a28ef720db4d3fff96a3c878fca0d9cb1d3f159d4ee7cd400404046c0404040404040404047c040408020840040404040404045c040404048004040408020c1438044c84041003000400",
+      "error": "Error: intentional witness refusal",
+      "calls": {
+        "gate": 0,
+        "key": 1
+      },
+      "events": [
+        "key"
+      ],
+      "queries": []
+    }
+  ]
+}

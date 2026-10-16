@@ -10,9 +10,8 @@ on:
   # No path filters: required checks must finish for documentation-only PRs too.
   push:
     branches: [codex/rust-backend-ast]
+  # Also cover stacked PRs without encoding temporary branch names.
   pull_request:
-    # Exercise the second PR while it is stacked on the public-gates slice.
-    branches: [codex/rust-backend-ast, codex/rust-ast-public-gates]
 
 permissions: {}
 
@@ -210,6 +209,12 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+      - name: Install pinned Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: Test workflow controls
+        run: python3 -B -m unittest discover -s scripts -p test_workflow_control.py -v
       - name: Run public unit and sidecar controls
         run: |
           python3 -B tools/compact-rust-backend/ci_python_checks.py \

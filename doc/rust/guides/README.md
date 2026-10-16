@@ -8,7 +8,7 @@ See [candidate qualification](candidate-qualification.md) for the current valida
 
 ## Recording-effect branch
 
-[Checked recording and source diagnostics](checked-recording.md) describes the current architecture and extension workflow. The [checked recording guide](checked-recording.md) separates fresh, reused and pending evidence. The examples and receipts below retain the 0.3.0 source epoch; current primitive support is determined by checked operations and composition.
+[Checked recording and source diagnostics](checked-recording.md) describes the current architecture and extension workflow. The [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) separates fresh, reused and pending evidence. The examples and receipts below retain the 0.3.0 source epoch; current primitive support is determined by checked operations and composition.
 
 ## Retained 0.3.0 qualification boundary
 
@@ -20,5 +20,9 @@ The [candidate follow-up receipts](../evidence/0.3.0/index.md#candidate-qualific
 
 [Candidate qualification](candidate-qualification.md) distinguishes bounded CI, full local validation and documentation publication.
 
-[Portable Python fixtures](retained-python-fixtures.md) explains the bundled historical
-baseline and explicitly selected manual graph controls.
+The [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) and [original 84-row ledger](../recording-effect-algebra/retirement-ledger.json) preserve boundary accounting and distinguish current implementation from retained qualification epochs. [Retained conformance inputs](retained-conformance-baseline.md) explains the explicit archive required by the one historical baseline case.
+
+[Portable Python fixtures](retained-python-fixtures.md) describes the checked-in
+historical baseline and explicitly selected manual graph controls.
+
+[Recording-effect closure](../recording-effect-algebra/closure-report.md) records the final local source, stage-separated qualification, original completion criteria and follow-ups. The candidate-qualification page above retains its 0.3.0 epoch.

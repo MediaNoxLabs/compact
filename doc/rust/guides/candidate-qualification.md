@@ -2,7 +2,7 @@
 
 **Technical qualification passed.** The qualified implementation is `f9a496660a4a69f4dd7c7927111767ad5c0c12b2`. Documentation publication and milestone closure have separate provenance; no release tag, registry publication or deployment is implied.
 
-This page is the retained **0.3.0 qualification epoch**. It does not qualify the current recording-effect branch. See the [checked recording guide](checked-recording.md) for current gates, reuse premises and pending closure.
+This page is the retained **0.3.0 qualification epoch**. It does not qualify the current recording-effect branch. See the [current capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for current gates, reuse premises and the recording-effect closure record.
 
 ## Local execution
 

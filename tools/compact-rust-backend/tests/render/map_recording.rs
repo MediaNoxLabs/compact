@@ -72,16 +72,28 @@ fn opaque_string_map_recording_composes_writes_and_keeps_return_domain() {
         vec![("put".into(), true), ("ensure".into(), true)]
     );
     let output = render_with_capabilities(&contract).unwrap();
+    let capability = output
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "ensure")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
     let body = super::lifecycle_recording::generated_body(&output.source, "recorded", "ensure");
-    let lookup = body
-        .find(&quote::quote!(.record_lookup).to_string())
-        .unwrap();
-    // Field constants use the exact canonical 32-byte little-endian encoding.
+    let member = quote::quote!(.record_member).to_string();
+    let lookup = quote::quote!(.record_lookup).to_string();
+    assert_eq!(body.matches(&member).count(), 1);
+    assert_eq!(body.matches(&lookup).count(), 1);
+    assert_eq!(body.matches("missing key").count(), 1);
+    // The retained membership/assert prefix and discarded lookup still execute
+    // once before the now-independent Field result.
     let bytes = [7u8].into_iter().chain([0u8; 31]);
-    let literal = body
-        .find(&quote::quote!([#(#bytes,)*]).to_string())
-        .unwrap();
-    assert!(lookup < literal);
+    let literal = quote::quote!([#(#bytes,)*]).to_string();
+    assert_eq!(body.matches(&literal).count(), 1);
+    assert!(body.find(&member).unwrap() < body.find("missing key").unwrap());
+    assert!(body.find("missing key").unwrap() < body.find(&lookup).unwrap());
+    assert!(body.find(&lookup).unwrap() < body.find(&literal).unwrap());
     let StateReturn::Expression {
         value: Expr::Let { body, .. },
     } = &mut contract.stateful_circuits[1].return_value

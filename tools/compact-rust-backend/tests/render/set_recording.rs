@@ -66,10 +66,21 @@ fn opaque_string_set_recording_composes_defaults_and_checks_declared_keys() {
         vec![("addName".into(), true), ("hasName".into(), true)]
     );
     let output = render_with_capabilities(&contract).unwrap();
-    assert!(
-        generated_body(&output.source, "recorded", "hasName")
-            .contains(&quote::quote!(.record_member).to_string())
-    );
+    let capability = output
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "hasName")
+        .unwrap();
+    assert!(capability.recorded && capability.observed_call);
+    assert!(capability.recording_unavailable.is_none());
+    let body = generated_body(&output.source, "recorded", "hasName");
+    let default =
+        quote::quote!(<runtime::OpaqueString as ::core::default::Default>::default()).to_string();
+    let member = quote::quote!(.record_member).to_string();
+    assert_eq!(body.matches(&default).count(), 1);
+    assert_eq!(body.matches(&member).count(), 1);
+    assert!(body.find(&default).unwrap() < body.find(&member).unwrap());
     let StateReturn::SetMember { value, .. } = &mut contract.stateful_circuits[1].return_value
     else {
         unreachable!()
@@ -241,13 +252,25 @@ fn opaque_set_check_in_composes_typed_effects_and_preserves_witness_order() {
     assert!(
         bytes.capabilities.circuits[0].recorded && bytes.capabilities.circuits[0].observed_call
     );
+    assert!(
+        bytes.capabilities.circuits[0]
+            .recording_unavailable
+            .is_none()
+    );
     let body = generated_body(&bytes.source, "recorded", "check_in");
+    for operation in ["record_member", "record_insert", "record_remove"] {
+        assert_eq!(body.matches(operation).count(), 1, "{operation}");
+    }
+    assert!(!body.contains("try_witness_metered"));
     assert!(body.find("record_member").unwrap() < body.find("record_insert").unwrap());
     assert!(body.find("record_insert").unwrap() < body.find("record_remove").unwrap());
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert!(matches!(
         render(&contract),
-        Err(RenderError::TypeMismatch { .. })
+        Err(RenderError::TypeMismatch {
+            expected: Type::OpaqueBytes,
+            actual: Type::Field,
+        })
     ));
 }
 

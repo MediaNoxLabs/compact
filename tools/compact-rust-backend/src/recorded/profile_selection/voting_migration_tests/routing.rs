@@ -22,11 +22,11 @@ fn voting_owner_runs_once_and_stops_later_profiles() {
 }
 
 #[test]
-fn earlier_organizer_composite_and_receive_owners_prevent_voting_attempts() {
+fn earlier_membership_composite_and_receive_owners_prevent_voting_attempts() {
     for (json, name, owner) in [
         (
             include_str!("../../../../tests/welcome-organizer-schema13-ir.json"),
-            None,
+            Some("add_participant"),
             "algebra.membership",
         ),
         (
@@ -49,7 +49,11 @@ fn earlier_organizer_composite_and_receive_owners_prevent_voting_attempts() {
             .unwrap();
         let row = legacy_selected_trace(&c, r);
         assert_eq!(row["body_owner"], owner);
-        assert!(!attempts(&row).contains(&"algebra.voting-commit"));
+        let a = attempts(&row);
+        assert_eq!(a.iter().filter(|&&route| route == owner).count(), 1);
+        assert_eq!(a.last().copied(), Some(owner));
+        assert!(!a.iter().any(|route| route.starts_with("organizer.")));
+        assert!(!a.contains(&"algebra.voting-commit"));
     }
 }
 

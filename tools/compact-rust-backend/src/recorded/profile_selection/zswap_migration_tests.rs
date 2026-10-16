@@ -282,6 +282,19 @@ fn former_boolean_inequality_refusal_preserves_earlier_checked_unit_owner() {
     let (selected, row) = maps.legacy_selected(root(&c, "flow"));
     assert!(selected.typed_result.is_some());
     assert_eq!(row["body_owner"], "algebra.unit-composition");
+    let selected_attempts = attempts(&row);
+    assert_eq!(
+        selected_attempts
+            .iter()
+            .filter(|&&route| route == "algebra.unit-composition")
+            .count(),
+        1
+    );
+    assert_eq!(
+        selected_attempts.last().copied(),
+        Some("algebra.unit-composition")
+    );
+    assert!(!selected_attempts.contains(&"algebra.zswap"));
     let (output, rows) = trace::capture_json(|| crate::render_with_capabilities(&c));
     let output = output.unwrap();
     let capability = output

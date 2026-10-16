@@ -194,8 +194,8 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def authenticate_retained_artifacts(artifacts, *, source_root=None):
-    """Authenticate only the original retained pair and its existing authority closure."""
+def _authenticate_file_closure(artifacts, *, source_root, authority):
+    """Read a supplied file closure live; this primitive establishes no graph provenance."""
     if artifacts is None or not str(artifacts):
         raise ValueError("explicit retained guarded-point inputs required: supply "
                          "--guarded-point-artifacts or " + RETAINED_GRAPH_ENVIRONMENT)
@@ -212,7 +212,6 @@ def authenticate_retained_artifacts(artifacts, *, source_root=None):
                 "guarded-point retained input escapes root: " + relative)
         return path
 
-    authority = RETAINED_GRAPH_AUTHORITY
     for table in ("artifact_fingerprints", "authority_fingerprints"):
         for relative, expected in authority[table].items():
             require(digest(contained(artifacts, relative)) == expected,
@@ -220,24 +219,37 @@ def authenticate_retained_artifacts(artifacts, *, source_root=None):
     source = authority["source"]
     require(digest(contained(source_root, source["path"])) == source["sha256"],
             "guarded-point current fixture drift")
-    return {"root": str(artifacts), "source_root": str(source_root),
+    return {"root": str(artifacts), "source_root": str(source_root)}
+
+
+def authenticate_retained_artifacts(artifacts, *, source_root=None):
+    """Authenticate only the original retained pair and its fixed authority closure."""
+    authority = RETAINED_GRAPH_AUTHORITY
+    roots = _authenticate_file_closure(artifacts, source_root=source_root, authority=authority)
+    return {**roots,
             "artifact_fingerprints": dict(authority["artifact_fingerprints"]),
             "authority_fingerprints": dict(authority["authority_fingerprints"]),
-            "source": dict(source), "producer_identities": dict(authority["producer_identities"]),
+            "source": dict(authority["source"]), "producer_identities": dict(authority["producer_identities"]),
             "qualification": "Retained nested graph mutation controls; not fresh current "
                              "emission, VM, proof or complete historical qualification."}
 
 
 @contextmanager
-def retained_artifact_root(artifacts, *, source_root=None):
-    """Keep each case's canonical inputs live through fixture cleanup."""
-    receipt = authenticate_retained_artifacts(artifacts, source_root=source_root)
+def _authenticated_artifact_root(artifacts, *, source_root, authenticate):
+    """Recheck the selected canonical roots, even if their original aliases move."""
+    receipt = authenticate(artifacts, source_root=source_root)
     selected = Path(receipt["root"])
     selected_source = Path(receipt["source_root"])
     try:
         yield selected
     finally:
-        authenticate_retained_artifacts(selected, source_root=selected_source)
+        authenticate(selected, source_root=selected_source)
+
+
+def retained_artifact_root(artifacts, *, source_root=None):
+    """Keep the original retained closure live through fixture cleanup."""
+    return _authenticated_artifact_root(artifacts, source_root=source_root,
+                                        authenticate=authenticate_retained_artifacts)
 
 
 def compile_sources(compiler, output):

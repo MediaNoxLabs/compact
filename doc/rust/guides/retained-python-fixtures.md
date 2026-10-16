@@ -74,3 +74,26 @@ execute the original ten graph controls and ten retained graph-input controls
 with no artifact-dependent skips. Default
 unit discovery with skips is not a successful full gate, a rerun of the accepted
 974 historical laws or a proof result. Test outcomes and proofs are never cached.
+
+## Public file-authentication controls
+
+`test_guarded_point_file_closure.py` tests the shared live file-authentication and
+canonical-root cleanup machinery with private temporary synthetic inputs. Run:
+
+```sh
+cd tools/compact-rust-backend
+python3 -B -m unittest test_guarded_point_file_closure -v
+```
+
+All 17 methods run without artifact overrides, compiler tools, parameters, keys
+or network. Sixteen exercise real filesystem validation/lifetime behavior; one
+isolates receipt projection after the file boundary, without claiming historical
+authentication. They cover content/deletion, source/authority identity, path and
+symlink escape, alias retargeting, exception cleanup and fixture isolation. The
+synthetic receipt contains canonical roots only. Synthetic bytes must still be
+refused by the public retained authenticator.
+
+These are unit mechanics controls, not the original retained graph, emission,
+proof or 974-case historical qualification. The fixed retained authority and
+all original genuine graph controls remain unchanged. Select authentic graph
+inputs explicitly to execute that separate population.

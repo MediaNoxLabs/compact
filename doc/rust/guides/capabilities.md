@@ -143,4 +143,4 @@ Historically, the checker passed the digest row and refused the relation row at 
 
 These are separate project version domains, not a single Compact language version or a public standard called “schema-20”. The backend library initially creates an unclassified schema-2 capability draft; the CLI joins frontend proof metadata and emits finalized schema3. Application checks should consume the finalized report.
 
-All new guides and ADRs remain in Obsidian until milestone closeout. Historical measurements and capability examples retain their exact source checkpoint.
+Published guides and ADRs live under `doc/rust/`. Planning notes and detailed local acceptance follow the [evidence availability policy](../recording-effect-algebra/evidence-availability.md). Historical measurements and capability examples retain their exact source checkpoint.

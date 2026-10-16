@@ -1,6 +1,6 @@
 # Recording effect algebra: capability and retirement
 
-**Local closure record: compiler 0.31.135 / ledger8.1.3, with historical checkpoints retained separately.** The [closure report](closure-report.md) and [evidence index](closure-evidence.json) bind the frozen implementation, original eleven DoD, EA00–EA13 and maintainable contribution history. This publication preserves all original 84 retirement rows and creates no new execution or coverage result.
+**Maintainer-reported local closure: compiler 0.31.135 / ledger8.1.3, with historical checkpoints retained separately.** The [closure report](closure-report.md) and [evidence index](closure-evidence.json) record the original eleven DoD, EA00–EA13 and contribution history. [Evidence availability](evidence-availability.md) separates published source/reviews from maintainer-only historical acceptance. This publication preserves all original 84 retirement rows and creates no new execution or coverage result.
 
 ## Architecture
 
@@ -65,17 +65,17 @@ The original `d18cddae` / `b2d1122e` / `a1d6dc33` rows above describe their own 
 | Runtime refresh | 18 fresh current controls: nine helper-boundary, four VM and five testkit methods. Helper and VM controls overlap retained runtime populations. Testkit resolver/IR/assertion controls generate no proofs, parameters or keys. |
 | Historical machinery / retained fixtures | 28 and 83 methods passed in their respective earlier source epochs. Independent review accepted unchanged relevant test/source/input premises after the seven-path Nix cohort inheritance: 71 machinery inputs, and the fixture modules plus 150 archive and six graph inputs. This does not relabel the whole-source execution epoch or rerun the historical 974 cases. |
 
-These accepted results have recorded source, tool, input, artifact and feature bindings. The present documentation overlay executes nothing. The ledger preserves both the original source checkpoint and the subsequent publication checkpoint; the frozen composed implementation is `22a6f44cce66641c217ffd5caaf8146670b8ab57`; later closure commits change documentation only. Original 70 proof calls remain ledger8.0.3 historical evidence. Current 8.1.3 affected proof receipts retain their own narrower circuit/key/runtime scope. The 605 applicability rows are not proofs.
+These accepted results have recorded source, tool, input, artifact and feature bindings. The present documentation overlay executes nothing. The ledger preserves both the original source checkpoint and the subsequent publication checkpoint; the original local implementation is identified in the [maintainer-only evidence record](evidence-availability.md), separately from the published source checkpoint. Later closure corrections change documentation only. Original 70 proof calls remain ledger8.0.3 historical evidence. Current 8.1.3 affected proof receipts retain their own narrower circuit/key/runtime scope. The 605 applicability rows are not proofs.
 
-## Final composed closure
+## Reported local composed closure
 
-The [closure report](closure-report.md) separates fresh affected checks, authenticated retained proof/consumer/historical evidence, source identity and all original completion conditions. Current Rust has 1,829 passes and seven existing ignored tests. Authenticated Python discovery has 289 passes and zero skips. Default discovery reports manual skips honestly; invalid explicit inputs fail.
+The [closure report](closure-report.md) separates fresh affected checks, authenticated retained proof/consumer/historical evidence, source identity and all original completion conditions. The original local epoch reported 1,829 Rust passes and seven existing ignored tests. Authenticated Python discovery at that epoch reported 289 passes and zero skips. Default discovery reports manual skips honestly; invalid explicit inputs fail.
 
-The contribution train is source-identical to the qualified `43d7e2f0` epoch. Its prerequisite ancestry is aligned to the actual merged AST base without changing any implementation tree, message, author or date. Original refs, failed attempts and raw signatures remain preserved. Final root and independent coding-agent acceptance is recorded separately before closure publication.
+The original local contribution train was checked against its recorded qualified epoch. That historical source-identity and acceptance claim follows the [availability policy](evidence-availability.md); it is not a claim that the public whole tree is identical to the private checkpoint. Public source and reviewer-reported local checks have their own linked anchors. Original refs, failed attempts and raw signatures remain retained.
 
 The wide-add producer hold is resolved: the portable current 3.1.2 capture has its own epoch and leaves the old 3.0.0 oracle unchanged. Restored independent output snapshots and checker controls remain present. The private replay-input archive retains original path-bearing provenance and is not an approved public upload or an outer-qualification substitute.
 
-No universal TS/spec parity, Agda semantic proof, production network readiness or newly executed monolithic release gate is claimed. Forge remains deferred. Coordinated Rust crate/version/lock migration is required before registry publication and is outside this local epic.
+No universal TS/spec parity, Agda semantic proof, production network readiness or newly executed monolithic release gate is claimed. Compiler-level Forge integration remains deferred; the separate opt-in local adapter is already published. Coordinated Rust crate/version/lock migration is required before registry publication and is outside this local epic.
 
 ## Candidate-runner incident
 

@@ -1,15 +1,17 @@
 # Goal #508 — local closure report
 
-> **Publication context — 2026-10-16:** This report records the independently accepted local qualification epoch `45b575c8` / implementation `22a6f44c`. The public contribution stack preserves that implementation while retaining the subsequently merged optional Forge tests and explicit historical-input documentation. It is not byte-identical to the old whole local tree. See [publication stack and evidence boundaries](publication-stack.md) and [Discussion #644](https://github.com/MediaNoxLabs/compact/discussions/644) for publication status. Historical execution counts below remain at their original source/material epochs.
+> **Publication context — 2026-10-16:** This is a maintainer-reported local closure summary for epic #508, not a publicly reproducible historical acceptance certificate. Published source, public review comments and maintainer-only historical evidence are separated in [evidence availability](evidence-availability.md). The entire 0.4.0 milestone and registry release remain open.
 
-Date: 2026-10-16. This record covers the recording-effect epic, not the entire 0.4.0 milestone or a registry release. Final internal and independent coding-agent approval is recorded in the midnight vault and the local closure packet before this report is adopted.
+## Published implementation and local history
 
-## Qualified implementation
+- Published source checkpoint: [785c892c5165cf0eaa12e895d5e54004822678ce](https://github.com/betsudo/compact/commit/785c892c5165cf0eaa12e895d5e54004822678ce); public tree `2f8d8916fda80b006d9ea8420df760980ddac07b`. This availability correction changes documentation only.
+- The [public review at that checkpoint](https://github.com/betsudo/compact/pull/651#issuecomment-6219269611) reports local checks and their source scope. [Discussion #644](https://github.com/betsudo/compact/discussions/644) publishes the closure narrative. These are public summaries, not the raw historical acceptance packet.
+- The local source manifest has SHA256 `f47437a5f8d9dd380e74ad44abc718319615899fb667358d83033a7b700d9a8f`. Its 5,586-file population and original source epochs are identified as maintainer-only in [evidence availability](evidence-availability.md); this digest does not authenticate the later public whole tree.
+- The original local implementation history preserves 144 original contributions and 19 authored corrections. The original AST checkout, local closure and prototype history remain retained. Core PR641, optional Forge PR642 and publication PR645–PR650 have merged; this closure packet is published as PR651 and awaits owner review/merge. Publication is not a tag or release.
 
-- Implementation commit: `22a6f44cce66641c217ffd5caaf8146670b8ab57`; tree: `1c8271947d41245aa6da5f6ea3de0d0bc02e997c`.
-- The 5,586-file source manifest has SHA256 `f47437a5f8d9dd380e74ad44abc718319615899fb667358d83033a7b700d9a8f`. It is retained in the local evidence archive; the Git commit/tree authenticate the published implementation bytes.
-- The source is byte-identical to the qualified `43d7e2f0` epoch. The 163 meaningful contributions preserve 144 original contributions and 19 authored corrections. Their parent chain is aligned to the source-identical merged AST prerequisites at `fcfe6057`. All previous objects and refs have backups. The final closure-document commit follows this implementation without changing executable sources.
-- The original AST checkout and prototype/publication history remain preserved. This focused local successor is prepared for owner merge commits. It has not been pushed under this local closure.
+The recorded local checks and acceptance conditions below retain their original
+source, input and tool epochs. They are reported historical outcomes, not fresh
+execution at the public checkpoint or publicly inspectable full-gate evidence.
 
 ## Architecture and compatibility
 
@@ -19,7 +21,7 @@ The independent validator checks scopes, types, signatures and budgets. It does 
 
 The source cohort uses official ledger 8.1.3 at `b5d3e965a18e4cac17fac4f38446fc55c524439a`, compiler 0.31.135, JS runtime 0.16.102 and onchain runtime 3.1.2. Rust runtime ABI52, IR20, capability schema3, compatibility schema2 and origin transport3 are distinct version domains. Backend/runtime owners require Rust 1.89; the independent toolchain-manager CLI retains 1.88.
 
-## Actual current checks and authenticated reuse
+## Reported local checks and authenticated reuse
 
 | Population | Outcome | Scope |
 |---|---|---|
@@ -90,13 +92,13 @@ The old ledger8.0.3 seventy-call proof population remains historical. Accepted l
 
 The dependency-ordered local slices keep coupled source/tests/generated consumers/manifests together. Original descriptions, authorship and dates are retained; new commits use Conventional messages, verified GPG signatures, DCO and AI trailers. Only reviewed fixups and finite metadata successors were consolidated. Historical refs, rejected signatures and failed gate epochs remain preserved.
 
-Each slice has a local review description stating its parent, profile, actual checks and reuse limits. Source-only staged qualification is distinguished from later signed ancestry. Independent extraction/history/composition reviews cover the final source and original contribution mapping. Obsidian holds the slice map, decisions and step-by-step log. No blanket feature-history squash is used.
+Each slice has a local review description stating its parent, profile, actual checks and reuse limits. Source-only staged qualification is distinguished from later signed ancestry. Independent extraction/history/composition reviews cover the final source and original contribution mapping. The historical slice map, decisions and step-by-step log follow the [evidence availability policy](evidence-availability.md). No blanket feature-history squash is used.
 
 ## Resources, historical tooling and availability
 
 Selected medium/near/over and 2 MiB controls retain their declared budgets and soft warnings. Successful-only `TypeBoundsSession` facts are per-invocation, keyed by immutable bindings and invalidated on raw-key shadowing; they do not certify carrier semantics. No universal CPU, stack, memory or latency guarantee is claimed.
 
-The historical runner retains process sharding. A separately retained path-validation experiment measured a 10.34% median saving across three paired representative processes. The [historical results summary](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md) records the scope and limits; this is not a current-runner or full-suite speedup claim. The patch, measurement driver and detailed acceptance record remain in the midnight vault and local evidence archive. They are not distributed as runnable tooling in this checkout. The current runner and its live authentication requirements are unchanged; no proofs, passing results or authentication decisions are cached.
+The historical runner retains process sharding. A separately retained path-validation experiment measured a 10.34% median saving across three paired representative processes. The [historical results summary](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md) records the scope and limits; this is not a current-runner or full-suite speedup claim. The patch, measurement driver and detailed acceptance record follow the [maintainer-only availability policy](evidence-availability.md). They are not distributed as runnable tooling in this checkout. The current runner and its live authentication requirements are unchanged; no proofs, passing results or authentication decisions are cached.
 
 The private replay-input archive has SHA256 `31795590babd55a30ce8cf05175911d51f65511bac0b084e9721154c15e58754`: 272 unchanged payloads, 274 regular members, 31 payloads with original owner-path provenance. Local packaging is accepted. It is not an approved public upload, sanitized source distribution or replacement for the original outer qualification. Public metadata records hashes and availability without silently altering authenticated bytes. The new bundled 150-file public conformance fixture is separate and matches public Git exactly.
 
@@ -106,6 +108,6 @@ The private replay-input archive has SHA256 `31795590babd55a30ce8cf05175911d51f6
 - Replace test-only recognizers only after independent semantic laws preserve their assertions and negative controls; see the [retirement plan](../plans/retired-recording-oracles.md).
 - Transient-origin diagnostics remain proposed; fixed-width Field commitments are supported.
 - Forge compiler/cache integration is deferred by owner decision. No P256/secp256k1/later-ledger, production network SDK, universal TS/spec parity or Agda semantic-equivalence claim.
-- PR641 was separately updated under explicit owner authorization and is clean/mergeable at its inspected base. This unpublished focused stack is not a PR merge, tag, release or hosted-CI qualification.
+- Core PR641 and optional Forge PR642 are merged. This published closure packet is not a milestone release, registry publication or hosted-CI qualification.
 
 Independent coding-agent review is not a human security audit. The original AST checkout, original aggregate/publication history, producer's four staged files and deferred work are preserved.

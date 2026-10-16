@@ -41,6 +41,8 @@ Rust and TypeScript consume the same language/ledger semantics. The Rust backend
 
 Backend paths in this table are under `tools/compact-rust-backend/src/`. See [checked recording](checked-recording.md) for the extension workflow and [the retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for finite family/evidence coverage. Runtime and compiler source changes need their own affected checks; old test-profile names do not authorize production recording.
 
+Historical acceptance references below follow the [evidence availability policy](../recording-effect-algebra/evidence-availability.md); they are not unpublished prerequisites for browsing the public component sources.
+
 ## Historical 0.3.0 component map
 
 All paths below are repository-relative navigation references.

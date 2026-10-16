@@ -1,6 +1,6 @@
 # Recording algebra publication stack
 
-Date: 2026-10-16. Local epic #508 is independently accepted; the entire 0.4.0 milestone remains open. This stack publishes residual qualification/documentation adjuncts after core PR641 and optional Forge PR642 merged. The owner has merged PR645–PR648; PR649–PR651 remain subject to review. This is not a milestone release.
+Date: 2026-10-16. The local acceptance of epic #508 is reported under the [evidence availability policy](evidence-availability.md); the entire 0.4.0 milestone remains open. This stack publishes residual qualification/documentation adjuncts after core PR641 and optional Forge PR642 merged. The owner has merged PR645–PR650; PR651 remains subject to review. This is not a milestone release.
 
 ## Review order
 
@@ -14,11 +14,11 @@ Date: 2026-10-16. Local epic #508 is independently accepted; the entire 0.4.0 mi
 | 6 | `codex/publish-runtime-evidence-guides` | Source pairing, fixture provenance and evidence scope |
 | 7 | `codex/publish-recording-closure` | Closure, retirement ledger and navigation |
 
-The remaining stack starts with PR649 targeting `codex/rust-backend-ast`; PR650 and PR651 target their immediate predecessor. Retarget the next PR to AST after its predecessor merges. Most of the original 39-slice local history is already represented by merged core work. Original detailed contribution history, authors, source/authority epochs and failed attempts remain retained. This stack is not a replay or blanket squash of those features.
+The remaining PR651 targets `codex/rust-backend-ast` directly. Its predecessors are merged. Most of the original 39-slice local history is already represented by merged core work. Original detailed contribution history, authors, source/authority epochs and failed attempts remain retained. This stack is not a replay or blanket squash of those features.
 
 ## Source composition and qualification
 
-Accepted local checkpoint: `45b575c85982c8d7a71bbd1714fb197a8e8b877b`; implementation `22a6f44cce66641c217ffd5caaf8146670b8ab57`; independent actual-object/vault acceptance SHA256 `43673887f9cab2acd6d6f8d44e739e8995e477ef52260e362e3de8dcd65ed3ed`. These authenticate the original local qualification epoch, not the current combined public tree or availability of every historical object on GitHub.
+Published source checkpoint: [785c892c5165cf0eaa12e895d5e54004822678ce](https://github.com/betsudo/compact/commit/785c892c5165cf0eaa12e895d5e54004822678ce), tree `2f8d8916fda80b006d9ea8420df760980ddac07b`. [Public review comments and the closure summary](evidence-availability.md) provide inspectable reports; the original local source epochs and acceptance packet have the separately stated maintainer-only availability. No private commit ID is used as this publication's source anchor.
 
 Publication baseline: AST `c9778ee9130e92a6832c8fd2bff8fd34cc096056`, including optional Forge. Its 17-file cache delta remains; the sole shared editorial change updates the guide index introduction while retaining its entire opt-in Forge section. The sharder code/tests remain exact. Its README retains the explicit missing-driver/frozen-input warning and links the scoped historical results summary. The publication notice and this page are intentional documentation successors.
 
@@ -26,13 +26,13 @@ Original closure counts keep their actual execution/source/tool/material epochs 
 
 All original 84 retirement rows and independent output snapshots remain unchanged. No assertion, source-authentication, mutation/refusal or fixture-cleanup contract is weakened. The experimental patch and measurement driver are not distributed in the current tree; the default runner is unchanged. Forge stays an explicit local test opt-in; compiler-level cache integration is separately deferred.
 
-Current publication status: [Discussion #644](https://github.com/betsudo/compact/discussions/644) and the midnight vault. This packet does not merge PRs, close issues or dispatch hosted CI.
+Current publication status: [Discussion #644](https://github.com/betsudo/compact/discussions/644), this PR and the [availability/follow-up record](evidence-availability.md). This packet does not merge PRs, close issues or dispatch hosted CI.
 
 ## Publication review correction — 2026-10-16
 
 PR649 now publishes only the [historical results summary](../../../tools/compact-rust-backend/tests/performance/historical-path-validation-benchmark.md).
 The original patch, reproduction commands, raw measurements and incident record
-are retained in the midnight vault and local evidence archive. PR650 distinguishes
+follow the [maintainer-only evidence policy](evidence-availability.md). PR650 distinguishes
 this historical tooling result from current proof/application evidence; this
 closure packet uses the same availability boundary.
 
@@ -44,3 +44,13 @@ cover relative links, documentation scope and preservation of executable/test
 sources and fixed evidence records. No Rust, proof or historical-suite rerun is
 inferred from these checks. Original signed commits remain in ancestry; the
 corrections propagate through signed merge commits without rewriting history.
+
+## Evidence-availability review correction — 2026-10-16
+
+The closure summary now uses existing public commit links and explicitly
+separates public review reports from the original maintainer-only acceptance.
+No archive tags or private history are published. [#653](https://github.com/betsudo/compact/issues/653)
+tracks redistributable historical evidence and reproduction; the local closure
+summary does not claim that follow-up is complete. The earlier publication
+correction changed Markdown and removed the unused patch; this correction
+changes Markdown only and retains all original receipt/ledger identities.

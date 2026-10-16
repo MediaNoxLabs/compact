@@ -57,3 +57,52 @@ Forge acceleration delivery must qualify compatible keys and preserve actual
 proofs, verification, assertions and an uncached key-generation lane. Build caches
 are not cached test results. Do not add a key-cache setup cost to lanes that
 perform no key generation.
+
+## Temporary repository workflow profiles
+
+GitHub supports enabling and disabling individual workflows through its API.
+[`workflow_control.py`](../../../scripts/workflow_control.py) wraps those controls
+with a read-only plan, an explicit repository, a create-only state snapshot and
+live state verification. It uses the existing `gh` login and never edits workflow
+files, cancels running jobs, merges PRs or changes branch protection.
+
+```sh
+python3 scripts/workflow_control.py --repo betsudo/compact list
+python3 scripts/workflow_control.py --repo betsudo/compact focus
+
+# Apply the displayed focus plan; retain the snapshot until it is restored.
+CI_STATE_DIR="$(mktemp -d)"
+python3 scripts/workflow_control.py --repo betsudo/compact focus \
+  --apply --snapshot "$CI_STATE_DIR/before.json"
+
+# Enable one workflow when its component needs qualification.
+python3 scripts/workflow_control.py --repo betsudo/compact enable ci-specification.yml \
+  --apply --snapshot "$CI_STATE_DIR/enable-agda.json"
+
+# Restore only the operations from the original focus plan.
+python3 scripts/workflow_control.py --repo betsudo/compact restore "$CI_STATE_DIR/before.json" \
+  --apply --snapshot "$CI_STATE_DIR/restore.json"
+```
+
+`enable` and `disable` accept exact workflow filenames. Without `--apply`, every
+command is a dry run. Apply writes its snapshot before the first remote mutation;
+if a later API call fails, the same snapshot can reconcile partial changes.
+Restoration checks repository, workflow identity and current state. Unknown
+workflows are left unchanged; an explicitly requested unregistered workflow is an
+error. The script protects Rust-AST, Forge, compiler-build and security workflows
+from disabling. It refuses unexpected states such as inactivity suspension.
+
+The `focus` profile pauses editor, TypeScript debugger/runtime, Agda, unrelated
+CLI/release/publishing, upstream contract qualification, documentation sync and
+scheduled fuzzing workflows. Rust, compiler-build, security, ledger-line checks,
+changelog checks and result reporting remain available. This is a temporary Rust
+backend delivery profile: restore or enable the relevant workflows before changing
+those components, specification work or full release qualification.
+
+**Workflow state is repository-wide, across all branches.** Disabling a workflow
+can leave a required check on another branch pending; inspect that branch's rules
+before applying a profile there. Enabling a workflow does not replay missed events.
+Use an eligible new PR event or an explicit dispatch where the workflow supports
+it. Manual dispatch registration may require the file on GitHub's default branch;
+new feature-branch workflows can run from a fresh PR event. A disabled workflow or
+an empty check list never counts as a passing gate.

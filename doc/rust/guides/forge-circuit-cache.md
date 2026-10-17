@@ -5,6 +5,10 @@ Local circuit tests can optionally reuse binary ZKIR, prover keys and verifier k
 Proof generation, verification, assertions, negative controls and fixture checks
 still execute on every run. Test outcomes and proofs are never cached.
 
+The optional [Forge proof workflow](../../../.github/workflows/forge-local-ci.yml)
+prepares the same integration for CI. The required Rust-AST checks run without
+Forge; the proof workflow is a separate lane.
+
 ## Matching tools
 
 The active consumer uses the official ledger **8.1.3** revision
@@ -146,3 +150,101 @@ proof-executed by that selector. A later compiler rebuild was checked separately
 its complete generated tree matched, then three fresh Jubjub scenarios and one
 corrupt-verifier control passed. The historical Python qualification was not rerun
 or measured as part of this sample.
+
+## Public Forge qualification — 2026-10-17
+
+The public source home is [betsudo/forge](https://github.com/betsudo/forge).
+The additional qualified source is commit
+[`4ad82c8e1e687b64b7a440679fb8f648358106f0`](https://github.com/betsudo/forge/commit/4ad82c8e1e687b64b7a440679fb8f648358106f0),
+with ledger8 build fingerprint
+`bd1a54e776b8af58fb6ed682489b82d265aca4175040bd90c4acafa6db843e9f`.
+Qualification was performed locally on **aarch64-darwin**, Compact 0.31.135,
+using the current locked ledger graph. This does not qualify Linux or hosted CI.
+The older accepted build remains supported by its original adapter contract.
+
+For the new build, the adapter also requires the materialized descriptor and its
+live sidecar to match the manifest, recipe and exact binary serialization:
+`ir-source[v2]`, `prover-key[v7](ir-source[v2])`, and `verifier-key[v6]`.
+A missing descriptor, incompatible build or corrupt artifact is an error.
+
+| Complete test process | Cold Forge | Warm Forge | Fresh uncached |
+|---|---:|---:|---:|
+| Counter + Let | 3.787s | 1.324s | 1.285s |
+| Jubjub | 4.409s | 2.642s | 3.031s |
+
+These are single sequential comparisons, including actual proof/verification,
+ledger assertions and private corrupt-verifier refusals in every mode. All source,
+binary IR and key bytes matched fresh generation. The small sample was slightly
+slower warm; Jubjub was 12.8% shorter warm. This does not establish a general or CI
+speedup. `raw_after_write` was generated and compared but not proof-executed.
+The earlier table is historical evidence for the earlier build, not a new result.
+
+## Isolated local snapshot lane
+
+Build the pinned public Forge package, current compiler and proof runner. Keep the
+matching actual `zkir` on PATH and configure the authenticated ledger static fixture
+as described above. Use fresh output paths for every invocation:
+
+```sh
+python3 -B tools/compact-rust-backend/forge_ci.py bootstrap \
+  --compiler "$COMPACTC" --forge "$FORGE" --params-dir "$MIDNIGHT_PP" \
+  --output "$EVIDENCE/bootstrap"
+python3 -B tools/compact-rust-backend/forge_ci.py plan \
+  --compiler "$COMPACTC" --forge "$FORGE" --helper "$FORGE_CI" \
+  --proof-runner "$PROOF_RUNNER" --params-dir "$MIDNIGHT_PP" \
+  --generation local-1 --output "$EVIDENCE/plan-1"
+python3 -B tools/compact-rust-backend/forge_ci.py run \
+  --plan "$EVIDENCE/plan-1" --snapshot "$EVIDENCE/absent-snapshot" \
+  --snapshot-out "$EVIDENCE/snapshot-1" --uncached-zkir "$ZKIR"
+```
+
+Bootstrap only verifies existing parameters unless `--fetch-params` is explicitly
+provided; acquisition uses Forge's official verifying provider. A wrong existing
+parameter is refused. Planning binds current source, compiler, proof consumer,
+helper, Forge, parameter bytes and platform. A fresh second plan can restore
+`snapshot-1`; proofs and controls still run. Run markers prevent reusing a test
+verdict. The official helper owns partitioning, snapshot validation and post-restore
+statistics; malformed present snapshots fail instead of becoming cold misses.
+
+The prepared workflow uses an isolated store for each job, separate build and
+parameter caches, and a 256 MiB snapshot budget. Pull requests restore only.
+Only successful pushes to `codex/rust-backend-ast` may publish circuit snapshots;
+GitHub event/ref conditions and cache scopes establish that trust. The helper's
+`--tests-passed` argument alone grants no authority. It never stores proofs or test
+reports in the snapshot. An all-hit run does not save another snapshot.
+
+The Apple Silicon workflow is prepared and locally linted. Its first hosted run,
+hosted timing and any branch-protection configuration remain operational steps
+after publication. A different build/profile fails closed pending qualification.
+
+### Snapshot runner acceptance
+
+The same runner was exercised locally with a fresh store and a new isolated restore.
+The cold run recorded three misses; the restored run recorded three hits, zero
+misses/errors and zero key-generation time. Both executed the three Jubjub proof
+scenarios and verifier-corruption refusal. Artifact hashes were identical; private
+fixtures were removed. A reused plan and a present corrupt snapshot were refused.
+The snapshot contained 3,527,075 payload bytes, below the workflow budget.
+
+Complete final runner processes took 9.570s cold and 5.438s restored. These numbers are
+**not a speed comparison**: the cold invocation additionally ran the two-case
+uncached qualification and created the snapshot. Helper job elapsed time also
+includes its source/tool/parameter checks, not just Forge preparation. No hosted
+cache transfer or hosted timing was measured.
+
+### CI cost controls
+
+The optional proof workflow filters pushes and pull requests to compiler/runtime,
+backend and proof inputs, fixtures, locked dependencies, Nix definitions and its
+own workflow. Compiler source inputs also include `third_party/compiler` and
+`srcMaps`. It does not encode temporary stack branch names. Documentation-only
+changes outside those inputs do not start the macOS lane; explicit dispatch remains
+available after GitHub registers the workflow. Required Rust-AST checks have no
+path filters.
+
+The Forge lane caches only Cargo registry/git downloads, public parameters and
+bounded stopped Forge snapshots. It no longer caches the entire macOS target
+directory or keys a build cache on every workspace Rust file. This reduces cache
+churn and storage pressure; the actual hosted time trade-off must be measured.
+The default Darwin Chez fix is already present in the AST line (`159d4bc51a`);
+the pinned compiler uses `chez = pkgs.chez` rather than the obsolete LLVM18 override.

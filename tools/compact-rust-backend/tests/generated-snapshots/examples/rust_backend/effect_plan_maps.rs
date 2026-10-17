@@ -501,6 +501,10 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::OpaqueString = __compact_param_2;
             let __compact_effect_3: runtime::Field = __compact_param_3;
             let __compact_effect_4: runtime::Field = __compact_param_4;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, bool) =
                     frame.try_witness_metered(|context, meter| {

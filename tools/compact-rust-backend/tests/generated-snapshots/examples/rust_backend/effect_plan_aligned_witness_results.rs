@@ -799,6 +799,10 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let (frame, __compact_effect_2): (_, runtime::OpaqueString) = frame
                     .try_witness_metered_exact(|context, meter| {

@@ -117,6 +117,30 @@ fn initializer(statement: &syn::Stmt) -> &syn::Expr {
     };
     local.init.as_ref().unwrap().expr.as_ref()
 }
+fn unit_frame_lint_scope(statement: &syn::Stmt) {
+    let syn::Stmt::Local(local) = statement else {
+        panic!("Unit frame local lost")
+    };
+    assert_eq!(local.attrs.len(), 1);
+    let attribute = &local.attrs[0];
+    assert!(attribute.path().is_ident("allow"));
+    let arguments = attribute
+        .parse_args_with(syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)
+        .expect("structured lint policy");
+    assert_eq!(arguments.len(), 2);
+    assert!(
+        matches!(&arguments[0], syn::Meta::Path(path) if path.is_ident("clippy::let_and_return")
+        || path.segments.iter().map(|segment| segment.ident.to_string()).collect::<Vec<_>>() == ["clippy", "let_and_return"])
+    );
+    let syn::Meta::NameValue(reason) = &arguments[1] else {
+        panic!("local lint reason lost")
+    };
+    assert!(reason.path.is_ident("reason"));
+    assert!(
+        matches!(&reason.value, syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(reason), .. })
+        if reason.value() == "uniform Unit frames preserve ordered recording steps")
+    );
+}
 fn frame_initializer(statement: &syn::Stmt) -> &syn::Expr {
     let syn::Stmt::Local(local) = statement else {
         panic!("frame binding lost")
@@ -164,6 +188,7 @@ fn unit_calls_return_only_the_frame_without_payload_formals() {
             Type::Unit,
         );
         assert_eq!(result.steps.len(), 1);
+        unit_frame_lint_scope(&result.steps[0]);
         let syn::Expr::Block(call) = frame_initializer(&result.steps[0]) else {
             panic!("lexical call frame lost")
         };
@@ -201,6 +226,7 @@ fn unit_conditionals_keep_both_orientations_and_empty_arm() {
             ),
             Type::Unit,
         );
+        unit_frame_lint_scope(&result.steps[1]);
         let syn::Expr::If(choice) = frame_initializer(&result.steps[1]) else {
             panic!("conditional frame lost")
         };
@@ -353,6 +379,10 @@ fn field_and_empty_tuple_calls_and_branches_keep_typed_payload_carriers() {
             let syn::Stmt::Local(local) = statement else {
                 panic!("typed payload lost")
             };
+            assert!(
+                local.attrs.is_empty(),
+                "non-Unit frames must not inherit Unit lint policy"
+            );
             let syn::Pat::Type(pattern) = &local.pat else {
                 panic!("non-Unit payload erased")
             };

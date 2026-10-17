@@ -183,6 +183,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_0: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -190,6 +194,10 @@ pub mod ledger_contract {
                     .record_increment(frame, (__compact_effect_0).value() as u16)?;
                 frame
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -215,12 +223,20 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_1: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_1).value() as u16)?;
                 frame
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_5: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count

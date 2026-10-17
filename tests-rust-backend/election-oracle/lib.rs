@@ -1241,6 +1241,10 @@ pub mod ledger_contract {
             let __compact_effect_32: crate::types::PermissibleVotes =
                 crate::types::PermissibleVotes::yes;
             let __compact_effect_33: bool = __compact_effect_16 == __compact_effect_32;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_33 {
                 let __compact_effect_34: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;

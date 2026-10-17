@@ -297,6 +297,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::PointMethod = __compact_param_0;
             let __compact_effect_1: bool = __compact_param_1;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_1 {
                 let __compact_effect_2: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_3): (_, bool) = crate::ledger_slots::pointMethods
@@ -346,6 +350,10 @@ pub mod ledger_contract {
                 (__compact_effect_21).clone(),
                 (__compact_effect_0).clone(),
             )?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_23: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -369,6 +377,10 @@ pub mod ledger_contract {
             }
             let frame = crate::ledger_slots::pointMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;

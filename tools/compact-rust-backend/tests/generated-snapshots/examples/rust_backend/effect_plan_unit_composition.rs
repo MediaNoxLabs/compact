@@ -275,6 +275,10 @@ pub mod ledger_contract {
             let __compact_effect_1: bool = __compact_param_1;
             let __compact_effect_2: bool = __compact_param_2;
             let __compact_effect_3: () = crate::pure_circuits::require_enabled(__compact_effect_1)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_4): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
@@ -288,6 +292,10 @@ pub mod ledger_contract {
                         "first denied".to_owned(),
                     ));
                 }
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_6: runtime::BoundedUint<65535> =
                         <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -315,6 +323,10 @@ pub mod ledger_contract {
                         "second denied".to_owned(),
                     ));
                 }
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_14: runtime::BoundedUint<65535> =
                         <runtime::BoundedUint<65535>>::new(1u128)?;

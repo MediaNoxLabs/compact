@@ -592,6 +592,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::ShieldedCoinInfo = __compact_param_0;
             let __compact_effect_1: crate::types::Either = __compact_param_1;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_2: crate::types::ShieldedCoinInfo =
                     (__compact_effect_0).clone();
@@ -746,6 +750,10 @@ pub mod ledger_contract {
                         let __compact_effect_44: bool = false;
                         (frame, __compact_effect_44)
                     };
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
                     let frame = if __compact_effect_45 {
                         let __compact_effect_46: runtime::FixedBytes<32> =
                             crate::pure_circuits::coinCommitment(

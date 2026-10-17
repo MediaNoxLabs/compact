@@ -475,6 +475,10 @@ pub mod ledger_contract {
                 };
                 (frame, __compact_effect_24)
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_28): (_, bool) = if __compact_effect_25 {
                     let __compact_effect_26: bool = false;
@@ -488,12 +492,20 @@ pub mod ledger_contract {
                         "already present".to_owned(),
                     ));
                 }
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_30: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_31: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_32: crate::types::Relation =
                         crate::types::Relation::Authentication;
                     let __compact_effect_33: bool = __compact_effect_30 == __compact_effect_32;
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
                     let frame = if __compact_effect_33 {
                         let frame = crate::ledger_slots::authentication
                             .record_insert(frame, (__compact_effect_31).clone())?;
@@ -502,6 +514,10 @@ pub mod ledger_contract {
                         let __compact_effect_36: crate::types::Relation =
                             crate::types::Relation::Agreement;
                         let __compact_effect_37: bool = __compact_effect_30 == __compact_effect_36;
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
                         let frame = if __compact_effect_37 {
                             let frame = crate::ledger_slots::agreement
                                 .record_insert(frame, (__compact_effect_31).clone())?;
@@ -511,6 +527,10 @@ pub mod ledger_contract {
                                 crate::types::Relation::Invocation;
                             let __compact_effect_41: bool =
                                 __compact_effect_30 == __compact_effect_40;
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_41 {
                                 let frame = crate::ledger_slots::invocation
                                     .record_insert(frame, (__compact_effect_31).clone())?;
@@ -520,6 +540,10 @@ pub mod ledger_contract {
                                     crate::types::Relation::Delegation;
                                 let __compact_effect_45: bool =
                                     __compact_effect_30 == __compact_effect_44;
+                                #[allow(
+                                    clippy::let_and_return,
+                                    reason = "uniform Unit frames preserve ordered recording steps"
+                                )]
                                 let frame = if __compact_effect_45 {
                                     let frame = crate::ledger_slots::delegation
                                         .record_insert(frame, (__compact_effect_31).clone())?;
@@ -542,12 +566,20 @@ pub mod ledger_contract {
                         "missing relation".to_owned(),
                     ));
                 }
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_60: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_61: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_62: crate::types::Relation =
                         crate::types::Relation::Authentication;
                     let __compact_effect_63: bool = __compact_effect_60 == __compact_effect_62;
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
                     let frame = if __compact_effect_63 {
                         let frame = crate::ledger_slots::authentication
                             .record_remove(frame, (__compact_effect_61).clone())?;
@@ -556,6 +588,10 @@ pub mod ledger_contract {
                         let __compact_effect_66: crate::types::Relation =
                             crate::types::Relation::Agreement;
                         let __compact_effect_67: bool = __compact_effect_60 == __compact_effect_66;
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
                         let frame = if __compact_effect_67 {
                             let frame = crate::ledger_slots::agreement
                                 .record_remove(frame, (__compact_effect_61).clone())?;
@@ -565,6 +601,10 @@ pub mod ledger_contract {
                                 crate::types::Relation::Invocation;
                             let __compact_effect_71: bool =
                                 __compact_effect_60 == __compact_effect_70;
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_71 {
                                 let frame = crate::ledger_slots::invocation
                                     .record_remove(frame, (__compact_effect_61).clone())?;
@@ -574,6 +614,10 @@ pub mod ledger_contract {
                                     crate::types::Relation::Delegation;
                                 let __compact_effect_75: bool =
                                     __compact_effect_60 == __compact_effect_74;
+                                #[allow(
+                                    clippy::let_and_return,
+                                    reason = "uniform Unit frames preserve ordered recording steps"
+                                )]
                                 let frame = if __compact_effect_75 {
                                     let frame = crate::ledger_slots::delegation
                                         .record_remove(frame, (__compact_effect_61).clone())?;

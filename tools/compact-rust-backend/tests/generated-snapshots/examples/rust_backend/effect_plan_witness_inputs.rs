@@ -374,6 +374,10 @@ pub mod ledger_contract {
                     "first callback refused".to_owned(),
                 ));
             }
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_19): (_, bool) =
                     frame.try_witness_metered(|context, meter| {

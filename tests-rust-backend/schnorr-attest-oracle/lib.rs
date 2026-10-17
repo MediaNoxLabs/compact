@@ -505,12 +505,20 @@ pub mod ledger_contract {
             }
             let (frame, __compact_effect_4): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::attestorKey.record_read(frame)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_5: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_0).clone();
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_7: runtime::JubjubPoint = __compact_effect_4;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
@@ -659,12 +667,20 @@ pub mod ledger_contract {
             }
             let (frame, __compact_effect_4): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::attestorKey.record_read(frame)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_5: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_0).clone();
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_7: runtime::JubjubPoint = __compact_effect_4;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();

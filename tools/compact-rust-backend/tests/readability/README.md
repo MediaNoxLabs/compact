@@ -1,6 +1,6 @@
 # Generated Rust readability sample (#491)
 
-Current local result: see [cumulative policy and qualification](#cumulative-local-result-and-policy-491).
+Current local result: see [strict Clippy qualification](#strict-clippy-qualification) and [cumulative policy](#cumulative-local-result-and-policy-491).
 Earlier sections retain each delivered stage as history; they do not describe
 the current remaining backlog. Remote publication and issue closure are separate.
 
@@ -304,3 +304,28 @@ The finite issue scope is locally complete after independent review and the
 consolidated ADR0538; remote publication/issue closure is separate. Future
 ownership/liveness optimization, universal source naming and module-layout
 redesign require their own measured proposals and are not implied by this result.
+
+
+### Strict Clippy qualification
+
+[after-ci-frames.json](after-ci-frames.json) retains the same original corpus
+and strict comparison after statement-scoped recording lint annotations
+(ADR0540 in the midnight vault). Source lines are now 3,749, compared with
+3,782 originally and 3,721 before those annotations. All ten per-file metric
+comparisons and declared-function-signature hashes still pass; internal-name
+occurrences remain 423, literal Unit bindings zero, clones78 and collect0.
+The 28 added lines explain intentional Unit frame locals. They do not change
+operations, block boundaries or effect order. The earlier reports retain their
+original source identities; the original baseline and comparator are unchanged.
+
+Only checked Unit Call/If local initializers receive a reasoned allowance for
+`clippy::let_and_return`, following the existing branch-frame emitter convention.
+Other lints remain strict. Field and empty IR tuple controls receive no allowance.
+This preserves uniform ordered recording syntax without introducing a general
+tail-expression optimizer or changing temporary destruction scope.
+
+A separate pure Map closure cleanup returns an already checked
+`Result<_, runtime::CompactError>` directly instead of `Ok(expr?)`. Only an
+unannotated outer question mark is removed; nested operations and wrappers
+remain. It changes one fixture outside this corpus. Compiled order, failure
+and cleanup controls remain enabled; ADR0541 records the error-type boundary.

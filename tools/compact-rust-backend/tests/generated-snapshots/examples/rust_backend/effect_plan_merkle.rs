@@ -484,7 +484,15 @@ pub mod ledger_contract {
             let __compact_effect_1: crate::types::MerkleTreeDigest = __compact_param_1;
             let __compact_effect_2: bool = __compact_param_2;
             let frame = crate::ledger_slots::plain.record_insert(frame, __compact_effect_0)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_2 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_4: runtime::BoundedUint<255> = __compact_effect_0;
                     let frame =

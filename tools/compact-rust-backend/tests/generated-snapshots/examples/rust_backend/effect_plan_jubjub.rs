@@ -259,6 +259,10 @@ pub mod ledger_contract {
                 runtime::jubjub_scalar_from_native(__compact_effect_2);
             let (frame, __compact_effect_5): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::first.record_read(frame)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_0 {
                 let __compact_effect_6: runtime::JubjubPoint =
                     runtime::ec_mul_generator(__compact_effect_4)?;

@@ -571,6 +571,10 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::OpaqueString = (__compact_effect_7.text).clone();
             let (frame, __compact_effect_10): (_, bool) =
                 crate::ledger_slots::names.record_member(frame, (__compact_effect_9).clone())?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_1 {
                 let __compact_effect_11: crate::types::OwnedKey =
                     crate::pure_circuits::copyKey((__compact_effect_7).clone())?;

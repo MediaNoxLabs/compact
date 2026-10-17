@@ -269,6 +269,10 @@ pub mod ledger_contract {
             let (frame, __compact_effect_6): (_, crate::types::Method) =
                 crate::ledger_slots::methods.record_lookup(frame, (__compact_effect_0).clone())?;
             let __compact_effect_7: runtime::JubjubPoint = __compact_effect_6.verificationPoint;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_8: runtime::JubjubPoint = __compact_effect_1;
                 let __compact_effect_9: runtime::JubjubPoint = __compact_effect_7;

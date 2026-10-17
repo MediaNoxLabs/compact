@@ -256,6 +256,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let __compact_effect_1: bool = __compact_param_1;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_1 {
                 let (frame, __compact_effect_2): (_, bool) = crate::ledger_slots::methods
                     .record_member(frame, (__compact_effect_0).clone())?;

@@ -615,6 +615,10 @@ pub mod ledger_contract {
                             let __compact_effect_33: bool = false;
                             (frame, __compact_effect_33)
                         };
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
                         let frame = if __compact_effect_34 {
                             let __compact_effect_35: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(

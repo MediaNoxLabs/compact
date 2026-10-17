@@ -196,6 +196,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::defined(__compact_effect_0)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
@@ -211,6 +215,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::localGuard(__compact_effect_0)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
@@ -226,6 +234,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::transitiveGuard(__compact_effect_0)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;

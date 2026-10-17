@@ -202,6 +202,10 @@ pub mod ledger_contract {
             let __compact_effect_1: crate::types::Mutation = __compact_param_1;
             let __compact_effect_2: runtime::Field =
                 crate::pure_circuits::digest((__compact_effect_0).clone(), __compact_effect_1)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_3: runtime::Field = __compact_effect_2;
                 let (frame, __compact_effect_4): (_, bool) =

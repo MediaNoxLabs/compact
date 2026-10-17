@@ -244,6 +244,10 @@ pub mod ledger_contract {
             };
             let __compact_effect_7: bool = __compact_effect_0 == __compact_effect_1;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_7)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_4 {
                 let __compact_effect_9: bool =
                     (__compact_effect_5).clone() == (__compact_effect_6).clone();

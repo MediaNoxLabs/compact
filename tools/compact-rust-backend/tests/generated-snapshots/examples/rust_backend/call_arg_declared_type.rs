@@ -984,6 +984,10 @@ pub mod ledger_contract {
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_4: runtime::FixedVector<runtime::Field, 2> =
                     (__compact_effect_3).clone();
@@ -1002,6 +1006,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::flag.record_read(frame)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_0 {
                 let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1021,6 +1029,10 @@ pub mod ledger_contract {
                         __compact_cast_source_0;
                     runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
                 };
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_5: runtime::FixedVector<runtime::Field, 2> =
                         (__compact_effect_4).clone();

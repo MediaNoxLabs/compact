@@ -235,6 +235,10 @@ pub mod ledger_contract {
                 (__compact_effect_6).clone(),
                 (__compact_effect_0).clone(),
             )?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_8: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -258,6 +262,10 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::entries.record_remove(frame, (__compact_effect_0).clone())?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;

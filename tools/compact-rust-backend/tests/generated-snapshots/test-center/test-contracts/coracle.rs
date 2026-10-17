@@ -2363,6 +2363,10 @@ pub mod ledger_contract {
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_13: crate::types::State = crate::types::State::red_started;
             let __compact_effect_14: bool = __compact_effect_12 == __compact_effect_13;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_14 {
                 let __compact_effect_15: runtime::BoundedUint<
                     340282366920938463463374607431768211455,
@@ -2423,6 +2427,10 @@ pub mod ledger_contract {
                     "Initial board is not valid".to_owned(),
                 ));
             }
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_41: crate::types::ShieldedCoinInfo =
                     (__compact_effect_1).clone();
@@ -2459,6 +2467,10 @@ pub mod ledger_contract {
                 ))?;
                 frame
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_49: crate::types::ShieldedCoinInfo =
                     (__compact_effect_2).clone();
@@ -2862,7 +2874,15 @@ pub mod ledger_contract {
                     "Not a player".to_owned(),
                 ));
             }
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_3 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_9: runtime::Field = __compact_effect_0;
                     let (frame, __compact_effect_10): (_, runtime::FixedBytes<32>) = frame
@@ -2940,6 +2960,10 @@ pub mod ledger_contract {
                 };
                 frame
             } else {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_33: runtime::Field = __compact_effect_0;
                     let (frame, __compact_effect_34): (_, runtime::FixedBytes<32>) = frame
@@ -3265,6 +3289,10 @@ pub mod ledger_contract {
                                 let __compact_effect_62: bool = false;
                                 (frame, __compact_effect_62)
                             };
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_63 {
                                 let __compact_effect_64: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
@@ -3599,6 +3627,10 @@ pub mod ledger_contract {
                                 let __compact_effect_146: bool = false;
                                 (frame, __compact_effect_146)
                             };
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_147 {
                                 let __compact_effect_148: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
@@ -3927,6 +3959,10 @@ pub mod ledger_contract {
                                 let __compact_effect_50: bool = false;
                                 (frame, __compact_effect_50)
                             };
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_51 {
                                 let __compact_effect_52: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
@@ -4184,6 +4220,10 @@ pub mod ledger_contract {
                                 let __compact_effect_113: bool = false;
                                 (frame, __compact_effect_113)
                             };
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_114 {
                                 let __compact_effect_115: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
@@ -4482,6 +4522,10 @@ pub mod ledger_contract {
                                 let __compact_effect_186: bool = false;
                                 (frame, __compact_effect_186)
                             };
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_187 {
                                 let __compact_effect_188: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
@@ -4739,6 +4783,10 @@ pub mod ledger_contract {
                                 let __compact_effect_249: bool = false;
                                 (frame, __compact_effect_249)
                             };
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
                             let frame = if __compact_effect_250 {
                                 let __compact_effect_251: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(

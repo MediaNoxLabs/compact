@@ -2675,6 +2675,10 @@ pub mod ledger_contract {
                     "Attempted to double commit a vote".to_owned(),
                 ));
             }
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_36: crate::types::ShieldedCoinInfo =
                     (__compact_effect_1).clone();
@@ -2841,6 +2845,10 @@ pub mod ledger_contract {
                         let __compact_effect_81: bool = false;
                         (frame, __compact_effect_81)
                     };
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
                     let frame = if __compact_effect_82 {
                         let __compact_effect_83: runtime::FixedBytes<32> =
                             crate::pure_circuits::coinCommitment(
@@ -3203,6 +3211,10 @@ pub mod ledger_contract {
                 ));
             }
             let __compact_effect_51: bool = __compact_effect_23.value;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_51 {
                 let __compact_effect_52: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -3270,6 +3282,10 @@ pub mod ledger_contract {
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_13: crate::types::LedgerState = crate::types::LedgerState::r#final;
             let __compact_effect_14: bool = __compact_effect_12 == __compact_effect_13;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_14 {
                 let (frame, __compact_effect_raw_15) =
                     crate::ledger_slots::no.record_read(frame)?;
@@ -3301,6 +3317,10 @@ pub mod ledger_contract {
                     ));
                 }
                 let __compact_effect_22: bool = false;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_23: bool = __compact_effect_22;
                     let __compact_effect_24: crate::types::LedgerState =
@@ -3325,6 +3345,10 @@ pub mod ledger_contract {
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::round
                         .record_increment(frame, (__compact_effect_35).value() as u16)?;
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
                     let frame = if __compact_effect_23 {
                         let __compact_effect_37: crate::types::QualifiedShieldedCoinInfo = <crate::types::QualifiedShieldedCoinInfo as ::core::default::Default>::default();
                         let frame = crate::ledger_slots::pot
@@ -3414,6 +3438,10 @@ pub mod ledger_contract {
                     "Attempted to set topic after setup phase".to_owned(),
                 ));
             }
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_23: crate::types::ShieldedCoinInfo =
                     (__compact_effect_2).clone();
@@ -3459,6 +3487,10 @@ pub mod ledger_contract {
                 let __compact_effect_33: bool = true;
                 (frame, __compact_effect_33)
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_34 {
                 let (frame, __compact_effect_address_35) = frame.kernel_self()?;
                 let __compact_effect_35: crate::types::ContractAddress =
@@ -3757,6 +3789,10 @@ pub mod ledger_contract {
                     "Invalid buy-in, expected configured buy_in for each voting token".to_owned(),
                 ));
             }
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_19: crate::types::ShieldedCoinInfo =
                     (__compact_effect_0).clone();
@@ -3802,6 +3838,10 @@ pub mod ledger_contract {
                 let __compact_effect_29: bool = true;
                 (frame, __compact_effect_29)
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_30 {
                 let (frame, __compact_effect_address_31) = frame.kernel_self()?;
                 let __compact_effect_31: crate::types::ContractAddress =
@@ -4121,6 +4161,10 @@ pub mod ledger_contract {
                     let __compact_effect_110: bool = false;
                     (frame, __compact_effect_110)
                 };
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = if __compact_effect_111 {
                     let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
                         runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
@@ -4306,6 +4350,10 @@ pub mod ledger_contract {
                     let __compact_effect_51: bool = false;
                     (frame, __compact_effect_51)
                 };
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = if __compact_effect_52 {
                     let __compact_effect_53: runtime::FixedBytes<32> =
                         crate::pure_circuits::coinCommitment(
@@ -4407,6 +4455,10 @@ pub mod ledger_contract {
                 (frame, (__compact_effect_77).clone())
             };
             let __compact_effect_79: bool = true;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_80: bool = __compact_effect_79;
                 let __compact_effect_81: crate::types::LedgerState =
@@ -4429,6 +4481,10 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::round
                     .record_increment(frame, (__compact_effect_92).value() as u16)?;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = if __compact_effect_80 {
                     let __compact_effect_94: crate::types::QualifiedShieldedCoinInfo = <crate::types::QualifiedShieldedCoinInfo as ::core::default::Default>::default();
                     let frame = crate::ledger_slots::pot

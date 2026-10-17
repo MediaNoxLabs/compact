@@ -270,6 +270,10 @@ pub mod ledger_contract {
                         __compact_effect_2,
                     )
                 })?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
@@ -303,6 +307,10 @@ pub mod ledger_contract {
                         __compact_effect_12,
                     )
                 })?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_14: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_13;

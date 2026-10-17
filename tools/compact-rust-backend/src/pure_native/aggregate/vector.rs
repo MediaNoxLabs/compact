@@ -52,10 +52,7 @@ pub(super) fn map(
     let syn::Expr::Block(block) = callback.body.as_mut() else {
         unreachable!("Map closure body template");
     };
-    let syn::Stmt::Expr(syn::Expr::Call(ok), None) = &mut block.block.stmts[0] else {
-        unreachable!("Map result template");
-    };
-    *ok.args.first_mut().expect("Map result argument slot") = body;
+    block.block.stmts[0] = syn::Stmt::Expr(map_result(body), None);
     syn::Expr::Try(expression)
 }
 pub(super) fn fold(
@@ -79,4 +76,54 @@ pub(super) fn fold(
             #acc, crate::pure_circuits::#function
         )?
     })
+}
+
+/// Checked native fallible children already return CompactError, as does this
+/// explicit Map closure. Peel only its unannotated outer question mark; nested
+/// calls, question marks, blocks and attributes remain in their original scope.
+fn map_result(body: syn::Expr) -> syn::Expr {
+    match body {
+        syn::Expr::Try(fallible) if fallible.attrs.is_empty() => *fallible.expr,
+        other => {
+            let mut result: syn::ExprCall = syn::parse_quote!(Ok(__compact_body_placeholder));
+            *result.args.first_mut().expect("Map result argument slot") = other;
+            syn::Expr::Call(result)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::map_result;
+    use quote::ToTokens;
+
+    #[test]
+    fn map_result_peels_only_unannotated_outer_try_and_keeps_nested_evaluation() {
+        let inner: syn::Expr = syn::parse_quote!(runtime::cast_unsigned::<15, 255>(
+            crate::pure_circuits::step(crate::pure_circuits::input()?)?
+        ));
+        let outer: syn::Expr = syn::parse_quote!(#inner?);
+        assert_eq!(
+            map_result(outer).to_token_stream().to_string(),
+            inner.to_token_stream().to_string()
+        );
+        for body in [
+            syn::parse_quote!(plain_value()),
+            syn::parse_quote!((fallible()?)),
+            syn::parse_quote!({
+                let value = fallible()?;
+                value
+            }),
+            syn::parse_quote!(
+                #[allow(unused_parens)]
+                fallible()?
+            ),
+        ] {
+            let expected: syn::Expr = syn::parse_quote!(Ok(#body));
+            assert_eq!(
+                map_result(body).to_token_stream().to_string(),
+                expected.to_token_stream().to_string()
+            );
+        }
+    }
 }

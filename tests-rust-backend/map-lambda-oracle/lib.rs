@@ -100,18 +100,17 @@ pub mod ledger_contract {
                 ])
             })
             .try_map(|x| -> Result<_, runtime::CompactError> {
-                Ok(runtime::cast_unsigned::<
-                    36893488147419103231,
-                    18446744073709551615,
-                >(runtime::multiply_unsigned::<
-                    36893488147419103230,
-                    36893488147419103230,
-                    36893488147419103231,
-                >(
-                    runtime::cast_unsigned::<18446744073709551615, 36893488147419103230>(x)?,
-                    runtime::BoundedUint::<36893488147419103230>::new(2u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                )?)?)
+                runtime::cast_unsigned::<36893488147419103231, 18446744073709551615>(
+                    runtime::multiply_unsigned::<
+                        36893488147419103230,
+                        36893488147419103230,
+                        36893488147419103231,
+                    >(
+                        runtime::cast_unsigned::<18446744073709551615, 36893488147419103230>(x)?,
+                        runtime::BoundedUint::<36893488147419103230>::new(2u128)
+                            .expect("Compact Uint literal fits its maximum"),
+                    )?,
+                )
             })?;
             let step = context.write_cell(0, (__compact_constructor_local_0.clone()).clone())?;
             context = step.context;

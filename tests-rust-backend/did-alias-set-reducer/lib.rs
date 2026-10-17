@@ -299,6 +299,10 @@ pub mod ledger_contract {
             let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
             let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Insert;
             let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = if __compact_effect_4 {
                 let (frame, __compact_effect_5): (_, bool) = crate::ledger_slots::aliases
                     .record_member(frame, (__compact_effect_0).clone())?;
@@ -320,6 +324,10 @@ pub mod ledger_contract {
             } else {
                 let __compact_effect_12: crate::types::Mutation = crate::types::Mutation::Remove;
                 let __compact_effect_13: bool = __compact_effect_1 == __compact_effect_12;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = if __compact_effect_13 {
                     let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::aliases
                         .record_member(frame, (__compact_effect_0).clone())?;
@@ -334,6 +342,10 @@ pub mod ledger_contract {
                 };
                 frame
             };
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_22: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;

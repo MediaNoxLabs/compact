@@ -310,8 +310,16 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let (frame, __compact_effect_0): (_, runtime::Field) =
                 crate::ledger_slots::value.record_read(frame)?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let __compact_effect_1: runtime::Field = __compact_effect_0;
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
                 let frame = {
                     let __compact_effect_2: runtime::Field = __compact_effect_1;
                     let (frame, __compact_effect_3): (_, runtime::Field) = frame

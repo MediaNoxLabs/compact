@@ -90,6 +90,11 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
         } else {
             quote::quote!((frame, #output): (_, #ty))
         };
+        let frame_attribute = if binding.value.ty == crate::ir::Type::Unit {
+            quote::quote!(#[allow(clippy::let_and_return, reason = "uniform Unit frames preserve ordered recording steps")])
+        } else {
+            proc_macro2::TokenStream::new()
+        };
         match &binding.operation {
             Operation::VectorMap { .. } => {
                 steps.push(vector_map::render(binding, declarations)?);
@@ -117,6 +122,7 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 let body_steps = block(body, declarations)?;
                 let result = frame_result(&body.result);
                 steps.push(syn::parse_quote! {
+                    #frame_attribute
                     let #target = {
                         #(#formals)*
                         #(#body_steps)*
@@ -135,6 +141,7 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 let then_value = frame_result(&then.result);
                 let else_value = frame_result(&otherwise.result);
                 steps.push(syn::parse_quote! {
+                    #frame_attribute
                     let #target = if #condition {
                         #(#then_steps)*
                         #then_value

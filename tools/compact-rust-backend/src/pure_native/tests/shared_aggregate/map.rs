@@ -259,7 +259,13 @@ impl syn::visit_mut::VisitMut for LegacyMapTemplate {
         if block.to_token_stream().to_string() != expected.to_token_stream().to_string() {
             return;
         }
-        *expression = syn::parse_quote!((#source).try_map(|#item| -> Result<_, runtime::CompactError> { Ok(#body) })?);
+        // The checked successor closure and every native fallible callee use
+        // CompactError. Preserve annotated tries and all inner operations.
+        let result = match body {
+            syn::Expr::Try(fallible) if fallible.attrs.is_empty() => fallible.expr.as_ref().clone(),
+            other => syn::parse_quote!(Ok(#other)),
+        };
+        *expression = syn::parse_quote!((#source).try_map(|#item| -> Result<_, runtime::CompactError> { #result })?);
     }
 }
 
@@ -285,12 +291,19 @@ fn mapped_parts(expression: &syn::Expr) -> (&syn::Expr, &syn::ExprClosure) {
     );
     (&call.receiver, closure)
 }
-fn mapped_body(closure: &syn::ExprClosure) -> &syn::Expr {
+fn mapped_result(closure: &syn::ExprClosure) -> &syn::Expr {
     let syn::Expr::Block(body) = closure.body.as_ref() else {
         panic!("closure block");
     };
-    let [syn::Stmt::Expr(syn::Expr::Call(ok), None)] = body.block.stmts.as_slice() else {
-        panic!("Ok body");
+    let [syn::Stmt::Expr(result, None)] = body.block.stmts.as_slice() else {
+        panic!("single Result body");
+    };
+    result
+}
+
+fn mapped_body(closure: &syn::ExprClosure) -> &syn::Expr {
+    let syn::Expr::Call(ok) = mapped_result(closure) else {
+        panic!("infallible body must retain Ok wrapper");
     };
     assert_eq!(ok.func.to_token_stream().to_string(), "Ok");
     assert_eq!(ok.args.len(), 1);
@@ -333,7 +346,13 @@ fn fallible_map_scopes_body_question_mark_and_evaluates_coerced_source_once_with
             receiver.contains("cast_unsigned :: < 15 , 255 >"),
             "source widening precedes try_map: {receiver}"
         );
-        assert!(matches!(mapped_body(closure), syn::Expr::Try(_)));
+        let syn::Expr::Call(result) = mapped_result(closure) else {
+            panic!("checked CompactError result call must be returned directly");
+        };
+        assert_eq!(
+            result.func.to_token_stream().to_string(),
+            "crate :: pure_circuits :: step"
+        );
         assert_eq!(
             closure
                 .inputs

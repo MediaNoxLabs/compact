@@ -294,6 +294,10 @@ pub mod ledger_contract {
                 (__compact_effect_1).clone(),
                 __compact_effect_2,
             )?;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
             let frame = {
                 let (frame, __compact_effect_4): (_, bool) =
                     frame.try_witness_metered(|context, meter| {

@@ -18,6 +18,7 @@
 use super::*;
 use crate::pure_semantics::aggregate::tests::protocol::{Consumer, Visitor};
 mod call_fold;
+mod fold;
 mod literals;
 mod map;
 mod nested;
@@ -33,7 +34,8 @@ fn compare(
     let current = observe(source, parameters, circuits);
     assert_eq!(
         current,
-        old_oracle::observe(source, parameters, circuits),
+        old_oracle::observe(source, parameters, circuits)
+            .map(|(expression, statements, ty)| { (fold::successor(&expression), statements, ty) }),
         "{source:?}"
     );
     let bindings = parameters
@@ -79,7 +81,7 @@ fn compare_map_views(
     let current = observe(source, parameters, circuits);
     let retained =
         old_oracle::observe(source, parameters, circuits).map(|(expression, statements, ty)| {
-            let mut expression: syn::Expr = syn::parse_str(&expression).unwrap();
+            let mut expression: syn::Expr = syn::parse_str(&fold::successor(&expression)).unwrap();
             syn::visit_mut::VisitMut::visit_expr_mut(&mut map::LegacyMapTemplate, &mut expression);
             (expression.to_token_stream().to_string(), statements, ty)
         });

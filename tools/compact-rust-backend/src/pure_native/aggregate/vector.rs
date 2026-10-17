@@ -69,14 +69,14 @@ pub(super) fn fold(
     let source = coercion::render(source_plan, source, 0);
     let function = checked_ident(&function);
     let acc = syn::Ident::new("__compact_fold_accumulator", Span::call_site());
-    let item = syn::Ident::new("__compact_fold_item", Span::call_site());
     let source_name = syn::Ident::new("__compact_fold_source", Span::call_site());
+    // Keep both initializations before iterator construction. In particular, an
+    // initial-value failure must drop the original source before any iteration.
     syn::parse_quote!({
         let #source_name = #source;
-        let mut #acc = #initial;
-        for #item in #source_name.into_array() {
-            #acc = crate::pure_circuits::#function(#acc, #item)?;
-        }
-        #acc
+        let #acc = #initial;
+        #source_name.into_array().into_iter().try_fold(
+            #acc, crate::pure_circuits::#function
+        )?
     })
 }

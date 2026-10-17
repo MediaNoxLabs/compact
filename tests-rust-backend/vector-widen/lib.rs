@@ -261,15 +261,12 @@ pub mod pure_circuits {
                         .expect("Vector coercion preserves its length"),
                 )
             };
-            let mut __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
+            let __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-            for __compact_fold_item in __compact_fold_source.into_array() {
-                __compact_fold_accumulator = crate::pure_circuits::last_unsigned(
-                    __compact_fold_accumulator,
-                    __compact_fold_item,
-                )?;
-            }
-            __compact_fold_accumulator
+            __compact_fold_source.into_array().into_iter().try_fold(
+                __compact_fold_accumulator,
+                crate::pure_circuits::last_unsigned,
+            )?
         })
     }
     pub fn fold_mapped_unsigned(
@@ -289,15 +286,12 @@ pub mod pure_circuits {
                 )
             })
             .try_map(|value| -> Result<_, runtime::CompactError> { Ok(value) })?;
-            let mut __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
+            let __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-            for __compact_fold_item in __compact_fold_source.into_array() {
-                __compact_fold_accumulator = crate::pure_circuits::last_unsigned(
-                    __compact_fold_accumulator,
-                    __compact_fold_item,
-                )?;
-            }
-            __compact_fold_accumulator
+            __compact_fold_source.into_array().into_iter().try_fold(
+                __compact_fold_accumulator,
+                crate::pure_circuits::last_unsigned,
+            )?
         })
     }
     pub fn map_empty_fields(

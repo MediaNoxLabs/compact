@@ -103,7 +103,7 @@ pub mod pure_circuits {
         Ok(crate::types::MerkleTreeDigest {
             field: {
                 let __compact_fold_source = ((path.clone()).path).clone();
-                let mut __compact_fold_accumulator = runtime::degrade_to_transient(
+                let __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
@@ -111,13 +111,10 @@ pub mod pure_circuits {
                         data: (path.clone()).leaf,
                     }),
                 );
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::merkleTreePathEntryRoot(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                __compact_fold_source.into_array().into_iter().try_fold(
+                    __compact_fold_accumulator,
+                    crate::pure_circuits::merkleTreePathEntryRoot,
+                )?
             },
         })
     }
@@ -127,15 +124,11 @@ pub mod pure_circuits {
         Ok(crate::types::MerkleTreeDigest {
             field: {
                 let __compact_fold_source = ((path.clone()).path).clone();
-                let mut __compact_fold_accumulator =
-                    runtime::degrade_to_transient((path.clone()).leaf);
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::merkleTreePathEntryRoot(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                let __compact_fold_accumulator = runtime::degrade_to_transient((path.clone()).leaf);
+                __compact_fold_source.into_array().into_iter().try_fold(
+                    __compact_fold_accumulator,
+                    crate::pure_circuits::merkleTreePathEntryRoot,
+                )?
             },
         })
     }

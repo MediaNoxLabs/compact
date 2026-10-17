@@ -29,6 +29,7 @@ use std::collections::HashMap;
 mod control_fold;
 mod differential;
 mod execution;
+mod fold_execution;
 mod item_assembly;
 mod local_symbols;
 mod map_execution;

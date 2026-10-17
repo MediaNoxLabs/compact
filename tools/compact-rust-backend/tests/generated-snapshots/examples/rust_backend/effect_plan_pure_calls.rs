@@ -74,14 +74,11 @@ pub mod pure_circuits {
                 <crate::types::VectorBox as Default>::default();
             {
                 let __compact_fold_source = ((__compact_local_holder.clone()).values).clone();
-                let mut __compact_fold_accumulator = seed;
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::foldStep(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                let __compact_fold_accumulator = seed;
+                __compact_fold_source
+                    .into_array()
+                    .into_iter()
+                    .try_fold(__compact_fold_accumulator, crate::pure_circuits::foldStep)?
             }
         })
     }

@@ -342,7 +342,6 @@ pub mod ledger_contract {
                 <runtime::FixedVector<runtime::Field, 4> as ::core::default::Default>::default();
             let frame =
                 crate::ledger_slots::c.record_push_front(frame, (__compact_effect_13).clone())?;
-            let __compact_effect_14: () = ();
             let (frame, __compact_list_length_15) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_15: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -408,7 +407,6 @@ pub mod ledger_contract {
                 ]);
             let frame =
                 crate::ledger_slots::c.record_push_front(frame, (__compact_effect_33).clone())?;
-            let __compact_effect_34: () = ();
             let (frame, __compact_list_length_35) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_35: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -461,7 +459,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_pop_front(frame)?;
-            let __compact_effect_48: () = ();
             let (frame, __compact_list_length_49) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_49: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -489,7 +486,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_pop_front(frame)?;
-            let __compact_effect_58: () = ();
             let (frame, __compact_effect_59): (_, crate::types::Maybe) =
                 crate::ledger_slots::c.record_head::<crate::types::Maybe, _, _>(frame)?;
             let __compact_effect_60: bool = __compact_effect_59.is_some;
@@ -501,7 +497,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let __compact_effect_64: () = ();
             let (frame, __compact_list_length_65) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_65: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(

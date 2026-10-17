@@ -376,7 +376,6 @@ pub mod ledger_contract {
                 (__compact_effect_2).clone(),
                 __compact_effect_3,
             )?;
-            let __compact_effect_4: () = ();
             Ok(frame.finish(()))
         }
         pub fn mapMember<Private>(
@@ -442,7 +441,6 @@ pub mod ledger_contract {
                 runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
             let frame =
                 crate::ledger_slots::values.record_remove(frame, (__compact_effect_2).clone())?;
-            let __compact_effect_3: () = ();
             Ok(frame.finish(()))
         }
         pub fn mapInsertDefault<Private>(
@@ -464,7 +462,6 @@ pub mod ledger_contract {
                 runtime::FixedVector::new([__compact_effect_0, __compact_effect_1]);
             let frame = crate::ledger_slots::values
                 .record_insert_default(frame, (__compact_effect_2).clone())?;
-            let __compact_effect_3: () = ();
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

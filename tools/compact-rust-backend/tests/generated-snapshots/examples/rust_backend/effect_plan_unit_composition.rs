@@ -303,7 +303,6 @@ pub mod ledger_contract {
                     (__compact_effect_0).clone(),
                     (__compact_effect_10).clone(),
                 )?;
-                let __compact_effect_11: () = ();
                 let (frame, __compact_effect_12): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.second(context.witness_context_with(super::LedgerView {

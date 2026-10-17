@@ -263,7 +263,6 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::items.record_pop_front(frame)?;
-            let __compact_effect_0: () = ();
             Ok(frame.finish(()))
         }
         pub fn clear_items<Private>(
@@ -272,7 +271,6 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::items.record_reset(frame)?;
-            let __compact_effect_0: () = ();
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

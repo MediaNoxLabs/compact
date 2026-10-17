@@ -450,7 +450,6 @@ pub mod ledger_contract {
                 (__compact_effect_0).clone(),
                 __compact_effect_1,
             )?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
@@ -473,7 +472,6 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
                 crate::ledger_slots::table.record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
             let __compact_effect_2: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
@@ -534,7 +532,6 @@ pub mod ledger_contract {
                     (__compact_effect_6).clone(),
                     __compact_effect_8,
                 )?;
-                let __compact_effect_9: () = ();
                 let __compact_effect_10: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls

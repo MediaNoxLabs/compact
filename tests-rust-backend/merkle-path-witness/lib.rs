@@ -330,7 +330,6 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
             Ok(frame.finish(()))
         }
         pub fn get_path<Private, W: super::TryWitnesses<Private>>(
@@ -358,7 +357,6 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
             let frame = crate::ledger_slots::h.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
             Ok(frame.finish(()))
         }
         pub fn get_historic_path<Private, W: super::TryWitnesses<Private>>(

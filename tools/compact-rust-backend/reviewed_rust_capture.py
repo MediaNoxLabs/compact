@@ -35,10 +35,10 @@ REVIEWED_BINDINGS = {
     'tests-rust-backend/did-alias-set-reducer': '70df1bf8c1dbb8f56159e2950707251ecda4cfbdbe1f56cec010cec8e290463c',
     'tests-rust-backend/did-alias-digest-reducer': '6a5aa7c98f119bb57fb77e3159666b47fbef0499efd9e26f6e58f30be7f3b279',
     'tests-rust-backend/did-alias-guard-reducer': 'c025dfe3aaf7be5de6d15081f021ebc67f4537ce2be8896fce7af80b7c72df16',
-    'tests-rust-backend/did-service-map-reducer': '586c01c847b696318baf6bc173f31bdf4ee972f886523d32394a64510bf37b05',
-    'tests-rust-backend/did-point-map-reducer': '12e0ab17a9ab572afc49e617b61af174aa79dcc3f5d8c7ad8f06f472ebd884b8',
-    'tests-rust-backend/did-nested-map-reducer': 'df996bc9010c968b2b4afd6f178cb0083e51b1e45c413cdae27e5a9f3eab95fb',
-    'tests-rust-backend/did-enum-map-reducer': 'cd65002726ca927c730029f423ee023c9dc9e8d5067783915dce0df70fb02820',
+    'tests-rust-backend/did-service-map-reducer': '9a88d250b8e020064849fd15ed57ac388c374183d8ef30a4c1fe7d2f39adaee7',
+    'tests-rust-backend/did-point-map-reducer': '1b9b6e92fcba909a67d2229bf59340ee89e1d793663792d705925a8ec05855e5',
+    'tests-rust-backend/did-nested-map-reducer': '70ccfa361f6c75d633b637ce34dd3f90e5ff85218afe5b6cd512c0135eb6d381',
+    'tests-rust-backend/did-enum-map-reducer': '8d74fa102d960078f874caf40a4e0f3d1277ba5c13f6e63d617fd085841c5eab',
 }
 
 

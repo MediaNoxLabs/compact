@@ -285,7 +285,6 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
             Ok(frame.finish(()))
         }
         pub fn replace<Private>(
@@ -302,7 +301,6 @@ pub mod ledger_contract {
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_2: () = ();
             Ok(frame.finish(()))
         }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(

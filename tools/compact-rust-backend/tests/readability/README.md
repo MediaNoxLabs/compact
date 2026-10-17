@@ -143,3 +143,42 @@ milestone closeout. #491 remains open for further measured readability slices.
 Qualification used the locked ledger 8.1.3/ZKIR 2.1.1 graph and the unchanged
 Scheme frontend. It does not reuse cached proofs or pass decisions, claim full
 historical qualification, or establish formal equivalence.
+
+## Follow-up: delegated collection and tree mutations (ADR0531)
+
+The same checked-Unit rule now applies to Map, List and Merkle action renderers.
+Their mutations keep the original fallible slot call and frame binding, without
+appending a literal Unit temporary. Query payloads and all validation rules stay
+unchanged. This removes four redundant emitter statements, without adding an
+optimizer, helper abstraction or runtime API.
+
+[after-collections.json](after-collections.json) records the new measurement;
+both earlier reports remain frozen.
+
+| Metric, same ten files | Original | First slice | Collection follow-up |
+| --- | ---: | ---: | ---: |
+| Source lines | 3,782 | 3,735 | 3,724 |
+| Literal Unit bindings | 58 | 11 | 0 |
+| Internal identifier occurrences | 519 | 445 | 434 |
+| Clone calls | 78 | 78 | 78 |
+
+All ten function-signature fingerprints still match. Parameter, call and branch
+aliases remain outside this rule. List mutations are tested outside the finite
+ten-file survey; the sample was not changed to improve its measurements.
+
+Fresh regeneration checks all 255 outputs; 37 change solely by removing 123
+literal Unit declarations. Independent comparison confirms unchanged remaining
+AST tokens. Five reviewed current-Rust binding successors, four Python manifest
+pins and one dependent DID matrix pointer follow those generated libraries.
+Original TS captures, case rows, captured identities and verifier logic remain
+unchanged; this does not expand any recorded coverage claim.
+
+Follow-up local checks: 708 effect-plan tests pass (three existing ignores),
+169 tests across 30 affected/runtime fixture packages pass, and the twelve Python
+capture mutation/refusal controls pass. Fresh uncached Map (four scenarios),
+Field List and Merkle reset proof/verification/application checks pass, including
+private corrupt-verifier refusal and unchanged original artifact hashes. Map and
+List use existing strict funded application checks; Merkle reset uses the shared
+unbalanced smoke policy. These checks do not certify every mutation variant or
+constructor deployment proof. Backend Clippy with warnings denied, formatting
+and source-package inventory checks pass. The broader #491 work remains open.

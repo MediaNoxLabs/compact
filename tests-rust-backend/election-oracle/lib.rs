@@ -1126,7 +1126,6 @@ pub mod ledger_contract {
                 crate::pure_circuits::commit_with_sk(__compact_effect_32, __compact_effect_11)?;
             let frame =
                 crate::ledger_slots::committed_votes.record_insert(frame, __compact_effect_33)?;
-            let __compact_effect_34: () = ();
             let frame = crate::ledger_slots::committed.record_insert(frame, __compact_effect_12)?;
             let (frame, __compact_effect_36): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
@@ -1410,7 +1409,6 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::eligible_voters.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_16: () = ();
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

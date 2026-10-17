@@ -3009,7 +3009,6 @@ pub mod ledger_contract {
             };
             let frame =
                 crate::ledger_slots::committed_votes.record_insert(frame, __compact_effect_121)?;
-            let __compact_effect_122: () = ();
             let frame = crate::ledger_slots::committed_participants
                 .record_insert(frame, __compact_effect_30)?;
             let (frame, __compact_effect_124): (_, ()) =
@@ -3323,7 +3322,6 @@ pub mod ledger_contract {
                         .record_write(frame, (__compact_effect_30).clone())?;
                     let frame =
                         crate::ledger_slots::committed_votes.record_reset_to_default(frame)?;
-                    let __compact_effect_32: () = ();
                     let frame = crate::ledger_slots::committed_participants.record_reset(frame)?;
                     let frame = crate::ledger_slots::revealed_participants.record_reset(frame)?;
                     let __compact_effect_35: runtime::BoundedUint<65535> =
@@ -4428,7 +4426,6 @@ pub mod ledger_contract {
                 let frame = crate::ledger_slots::beneficiary
                     .record_write(frame, (__compact_effect_87).clone())?;
                 let frame = crate::ledger_slots::committed_votes.record_reset_to_default(frame)?;
-                let __compact_effect_89: () = ();
                 let frame = crate::ledger_slots::committed_participants.record_reset(frame)?;
                 let frame = crate::ledger_slots::revealed_participants.record_reset(frame)?;
                 let __compact_effect_92: runtime::BoundedUint<65535> =

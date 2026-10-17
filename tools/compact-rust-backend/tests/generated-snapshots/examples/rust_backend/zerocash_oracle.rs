@@ -725,7 +725,6 @@ pub mod ledger_contract {
                 )?;
             let frame = crate::ledger_slots::commitments
                 .record_insert(frame, (__compact_effect_22).clone())?;
-            let __compact_effect_23: () = ();
             let __compact_effect_24: runtime::OpaqueBytes = (__compact_effect_0.encryption).clone();
             let (frame, __compact_effect_25): (_, runtime::OpaqueBytes) = frame
                 .try_witness_metered_exact(|context, meter| {
@@ -793,7 +792,6 @@ pub mod ledger_contract {
                 )?;
             let frame = crate::ledger_slots::commitments
                 .record_insert(frame, (__compact_effect_3).clone())?;
-            let __compact_effect_4: () = ();
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

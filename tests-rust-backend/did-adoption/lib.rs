@@ -4269,7 +4269,6 @@ pub mod ledger_contract {
                 let __compact_effect_103: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::verificationMethods
                     .record_remove(frame, (__compact_effect_103).clone())?;
-                let __compact_effect_104: () = ();
                 (frame, ())
             } else {
                 let __compact_effect_106: crate::types::MapMutation =
@@ -4319,7 +4318,6 @@ pub mod ledger_contract {
                 (__compact_effect_124).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_125: () = ();
             let (frame, __compact_effect_133): (_, ()) = {
                 let __compact_effect_126: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -4617,7 +4615,6 @@ pub mod ledger_contract {
             };
             let frame = crate::ledger_slots::verificationMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_95: () = ();
             let (frame, __compact_effect_103): (_, ()) = {
                 let __compact_effect_96: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -4845,7 +4842,6 @@ pub mod ledger_contract {
                 let __compact_effect_72: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_remove(frame, (__compact_effect_72).clone())?;
-                let __compact_effect_73: () = ();
                 (frame, ())
             } else {
                 let __compact_effect_75: crate::types::MapMutation =
@@ -4895,7 +4891,6 @@ pub mod ledger_contract {
                 (__compact_effect_93).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_94: () = ();
             let (frame, __compact_effect_102): (_, ()) = {
                 let __compact_effect_95: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -5194,7 +5189,6 @@ pub mod ledger_contract {
             };
             let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_95: () = ();
             let (frame, __compact_effect_103): (_, ()) = {
                 let __compact_effect_96: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -6126,7 +6120,6 @@ pub mod ledger_contract {
                 let __compact_effect_72: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
                     .record_remove(frame, (__compact_effect_72).clone())?;
-                let __compact_effect_73: () = ();
                 (frame, ())
             } else {
                 let __compact_effect_75: crate::types::MapMutation =
@@ -6161,7 +6154,6 @@ pub mod ledger_contract {
                 (__compact_effect_88).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_89: () = ();
             let (frame, __compact_effect_97): (_, ()) = {
                 let __compact_effect_90: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -6377,7 +6369,6 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_67: () = ();
             let (frame, __compact_effect_75): (_, ()) = {
                 let __compact_effect_68: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;

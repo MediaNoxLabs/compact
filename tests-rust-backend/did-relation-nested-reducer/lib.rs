@@ -245,7 +245,6 @@ pub mod ledger_contract {
                 (__compact_effect_1).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_2: () = ();
             Ok(frame.finish(()))
         }
         pub fn check<Private>(

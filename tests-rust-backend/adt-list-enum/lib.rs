@@ -323,7 +323,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_push_front(frame, __compact_effect_0)?;
-            let __compact_effect_15: () = ();
             let (frame, __compact_list_length_16) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_16: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -357,7 +356,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_push_front(frame, __compact_effect_1)?;
-            let __compact_effect_29: () = ();
             let (frame, __compact_list_length_30) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_30: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -391,7 +389,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_pop_front(frame)?;
-            let __compact_effect_43: () = ();
             let (frame, __compact_list_length_44) = crate::ledger_slots::c.record_length(frame)?;
             let __compact_effect_44: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(
@@ -425,7 +422,6 @@ pub mod ledger_contract {
                 ));
             }
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let __compact_effect_57: () = ();
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

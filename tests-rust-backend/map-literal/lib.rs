@@ -127,7 +127,6 @@ pub mod ledger_contract {
                 __compact_effect_1,
                 __compact_effect_0,
             )?;
-            let __compact_effect_2: () = ();
             Ok(frame.finish(()))
         }
         pub fn lookup_true<Private>(

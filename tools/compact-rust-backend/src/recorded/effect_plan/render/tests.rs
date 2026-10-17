@@ -14,6 +14,8 @@
 // limitations under the License.
 
 //! Structural controls for payload-free values; operations must still execute.
+mod collections;
+
 use super::*;
 use crate::ir::{Parameter, Type, WitnessDeclaration};
 

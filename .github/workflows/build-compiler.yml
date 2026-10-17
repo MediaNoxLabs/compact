@@ -128,6 +128,9 @@ jobs:
         with:
           python-version: 3.13
 
+      - name: Check pinned oracle inventory before expensive builds
+        run: python3 tools/compact-rust-backend/check_oracle_acceptance.py
+
       - name: Check flake.nix version matches compiler/compiler-version.ss
         run: |
           FLAKE_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+(?=";.*# NB: also update compiler-version)' flake.nix)

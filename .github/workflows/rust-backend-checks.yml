@@ -7,40 +7,11 @@ name: Rust Backend Checks
 
 on:
   workflow_dispatch:
-  # Bootstrap and stabilize this branch before the workflow reaches default.
+  # No path filters: required checks must finish for documentation-only PRs too.
   push:
     branches: [codex/rust-backend-ast]
-    paths:
-      - '**/*.rs'
-      - 'runtime-rs/**'
-      - 'runtime-rs-macros/**'
-      - 'testkit-rs/**'
-      - 'tools/compact-rust-backend/**'
-      - 'tests-rust-backend/**'
-      - 'examples/rust_backend/**'
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-      - '.cargo/**'
-      - 'rust-toolchain*'
-      - 'rustfmt.toml'
-      - '.rustfmt.toml'
-      - '.github/workflows/rust-backend-checks.yml'
+  # Also cover stacked PRs without encoding temporary branch names.
   pull_request:
-    paths:
-      - '**/*.rs'
-      - 'runtime-rs/**'
-      - 'runtime-rs-macros/**'
-      - 'testkit-rs/**'
-      - 'tools/compact-rust-backend/**'
-      - 'tests-rust-backend/**'
-      - 'examples/rust_backend/**'
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-      - '.cargo/**'
-      - 'rust-toolchain*'
-      - 'rustfmt.toml'
-      - '.rustfmt.toml'
-      - '.github/workflows/rust-backend-checks.yml'
 
 permissions: {}
 
@@ -215,7 +186,7 @@ jobs:
               summary.write(f"## Rust {source['lane']}: {result['status']}\n\n")
               summary.write(f"Source `{source['source_commit']}`; Rust `{os.environ['RUSTUP_TOOLCHAIN']}`.\n\n")
               summary.write(source['qualification'] + '.\n')
-          assert locks_unchanged, 'Cargo lock changed during checks'
+          assert passed, 'required checks failed, were skipped, or changed the Cargo locks'
           PY
 
       - name: Upload bounded check receipts
@@ -226,3 +197,54 @@ jobs:
           path: ${{ env.RUST_CHECK_RECEIPTS }}
           if-no-files-found: warn
           retention-days: 14
+
+  public-python:
+    name: Rust / public Python controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install pinned Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: Test workflow and header controls
+        run: python3 -B -m unittest discover -s scripts -p 'test_*.py' -v
+      - name: Run public unit and sidecar controls
+        run: |
+          python3 -B tools/compact-rust-backend/ci_python_checks.py \
+            --receipt "$RUNNER_TEMP/public-python.json"
+      - name: Upload public check accounting
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rust-public-python-${{ github.sha }}
+          path: ${{ runner.temp }}/public-python.json
+          if-no-files-found: error
+          retention-days: 14
+
+  required:
+    name: Rust AST / required
+    if: always()
+    needs: [checks, public-python]
+    runs-on: ubuntu-latest
+    permissions: {}
+    timeout-minutes: 5
+    steps:
+      - name: Require every prerequisite to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          assert set(results) == {'checks', 'public-python'}, 'missing prerequisite'
+          failed = {name: item['result'] for name, item in results.items()
+                    if item['result'] != 'success'}
+          assert not failed, f'Rust AST checks failed or were incomplete: {failed}'
+          PYTHON

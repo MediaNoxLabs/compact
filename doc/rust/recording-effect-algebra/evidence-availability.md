@@ -55,3 +55,19 @@ identity rather than silently replacing original authenticated bytes.
 [#652](https://github.com/betsudo/compact/issues/652) separately tracks small
 fixture-independent authentication controls for ordinary CI. Synthetic controls
 do not substitute for the original historical graph/proof evidence.
+
+## Verified constituent inventory
+
+The [qualification inventory and bounded acceptance summaries](qualification-evidence-summary.md)
+identify exact source providers, original receipt hashes and individual replay
+payload availability. All 150 archived public source files match their published
+Git blobs. Of the remaining 122 payloads, 91 are path-free redistribution
+candidates requiring review and 31 retain original owner-path provenance and
+remain maintainer-only. The original whole archive is not redistributed.
+
+Public source at `ab132650` and the archived `6e37443b` source are independently
+fetchable; private authorities, inverse/fixture closure and outer controls still
+prevent a complete public historical reproduction. The inventory does not
+replace or repin them. The full-reproduction criterion in #653 remains explicitly
+unfulfilled; the public inventory/nonpublic-constituent route is a narrower
+local deliverable, not a declaration that every acceptance item is complete.

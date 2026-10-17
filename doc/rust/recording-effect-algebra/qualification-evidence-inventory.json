@@ -1,0 +1,2848 @@
+{
+  "title": "Recording qualification evidence inventory and derivative acceptance summaries",
+  "issue": "https://github.com/betsudo/compact/issues/653",
+  "prepared_utc": "2026-10-16T16:45:05.313576+00:00",
+  "status": "Independently reviewed local publication candidate: derivative inventory/summary only; full public historical reproduction remains unmet",
+  "identity_policy": "New derivative inventory; not a replacement original authority. Original bytes, hashes, assertions and epochs are unchanged. Digests identify private originals without making them publicly inspectable.",
+  "availability_terms": {
+    "public": "Anonymously fetchable source or artifact verified through remote commit API or raw-file bytes.",
+    "redistributable-after-review-candidate": "Bounded scan found no owner root; license/provenance/publication review remains necessary. Not permission or an approved runnable subset.",
+    "maintainer-only": "Withheld because private roots/provenance or unpublished history remains. No archive/history upload proposed."
+  },
+  "public_anchors": [
+    {
+      "role": "historical actual-source epoch",
+      "commit": "ab1326505ece60a059d6d4ba89b0d204b58e3db5",
+      "tree": "2e1db6f8692a9ca467fa3aa2da20be5fff78efc7",
+      "url": "https://github.com/betsudo/compact/commit/ab1326505ece60a059d6d4ba89b0d204b58e3db5",
+      "anonymous_api_url": "https://api.github.com/repos/betsudo/compact/commits/ab1326505ece60a059d6d4ba89b0d204b58e3db5",
+      "anonymous_api_status": 200,
+      "verification": "Anonymous HTTPS commit API retrieval and local Git commit/tree comparison performed during this inventory preparation."
+    },
+    {
+      "role": "archive byte provider",
+      "commit": "6e37443b4fc2f5363954e0aef88373a48f4d3ae8",
+      "tree": "0113052f9e7d18e25e719446218ae1b8ed4ba410",
+      "url": "https://github.com/betsudo/compact/commit/6e37443b4fc2f5363954e0aef88373a48f4d3ae8",
+      "anonymous_api_url": "https://api.github.com/repos/betsudo/compact/commits/6e37443b4fc2f5363954e0aef88373a48f4d3ae8",
+      "anonymous_api_status": 200,
+      "verification": "Anonymous HTTPS commit API retrieval and local Git commit/tree comparison performed during this inventory preparation."
+    },
+    {
+      "role": "published source checkpoint",
+      "commit": "785c892c5165cf0eaa12e895d5e54004822678ce",
+      "tree": "2f8d8916fda80b006d9ea8420df760980ddac07b",
+      "url": "https://github.com/betsudo/compact/commit/785c892c5165cf0eaa12e895d5e54004822678ce",
+      "anonymous_api_url": "https://api.github.com/repos/betsudo/compact/commits/785c892c5165cf0eaa12e895d5e54004822678ce",
+      "anonymous_api_status": 200,
+      "verification": "Anonymous HTTPS commit API retrieval and local Git commit/tree comparison performed during this inventory preparation."
+    },
+    {
+      "role": "public review test checkpoint",
+      "commit": "26886cb4b35ae5ed1e62ab033e7449a41a96bd0b",
+      "tree": "b5befc40ddeefaa1804748e9b4d85870062acbad",
+      "url": "https://github.com/betsudo/compact/commit/26886cb4b35ae5ed1e62ab033e7449a41a96bd0b",
+      "anonymous_api_url": "https://api.github.com/repos/betsudo/compact/commits/26886cb4b35ae5ed1e62ab033e7449a41a96bd0b",
+      "anonymous_api_status": 200,
+      "verification": "Anonymous HTTPS commit API retrieval and local Git commit/tree comparison performed during this inventory preparation."
+    },
+    {
+      "role": "published retained conformance MANIFEST.json",
+      "url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/MANIFEST.json",
+      "anonymous_raw_url": "https://raw.githubusercontent.com/betsudo/compact/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/MANIFEST.json",
+      "anonymous_raw_status": 200,
+      "sha256": "0b1687c45f4258b56c03b9039e7aa6ad7dc8930ad0109a50a69998c7ebb3e6eb",
+      "bytes": 29233,
+      "verification": "Anonymous HTTPS raw-file bytes match local Git object."
+    },
+    {
+      "role": "published retained conformance LICENSE",
+      "url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/LICENSE",
+      "anonymous_raw_url": "https://raw.githubusercontent.com/betsudo/compact/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/LICENSE",
+      "anonymous_raw_status": 200,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357,
+      "verification": "Anonymous HTTPS raw-file bytes match local Git object."
+    }
+  ],
+  "public_review_anchors": [
+    {
+      "url": "https://github.com/betsudo/compact/pull/651#issuecomment-6214036479",
+      "tested_source_commit": "26886cb4b35ae5ed1e62ab033e7449a41a96bd0b",
+      "scope": "Public AI-assisted local-check report; raw logs not embedded."
+    },
+    {
+      "url": "https://github.com/betsudo/compact/pull/651#issuecomment-6219269611",
+      "reviewed_source_commit": "785c892c5165cf0eaa12e895d5e54004822678ce",
+      "scope": "Public re-review; repeated Python discovery and earlier executable-check reuse, no fresh Rust/proof/historical run."
+    },
+    {
+      "url": "https://github.com/betsudo/compact/discussions/644",
+      "scope": "Public maintainer closure narrative; original detailed receipts remain private."
+    }
+  ],
+  "original_inventory": [
+    {
+      "constituent": "Qualified implementation manifest",
+      "sha256": "f47437a5f8d9dd380e74ad44abc718319615899fb667358d83033a7b700d9a8f",
+      "tracked_blobs": 5586,
+      "implementation_head": "22a6f44cce66641c217ffd5caaf8146670b8ab57",
+      "implementation_tree": "1c8271947d41245aa6da5f6ea3de0d0bc02e997c",
+      "qualified_source_epoch": "43d7e2f0f1a14d8396ad8bcf33c6b55df841b1e0",
+      "closure_epoch": "45b575c85982c8d7a71bbd1714fb197a8e8b877b",
+      "availability": "maintainer-only",
+      "verification": "Raw manifest rehashed; all5586 path/blob hashes match local implementation with zero missing, extra or mismatching blobs; qualified tree matches implementation tree. Local object equality does not establish remote availability."
+    },
+    {
+      "constituent": "Historical actual source",
+      "source_epoch": "ab1326505ece60a059d6d4ba89b0d204b58e3db5",
+      "availability": "public",
+      "verification": "All3218 present actual-source pins and one required absence in unchanged transition manifest match public source."
+    },
+    {
+      "constituent": "Original orchestration authority",
+      "sha256": "ec34d8fbf42ca48b7c2a62ea57d390f991a96c5250301ef6c2092bc649210f70",
+      "availability": "redistributable-after-review-candidate",
+      "limits": "Path-free file depends on private path-bearing transition manifest; cannot alone make replay runnable."
+    },
+    {
+      "constituent": "Original transition/source-view manifest",
+      "sha256": "7cbe320fccab6c0c87989b92568aad783ebc9ecc6ef3531b62d0cb2d48a385a5",
+      "availability": "maintainer-only",
+      "actual_source_entries": 3219,
+      "per_read_helper_entries": 198,
+      "retained_fixture_entries": 948,
+      "retained_fixture_composition": {
+        "public_source_copies": 907,
+        "inverse_payloads": 40,
+        "required_absence": 1
+      }
+    },
+    {
+      "constituent": "Outer source freeze",
+      "sha256": "cfc52ab324e3c6f96a743b47a101e015b2189e9b7ec1b28756f29600b70bc257",
+      "availability": "maintainer-only",
+      "source_entries_reported_by_review": 5602
+    },
+    {
+      "constituent": "Original outer wrapper",
+      "sha256": "a95614b2b27bda0338d7131591f25446011db50ae0a40ba07d351935b1e54f8e",
+      "availability": "maintainer-only",
+      "limits": "Original machine roots preserved; reference bytes are not portable defaults."
+    },
+    {
+      "constituent": "Held historical harness",
+      "availability": "mixed; see payload inventory",
+      "held_payloads": 110,
+      "hold_descriptor": 1,
+      "hold_sha256": "6cabc3cb104db8e833b8d0317ec04273a40892c809e9eb738c98c61876f84f32",
+      "limits": "Path-free subset does not preserve complete original authority/dependency graph; original invocation/accounting/isolation/cleanup/verifier controls stay bound to originals."
+    },
+    {
+      "constituent": "Historical archived source",
+      "availability": "public",
+      "payloads": 150,
+      "payload_bytes": 3081119,
+      "public_byte_provider": "6e37443b4fc2f5363954e0aef88373a48f4d3ae8",
+      "original_descriptor_identity_preserved": "f0c7e3eb8dbb4867db80f82dfc64013502026e1e",
+      "limits": "Public provider supplies exact bytes, without replacing original descriptor identity."
+    },
+    {
+      "constituent": "Retained graph and authorities",
+      "availability": "mixed; see payload inventory",
+      "payloads": 6,
+      "limits": "Two graphs and four authority receipts; complete original proof/VM logs referenced by receipts are not included. Generated-output rights/provenance need review."
+    },
+    {
+      "constituent": "Reviews and acceptance originals",
+      "availability": "maintainer-only",
+      "limits": "Original local files read/rehashed; derivative summaries do not repin originals."
+    }
+  ],
+  "unchanged_private_archive": {
+    "sha256": "31795590babd55a30ce8cf05175911d51f65511bac0b084e9721154c15e58754",
+    "bytes": 1458768,
+    "manifest_sha256": "5141cc6fe1711e462ec64c18822e660ddcbddd5181ffef6b4511b058585ed88b",
+    "payloads": 272,
+    "payload_bytes": 6741826,
+    "regular_members": 274,
+    "owner_path_payloads": 31,
+    "payload_classification": {
+      "maintainer-only": 31,
+      "redistributable-after-review-candidate": 91,
+      "public": 150
+    },
+    "verification": "All payload hashes/sizes, tar round trip and manifest path flags checked. No runner imported, fixture materialized, tests/proofs executed or originals edited.",
+    "publication": "Maintainer-only as a whole. The91 path-free candidate files are not an approved or qualified standalone package; original README/packaging metadata also need review."
+  },
+  "licensing_and_privacy": {
+    "public_license": "Apache-2.0",
+    "public_license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "public_archive_SPDX_headers": 141,
+    "public_archive_other_files": 9,
+    "all_payload_SPDX_headers": 189,
+    "findings": "All150 archive blobs match licensed public source and published retained fixture. Preserve original notices and existing LICENSE on redistribution. Private replay archive contains no LICENSE; no blanket license inferred for private receipts, graph output, wrapper or audit prose.",
+    "path_check": "Text scan for original owner roots matches all31 manifest flags. Bounded path/provenance inspection is not a comprehensive secrets audit or publication approval."
+  },
+  "derivative_acceptance_summaries": [
+    {
+      "label": "Original historical terminal acceptance",
+      "evidence_kind": "historical tests/replay and outer controls",
+      "source_epoch": "ab1326505ece60a059d6d4ba89b0d204b58e3db5",
+      "raw_review_sha256": "15104c733d0e5656711e64bb278d6186c4cde0a7554109fbc8ad5f2657f967c0",
+      "raw_execution_receipt_sha256": "846792187fc977a8eebef98bac15a134d3489cf938d8836c3b9f8e5d17817290",
+      "raw_report_sha256": "7cae10e33764e51486e9300d9c937a567ebb85ca8ec0cb92c3053ebc0ae0907b",
+      "raw_authority_sha256": "ec34d8fbf42ca48b7c2a62ea57d390f991a96c5250301ef6c2092bc649210f70",
+      "raw_transition_sha256": "7cbe320fccab6c0c87989b92568aad783ebc9ecc6ef3531b62d0cb2d48a385a5",
+      "facts": {
+        "exact_cases": 974,
+        "workers": 4,
+        "worker_cases": [
+          245,
+          242,
+          244,
+          243
+        ],
+        "groups": {
+          "ordinary": 292,
+          "earlier_inventory": 548,
+          "latest_inventory": 128,
+          "current_measurement": 6
+        },
+        "failures_errors_skips_unrun": 0,
+        "outer_returncode": 0,
+        "outer_wall_seconds": 27005.031954791048
+      },
+      "reviewed_controls": "Independent coding-agent review accepted original partitions/order, exclusive948-entry worker fixtures, source/authority live checks and wrapper postchecks. Cleanup retains original scope; no new complete filesystem/process-leak guarantee.",
+      "incident_caveat": "A fixture Git initialization inherited global Git environment and temporarily redirected observations through common core.worktree. Independent review accepted source/authority/case identities after scoped repair and actual endpoint/postchecks. No continuously pristine Git configuration/metadata accuracy claimed. External derived bytecode outside authenticated source was disclosed.",
+      "public_source_binding": "https://github.com/betsudo/compact/commit/ab1326505ece60a059d6d4ba89b0d204b58e3db5",
+      "limits": "Public actual source alone is not a public authority/fixture/outer-wrapper binding. Six retained measurement laws are not current performance. No new test/proof/application or current compiler/runtime qualification."
+    },
+    {
+      "label": "Original composed local epic closure",
+      "evidence_kind": "independent coding-agent acceptance of continuity and composed stages",
+      "raw_final_review_sha256": "43673887f9cab2acd6d6f8d44e739e8995e477ef52260e362e3de8dcd65ed3ed",
+      "raw_fullscope_review_sha256": "9cbcbf181c76fee40d6a68e7140bb8f7eedc9e7c3cb79a76bf3d885d34034b38",
+      "implementation_head": "22a6f44cce66641c217ffd5caaf8146670b8ab57",
+      "implementation_tree": "1c8271947d41245aa6da5f6ea3de0d0bc02e997c",
+      "qualified_source_epoch": "43d7e2f0f1a14d8396ad8bcf33c6b55df841b1e0",
+      "closure_epoch": "45b575c85982c8d7a71bbd1714fb197a8e8b877b",
+      "source_manifest_sha256": "f47437a5f8d9dd380e74ad44abc718319615899fb667358d83033a7b700d9a8f",
+      "reviewed_scope": "Eleven original DoD, EA00-EA13 and six contribution criteria accepted for finite local epic508 scope; final reviewer authored none of reviewed source.",
+      "fresh_affected_checks": {
+        "rust_passes": 1829,
+        "rust_ignored": 7,
+        "python_authenticated_passes": 289,
+        "python_default_passes": 270,
+        "python_default_manual_method_ids": 19,
+        "python_default_skip_events": 20,
+        "scope": "Actual current composed source epoch; later source-identical ancestry change is not a new execution."
+      },
+      "retained_actual_checks": {
+        "shared_compiler_cases": 3881,
+        "shared_compiler_groups": 46,
+        "isolated_consumers": 257,
+        "isolated_commands": 772,
+        "consumer_input_hashes_reauthenticated": 606,
+        "runtime_hashes_reauthenticated": 59,
+        "historical_cases": 974,
+        "historical_report_sha256": "7cae10e33764e51486e9300d9c937a567ebb85ca8ec0cb92c3053ebc0ae0907b"
+      },
+      "limits": "Actual fresh Rust/Python, retained compiler/consumer/historical and proof/application constituents keep their original epochs. Counts overlap and cannot be summed. No new monolithic release gate, public binding for private closure, human security audit or equivalence proof."
+    },
+    {
+      "label": "Public checkpoint review",
+      "evidence_kind": "public reviewer-reported local checks",
+      "source_commit": "26886cb4b35ae5ed1e62ab033e7449a41a96bd0b",
+      "source_tree": "b5befc40ddeefaa1804748e9b4d85870062acbad",
+      "public_review_url": "https://github.com/betsudo/compact/pull/651#issuecomment-6214036479",
+      "summary": "Public report records2291 passing Rust tests and7ignored across four crates, Rust1.89 check and strict lint. Python discovery omitted private-graph controls.",
+      "rereview_url": "https://github.com/betsudo/compact/pull/651#issuecomment-6219269611",
+      "rereview_source_commit": "785c892c5165cf0eaa12e895d5e54004822678ce",
+      "limits": "Public reports omit raw logs/environment receipts. Later re-review reuses earlier executable checks and repeats Python discovery; no certification of private historical evidence or silent rebinding of closure counts."
+    }
+  ],
+  "original_review_receipt_identities": [
+    {
+      "label": "pr641-train-composition-affected-gates-independent-review.json",
+      "sha256": "32434dc473ad962457755055787356e87c0a32969d92766fe92e9ccbdc06be5e",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "pr641-train-python-terminal-independent-review.json",
+      "sha256": "20d4c1dea9104d023ac9f5b5981468b2ba94f2c9f70e32322210fb2817dc9356",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "159-contribution-history-and-stack-independent-audit.json",
+      "sha256": "bbb9cbe3e42f5e95d035aa5249e84659e3275e462c3b212a7031fccd37ca1373",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "159-review-draft-update-independent-review.json",
+      "sha256": "bb69f31860960d3740fe796b8faf445df5f33edb28ba4599f66fe4d0f0b06d81",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "GOAL508-159-TRAIN-REQUIREMENTS-CHECKLIST.md",
+      "sha256": "1ef3b145240c369d87ec78acade69bfce0543011da82c69acdb1d371ec6ef436",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "goal508-159-train-requirement-checklist-inputs.json",
+      "sha256": "5a939cbca127debfc8c461332f7db357f1bb5b4a0bfcee8bc89c08c880d8bf22",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "historical-terminal-independent-review.json",
+      "sha256": "15104c733d0e5656711e64bb278d6186c4cde0a7554109fbc8ad5f2657f967c0",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "wide-add-publication-post-adoption-independent-review.json",
+      "sha256": "ad3e2901b152610e7499fad369c659bb36f94af8cd48307946a1da51177c20fe",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "generated-output-restoration-post-adoption-independent-review.json",
+      "sha256": "ac1c0e82e43ab23ff4256aecf4243a7a458bcaadb09ed213a5bd10884984cdc5",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "independent-final-actual-acceptance.json",
+      "sha256": "43673887f9cab2acd6d6f8d44e739e8995e477ef52260e362e3de8dcd65ed3ed",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "independent-fullscope-source-and-proposal-review.json",
+      "sha256": "9cbcbf181c76fee40d6a68e7140bb8f7eedc9e7c3cb79a76bf3d885d34034b38",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    },
+    {
+      "label": "historical-replay-independent-review.json",
+      "sha256": "22a271c54e26d4c4ba3814a1e06ee029fcd92a75a28467af7decd69a67d31d62",
+      "availability": "maintainer-only original; derivative summary prepared for review"
+    }
+  ],
+  "issue_653_disposition": [
+    {
+      "criterion": 1,
+      "status": "candidate addresses inventory route; independent review/public delivery pending",
+      "detail": "Original source/manifests/orchestration/fixtures/reviews/receipts classified public, after-review candidate or maintainer-only."
+    },
+    {
+      "criterion": 2,
+      "status": "bounded derivative summaries prepared; independent review/publication pending",
+      "detail": "Exact public source/tool/input links supplied where verified; private summaries preserve raw receipt hashes/epochs without invented public authority/fixture bindings."
+    },
+    {
+      "criterion": 3,
+      "status": "unmet for original full historical reproduction",
+      "detail": "Original authority/fixture/outer control chain not publicly fetchable; no new isolated974 result. Explicit-nonpublic inventory route does not make this criterion pass."
+    },
+    {
+      "criterion": 4,
+      "status": "bounded provenance/license/path assessment complete locally; publication review pending",
+      "detail": "Licensed exact public subset verified;31 path-bearing payloads withheld; private/generated rights and full publication/secrets review unresolved."
+    },
+    {
+      "criterion": 5,
+      "status": "preserved in candidate",
+      "detail": "Original receipts/assertions/authorities/epochs unchanged; no sanitized successor or repinning."
+    },
+    {
+      "criterion": 6,
+      "status": "preserved in candidate",
+      "detail": "Historical results/replay/continuity/proof/application separated; no cached passing results or synthetic historical proof claim."
+    },
+    {
+      "criterion": 7,
+      "status": "pending repository delivery",
+      "detail": "Availability page needs adopted public inventory/summary links and remaining limitations."
+    }
+  ],
+  "recommended_issue_state": "Keep #653 open for authority/fixture/outer-control distribution and fresh public historical reproduction. Inventory/nonpublic-constituent route is delivered as a local reviewed candidate, not completion of all reproduction criteria.",
+  "payload_inventory": [
+    {
+      "path": "harness/AUTHOR-AUDIT.md",
+      "sha256": "a012a376bf1a6b35a707d3643df651ed6c6e11bc94252b4c91c7ba7cba81e1b5",
+      "bytes": 13263,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/CURRENT40-CONTROL-PLAN.json",
+      "sha256": "13de48827f718c1d6cc77a4667a3fde76bc5b11b95601a9dbc6431b8d203b29d",
+      "bytes": 2968,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/DATA-SUCCESSOR-AUDIT.md",
+      "sha256": "5fd614b21b84283d5b4fab8158c637e6f99a3d10d5df1757c682cdc91dfd4168",
+      "bytes": 1414,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/DOCUMENTATION-SUCCESSOR-AUDIT.md",
+      "sha256": "17d4302f55168150bf954c0def9834cdb378da53b60404e6f882b398a87c4890",
+      "bytes": 1217,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/alias-repair-receipt.json",
+      "sha256": "d4f5100f9abf47a3a37b07cdd7267817ba2dc06cdbfc1752410c679924bb66bd",
+      "bytes": 1076,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/author-hold-06.json",
+      "sha256": "e5a9d470ea2f8105b9b900418f745b899edc48ed8a2bb4e406f4d15a34878bc0",
+      "bytes": 14686,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/author-hold-07.json",
+      "sha256": "cfcda2b452c208c209a5dd99dd15f4903ba048035c8e81ef27662ba5eb8d014c",
+      "bytes": 15523,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/author-hold-08.json",
+      "sha256": "2c103d8a7f34f444c427188ee68089aba2870b064752af1aad4aea8ea959e8e4",
+      "bytes": 17746,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/author-hold-09.json",
+      "sha256": "cab97290ede0775979a60870969be96c2b7cd942193f36062f61ac3a44c036e6",
+      "bytes": 18557,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/authority.json",
+      "sha256": "ec34d8fbf42ca48b7c2a62ea57d390f991a96c5250301ef6c2092bc649210f70",
+      "bytes": 2282,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/auxiliary-authority-receipt.json",
+      "sha256": "ca599c8dbe95cf3ce189ea6ad64c118286c64acf60b52244c0489da3e1f4b4b5",
+      "bytes": 1903,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/binding-session-successor-receipt.json",
+      "sha256": "b544d7322e3118bc5d680236af753b557429d0441dc50866fe964f122ab9ead3",
+      "bytes": 7478,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/composed-fence-receipt.json",
+      "sha256": "2e08dbdccc35bd23a072697315992a183fdc994177fc490cd2b325ef69e87f7f",
+      "bytes": 1545,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/controls-01.log",
+      "sha256": "5850129f41264613e994238185f661a81736acab846c3f23532a1bcf0fa98619",
+      "bytes": 5711,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/correction/correction-receipt.json",
+      "sha256": "6cd3d628495c8d87d70cadd20c9d29a540dc8b923bf6b2d8747e7247eb00e186",
+      "bytes": 2446,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/correction/intent_checks.after.py",
+      "sha256": "e0c90a0f62744e20efa561f763e3468afa184e04a59ca7b8a939ef7d9a8eaa8a",
+      "bytes": 15877,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/correction/intent_checks.before.py",
+      "sha256": "dfc6f84ac484550f8e6d6116e5d23430ae733c490232bdc737e576c8060b892f",
+      "bytes": 15883,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/correction/native_targets.after.py",
+      "sha256": "38f11110b01d93aeb7e8da38e0054e9d7f68696f1ef128ac8d86e497af3e8973",
+      "bytes": 9862,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/correction/native_targets.before.py",
+      "sha256": "2af8ee6d204978ed925d3709746b825a930338168a92c67d918f332bff132d20",
+      "bytes": 9905,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/correction/scalar_checks.after.py",
+      "sha256": "4307c6202b2fc7a426cff7b2e465f1500aaa558d5fb2921fba07f50a2becc03c",
+      "bytes": 6289,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/correction/scalar_checks.before.py",
+      "sha256": "a554892a8e68e8acd228da9d599f2eaa98c4af72237fe4a9f94fe0301b9a546a",
+      "bytes": 6297,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/data-successor-plan.json",
+      "sha256": "b6e586d0d63a36ad7a086540e4ff3fdaa49f2236184bbd9a10e8a726b05d7ea2",
+      "bytes": 7788,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/derivation/generate-data-successor.py",
+      "sha256": "ba99eba9404aad12a880d6350abaace41d4d34d1b7e70c028e0a91879ad9606b",
+      "bytes": 12726,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/derivation/generate-docs-data-successor.py",
+      "sha256": "ddf5ded6ebcde3c24e42b33c3e46d36f5f006b80129a253a7b129af6471cb27e",
+      "bytes": 10537,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/derivation/historical_law_dispatcher.py",
+      "sha256": "ea4bea54b59536956442b9e99841806190716064f111b30774fe0aad4a02c275",
+      "bytes": 22484,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/derivation/historical_law_shards.py",
+      "sha256": "5f0616b87ca9bab35d9bbb7be8f6780e3f5f19e38a512ea619aa8781e35c8c2a",
+      "bytes": 15154,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/derivation/run_suites.derived.txt",
+      "sha256": "171177e61a11a0fcc20e1e33cad126009661f89e460c2ac28bb077746942dd0f",
+      "bytes": 5423,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/derivation/run_suites.diff",
+      "sha256": "af6ce39cc29672095324145349f82d6748cc96a6fb3b5b818d6f17ff3e078c43",
+      "bytes": 4534,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/derivation/run_suites.original.txt",
+      "sha256": "43a9027b84768d59d52cfc8b68328bc126bf885f2507d76e96e699c792086e36",
+      "bytes": 5484,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/documentation-execution-readiness-plan.json",
+      "sha256": "521416d432f33abdc156d239688b570a53a2b85da09c10eb21a0aba1174a6f8c",
+      "bytes": 3325,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/documentation-successor-receipt.json",
+      "sha256": "601348b64abe77e733249fd3d297cf07a337d456ecdc7c4fce20c1ac134399ce",
+      "bytes": 4911,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/final_epoch_source.py",
+      "sha256": "ebc721b4ff4e87f4a192b455579125df495980185e6e1b70c5edba89a856b366",
+      "bytes": 11388,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/final_epoch_transition.json",
+      "sha256": "7cbe320fccab6c0c87989b92568aad783ebc9ecc6ef3531b62d0cb2d48a385a5",
+      "bytes": 627669,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/final_historical_dispatcher.py",
+      "sha256": "d36640a5cc5ec72719c90940965e586f03b1850440e729ee08c5493fe905dd48",
+      "bytes": 10006,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/final_historical_shards.py",
+      "sha256": "562eed4f0576a3c31b9f9aea6720feed7763bf6713efc69edbb2226841ecb405",
+      "bytes": 8844,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/fixture-canonicalization-receipt.json",
+      "sha256": "d8adf44c7b5f1e317c0c63411ad24e45e6374d1defa5710a7e8270d5f7758547",
+      "bytes": 934,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/fixture-successor-receipt.json",
+      "sha256": "07164c4600c95b7a0ac630c4a61a143b7cd2f7a15ebbcdb97b8d7b7df63fa2e8",
+      "bytes": 2928,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/ordinary-registry-audit.json",
+      "sha256": "9928bee27619510b83a2eca72a590a9d42a364e1da2e3b1a4dd5f0334b7381fa",
+      "bytes": 12848,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/author-hold-01.json",
+      "sha256": "7893a30e7cee771040e924b3a66246c06dc4cb0d56edba00ad105d1b73d1392b",
+      "bytes": 9071,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/author-hold-02.json",
+      "sha256": "85109f53ae2a21073de1f7bd0c03ab474ab3387a12f402e514ba02b8f5f8bf07",
+      "bytes": 10127,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/author-hold-03.json",
+      "sha256": "cc7a72314417fc392606b9a52a8d0b92eadf2f00d2b0daa24f8b7bf9d0ef10f3",
+      "bytes": 10655,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/author-hold-04.json",
+      "sha256": "97941993a6dd0c917f60bac7b27d08e5c8580e5a045aa4669b5700d550a21550",
+      "bytes": 11976,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/author-hold-05.json",
+      "sha256": "c351031851b95e21ec82cdd2d84788eff109725eb80df588a4898a314cb7330f",
+      "bytes": 13708,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_source.py.before",
+      "sha256": "18f29a815f10806ae9095f819f41ece4d85824e03be24b85dfe6fd3263db4748",
+      "bytes": 9051,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_source.py.diff",
+      "sha256": "3566847003a56a19094f7677345a48dcd12d057d3d8cd331643142ca5c0d0573",
+      "bytes": 1479,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_source.py.hold03.before",
+      "sha256": "ed31df6cf150c0db85281cb0d34f0310ce62536c8d58e5eaac3ded73ec5da197",
+      "bytes": 9586,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_source.py.hold04.before",
+      "sha256": "bde1fac4f8a14ac5adfe0fb1a52ce12df7b122afff0966e94a3544def2298704",
+      "bytes": 10547,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_source.py.hold04.diff",
+      "sha256": "df7b4c49a89d144b1fde154837419a23acff1b5c81528dda856494f355b4f198",
+      "bytes": 2578,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_source.py.hold05.diff",
+      "sha256": "b067d5825bb6be292bba9404860e084c561cba937738f6f8c21e8c17388289cb",
+      "bytes": 2339,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_transition.json.hold04.before",
+      "sha256": "3f953b15ec9d8a825cebe0c94e5ad819bb7e06321d8868098621d8ae499a7229",
+      "bytes": 619678,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_epoch_transition.json.hold05.diff",
+      "sha256": "6dd930b6263aebba0c583ae78ab7f3a3f72a782d7d4864b7e50864a1e0b0a486",
+      "bytes": 3852,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_historical_dispatcher.py.hold03.before",
+      "sha256": "cab5c33d0c4c37d1c68d5acb692d20a56616b0d1a38e4c951cd54273a74c9133",
+      "bytes": 9466,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_historical_dispatcher.py.hold04.diff",
+      "sha256": "89c9f8ad5e40b839bd8c2fa328d75d3ca9fa7a100b972683e9c1cae8aa2c9f06",
+      "bytes": 525,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_historical_dispatcher.py.hold05.before",
+      "sha256": "ee18942029a4bde6f0b0f307ecb4b1127ad83ba971a48a07ba3a1bda2dc0bbd3",
+      "bytes": 9678,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_historical_dispatcher.py.hold06.diff",
+      "sha256": "f04175fc37af462346177906be0325de637c0a448765b243ec77205ff21a677c",
+      "bytes": 1268,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_historical_shards.py.hold04.before",
+      "sha256": "c4ba015bfe89a8a428b680d888f756664d78adebb5dd2392bd69a9de330dcd72",
+      "bytes": 8752,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/final_historical_shards.py.hold05.diff",
+      "sha256": "dd7920f6e599cf314a9ee38ee1ce7119e833e2581fd20bea77098e659e0943fc",
+      "bytes": 641,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.hold02.before",
+      "sha256": "c0e6bb9f95abdc2ade792e51067a22eee223e6eaa575137680743c6e45399b0e",
+      "bytes": 17808,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.hold03.diff",
+      "sha256": "3692ea0b83b1b0eead8cbf5c5d860111376ca22ae726e09bc892ab5265d6dc00",
+      "bytes": 461,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.before",
+      "sha256": "39481366ace5e864932f9b760b46cf08800b811f18cf4a29072d0554f6d24bc0",
+      "bytes": 16407,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.diff",
+      "sha256": "026e239aed0fa93fa47d70a5e598e61da4bb5d62160ad708ef21e3d42c21399d",
+      "bytes": 1883,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.hold03.before",
+      "sha256": "f7184af971b332d8a4ea2bd983dbc81ecc6b7e0070eab38dce9bebaa095184a1",
+      "bytes": 17818,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.hold04.before",
+      "sha256": "7f5b8b45fd1fb5c3de111cca8fe026615c03a79e3c1feb02c58f20a84bbda884",
+      "bytes": 20730,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.hold04.diff",
+      "sha256": "172436e1b90e153add7b2c40b141d104c1135ba54fef50112b9685fc3126b5f8",
+      "bytes": 3379,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.hold05.before",
+      "sha256": "295b123d158a1215082795cb66c4c2eeb7ec97f07ea574a41a493a9c7c5a711f",
+      "bytes": 22602,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.hold05.diff",
+      "sha256": "22bc254f42833e8b5efd35db0a381aee820f80ed6911f1ef65b6a391cef96408",
+      "bytes": 3290,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/predecessor/test_final_epoch.py.hold06.diff",
+      "sha256": "ec025d13b8e570bdf95a8db6e4c1746161e49fd4f38be91bf129308e0ad99782",
+      "bytes": 1984,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/bin/compactc.rs",
+      "sha256": "d7447d64cee09001e51305ac793022267c38f4b64358fdaa76369c6a1573a678",
+      "bytes": 47594,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/lib.rs",
+      "sha256": "5feb36f04250fd91d03a0fa43294c569856921faa8672dfe1f6d1de520945322",
+      "bytes": 120508,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_native/sink.rs",
+      "sha256": "86976e7d6785a1e6f759611956c991ddeaf9c6c0f10b913019848f14aa821ab0",
+      "bytes": 5308,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/aggregate.rs",
+      "sha256": "c85896bfbf39826933669af4638228caf371450969895258e6e952e242559de2",
+      "bytes": 4588,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/aggregate/call.rs",
+      "sha256": "a5f213b0034d57f26c6428f4e63579be164c195d49fdf3362db18444711c965c",
+      "bytes": 1664,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/body_check.rs",
+      "sha256": "52053a8d1a9ea9db450913984fa2a78668d7ebea235fac268e0d1d406317b4cc",
+      "bytes": 2020,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/carrier.rs",
+      "sha256": "0cac0806615ef4a8379c5e031788a6b5a0a00d32713149896393a6d79d54fd24",
+      "bytes": 3823,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/carrier/tests.rs",
+      "sha256": "b8a26fc06fbae2d18bf4cb2f2d110c7ef84930ed2a5e584e5e7d755a38872354",
+      "bytes": 6447,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/control.rs",
+      "sha256": "c6b1ed982310f889627e380c3b8c1b4dd02e74aff125b720bb8058cb2f5c72f9",
+      "bytes": 6480,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/expression.rs",
+      "sha256": "e4dd22ddfc6cc26fe2c04e257274bec8c12b774e5a6e2c5bb922d655795cb641",
+      "bytes": 2321,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/leaf.rs",
+      "sha256": "9f361d5599cdb84578ccf2fae018d1bd6f41dffe52076528a778bb8cc4920f72",
+      "bytes": 4444,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/scope.rs",
+      "sha256": "88dd1f7e5fa48cb9031999a90e36c9453727f6524412e8cf54ede1ebe4578884",
+      "bytes": 1397,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/sink.rs",
+      "sha256": "b2a53453e168a763852acab2cc0aa881333c07dee98cccda97a2185da25dd700",
+      "bytes": 4647,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/pure_semantics/visitor.rs",
+      "sha256": "2e11ed9045febcfdc3023c82159f67b46f07ee2150ff1a20a332c21be75eba9b",
+      "bytes": 1760,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded.rs",
+      "sha256": "7800e9a018fa4a3909d537ba43978f00d6d790287ad41df1cc6d87c5e2d123be",
+      "bytes": 24759,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan.rs",
+      "sha256": "846f7fab3f08d74b4e3494f4a16f17341764304eaa223328dcbbbbf845639bc9",
+      "bytes": 4523,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan/lower.rs",
+      "sha256": "d48dda953f518cb1b203ea7b3040875caa026eef0848126fa9949bcaa9dc7233",
+      "bytes": 20026,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan/lower/expressions.rs",
+      "sha256": "7bedef22d44add6f262b590e9ed9476df995c50a52dacd668534b4a845b4f2a9",
+      "bytes": 16243,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan/lower/ordinary.rs",
+      "sha256": "705df372cb1cc3fd8c8ce01a5c7f6d567c0fc87a043113e93ccbaf73ec018f87",
+      "bytes": 8273,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan/pure_certification.rs",
+      "sha256": "114803e5bdf10254cc46e533334e5baaac88733c2c9d4ba1230cad9bb3b7872f",
+      "bytes": 9781,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan/pure_certification/checker.rs",
+      "sha256": "c60bbe58bd0837dc11d8efbc9a220d51070b333ce9d5c3fdeb089a91edea55da",
+      "bytes": 2963,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/effect_plan/type_environment.rs",
+      "sha256": "46d7015357ea3d57becb9849e77cbb86d8b500a8c8fd2440dcf9497f9d9c9cdd",
+      "bytes": 8118,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/recorded/profile_selection.rs",
+      "sha256": "8e7d0a60045abbf3c0f06a9590975dcdcb7b112f2fd23a63c3e8af5247399f0f",
+      "bytes": 29656,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/resource_limits.rs",
+      "sha256": "2adc7200e599c300e19b1d2415f6ef5b7682f5e22c1cd8cc1f39f9b32a85c48b",
+      "bytes": 8795,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/resource_limits/borrowed_types.rs",
+      "sha256": "701b17d7ad93aa1e8f2e660b7636ca6228eb8265db219626fddc23d2ccf796c4",
+      "bytes": 5729,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/resource_limits/pure.rs",
+      "sha256": "0c8c52eeff481ec6304f4615ca4d12ce7f6a48315a5c31d5fdea4fe3f727bbb4",
+      "bytes": 2429,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/resource_limits/recording_calls.rs",
+      "sha256": "44e26400c3660040c00dad7a41dc20b246763dd99b148fcb109b02c1fffac604",
+      "bytes": 3447,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful.rs",
+      "sha256": "d6ea080187ec283adfcda18d9776e0de26395e511699cff4d1a16317ffd1cb57",
+      "bytes": 20860,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/actions.rs",
+      "sha256": "fcba035798bd4f47d68cce0038468e6fa816710b69cd54b1354b022d02945c7d",
+      "bytes": 5033,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/actions/cells_counters.rs",
+      "sha256": "aeba1c168c010cf82854500b10a9af60b3b1dcc0924df3930154a7c6e040c822",
+      "bytes": 6810,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/actions/coins.rs",
+      "sha256": "e35e53b45596561bf06cead5fa0b8fac3a5546fb9e88042ecc63e075486d50df",
+      "bytes": 6072,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/actions/collections.rs",
+      "sha256": "3261b3aea6cac10d7f4020fad4c0862f2b22350c16252fe4950fefeb51f5e990",
+      "bytes": 11454,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/actions/effects.rs",
+      "sha256": "912dea7c91f5cb221c788937dda67a2f258f3ceb7f8e888c87d1ceb8697d7b0e",
+      "bytes": 8135,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/actions/merkle.rs",
+      "sha256": "504715603dd82538346e333af3e1f169686671d762c1035f57f17ff778fa56d2",
+      "bytes": 11778,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/expression.rs",
+      "sha256": "b7f134380ec796d05731f43b10a4aed7b8133ab36ee66df70b1079b6c1a023c9",
+      "bytes": 83125,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/stateful/returns.rs",
+      "sha256": "148556047644c07ad98e9c6b52aa424c16b3c48d778f597a586c694a70e2339d",
+      "bytes": 19590,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/value_lowering.rs",
+      "sha256": "bbec6f8cfd1fdbb1a4cec34381992ea1476ead9179f34d7dd469a0e5ade34944",
+      "bytes": 7329,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/src/witness.rs",
+      "sha256": "f2129fafafcce04a226a99810ed820b45cce5d35e3f34c6414faacc82b01391c",
+      "bytes": 6602,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/test_focused_target_checks.py",
+      "sha256": "480158770d4f50559554045ca8af76de05fcb8017b1fd9602b22052364b724c1",
+      "bytes": 13571,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/preimages/tools/compact-rust-backend/test_native_targets.py",
+      "sha256": "f91bfd8492d876e64517f42c8c3ac2f1e18b13f54e2e3fe0ddf6ee9464bd590c",
+      "bytes": 10072,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "SPDX header: Apache-2.0"
+    },
+    {
+      "path": "harness/root-affinity-receipt.json",
+      "sha256": "8a660adccb572d02e9529e4570e1fa28ce02500f2b1f40b1911852370c02350b",
+      "bytes": 1296,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/static-author-receipt.json",
+      "sha256": "491fc1b5ca0dbbd282c8a2bf751bbe256aee5d9a3326da269109b82ec08983c0",
+      "bytes": 1746,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/test_final_epoch.py",
+      "sha256": "4eb024800f42b34b234b1c7d88533c013182f76e8966c0c25269074d300f6b03",
+      "bytes": 24125,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "harness/path-validation-hold.json",
+      "sha256": "6cabc3cb104db8e833b8d0317ec04273a40892c809e9eb738c98c61876f84f32",
+      "bytes": 19695,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "graph/baseline/nested/zkir/nested.zkir",
+      "sha256": "8159703d4b2301864e90917b33c0029b5d649fe265ff4dac3ec12353fb1b2288",
+      "bytes": 9843,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "graph/candidate/nested/zkir/nested.zkir",
+      "sha256": "75b6a4ff5ee415a034eea2b0eb3877ad9cdcf1dbbaa37c3bda67f1db510698b3",
+      "bytes": 10185,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "graph/authority/manifest.json",
+      "sha256": "841f85421a833cb8eb2d61af22e985f6308553c6bf201c03a2cdc8d2a224031d",
+      "bytes": 6538,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "graph/authority/emission-report.json",
+      "sha256": "a0e2735aa601ae292174da0af70f5e67d9fb51b177e08a805836120768a1cb9e",
+      "bytes": 8769,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "graph/authority/source-binding.json",
+      "sha256": "35194b84336fa170428a493a2cf25429b2bfb12a8914b970c2e82898578d2ade",
+      "bytes": 6126,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "graph/authority/qualification-final.json",
+      "sha256": "b13a414862aa75ddc1cbda2ab8417523f3e702213073810f9c429ed7fb7d673d",
+      "bytes": 17292,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "archive/.github/workflows/ci-specification.yml",
+      "sha256": "ee269ac4f0216f25b4304c2acce7809abd9d22590c30efe736f57ec11e72f53f",
+      "bytes": 3306,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/.github/workflows/ci-specification.yml",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/.github/workflows/ci-specification.yml"
+    },
+    {
+      "path": "archive/Cargo.lock",
+      "sha256": "36cdb54f1d471742a6bbee5159a2fe81ec2279aa0cf7060a26c941de1f98505b",
+      "bytes": 163577,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/Cargo.lock",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/Cargo.lock"
+    },
+    {
+      "path": "archive/compiler/analysis-passes.ss",
+      "sha256": "1e1beb4be9ca74cc229e533b65493874f7ab024b675892160faeca91fe5efc75",
+      "bytes": 322148,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/analysis-passes.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/analysis-passes.ss"
+    },
+    {
+      "path": "archive/compiler/compiler-version.ss",
+      "sha256": "d239179e2acb2c450b431bab1bb29e43256cff92c88177dea4d52b1700d75cb3",
+      "bytes": 1083,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/compiler-version.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/compiler-version.ss"
+    },
+    {
+      "path": "archive/compiler/field.ss",
+      "sha256": "73ad96c0bc1ac0d9c6127e3ac9e37713c24990c9ed046fc22d47ba330efa0a46",
+      "bytes": 1208,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/field.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/field.ss"
+    },
+    {
+      "path": "archive/compiler/frontend-passes.ss",
+      "sha256": "f89633ae3b7bb1ccb09f1c0166e657e57b21494d933ca4d20b3db4ecbdb97d14",
+      "bytes": 21330,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/frontend-passes.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/frontend-passes.ss"
+    },
+    {
+      "path": "archive/compiler/langs.ss",
+      "sha256": "cd28124ea4ef024bcb2f7fc235972e0349e97ee7132363a037ca63cc3c76c0ea",
+      "bytes": 57593,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/langs.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/langs.ss"
+    },
+    {
+      "path": "archive/compiler/language-version.ss",
+      "sha256": "11567dfd91b409727d34085f363deb47a2b8b63283a6bc9441ab7e5b9954f0b1",
+      "bytes": 1030,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/language-version.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/language-version.ss"
+    },
+    {
+      "path": "archive/compiler/midnight-ledger.ss",
+      "sha256": "b711672074e0e050f5be259af51ab09570613fbce1f10999a91f3c72140cf43c",
+      "bytes": 64988,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/midnight-ledger.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/midnight-ledger.ss"
+    },
+    {
+      "path": "archive/compiler/nanopass-extension.ss",
+      "sha256": "859ad64e24759185b908fb5ed8b3020ca484c721947402266017fbb322e5299a",
+      "bytes": 18900,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/nanopass-extension.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/nanopass-extension.ss"
+    },
+    {
+      "path": "archive/compiler/rust-ir-passes.ss",
+      "sha256": "a4132cb733ddf363b2665c48d021a201aa04520367c614a52b33c94f370cb5d4",
+      "bytes": 143841,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/rust-ir-passes.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/rust-ir-passes.ss"
+    },
+    {
+      "path": "archive/compiler/version.ss",
+      "sha256": "fce20cc6912face414ec59e48a2250232470a20e4c341f73571b02b12bfcc8cb",
+      "bytes": 8223,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/compiler/version.ss",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/compiler/version.ss"
+    },
+    {
+      "path": "archive/doc/compact-reference.mdx",
+      "sha256": "06f169d17dc2e4454bc4cff0c0832ca85946d8a951bcb869629e030cdae874bd",
+      "bytes": 179111,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/doc/compact-reference.mdx",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/doc/compact-reference.mdx"
+    },
+    {
+      "path": "archive/doc/explicit-disclosure.mdx",
+      "sha256": "e67f0c8703a72cc8be0f57a83b213615c5a446b5bcca19fb6b158ecea6c2b4f5",
+      "bytes": 10620,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/doc/explicit-disclosure.mdx",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/doc/explicit-disclosure.mdx"
+    },
+    {
+      "path": "archive/examples/rust_backend/boolean_logic.compact",
+      "sha256": "bd6fc3c9da25a8d1ee201b0d8028fb789cdffcdab8b6a4d23038ad119fcb3b31",
+      "bytes": 1324,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/examples/rust_backend/boolean_logic.compact",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/examples/rust_backend/boolean_logic.compact"
+    },
+    {
+      "path": "archive/examples/rust_backend/witness_effect_order.compact",
+      "sha256": "d2b4b4b2ad94776aa27a4354e6c1fe9253b342e267fa4eb4bf05a3e9450f9a58",
+      "bytes": 1219,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/examples/rust_backend/witness_effect_order.compact",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/examples/rust_backend/witness_effect_order.compact"
+    },
+    {
+      "path": "archive/runtime-rs/Cargo.toml",
+      "sha256": "bca116a67835118171aa2d195f6505ff8f453a69af903712176d5c4f93854f20",
+      "bytes": 2110,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/runtime-rs/Cargo.toml",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/runtime-rs/Cargo.toml"
+    },
+    {
+      "path": "archive/runtime-rs/src/lib.rs",
+      "sha256": "7d045bd7feea2f5f4f88b27c0f51f5bb0f460159052551ab36cc7e9d9eb033b5",
+      "bytes": 5332,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/runtime-rs/src/lib.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/runtime-rs/src/lib.rs"
+    },
+    {
+      "path": "archive/runtime-rs/tests/fixtures/boolean-logic.json",
+      "sha256": "79c9d212f89554cb39350e6de44866cbc93155577465e43d50deba4be3915bd1",
+      "bytes": 2470,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/runtime-rs/tests/fixtures/boolean-logic.json",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/runtime-rs/tests/fixtures/boolean-logic.json"
+    },
+    {
+      "path": "archive/runtime-rs/tests/fixtures/witness-effect-order.json",
+      "sha256": "463a1a2eac9b18cf1a2fe0c8828cc9acd53ed9733054bb89f5fe1d88a68a245f",
+      "bytes": 66607,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/runtime-rs/tests/fixtures/witness-effect-order.json",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/runtime-rs/tests/fixtures/witness-effect-order.json"
+    },
+    {
+      "path": "archive/specification/src/Overview.agda",
+      "sha256": "1689d448fcd3246c8a1222e663a0fc7a13a143122255398a21c187af619b50d3",
+      "bytes": 1351,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Overview.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Overview.agda"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Operational/Untyped/Machine.agda",
+      "sha256": "b6450c042d5300b1f943f3f62132a4b180d56dcbbc1bfe071dec7de74e5e9e8f",
+      "bytes": 14808,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Operational/Untyped/Machine.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Operational/Untyped/Machine.agda"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Operational/Untyped/Reduction.agda",
+      "sha256": "51eb51300b79a8dc3df5f367b900cbd39e08a9db8b93098d275cb11ca27c57ee",
+      "bytes": 20137,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Operational/Untyped/Reduction.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Operational/Untyped/Reduction.agda"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Operational/Untyped/State.agda",
+      "sha256": "d0f6003e2afc2921999c5f28a2c5905a48b0cec2b4a50a0ac05c2fe67476c91d",
+      "bytes": 2986,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Operational/Untyped/State.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Operational/Untyped/State.agda"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Operational/Untyped/Value.agda",
+      "sha256": "13aac239d01c3deae76754413600a27e7a4044843574fae628c00acd481d26e8",
+      "bytes": 6945,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Operational/Untyped/Value.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Operational/Untyped/Value.agda"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Static/Coverage.agda",
+      "sha256": "0494b91d8b5a9173a9a2ba1e139a197814e9476fa55ba483bea9fd4e191db174",
+      "bytes": 10103,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Static/Coverage.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Static/Coverage.agda"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Static/Lsrc/Lsrc-Typing.lagda.md",
+      "sha256": "87d928113953182fcaa5b648266aa974dbeaf677e2c9b3bc498f3f18d196f371",
+      "bytes": 42492,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Static/Lsrc/Lsrc-Typing.lagda.md",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Static/Lsrc/Lsrc-Typing.lagda.md"
+    },
+    {
+      "path": "archive/specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md",
+      "sha256": "636b1c02f2e291bdf76bc00f43c31fcd7ada458391ed775be5817172f8397de9",
+      "bytes": 97822,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Semantics/Static/Lsrc/Lsrc.lagda.md"
+    },
+    {
+      "path": "archive/specification/src/Syntax/Generated/Lsrc.agda",
+      "sha256": "68b76ab3b2852080ef9c5d2b46f7ce681579d035cf1e5a5034bf19d12aa8ed33",
+      "bytes": 13926,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Syntax/Generated/Lsrc.agda",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Syntax/Generated/Lsrc.agda"
+    },
+    {
+      "path": "archive/specification/src/Syntax/json/Lsrc.json",
+      "sha256": "1b192f03d15b88cd8d4c8634c87ecb754690bc28f350331fd2b38d539da09668",
+      "bytes": 4804,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/src/Syntax/json/Lsrc.json",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/src/Syntax/json/Lsrc.json"
+    },
+    {
+      "path": "archive/specification/syntax-generation/app/Main.hs",
+      "sha256": "cc24f96deeec9f8a38f2cd2a12b21677b7d16119f79613a8267951afe4996e8e",
+      "bytes": 25355,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/specification/syntax-generation/app/Main.hs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/specification/syntax-generation/app/Main.hs"
+    },
+    {
+      "path": "archive/tests-rust-backend/boolean-logic/Cargo.toml",
+      "sha256": "b7f214bee46e7af419b5023be037e864fb354a449269b8b46e5148ea8611509c",
+      "bytes": 899,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tests-rust-backend/boolean-logic/Cargo.toml",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tests-rust-backend/boolean-logic/Cargo.toml"
+    },
+    {
+      "path": "archive/tests-rust-backend/boolean-logic/lib.rs",
+      "sha256": "89b4fe8001fac2b198aa73118de3c162cfa75b44366428b722dd5533746455f1",
+      "bytes": 9847,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tests-rust-backend/boolean-logic/lib.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tests-rust-backend/boolean-logic/lib.rs"
+    },
+    {
+      "path": "archive/tests-rust-backend/boolean-logic/tests/boolean_logic.rs",
+      "sha256": "e7d1e48427d0f452a371e8dbd938f2fd4024714e250107d78d5a1ffbc4a1deef",
+      "bytes": 3500,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tests-rust-backend/boolean-logic/tests/boolean_logic.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tests-rust-backend/boolean-logic/tests/boolean_logic.rs"
+    },
+    {
+      "path": "archive/tests-rust-backend/boolean-logic/tests/conformance.rs",
+      "sha256": "334da118831ff2a3803471d77aef0fc19cd80ad4ce1ae0df435fc7d34ebd8064",
+      "bytes": 9192,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tests-rust-backend/boolean-logic/tests/conformance.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tests-rust-backend/boolean-logic/tests/conformance.rs"
+    },
+    {
+      "path": "archive/tests-rust-backend/witness-effect-order/lib.rs",
+      "sha256": "5b1668cad2ff7e06012d81b6f4de7fba3a18b7b67ac15d39f223f4e56f5cf642",
+      "bytes": 13085,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tests-rust-backend/witness-effect-order/lib.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tests-rust-backend/witness-effect-order/lib.rs"
+    },
+    {
+      "path": "archive/tests-rust-backend/witness-effect-order/tests/witness_effect_order.rs",
+      "sha256": "dfc8d1c2d1fa184d36ef29c5ab94535017f95dc672214589171f4360432e0e7c",
+      "bytes": 10321,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tests-rust-backend/witness-effect-order/tests/witness_effect_order.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tests-rust-backend/witness-effect-order/tests/witness_effect_order.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/check_rejections.py",
+      "sha256": "b2eccc1e4a5c9d81910ca2f3def28fe5208dad54ee8083306f74658411063185",
+      "bytes": 31209,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/check_rejections.py",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/check_rejections.py"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/bin/compactc.rs",
+      "sha256": "d7447d64cee09001e51305ac793022267c38f4b64358fdaa76369c6a1573a678",
+      "bytes": 47594,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/bin/compactc.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/bin/compactc.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/capabilities.rs",
+      "sha256": "43dee1f3ae38b1dca85e0965c09c2ba2a7d7b0e3dbdb128a18996c0f86b1184c",
+      "bytes": 12190,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/capabilities.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/capabilities.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/compatibility.json",
+      "sha256": "5a24458240b7f96f10e08dc79c284fb6eba67f21446a0f746888dfd85cc17bcd",
+      "bytes": 900,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/compatibility.json",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/compatibility.json"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/ir.rs",
+      "sha256": "365e07cb913276b9162d2053c03997161353a03f377a28ecea219717b7207eed",
+      "bytes": 20043,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/ir.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/ir.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/lib.rs",
+      "sha256": "0c76c00acb1a9097016782bbcf8a6268a054acfca150e6fd425f931db14db678",
+      "bytes": 155882,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/lib.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/lib.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/naming.rs",
+      "sha256": "195add310b477edb75df58abb91ac7cc5ede949d399429cce04815bbd02683c0",
+      "bytes": 5784,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/naming.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/naming.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded.rs",
+      "sha256": "4795069cf64e978fd2680e44c71918f9964d21bc4814baaf03cabde38fa642c4",
+      "bytes": 48930,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/diagnostics.rs",
+      "sha256": "b0d226b07256e2e4abdc6202372d2007952cbd79c6fe9667018db7cbd80e5839",
+      "bytes": 5590,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/diagnostics.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/diagnostics.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/item.rs",
+      "sha256": "3cc30c5235992b717f8b7ce0f5058c4abf827fabc83f7bb81fe0a5cbdad4fe07",
+      "bytes": 5435,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/item.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/item.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy.rs",
+      "sha256": "eb67c6d6effb49bdcfeb953de71aeaed36df79b2ca15ece1d4f9e648a339e572",
+      "bytes": 1306,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions.rs",
+      "sha256": "56efd8dfd63c4782c8de29fe5d3e4d81618dec215ecfd99a37400878596cb22a",
+      "bytes": 5358,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs",
+      "sha256": "2111fd862692b4d57075f2fa24a41b93821cde0b3f1d6123bd8ca0c3a0dff9a9",
+      "bytes": 9368,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/assertions.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs",
+      "sha256": "2a04775606628608067e3fc76c5ae8657d30c9e86d17ead77c81e3a2a32a93d2",
+      "bytes": 25687,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/bindings.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs",
+      "sha256": "bad1b71b45d3b508fba2bdad0e86a2dfbe28592d9b56e263fa0a49e85e17574a",
+      "bytes": 27505,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/closed.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/crypto.rs",
+      "sha256": "0c01df081e0bcd472c63acb39cba0da2f1c70b5a5aa4f0f925faf10a65f4a3ac",
+      "bytes": 5824,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/crypto.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/crypto.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/field.rs",
+      "sha256": "1e5c56893d6de82a3a5112f95bc4e74860603ae9f7a28439dd347dc4422d6534",
+      "bytes": 11396,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/field.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/field.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/witness.rs",
+      "sha256": "8b00ef735c9b50f7beecce52b3d171557fecda77f43696a818535a947fb0684b",
+      "bytes": 3848,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/witness.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/bindings/witness.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs",
+      "sha256": "502dd04921b10bfa8ef6bba8ce2c6dbfed5fef7ee715b8e1203f672a925c3ab8",
+      "bytes": 16069,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/collections.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/control.rs",
+      "sha256": "d313179d5f5337547a3346c3f451b4181d04402cc77f6e555afb2e7b48083b9e",
+      "bytes": 11180,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/control.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/control.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs",
+      "sha256": "3cf42d345080854e220522767c2a4ed27fbec30ea985ba2dc0a565f3ad380247",
+      "bytes": 13023,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/actions/merkle.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/calls.rs",
+      "sha256": "72c733a875763f71845fcadd22c033c8975756fc915a82cca348b89013a9f4c3",
+      "bytes": 5466,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/calls.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/calls.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/expressions.rs",
+      "sha256": "cb5b299be4df0d2055ab98a5b6bced9437fb875270168fd8742d02f4f1a7c9df",
+      "bytes": 1036,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/expressions.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/expressions.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs",
+      "sha256": "181baf6286d611ede3ca28520626acfe59f819b4d22018c0aa32baf8af164de7",
+      "bytes": 28541,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/expressions/boolean.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs",
+      "sha256": "4c1369c843dff595ecd5a14324c2867037b2643de7f225f3f7eb7163eae2890a",
+      "bytes": 18586,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/expressions/field.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs",
+      "sha256": "1ba60d53b08ec9fcb7598348ecbee14c986861f46d7b4e4007485f63bd516bd7",
+      "bytes": 2656,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/expressions/scalar.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs",
+      "sha256": "84f8f1d308bdd893b4e12fee9063ed55d87b6f8fa059ba86565d890f026e60cf",
+      "bytes": 10736,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/guarded_map.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs",
+      "sha256": "777cb193a357ad0b91adb2ff34b5a3c71eff756a11201782c0a9acd97e1fff5b",
+      "bytes": 8999,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/guarded_pure.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/opaque_map.rs",
+      "sha256": "c0a913f3ddc6d829f32e6fffbcf1924ec62ccbd41977014eef82dd3e7c26ea3f",
+      "bytes": 18788,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/opaque_map.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/opaque_map.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs",
+      "sha256": "5aa90c2adece625033b46a4341c7fd74b40e67514d828b9d84379404cc115ba0",
+      "bytes": 13848,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/opaque_set.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns.rs",
+      "sha256": "436891a4d52433d4b5083d57bc6a09b391f1e24557f0df6e120e0e4ee01d62be",
+      "bytes": 944,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns/collections.rs",
+      "sha256": "d3575d06f07035e223b70dd760e7e9075816e29e2dd3529ec00068a8b2158c5c",
+      "bytes": 929,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns/collections.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns/collections.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns/collections/list.rs",
+      "sha256": "75512baedb07ab0630405416661ad93bd50799b8b4dfbbe7892f36c7f4affef1",
+      "bytes": 3920,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns/collections/list.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns/collections/list.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns/collections/map.rs",
+      "sha256": "91cc6bcf2a47c856548ee11e480e66cf6f70e5f4a47d21a673c5325afa4ba89f",
+      "bytes": 5319,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns/collections/map.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns/collections/map.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs",
+      "sha256": "4af78214478447906a3a018e577f2b6aa69859ac6aad17bdf8fe6d07372fce98",
+      "bytes": 4167,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns/collections/set.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs",
+      "sha256": "d19bb07c30f96749d3f7e9789fff5fa5a671a43c504d29625525c79088caef46",
+      "bytes": 5587,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns/conditional.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/returns/merkle.rs",
+      "sha256": "888560623c2d26bad5e6c17de8f2859e4daa596cabf54770c470a57c8adabd4d",
+      "bytes": 8251,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/returns/merkle.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/returns/merkle.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/legacy/value_sources.rs",
+      "sha256": "58392dabd6b787fee3f88024f7c742a676480470cab1b1d694c091cb351464a5",
+      "bytes": 25392,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/legacy/value_sources.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/legacy/value_sources.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/profile_selection.rs",
+      "sha256": "dd2809d88402d069cef45762fc3da8f3e22be690ef34a7f844c812cbfc64ad6b",
+      "bytes": 9919,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/profile_selection.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/profile_selection.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan.rs",
+      "sha256": "076a98d10acd036fbcc6d72195961e1ff10ae0745336ff12de71b6826a301ef0",
+      "bytes": 97876,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/actions.rs",
+      "sha256": "52e64a5f3e98a29736c46c791ef72eb7a631893b4c2c095fd1d139045ff045dd",
+      "bytes": 1037,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/actions.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/actions.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs",
+      "sha256": "2973b528939db63de51529a2c40af89ce1e7013f87afc3a22042316f8b203d66",
+      "bytes": 5285,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/actions/cells.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs",
+      "sha256": "37d1b99fa1552487795e6581e28df64e283bfd1a02c2d89e2d8c3c187e06f49f",
+      "bytes": 9109,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/actions/collections.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs",
+      "sha256": "4d22fa54377d567e7844311b18eb014a968b3991eefe66e08758113d7d1e0aed",
+      "bytes": 2730,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/actions/counters.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs",
+      "sha256": "8cd4e5b297a0f0465771ba9e0a14505abc117ec35ae6f759b12c657c37129129",
+      "bytes": 3048,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/actions/unit_effects.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/admission.rs",
+      "sha256": "656254b82f89f77bff1bca3c78b4b3a2bca22680d27550b0e6e1529cf3dc1675",
+      "bytes": 1555,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/admission.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/admission.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs",
+      "sha256": "263cd4903db55951e8cd85b7a6d77d132caf075b40d1a61c3b9a8cc7c813bbda",
+      "bytes": 3727,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/aggregates.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs",
+      "sha256": "e4e1a6f98263a2b5f663c601e28f18c4616e9116503259de23f381af9034be37",
+      "bytes": 9129,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/arithmetic.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/composition.rs",
+      "sha256": "126c7f8922b304828021dc9124bded8729de64c72ccfb96794db9fb6537aa4a0",
+      "bytes": 34425,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/composition.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/composition.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/control.rs",
+      "sha256": "4f9e73e1ee0d070f0a3a2c0e115ec6d0a41d9ca10f39a83412ee815ad0ba4f0d",
+      "bytes": 4880,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/control.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/control.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs",
+      "sha256": "38a5d00807d56717644b95cf4f6d389381fbab8a1ff321cdf901df9cfbdf0c2e",
+      "bytes": 5398,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/crypto.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs",
+      "sha256": "986288e4b5f6fce6b620421fa2b9a089f3fa8ca36d23707e75b2723be1b902ef",
+      "bytes": 1333,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/declarations.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/effects.rs",
+      "sha256": "72174159a525738409d05610e997c1b5757045638336a69e9c6e6f0e3bbd1429",
+      "bytes": 7226,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/effects.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/effects.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs",
+      "sha256": "5e183182443a44e75bf995cfdd230a807eed3789d336380ca06878a22b3ed427",
+      "bytes": 1313,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/evaluation.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs",
+      "sha256": "b835a76820570715992ab13a54e4b47ca8ce0933f227d5a5e46ea44866661c1f",
+      "bytes": 1964,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/evidence.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/funded_mint.rs",
+      "sha256": "a7ee91d7c739088adce9ce0edd630f43efa2b007519a92fe835a1a0540758a2e",
+      "bytes": 12751,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/funded_mint.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/funded_mint.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs",
+      "sha256": "d7c41e82b00576d5afd2f0857c92cd453e205a29571383ac80fe34a1f0f78c07",
+      "bytes": 25724,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/guarded_deposit.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs",
+      "sha256": "91ff83866f77e2ca57f26e7c7644134887e674e1009ba3949b8f1a84c429fce6",
+      "bytes": 12715,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/immediate_send.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs",
+      "sha256": "f02229d90056fdf98fc02dbc841575d953031bb6c4d10ab7b1e54b680e5d5ea1",
+      "bytes": 5994,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/jubjub_values.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs",
+      "sha256": "3b1d8a336bfb66d17927a33bb85ea95bb79e5ad459af3a3632c35537614f4385",
+      "bytes": 2739,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/leaves.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/observations.rs",
+      "sha256": "7f77c8e3e0b0babd846e339cac7067150ca4ac920ea6fc1dbb50d187a4285243",
+      "bytes": 11461,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/observations.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/observations.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs",
+      "sha256": "782df26e0640a4dbc58924385dafd5d85188d276990bf717f2aa952956768d8c",
+      "bytes": 15065,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/phase_reset.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs",
+      "sha256": "9f3d798a39e08f91aa5d33b2aff2771ab4be93848f6fd5a7f04bbd20fb11efc5",
+      "bytes": 13931,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/reset_payout.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs",
+      "sha256": "65a451b226b35a308575c10393a07313f73d4f28a18e3da0172807f96e5b4ffc",
+      "bytes": 15050,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/shielded_merge.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs",
+      "sha256": "7a13d8a6bacba6204cf4853f8fa350d8fb576248cce24b61f0256fcedd594049",
+      "bytes": 25407,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/shielded_payout.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_tests.rs",
+      "sha256": "cd613c72628f52df5e9950e6e37d79a99318b8b2439bad4eece208344d62ef50",
+      "bytes": 6819,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_tests.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/shielded_receive_tests.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs",
+      "sha256": "e22d3f1029e6899ff093ba19391a3ecbf0dba2db268826b8c2507bdb35defc30",
+      "bytes": 6648,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/shielded_send_tests.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs",
+      "sha256": "48bae139027a353b2ae462554b7735b839a9a85ba6ce4e4ad376483ceac950b5",
+      "bytes": 35885,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/start_funding.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs",
+      "sha256": "527ae4ae14de1e85ffdf39f1d23d2e657e54dd3a251e2c87afb2843ab0e2082e",
+      "bytes": 16047,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/terminal_returns.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/tests.rs",
+      "sha256": "1c4ae6fdafd2131bea12b0658a30d5af2bcae3bc066039ff55fef31d10d940c0",
+      "bytes": 25633,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/tests.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/tests.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs",
+      "sha256": "677c0aad7aa63d90d2842a965e7f28afb1d3cafc512c476fd06c7cf11c972c41",
+      "bytes": 15172,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/unit_actions.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs",
+      "sha256": "7a16bf5d0552c3ba82e680a32978280b68106f8373f2ea0eca63df4ddc8e1a40",
+      "bytes": 20990,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/recorded/typed_plan/voting_commit.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/resource_limits.rs",
+      "sha256": "dc11725f6c25b6f327bb7589069217e248a40d677b79794194658c114b91b5e0",
+      "bytes": 7750,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/resource_limits.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/resource_limits.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful.rs",
+      "sha256": "d6ea080187ec283adfcda18d9776e0de26395e511699cff4d1a16317ffd1cb57",
+      "bytes": 20860,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/actions.rs",
+      "sha256": "fcba035798bd4f47d68cce0038468e6fa816710b69cd54b1354b022d02945c7d",
+      "bytes": 5033,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/actions.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/actions.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/actions/cells_counters.rs",
+      "sha256": "aeba1c168c010cf82854500b10a9af60b3b1dcc0924df3930154a7c6e040c822",
+      "bytes": 6810,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/actions/cells_counters.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/actions/cells_counters.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/actions/coins.rs",
+      "sha256": "e35e53b45596561bf06cead5fa0b8fac3a5546fb9e88042ecc63e075486d50df",
+      "bytes": 6072,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/actions/coins.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/actions/coins.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/actions/collections.rs",
+      "sha256": "3261b3aea6cac10d7f4020fad4c0862f2b22350c16252fe4950fefeb51f5e990",
+      "bytes": 11454,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/actions/collections.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/actions/collections.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/actions/effects.rs",
+      "sha256": "912dea7c91f5cb221c788937dda67a2f258f3ceb7f8e888c87d1ceb8697d7b0e",
+      "bytes": 8135,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/actions/effects.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/actions/effects.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/actions/merkle.rs",
+      "sha256": "504715603dd82538346e333af3e1f169686671d762c1035f57f17ff778fa56d2",
+      "bytes": 11778,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/actions/merkle.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/actions/merkle.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/expression.rs",
+      "sha256": "68566ada9187a89cc70ed7068302fca3ace194b3fecf2b788322aad019401a34",
+      "bytes": 81169,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/expression.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/expression.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/facade.rs",
+      "sha256": "26964d548ffeb1a02012f76d21f055937b2f79e874eee617aa7b50be7a63716d",
+      "bytes": 2849,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/facade.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/facade.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/stateful/returns.rs",
+      "sha256": "148556047644c07ad98e9c6b52aa424c16b3c48d778f597a586c694a70e2339d",
+      "bytes": 19590,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/stateful/returns.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/stateful/returns.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/value_lowering.rs",
+      "sha256": "bcd00c3cdc385fab6180a8deb8e37ced35d0c04a9b31898cdbfe1f37a06ce813",
+      "bytes": 18673,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/value_lowering.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/value_lowering.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/src/witness.rs",
+      "sha256": "f2129fafafcce04a226a99810ed820b45cce5d35e3f34c6414faacc82b01391c",
+      "bytes": 6602,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/src/witness.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/src/witness.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render.rs",
+      "sha256": "da985acd83c8f3fdfab10db06034b6a4d5307f1bcb5d7c96cff41e918dfc1bf3",
+      "bytes": 2459,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/asset_recording.rs",
+      "sha256": "13b7df59f4b939ffeec5dbcf792d0c1c9b8d6cc3ab0da0c44d38deb18fe74f52",
+      "bytes": 17106,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/asset_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/asset_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/constructors.rs",
+      "sha256": "cf8eca16e0037b59d542f58c12a6d2f61bc4749b08c89adb0d4b366e3f80ed92",
+      "bytes": 15628,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/constructors.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/constructors.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/diagnostics.rs",
+      "sha256": "6df581b19e69fe9a1915381d976a5e3cb48e853472321a9ed2f2733c9af65b33",
+      "bytes": 7527,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/diagnostics.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/diagnostics.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/historic_merkle_recording.rs",
+      "sha256": "7dbfc4960d372cdab300b20fe7ee32746384810e69f0826d6d0eeaf206340ce4",
+      "bytes": 10724,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/historic_merkle_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/historic_merkle_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/ledger_views.rs",
+      "sha256": "c567ee1c60b295d474c9f700d00188c8ca45949f0e2b2ae356561cae441a30fb",
+      "bytes": 10081,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/ledger_views.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/ledger_views.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/lifecycle_recording.rs",
+      "sha256": "12d6c8b58e24bb3765642a891fa4e492398c4a70f9b8766c1d56c311c599555d",
+      "bytes": 11836,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/lifecycle_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/lifecycle_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/list_recording.rs",
+      "sha256": "d848271e19f1c943d213a4afdb2a08adbaf18481fe735513a95f6bbe33d85000",
+      "bytes": 19372,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/list_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/list_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/map_recording.rs",
+      "sha256": "4eb287d0bab11e84db2b547c409eedc0806d0d4dc626f2db390a12ae9b81b654",
+      "bytes": 8458,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/map_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/map_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/membership_recording.rs",
+      "sha256": "185deacf7a416476fb39823b331aa9f30d86d6e00031e187718c620f319399ec",
+      "bytes": 18105,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/membership_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/membership_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/merkle_recording.rs",
+      "sha256": "734e51844ec7f682449babcc7d0d656027da1f2f1423cb86aa289f10e98690ba",
+      "bytes": 22809,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/merkle_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/merkle_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/numeric_types.rs",
+      "sha256": "0f4036efd33336011fade5633446fe278bf533a418f2da96d8efb195e07fd907",
+      "bytes": 13048,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/numeric_types.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/numeric_types.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/private_effects.rs",
+      "sha256": "cffb9e8b05163b41cafe7fc9a97ade36abee4b1ce9a7588d2195b9781b74883e",
+      "bytes": 14604,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/private_effects.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/private_effects.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/pure_rendering.rs",
+      "sha256": "d1681938776cd363499de5c8d5e316e912000dc3dcce28aa59ead17350bb2dd2",
+      "bytes": 13234,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/pure_rendering.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/pure_rendering.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/pure_validation.rs",
+      "sha256": "7caf6e9fbc7895b6fcc125459f164b317904acad4382f1f393dbe9151fecfb9b",
+      "bytes": 4493,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/pure_validation.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/pure_validation.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_calls.rs",
+      "sha256": "9be2c0a8fe30a49dc966820aefc0d0380c61a6c77e3415dd9137fe4a23c3f2fc",
+      "bytes": 18505,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_calls.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_calls.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_conditionals.rs",
+      "sha256": "caa8dd141ab6b75f502c32515f82af7d2c7e8ec5efe7aa28d2f5694e9d38c5b6",
+      "bytes": 18520,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_conditionals.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_conditionals.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_guards.rs",
+      "sha256": "feceaa567adf92188b20eaa7df2f7965ed53df7215fd119942f616b1b8b6537f",
+      "bytes": 23433,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_guards.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_guards.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_hashes.rs",
+      "sha256": "a61ef8b05144ff5334f8e569e81606b0d4ef0c32a05cf9e257550c3be32c0553",
+      "bytes": 18359,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_hashes.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_hashes.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_returns.rs",
+      "sha256": "8e1f444c0f0f8862d304fd575cad3a5930071cc02cb9e4f83e374c1775ab3e22",
+      "bytes": 21640,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_returns.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_returns.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_structs.rs",
+      "sha256": "13a8a8f167ec27fdae50e6ec5c9567158566957331ffcfa756be1203eb98a11c",
+      "bytes": 12950,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_structs.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_structs.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recorded_witnesses.rs",
+      "sha256": "7c8b20aeddab5d6d4df379a8ee821568172901f03682e29c6ec3ffaf8ae379ce",
+      "bytes": 8441,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recorded_witnesses.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recorded_witnesses.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/recording_capabilities.rs",
+      "sha256": "8a2a2f58812166045edb3dc97273f238fa72605dd508373bcd82e34151c6efd3",
+      "bytes": 12504,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/recording_capabilities.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/recording_capabilities.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/set_recording.rs",
+      "sha256": "db620ccddb83fd1ee03037db93b5b18c7ebf5753565fbcb82781808aa8ccbe6f",
+      "bytes": 27077,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/set_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/set_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/shielded_recording.rs",
+      "sha256": "0c348bd5ae09d81bd34a0806552a61fb0ff8a1eb9a4f69dee61f70c30829d071",
+      "bytes": 24047,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/shielded_recording.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/shielded_recording.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/state_validation.rs",
+      "sha256": "f132618d06f3b03e038755ed85b4944561a4bd636203e0df65ad99861259b00a",
+      "bytes": 23260,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/state_validation.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/state_validation.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/support.rs",
+      "sha256": "d262860152f9d7836d3164d48151f344c88df46af535ddf7a94f0b9deda9251d",
+      "bytes": 1414,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/support.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/support.rs"
+    },
+    {
+      "path": "archive/tools/compact-rust-backend/tests/render/value_types.rs",
+      "sha256": "b6de9b144176659e287cc8c01332dcf6c1d047a9cea833248e6bc6c7dee9ac75",
+      "bytes": 15846,
+      "availability": "public",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "Public source repository and retained fixture supply Apache-2.0 LICENSE; retain original notices.",
+      "public_source_url": "https://github.com/betsudo/compact/blob/6e37443b4fc2f5363954e0aef88373a48f4d3ae8/tools/compact-rust-backend/tests/render/value_types.rs",
+      "public_fixture_url": "https://github.com/betsudo/compact/blob/785c892c5165cf0eaa12e895d5e54004822678ce/tools/compact-rust-backend/tests/retained-conformance-6e37443b/tools/compact-rust-backend/tests/render/value_types.rs"
+    },
+    {
+      "path": "outer-reference/source-freeze-275.json",
+      "sha256": "cfc52ab324e3c6f96a743b47a101e015b2189e9b7ec1b28756f29600b70bc257",
+      "bytes": 1011660,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "outer-reference/preflight-execution-receipt.json",
+      "sha256": "ba160b54a1f4dc2bc763341437ef9578e57dc1254d2187294142173a09cc730a",
+      "bytes": 591,
+      "availability": "redistributable-after-review-candidate",
+      "contains_original_owner_path_labels": false,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "outer-reference/preflight-observed.json",
+      "sha256": "4f6cb2ea689081126b882095ad3ad226873f03cce8848c264216bbc42afbb738",
+      "bytes": 174134,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "outer-reference/readiness-review.md",
+      "sha256": "b47229f2c5b1b3cba33c1171d5cb92fc7718b4b50170d2924e6e9e8e57f38056",
+      "bytes": 4820,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    },
+    {
+      "path": "outer-reference/original-run.py.txt",
+      "sha256": "a95614b2b27bda0338d7131591f25446011db50ae0a40ba07d351935b1e54f8e",
+      "bytes": 5463,
+      "availability": "maintainer-only",
+      "contains_original_owner_path_labels": true,
+      "license_evidence": "No per-file license grant established; owner/provenance review required."
+    }
+  ],
+  "publication_review": {
+    "scope": "Independent coding-agent verification of archive rows/bytes, original acceptance facts, local Git source equality and bounded privacy scan. Remote availability claims were recorded by the authoring agent, not re-fetched by the reviewer.",
+    "result": "accepted for local PR inclusion as derivative inventory; no full-reproduction acceptance",
+    "full_historical_reproduction": false
+  }
+}

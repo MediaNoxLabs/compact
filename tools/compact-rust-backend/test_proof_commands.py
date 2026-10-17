@@ -60,6 +60,18 @@ class ProofCommands(unittest.TestCase):
         self.assertEqual(options.count("--profile"), 1)
         self.assertEqual(command[boundary + 1], "--prepare-proof-material")
 
+    def test_capability_preflight_precedes_proofs_and_retains_later_live_gate(self):
+        workflow = (ROOT / ".github/workflows/build-compiler.yml").read_text()
+        command = ("env -u LD_LIBRARY_PATH nix develop .#compiler --command env "
+                   "COMPACTC=compactc python3 -X faulthandler -u "
+                   "tools/compact-rust-backend/check_rejections.py")
+        self.assertEqual(workflow.count(command), 2)
+        first, last = workflow.index(command), workflow.rindex(command)
+        self.assertLess(workflow.index("- name: Build compiler"), first)
+        self.assertLess(first, workflow.index("- name: Run compiler tests"))
+        self.assertLess(first, workflow.index("--prepare-proof-material"))
+        self.assertLess(workflow.index("--consumer --proof"), last)
+
     def test_existing_run_options_and_all_executable_arguments_survive(self):
         for prefix in (["cargo", "run"], ["cargo", "+1.99.0", "run"]):
             for package in ("-p", "--package"):

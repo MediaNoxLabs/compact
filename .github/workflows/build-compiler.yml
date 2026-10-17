@@ -280,6 +280,10 @@ jobs:
         run: |
           nix build
 
+      - name: Check Rust capability refusals before expensive qualification
+        run: |
+          env -u LD_LIBRARY_PATH nix develop .#compiler --command env COMPACTC=compactc python3 -X faulthandler -u tools/compact-rust-backend/check_rejections.py
+
       - name: Snapshot doc/compact-reference.mdx before running compiler/go
         run: |
           cp doc/compact-reference.mdx /tmp/compact-reference.before.mdx

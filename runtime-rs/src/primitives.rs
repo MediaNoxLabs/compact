@@ -147,6 +147,26 @@ impl<T, const N: usize> FixedVector<T, N> {
     pub fn into_array(self) -> [T; N] {
         self.0
     }
+
+    /// Transform elements in order, stopping at the first error.
+    ///
+    /// The source is consumed exactly once. An empty vector never calls `map`.
+    /// This uses temporary heap storage and requires neither element type to
+    /// implement `Copy`, `Clone`, `Default`, or `Debug`.
+    pub fn try_map<U, E>(
+        self,
+        mut map: impl FnMut(T) -> Result<U, E>,
+    ) -> Result<FixedVector<U, N>, E> {
+        let mut mapped = Vec::with_capacity(N);
+        for item in self.0 {
+            mapped.push(map(item)?);
+        }
+        let elements = match <[U; N]>::try_from(mapped) {
+            Ok(elements) => elements,
+            Err(_) => unreachable!("mapping preserves the fixed vector length"),
+        };
+        Ok(FixedVector::new(elements))
+    }
 }
 
 impl<T: Default, const N: usize> Default for FixedVector<T, N> {

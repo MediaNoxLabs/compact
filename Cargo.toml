@@ -33,3 +33,14 @@ license = "Apache-2.0"
 [profile.dist]
 inherits = "release"
 lto = "thin"
+
+# Proof qualification keeps dev checks while optimizing cryptographic dependencies.
+# Workspace code and ordinary test/dev builds retain their existing settings.
+[profile.proof-checks]
+inherits = "dev"
+debug = 0
+debug-assertions = true
+overflow-checks = true
+
+[profile.proof-checks.package."*"]
+opt-level = 3

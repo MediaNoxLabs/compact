@@ -21,7 +21,7 @@ use sha2::{Digest, Sha256};
 use std::{collections::BTreeSet, error::Error, fs, path::Path};
 use syn::visit_mut::{self, VisitMut};
 
-#[derive(Default, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 struct Metrics {
     lines: usize,
     internal_identifier_occurrences: usize,
@@ -117,7 +117,7 @@ struct Input {
     path: String,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 struct Row {
     name: String,
     path: String,
@@ -163,15 +163,84 @@ fn report(root: &Path, corpus_path: &Path) -> Result<serde_json::Value, Box<dyn 
     }))
 }
 
+/// Compare only the finite survey contract. This is not a semantic/API verifier.
+fn compare(
+    current: &serde_json::Value,
+    baseline: &[u8],
+) -> Result<serde_json::Value, Box<dyn Error>> {
+    #[derive(Deserialize)]
+    struct Snapshot {
+        schema: u32,
+        corpus_sha256: String,
+        files: Vec<Row>,
+    }
+    let before: Snapshot = serde_json::from_slice(baseline)?;
+    let after: Snapshot = serde_json::from_value(current.clone())?;
+    if before.schema != 1 || after.schema != 1 || before.corpus_sha256 != after.corpus_sha256 {
+        return Err("comparison requires schema 1 reports of the identical corpus".into());
+    }
+    let mut old = std::collections::BTreeMap::new();
+    for row in before.files {
+        if old
+            .insert((row.name.clone(), row.path.clone()), row)
+            .is_some()
+        {
+            return Err("duplicate baseline case".into());
+        }
+    }
+    if old.is_empty() || old.len() != after.files.len() {
+        return Err("comparison case accounting differs".into());
+    }
+    let mut regressions = Vec::new();
+    for row in after.files {
+        let previous = old
+            .remove(&(row.name.clone(), row.path.clone()))
+            .ok_or("comparison case identity differs")?;
+        if previous.declared_function_signatures_sha256 != row.declared_function_signatures_sha256 {
+            regressions.push(serde_json::json!({"case": row.name, "metric": "declared_function_signatures_sha256"}));
+        }
+        let before = serde_json::to_value(previous.metrics)?;
+        let after = serde_json::to_value(row.metrics)?;
+        // Both values originate from typed Metrics, so every field is a count.
+        for (metric, value) in after.as_object().ok_or("invalid metric object")? {
+            let previous = before
+                .get(metric)
+                .and_then(|v| v.as_u64())
+                .ok_or("missing baseline metric")?;
+            let value = value.as_u64().ok_or("invalid metric count")?;
+            if value > previous {
+                regressions.push(serde_json::json!({"case": row.name, "metric": metric, "before": previous, "after": value}));
+            }
+        }
+    }
+    Ok(serde_json::json!({
+        "scope": "same-corpus per-file counts and declared function signatures only; not full public API or behavior",
+        "passed": regressions.is_empty(),
+        "regressions": regressions,
+    }))
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args_os().skip(1).collect::<Vec<_>>();
-    if args.len() != 2 {
-        return Err("usage: readability ROOT CORPUS_JSON (prints JSON to stdout)".into());
+    if !(2..=3).contains(&args.len()) {
+        return Err(
+            "usage: readability ROOT CORPUS_JSON [BASELINE_REPORT_JSON] (prints JSON to stdout)"
+                .into(),
+        );
     }
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&report(Path::new(&args[0]), Path::new(&args[1]))?)?
-    );
+    let mut output = report(Path::new(&args[0]), Path::new(&args[1]))?;
+    let mut passed = true;
+    if let Some(path) = args.get(2) {
+        let comparison = compare(&output, &fs::read(path)?)?;
+        passed = comparison["passed"] == true;
+        output["comparison"] = comparison;
+    }
+    println!("{}", serde_json::to_string_pretty(&output)?);
+    if !passed {
+        return Err(
+            "readability regression: review reported tradeoffs before updating evidence".into(),
+        );
+    }
     Ok(())
 }
 
@@ -211,5 +280,50 @@ mod tests {
     #[test]
     fn malformed_rust_refuses_instead_of_reporting_zero_metrics() {
         assert!(Survey::measure("pub fn missing(").is_err());
+    }
+
+    fn snapshot(source: &str) -> serde_json::Value {
+        let survey = Survey::measure(source).unwrap();
+        serde_json::json!({
+            "schema": 1, "corpus_sha256": "same-corpus",
+            "files": [{"name": "case", "path": "case.rs", "source_sha256": hash(source.as_bytes()),
+                "declared_function_signatures_sha256": hash(&serde_json::to_vec(&survey.signatures).unwrap()),
+                "metrics": survey.metrics}]
+        })
+    }
+
+    #[test]
+    fn comparison_accepts_simplification_but_reports_nesting_and_signature_regressions() {
+        let before = snapshot("pub fn a() { let __compact_effect_0: () = (); }");
+        let bytes = serde_json::to_vec(&before).unwrap();
+        assert_eq!(
+            compare(&snapshot("pub fn a() {}"), &bytes).unwrap()["passed"],
+            true
+        );
+        for source in ["pub fn b() {}", "pub fn a() { { () } }"] {
+            let result = compare(&snapshot(source), &bytes).unwrap();
+            assert_eq!(result["passed"], false);
+            assert!(!result["regressions"].as_array().unwrap().is_empty());
+        }
+    }
+
+    #[test]
+    fn comparison_refuses_changed_corpus_missing_cases_and_duplicate_cases() {
+        let current = snapshot("pub fn a() {}");
+        for field in ["corpus_sha256", "schema", "files"] {
+            let mut changed = current.clone();
+            changed[field] = serde_json::json!(null);
+            assert!(compare(&current, &serde_json::to_vec(&changed).unwrap()).is_err());
+        }
+        let mut changed = current.clone();
+        changed["corpus_sha256"] = "different".into();
+        assert!(compare(&current, &serde_json::to_vec(&changed).unwrap()).is_err());
+        changed = current.clone();
+        changed["files"] = serde_json::json!([]);
+        assert!(compare(&current, &serde_json::to_vec(&changed).unwrap()).is_err());
+        changed = current.clone();
+        let row = changed["files"][0].clone();
+        changed["files"].as_array_mut().unwrap().push(row);
+        assert!(compare(&current, &serde_json::to_vec(&changed).unwrap()).is_err());
     }
 }

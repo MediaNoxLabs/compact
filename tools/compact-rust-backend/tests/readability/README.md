@@ -1,5 +1,9 @@
 # Generated Rust readability sample (#491)
 
+Current local result: see [cumulative policy and qualification](#cumulative-local-result-and-policy-491).
+Earlier sections retain each delivered stage as history; they do not describe
+the current remaining backlog. Remote publication and issue closure are separate.
+
 Baseline: merged AST `ffe3010ddd08e13b20b48116f3aabc0c2ae6865f`, Rust1.99,
 locked syntax dependencies. [corpus.json](corpus.json) selects ten retained Rust
 bodies across pure, stateful, witness, collection, Merkle, shielded, DID and Jubjub
@@ -182,3 +186,121 @@ List use existing strict funded application checks; Merkle reset uses the shared
 unbalanced smoke policy. These checks do not certify every mutation variant or
 constructor deployment proof. Backend Clippy with warnings denied, formatting
 and source-package inventory checks pass. The broader #491 work remains open.
+
+
+## Cumulative local result and policy (#491)
+
+[after-final.json](after-final.json) measures the **same original ten-file corpus**
+at emitter revision `a2d56251ca30341049e3ca2fa6ec505e19b7874f`. The report's
+`baseline_revision` identifies the original comparison baseline, not the current
+emitter. Earlier reports and corpus identities remain immutable.
+
+| Metric, same ten files | Original | Current |
+| --- | ---: | ---: |
+| Source lines | 3,782 | 3,721 |
+| Internal identifier occurrences | 519 | 423 |
+| Literal Unit bindings | 58 | 0 |
+| Clone calls | 78 | 78 |
+| Collect calls | 0 | 0 |
+
+No per-file measured count increases; all ten declared-function-signature hashes
+match. This is 61 fewer lines (1.6%) and 96 fewer internal-name occurrences
+(18.5%) in the fixed sample. It is not a claim about all generated code.
+
+Later focused passes carry only the recording frame through checked Unit Call/If
+control flow (ADR0534), use runtime `FixedVector::try_map` for pure Map (ADR0535),
+use standard iterator `try_fold` for pure Fold (ADR0536), and omit checked Unit
+root/helper aliases (ADR0537). The pure Map addition intentionally advances the
+runtime ABI to 53 with an additive runtime API; it does not change existing
+Compact/public generated signatures. Many of those fixtures are outside this
+sample. Their individual raw output audits, affected consumer executions and
+fresh proof/refusal results are retained separately in the midnight vault.
+
+### Repeatable comparison
+
+The existing survey accepts an optional same-corpus report:
+
+```sh
+cargo run --locked --offline -p compact-rust-backend --example readability -- \
+  . tools/compact-rust-backend/tests/readability/corpus.json \
+  tools/compact-rust-backend/tests/readability/baseline.json > /absolute/evidence/current.json
+```
+
+It prints the current measurements and a comparison, returning nonzero for any
+increased per-file count or changed declared-function signature. Changed corpus
+identities, missing/duplicate/replaced cases, malformed reports and missing typed
+metrics refuse comparison. Counts describe syntax, not redundancy or semantics.
+An intentional regression requires a documented tradeoff and separate review;
+there is no silent allowlist or automatic baseline rewrite. The survey does not
+replace behavior, fixture, public API, proof or ledger checks.
+
+### Naming contract
+
+Public Compact names use the existing checked Rust identifier mapping. Parameters
+prefer normalized source names, with deterministic indexed fallbacks for reserved
+names and collisions. Recorded helper names use the source circuit identifier;
+colliding helper names use a sorted declaration index and raw identifier bytes.
+Checked-plan temporaries use deterministic SSA ordinals in their isolated emitted
+namespace, rather than inventing source names that the checked model does not
+retain. Adding declarations or changing IR structure may change these ordinals.
+
+`src/naming/tests.rs` checks reserved/raw/`$` collisions, helper allocation under
+map insertion-order changes, repeated actual rendering and source-location
+changes. Apart from the declared identifiers described above, source paths, arbitrary
+source text and witness values are not naming inputs.
+This is a naming guarantee, **not** a general promise that intentionally emitted
+literals or public source identifiers cannot contain sensitive content. Public
+identifier normalization collisions continue to refuse instead of aliasing.
+
+### Change and qualification policy
+
+Use syn construction and prettyplease formatting. Select a measured opportunity,
+state its checked type/ownership boundary in an ADR, preserve every effect and
+failure point, and test syntax structure plus actual execution. Regenerate
+fixtures and independently audit the changed declarations and remaining AST;
+function-signature hashes alone are not a complete public API check. Run affected
+native/replay/gas and proof/application/refusal paths as appropriate. Keep the
+original authorities and assertions, and label finite coverage precisely.
+
+Current scoped checks include backend library 1,718 passes (seven existing
+ignores), render integration 154 passes and all 255 generated outputs checked
+(one updated for ADR0537). The affected public-products consumer's four tests
+include native/recorded/prepared `empty`; the two fresh original proof selectors
+exercise same-crate public-products and Unit-composition, **not** a proof of that
+`empty` export. Both private corrupt-verifier controls refuse. Later naming and
+survey checks do not change production emission; they reuse this exact-source
+behavior evidence. Formatting, scoped Clippy and header regression checks pass.
+These populations overlap and are not language-coverage totals.
+
+## Scoped generated-consumer build measurement
+
+A private Map<Boolean,Field> consumer compares original `ffe3010d` emission with
+current `a2d56251c`, against the same current runtime/toolchain/profile. The old
+copy adapts **only two ABI assertions from 52 to 53**, retaining the original file
+and exact patch separately. This is a compatible-emission benchmark, not a claim
+that an old ABI consumer builds unmodified or that different runtimes are equal.
+
+Source bytes fall 30,923 to 30,348; lines fall 722 to 711. Each trial cleans only
+the private consumer, then runs `cargo check --locked --offline -vv` under
+`/usr/bin/time -l`, with Rust 1.99.0, incremental compilation disabled, six jobs,
+dev debug symbols disabled and unchanged warm dependencies. All 233 dependencies
+report Fresh. Setup is outside trial timing; proofs/tests are not cached.
+
+| Order | Emission | Complete check wall seconds | Command peak RSS bytes |
+| --- | --- | ---: | ---: |
+| 1 | Original, ABI53 assertion | 0.415664 | 122,159,104 |
+| 2 | Current | 0.288461 | 122,175,488 |
+| 3 | Current | 0.482927 | 122,191,872 |
+| 4 | Original, ABI53 assertion | 0.321325 | 122,257,408 |
+
+The direction reverses between pairs: **no repeatable compilation improvement or
+regression is established**. RSS is the measured command's process maximum, not
+whole-machine/aggregate memory. This single small consumer, warm-dependency
+`cargo check` experiment says nothing about linking, clean dependencies, proofs,
+hosted CI or overall build speed. Exact source hashes, adapted bytes, commands,
+lockfile and raw logs are retained in the midnight vault's #491 closure evidence.
+
+The finite issue scope is locally complete after independent review and the
+consolidated ADR0538; remote publication/issue closure is separate. Future
+ownership/liveness optimization, universal source naming and module-layout
+redesign require their own measured proposals and are not implied by this result.

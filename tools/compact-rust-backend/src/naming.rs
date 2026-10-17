@@ -14,6 +14,12 @@
 // limitations under the License.
 
 //! Rust function names shared by native validation and recorded helpers.
+//!
+//! Public names follow checked Compact spelling. Private helper names use that
+//! spelling with deterministic collision fallback; generated SSA temporaries use
+//! checked traversal ordinals. These names do not incorporate source locations.
+//! Deterministic means identical semantic input, not stability after arbitrary
+//! edits that insert earlier declarations or operations.
 
 use std::collections::HashMap;
 
@@ -152,3 +158,6 @@ pub(crate) fn parameter_idents(
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests;

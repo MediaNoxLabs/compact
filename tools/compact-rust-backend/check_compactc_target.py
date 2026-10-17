@@ -28,6 +28,7 @@ import tempfile
 import tomllib
 
 import forge_circuits
+import proof_commands
 
 from target_checks import (
     application_checks, collection_proofs, intent_checks, native_targets, proof_artifacts,
@@ -106,7 +107,9 @@ FIELD_TO_BYTES32_SOURCE = ROOT / "examples/rust_backend/field_to_bytes32_oracle.
 
 
 def run(*arguments: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> None:
-    subprocess.run(forge_circuits.command(arguments, os.environ if env is None else env),
+    environment = os.environ if env is None else env
+    command = proof_commands.command(arguments, environment)
+    subprocess.run(forge_circuits.command(command, environment),
                    cwd=cwd, env=env, check=True)
 
 

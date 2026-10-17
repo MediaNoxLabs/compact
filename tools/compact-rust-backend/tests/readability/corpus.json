@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "baseline_revision": "ffe3010ddd08e13b20b48116f3aabc0c2ae6865f",
+  "scope": "Ten retained generated Rust outputs; finite readability sample, not language coverage",
+  "files": [
+    {
+      "name": "field-add",
+      "path": "tests-rust-backend/field-add/lib.rs"
+    },
+    {
+      "name": "bounded-uint-oracle",
+      "path": "tests-rust-backend/bounded-uint-oracle/lib.rs"
+    },
+    {
+      "name": "let-return-oracle",
+      "path": "tests-rust-backend/let-return-oracle/lib.rs"
+    },
+    {
+      "name": "witness-cell-write",
+      "path": "tests-rust-backend/witness-cell-write/lib.rs"
+    },
+    {
+      "name": "map-boolean-field",
+      "path": "tests-rust-backend/map-boolean-field/lib.rs"
+    },
+    {
+      "name": "nested-map-oracle",
+      "path": "tests-rust-backend/nested-map-oracle/lib.rs"
+    },
+    {
+      "name": "merkle-path-verify",
+      "path": "tests-rust-backend/merkle-path-verify/lib.rs"
+    },
+    {
+      "name": "shielded-receive-oracle",
+      "path": "tools/compact-rust-backend/tests/generated-snapshots/examples/rust_backend/shielded_receive_oracle.rs"
+    },
+    {
+      "name": "did-point-map-reducer",
+      "path": "tests-rust-backend/did-point-map-reducer/lib.rs"
+    },
+    {
+      "name": "jubjub-cell",
+      "path": "tests-rust-backend/jubjub-cell/lib.rs"
+    }
+  ]
+}

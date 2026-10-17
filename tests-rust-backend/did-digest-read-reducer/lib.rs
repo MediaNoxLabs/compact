@@ -37,7 +37,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -50,7 +50,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -261,17 +261,19 @@ pub mod ledger_contract {
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, bool) =
                 crate::ledger_slots::methods.record_member(frame, (__compact_effect_0).clone())?;
             if !__compact_effect_4 {
                 return Err(runtime::CompactError::AssertionFailed("missing".to_owned()));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_6): (_, crate::types::Method) =
                 crate::ledger_slots::methods.record_lookup(frame, (__compact_effect_0).clone())?;
             let __compact_effect_7: runtime::JubjubPoint = __compact_effect_6.verificationPoint;
-            let (frame, __compact_effect_21): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_8: runtime::JubjubPoint = __compact_effect_1;
                 let __compact_effect_9: runtime::JubjubPoint = __compact_effect_7;
                 let (frame, __compact_effect_10): (_, bool) =
@@ -286,7 +288,6 @@ pub mod ledger_contract {
                         "witness denied".to_owned(),
                     ));
                 }
-                let __compact_effect_11: () = ();
                 let __compact_effect_12: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_8);
                 let __compact_effect_13: runtime::Field =
@@ -297,7 +298,6 @@ pub mod ledger_contract {
                         "wrong point".to_owned(),
                     ));
                 }
-                let __compact_effect_15: () = ();
                 let __compact_effect_16: runtime::Field =
                     runtime::jubjub_point_y(__compact_effect_8);
                 let __compact_effect_17: runtime::Field =
@@ -308,12 +308,9 @@ pub mod ledger_contract {
                         "wrong point".to_owned(),
                     ));
                 }
-                let __compact_effect_19: () = ();
-                let __compact_effect_20: () = ();
-                (frame, __compact_effect_20)
+                frame
             };
-            let __compact_effect_22: () = ();
-            Ok(frame.finish(__compact_effect_22))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

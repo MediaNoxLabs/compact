@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -230,7 +230,6 @@ pub mod ledger_contract {
             let __compact_effect_5: runtime::JubjubPoint =
                 runtime::ec_mul(__compact_effect_4, __compact_effect_2)?;
             let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
             let __compact_effect_7: runtime::Field = runtime::Field::from_le_bytes(&[
                 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -256,27 +255,26 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::JubjubPoint = __compact_param_1;
             let __compact_effect_2: runtime::Field = __compact_param_2;
             let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_3: () = ();
             let __compact_effect_4: runtime::Field =
                 runtime::jubjub_scalar_from_native(__compact_effect_2);
             let (frame, __compact_effect_5): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::first.record_read(frame)?;
-            let (frame, __compact_effect_13): (_, ()) = if __compact_effect_0 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_0 {
                 let __compact_effect_6: runtime::JubjubPoint =
                     runtime::ec_mul_generator(__compact_effect_4)?;
                 let __compact_effect_7: runtime::JubjubPoint =
                     runtime::ec_add(__compact_effect_5, __compact_effect_6);
                 let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_7)?;
-                let __compact_effect_8: () = ();
-                let __compact_effect_9: () = ();
-                (frame, __compact_effect_9)
+                frame
             } else {
                 let __compact_effect_10: runtime::JubjubPoint =
                     runtime::ec_mul(__compact_effect_5, __compact_effect_4)?;
                 let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_10)?;
-                let __compact_effect_11: () = ();
-                let __compact_effect_12: () = ();
-                (frame, __compact_effect_12)
+                frame
             };
             let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::second.record_read(frame)?;
@@ -294,11 +292,9 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
             let __compact_effect_1: runtime::Field = __compact_param_1;
             let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::JubjubPoint =
                 runtime::ec_mul(__compact_effect_0, __compact_effect_1)?;
             let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_3)?;
-            let __compact_effect_4: () = ();
             Ok(frame.finish(__compact_effect_3))
         }
         /// Typed handle for circuits with a complete recorded trace.

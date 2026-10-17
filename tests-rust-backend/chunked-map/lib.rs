@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -62,7 +62,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -443,9 +443,7 @@ pub mod ledger_contract {
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn put_pair<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -463,15 +461,12 @@ pub mod ledger_contract {
                 __compact_effect_0,
                 __compact_effect_2,
             )?;
-            let __compact_effect_3: () = ();
             let frame = crate::ledger_slots::table.record_insert(
                 frame,
                 __compact_effect_1,
                 __compact_effect_2,
             )?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         pub fn put_default<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -482,9 +477,7 @@ pub mod ledger_contract {
             let __compact_effect_0: bool = __compact_param_0;
             let frame =
                 crate::ledger_slots::table.record_insert_default(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn has<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -518,9 +511,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let frame = crate::ledger_slots::table.record_remove(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn table_size<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -552,9 +543,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::table.record_reset(frame)?;
-            let __compact_effect_0: () = ();
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

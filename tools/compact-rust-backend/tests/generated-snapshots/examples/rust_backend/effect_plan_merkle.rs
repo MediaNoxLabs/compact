@@ -52,7 +52,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -66,7 +66,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -484,21 +484,24 @@ pub mod ledger_contract {
             let __compact_effect_1: crate::types::MerkleTreeDigest = __compact_param_1;
             let __compact_effect_2: bool = __compact_param_2;
             let frame = crate::ledger_slots::plain.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_3: () = ();
-            let (frame, __compact_effect_10): (_, ()) = if __compact_effect_2 {
-                let (frame, __compact_effect_7): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_2 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_4: runtime::BoundedUint<255> = __compact_effect_0;
                     let frame =
                         crate::ledger_slots::historic.record_insert(frame, __compact_effect_4)?;
-                    let __compact_effect_5: () = ();
-                    let __compact_effect_6: () = ();
-                    (frame, __compact_effect_6)
+                    frame
                 };
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                frame
             } else {
-                let __compact_effect_9: () = ();
-                (frame, __compact_effect_9)
+                frame
             };
             let (frame, __compact_effect_23): (_, crate::types::Snapshot) = {
                 let __compact_effect_11: crate::types::MerkleTreeDigest =
@@ -551,15 +554,12 @@ pub mod ledger_contract {
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_2: () = ();
             let frame = crate::ledger_slots::historic.record_insert_index(
                 frame,
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_3: () = ();
-            let __compact_effect_4: () = ();
-            Ok(frame.finish(__compact_effect_4))
+            Ok(frame.finish(()))
         }
         pub fn hashes<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -571,24 +571,19 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
             let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
             let frame = crate::ledger_slots::plain.record_insert_hash(frame, __compact_effect_0)?;
-            let __compact_effect_2: () = ();
             let frame =
                 crate::ledger_slots::historic.record_insert_hash(frame, __compact_effect_0)?;
-            let __compact_effect_3: () = ();
             let frame = crate::ledger_slots::plain.record_insert_hash_index(
                 frame,
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_4: () = ();
             let frame = crate::ledger_slots::historic.record_insert_hash_index(
                 frame,
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_5: () = ();
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn defaults<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -599,12 +594,9 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
             let frame = crate::ledger_slots::plain
                 .record_insert_index_default(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
             let frame = crate::ledger_slots::historic
                 .record_insert_index_default(frame, __compact_effect_0)?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn forget<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -612,9 +604,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::historic.record_reset_history(frame)?;
-            let __compact_effect_0: () = ();
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn reset<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -622,11 +612,8 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::plain.record_reset_to_default(frame)?;
-            let __compact_effect_0: () = ();
             let frame = crate::ledger_slots::historic.record_reset_to_default(frame)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

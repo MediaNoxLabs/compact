@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -235,7 +235,6 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_5: runtime::Field = __compact_effect_3 + __compact_effect_4;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
             let __compact_effect_7: bool = __compact_effect_1 == __compact_effect_2;
             let (frame, __compact_effect_12): (_, bool) = if __compact_effect_7 {
                 let (frame, __compact_effect_8): (_, runtime::Field) =
@@ -253,7 +252,6 @@ pub mod ledger_contract {
             };
             let (frame, __compact_effect_19): (_, runtime::Field) = if __compact_effect_12 {
                 let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_0)?;
-                let __compact_effect_13: () = ();
                 (frame, __compact_effect_3)
             } else {
                 let __compact_effect_14: runtime::BoundedUint<100> =
@@ -266,7 +264,6 @@ pub mod ledger_contract {
                         }))
                     })?;
                 let frame = crate::ledger_slots::unused.record_write(frame, __compact_effect_15)?;
-                let __compact_effect_16: () = ();
                 let __compact_effect_17: runtime::Field =
                     runtime::Field::from((__compact_effect_14).value());
                 let __compact_effect_18: runtime::Field = __compact_effect_3 + __compact_effect_17;

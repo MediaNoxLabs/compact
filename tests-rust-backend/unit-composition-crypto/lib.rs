@@ -70,7 +70,7 @@ pub use types::Verify_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn digest(
         expected: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<runtime::FixedVector<runtime::Field, 4>, runtime::CompactError> {
@@ -96,7 +96,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -520,7 +520,11 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
             let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
                 crate::pure_circuits::digest(__compact_effect_1)?;
-            let (frame, __compact_effect_55): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_3: crate::types::SchnorrSignature =
                     (__compact_effect_0).clone();
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
@@ -537,16 +541,23 @@ pub mod ledger_contract {
                 if !__compact_effect_7 {
                     return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                 }
-                let __compact_effect_8: () = ();
                 let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
-                let (frame, __compact_effect_53): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_10: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
                     let __compact_effect_11: crate::types::SchnorrSignature =
                         (__compact_effect_3).clone();
                     let __compact_effect_12: runtime::JubjubPoint = __compact_effect_9;
-                    let (frame, __compact_effect_51): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_13: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_14: crate::types::SchnorrSignature =
@@ -611,7 +622,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_30: () = ();
                         let __compact_effect_31: runtime::Field =
                             runtime::Field::from((__compact_effect_26).value());
                         let __compact_effect_32: runtime::Field =
@@ -625,7 +635,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_36: () = ();
                         let __compact_effect_37: runtime::Field = (__compact_effect_27).as_field();
                         let __compact_effect_38: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_17)?;
@@ -655,15 +664,11 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_49: () = ();
-                        let __compact_effect_50: () = ();
-                        (frame, __compact_effect_50)
+                        frame
                     };
-                    let __compact_effect_52: () = ();
-                    (frame, __compact_effect_52)
+                    frame
                 };
-                let __compact_effect_54: () = ();
-                (frame, __compact_effect_54)
+                frame
             };
             let (frame, __compact_effect_56): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -672,16 +677,17 @@ pub mod ledger_contract {
                     "inactive".to_owned(),
                 ));
             }
-            let __compact_effect_57: () = ();
             let __compact_effect_58: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_58)?;
-            let __compact_effect_59: () = ();
-            let (frame, __compact_effect_65): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_60: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_60).value() as u16)?;
-                let __compact_effect_61: () = ();
                 let (frame, __compact_effect_62): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.now(context.witness_context_with(super::LedgerView {
@@ -691,12 +697,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_62)?;
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                frame
             };
-            let __compact_effect_66: () = ();
-            Ok(frame.finish(__compact_effect_66))
+            Ok(frame.finish(()))
         }
         pub fn verifyOnly<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -710,7 +713,11 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
             let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
                 crate::pure_circuits::digest(__compact_effect_1)?;
-            let (frame, __compact_effect_55): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_3: crate::types::SchnorrSignature =
                     (__compact_effect_0).clone();
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
@@ -727,16 +734,23 @@ pub mod ledger_contract {
                 if !__compact_effect_7 {
                     return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                 }
-                let __compact_effect_8: () = ();
                 let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
-                let (frame, __compact_effect_53): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_10: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
                     let __compact_effect_11: crate::types::SchnorrSignature =
                         (__compact_effect_3).clone();
                     let __compact_effect_12: runtime::JubjubPoint = __compact_effect_9;
-                    let (frame, __compact_effect_51): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_13: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_14: crate::types::SchnorrSignature =
@@ -801,7 +815,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_30: () = ();
                         let __compact_effect_31: runtime::Field =
                             runtime::Field::from((__compact_effect_26).value());
                         let __compact_effect_32: runtime::Field =
@@ -815,7 +828,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_36: () = ();
                         let __compact_effect_37: runtime::Field = (__compact_effect_27).as_field();
                         let __compact_effect_38: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_17)?;
@@ -845,18 +857,13 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_49: () = ();
-                        let __compact_effect_50: () = ();
-                        (frame, __compact_effect_50)
+                        frame
                     };
-                    let __compact_effect_52: () = ();
-                    (frame, __compact_effect_52)
+                    frame
                 };
-                let __compact_effect_54: () = ();
-                (frame, __compact_effect_54)
+                frame
             };
-            let __compact_effect_56: () = ();
-            Ok(frame.finish(__compact_effect_56))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

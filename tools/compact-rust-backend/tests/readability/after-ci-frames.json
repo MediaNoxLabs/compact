@@ -1,0 +1,184 @@
+{
+  "baseline_revision": "ffe3010ddd08e13b20b48116f3aabc0c2ae6865f",
+  "comparison": {
+    "passed": true,
+    "regressions": [],
+    "scope": "same-corpus per-file counts and declared function signatures only; not full public API or behavior"
+  },
+  "corpus_sha256": "bc244464022b6eca4ef32e0f8179d5566a24ab063c7f156c47206603352b7a0b",
+  "files": [
+    {
+      "declared_function_signatures_sha256": "b7b0fca67398ad1dcf6a55c6f67288ab660da31777eb7f8609e7e365ea890ebf",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 0,
+        "internal_identifier_occurrences": 0,
+        "lines": 30,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 0,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 1
+      },
+      "name": "field-add",
+      "path": "tests-rust-backend/field-add/lib.rs",
+      "source_sha256": "dbb07e30e2c091df63652fbe9d2ef519d0e388e2ec8bf4c419ea0b7a037d97cd"
+    },
+    {
+      "declared_function_signatures_sha256": "a46234088c4132015a281e4877ed374db75b94982020f3833bf5b6c120b4081a",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 3,
+        "internal_identifier_occurrences": 8,
+        "lines": 206,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 18,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 10
+      },
+      "name": "bounded-uint-oracle",
+      "path": "tests-rust-backend/bounded-uint-oracle/lib.rs",
+      "source_sha256": "57cc63b61f837f5bf357f73b7a2a747ead87f25add340e98fd71f84bd295bed1"
+    },
+    {
+      "declared_function_signatures_sha256": "b51595738d59bc65f2c79507730f55077500d36892b7c625b57c55bf3674ad16",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 6,
+        "internal_identifier_occurrences": 16,
+        "lines": 184,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 24,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 7
+      },
+      "name": "let-return-oracle",
+      "path": "tests-rust-backend/let-return-oracle/lib.rs",
+      "source_sha256": "b7913139dba2544f4f71217b1a722931b645b850f78451418628c78881ad8889"
+    },
+    {
+      "declared_function_signatures_sha256": "fa4f33e8654ee0c2866782a8baa19c8fd83fd247928107b429a06c3b15441b08",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 13,
+        "internal_identifier_occurrences": 79,
+        "lines": 624,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 25,
+        "maximum_block_depth": 3,
+        "single_expression_blocks": 28
+      },
+      "name": "witness-cell-write",
+      "path": "tests-rust-backend/witness-cell-write/lib.rs",
+      "source_sha256": "07d3ad8f0b9af5a4761ee7b34115d49debf75e8430b05312e0592fdcab9d78c1"
+    },
+    {
+      "declared_function_signatures_sha256": "00dba0cea6198c3e7f53b2c1ed2f9b8d9ff99c2acdc1696f499a9a37c108f250",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 8,
+        "internal_identifier_occurrences": 68,
+        "lines": 711,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 20,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 23
+      },
+      "name": "map-boolean-field",
+      "path": "tests-rust-backend/map-boolean-field/lib.rs",
+      "source_sha256": "a1e2de314b9d2313d40da83f2e8de3777a5d62743ca13d5a1d821ce174114ef0"
+    },
+    {
+      "declared_function_signatures_sha256": "2d17742fd285e26d7a6843bc33b428a5d5bc38d306ffdd30167a221a6397266a",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 2,
+        "internal_identifier_occurrences": 4,
+        "lines": 162,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 18,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 7
+      },
+      "name": "nested-map-oracle",
+      "path": "tests-rust-backend/nested-map-oracle/lib.rs",
+      "source_sha256": "895068a91a37963c21085127947a0c1ebdba90f3f0aace866855cc2868c5c6b9"
+    },
+    {
+      "declared_function_signatures_sha256": "324a9303a2e06b9dd078f7753635ec44f4b74ea045544254b890ff2948a412cb",
+      "metrics": {
+        "clone_calls": 13,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 16,
+        "internal_identifier_occurrences": 48,
+        "lines": 512,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 28,
+        "maximum_block_depth": 4,
+        "single_expression_blocks": 21
+      },
+      "name": "merkle-path-verify",
+      "path": "tests-rust-backend/merkle-path-verify/lib.rs",
+      "source_sha256": "ae134022a5350d6b14710bbf73341e98933c72f8e89c2fed6b4dd1a19b1f1167"
+    },
+    {
+      "declared_function_signatures_sha256": "d153fac1890f8963288f2a2071f93427da36f3ad2bebebba1cdd29cb63497d71",
+      "metrics": {
+        "clone_calls": 24,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 18,
+        "internal_identifier_occurrences": 78,
+        "lines": 437,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 27,
+        "maximum_block_depth": 2,
+        "single_expression_blocks": 11
+      },
+      "name": "shielded-receive-oracle",
+      "path": "tools/compact-rust-backend/tests/generated-snapshots/examples/rust_backend/shielded_receive_oracle.rs",
+      "source_sha256": "2d692b085555144920c23dd3620578ac05e13ffc44c38fdb025d3ae972825a62"
+    },
+    {
+      "declared_function_signatures_sha256": "c9fc0d6f308e3312d550de398dfdfcd05393a3c6a078812b7dc2f8dcc0f0b44a",
+      "metrics": {
+        "clone_calls": 37,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 30,
+        "internal_identifier_occurrences": 104,
+        "lines": 494,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 28,
+        "maximum_block_depth": 4,
+        "single_expression_blocks": 14
+      },
+      "name": "did-point-map-reducer",
+      "path": "tests-rust-backend/did-point-map-reducer/lib.rs",
+      "source_sha256": "b4837e8889000617093585afd8f1bdfc905e77520e3ae5659d5fa34ee5a6a6c1"
+    },
+    {
+      "declared_function_signatures_sha256": "a9c9568116696a7e3d91379d5cfb0a61f888a686def21df37b8a009f0c77a085",
+      "metrics": {
+        "clone_calls": 4,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 3,
+        "internal_identifier_occurrences": 18,
+        "lines": 389,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 18,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 14
+      },
+      "name": "jubjub-cell",
+      "path": "tests-rust-backend/jubjub-cell/lib.rs",
+      "source_sha256": "e24f7abf2d5b1e004e044cea4880e81b6fb79049ab64444880c96f541e24d9de"
+    }
+  ],
+  "schema": 1,
+  "scope": "Ten retained generated Rust outputs; finite readability sample, not language coverage",
+  "syntax_scope": "syn AST without macro expansion; clone/collect/block counts are not redundancy proofs"
+}

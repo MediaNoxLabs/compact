@@ -170,7 +170,7 @@
   "status": "ledger8.1.3 source pairing and scoped local compiler/consumer qualification recorded; final contribution-stack/source/evidence acceptance pending; historical receipts retain their original epochs",
   "runtime_compatibility": {
     "schema_version": 2,
-    "runtime_abi": 52,
+    "runtime_abi": 53,
     "ir_schema": 20,
     "capability_schema": 3,
     "ledger_version": "ledger-8.1.3",

@@ -52,7 +52,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn some(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -94,7 +94,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -370,7 +370,6 @@ pub mod ledger_contract {
                     "set: attempted to overwrite recorded value".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             let (frame, __compact_effect_7): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
@@ -381,14 +380,10 @@ pub mod ledger_contract {
             let __compact_effect_8: runtime::FixedBytes<32> =
                 crate::pure_circuits::public_key(__compact_effect_7)?;
             let frame = crate::ledger_slots::authority.record_write(frame, __compact_effect_8)?;
-            let __compact_effect_9: () = ();
             let frame = crate::ledger_slots::value.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_10: () = ();
             let __compact_effect_11: crate::types::STATE = crate::types::STATE::set;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_11)?;
-            let __compact_effect_12: () = ();
-            let __compact_effect_13: () = ();
-            Ok(frame.finish(__compact_effect_13))
+            Ok(frame.finish(()))
         }
         pub fn get<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -436,7 +431,6 @@ pub mod ledger_contract {
                     "clear: no value is currently recorded".to_owned(),
                 ));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_6): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
@@ -454,23 +448,18 @@ pub mod ledger_contract {
                     "clear: attempted clear without proper authorization".to_owned(),
                 ));
             }
-            let __compact_effect_10: () = ();
             let __compact_effect_11: runtime::FixedBytes<32> =
                 <runtime::FixedBytes<32> as ::core::default::Default>::default();
             let frame = crate::ledger_slots::authority.record_write(frame, __compact_effect_11)?;
-            let __compact_effect_12: () = ();
             let __compact_effect_13: runtime::Field = runtime::Field::from_le_bytes(&[
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::value.record_write(frame, __compact_effect_13)?;
-            let __compact_effect_14: () = ();
             let __compact_effect_15: crate::types::STATE = crate::types::STATE::unset;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_15)?;
-            let __compact_effect_16: () = ();
-            let __compact_effect_17: () = ();
-            Ok(frame.finish(__compact_effect_17))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn combine(
         left: runtime::Field,
         right: runtime::Field,
@@ -40,7 +40,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -182,12 +182,10 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::Field =
                 crate::pure_circuits::combine(__compact_effect_1, __compact_effect_0)?;
             let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_2)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::Field) =
                 crate::ledger_slots::second.record_read(frame)?;
             let __compact_effect_5: runtime::Field = __compact_effect_4 + __compact_effect_2;
             let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
             Ok(frame.finish(__compact_effect_5))
         }
         pub fn optional_write<Private>(
@@ -201,14 +199,15 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let __compact_effect_1: runtime::Field = __compact_param_1;
-            let (frame, __compact_effect_5): (_, ()) = if __compact_effect_0 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_0 {
                 let frame = crate::ledger_slots::first.record_write(frame, __compact_effect_1)?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                frame
             } else {
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                frame
             };
             Ok(frame.finish(__compact_effect_1))
         }

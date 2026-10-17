@@ -97,7 +97,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -129,7 +129,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -503,16 +503,23 @@ pub mod ledger_contract {
                     "attestor is closed".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::attestorKey.record_read(frame)?;
-            let (frame, __compact_effect_55): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_0).clone();
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_7: runtime::JubjubPoint = __compact_effect_4;
-                let (frame, __compact_effect_53): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
                     let __compact_effect_9: crate::types::SchnorrSignature =
@@ -576,7 +583,6 @@ pub mod ledger_contract {
                             "Schnorr quotient out of range".to_owned(),
                         ));
                     }
-                    let __compact_effect_25: () = ();
                     let __compact_effect_26: runtime::Field =
                         runtime::Field::from((__compact_effect_21).value());
                     let __compact_effect_27: runtime::Field =
@@ -590,7 +596,6 @@ pub mod ledger_contract {
                             "Invalid challenge reduction".to_owned(),
                         ));
                     }
-                    let __compact_effect_31: () = ();
                     let __compact_effect_32: runtime::Field = (__compact_effect_22).as_field();
                     let __compact_effect_33: runtime::JubjubPoint =
                         runtime::ec_mul_generator(__compact_effect_12)?;
@@ -616,7 +621,6 @@ pub mod ledger_contract {
                                 .to_owned(),
                         ));
                     }
-                    let __compact_effect_42: () = ();
                     let __compact_effect_43: runtime::Field =
                         runtime::jubjub_point_x(__compact_effect_33);
                     let __compact_effect_44: runtime::Field =
@@ -638,15 +642,11 @@ pub mod ledger_contract {
                             "Invalid Jubjub Schnorr signature".to_owned(),
                         ));
                     }
-                    let __compact_effect_51: () = ();
-                    let __compact_effect_52: () = ();
-                    (frame, __compact_effect_52)
+                    frame
                 };
-                let __compact_effect_54: () = ();
-                (frame, __compact_effect_54)
+                frame
             };
-            let __compact_effect_56: () = ();
-            Ok(frame.finish(__compact_effect_56))
+            Ok(frame.finish(()))
         }
         pub fn acceptAttestation<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -665,16 +665,23 @@ pub mod ledger_contract {
                     "attestor is closed".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::attestorKey.record_read(frame)?;
-            let (frame, __compact_effect_55): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_0).clone();
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_7: runtime::JubjubPoint = __compact_effect_4;
-                let (frame, __compact_effect_53): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
                     let __compact_effect_9: crate::types::SchnorrSignature =
@@ -738,7 +745,6 @@ pub mod ledger_contract {
                             "Schnorr quotient out of range".to_owned(),
                         ));
                     }
-                    let __compact_effect_25: () = ();
                     let __compact_effect_26: runtime::Field =
                         runtime::Field::from((__compact_effect_21).value());
                     let __compact_effect_27: runtime::Field =
@@ -752,7 +758,6 @@ pub mod ledger_contract {
                             "Invalid challenge reduction".to_owned(),
                         ));
                     }
-                    let __compact_effect_31: () = ();
                     let __compact_effect_32: runtime::Field = (__compact_effect_22).as_field();
                     let __compact_effect_33: runtime::JubjubPoint =
                         runtime::ec_mul_generator(__compact_effect_12)?;
@@ -778,7 +783,6 @@ pub mod ledger_contract {
                                 .to_owned(),
                         ));
                     }
-                    let __compact_effect_42: () = ();
                     let __compact_effect_43: runtime::Field =
                         runtime::jubjub_point_x(__compact_effect_33);
                     let __compact_effect_44: runtime::Field =
@@ -800,20 +804,15 @@ pub mod ledger_contract {
                             "Invalid Jubjub Schnorr signature".to_owned(),
                         ));
                     }
-                    let __compact_effect_51: () = ();
-                    let __compact_effect_52: () = ();
-                    (frame, __compact_effect_52)
+                    frame
                 };
-                let __compact_effect_54: () = ();
-                (frame, __compact_effect_54)
+                frame
             };
             let __compact_effect_56: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::acceptedCount
                 .record_increment(frame, (__compact_effect_56).value() as u16)?;
-            let __compact_effect_57: () = ();
-            let __compact_effect_58: () = ();
-            Ok(frame.finish(__compact_effect_58))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

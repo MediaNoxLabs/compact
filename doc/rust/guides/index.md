@@ -6,7 +6,7 @@ The Rust backend uses the ledger8 Compact frontend, a private typed IR and struc
 
 ## Current recording-effect branch
 
-The tutorial receipts below belong to milestone 0.3.0. Current source uses ABI52 / ledger8.1.3 and requires Rust1.89; see [versions and targets](versions-and-targets.md) and [source pairing and evidence scopes](ledger-8.1.3-local-qualification.md). For the current compiler architecture, primitive extension workflow, typed refusals and source diagnostics, read [Checked recording and source diagnostics](checked-recording.md). Use the [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for separate execution, proof and application evidence.
+The tutorial receipts below belong to milestone 0.3.0. Current source uses ABI53 / ledger8.1.3 and requires Rust1.89; see [versions and targets](versions-and-targets.md) and [source pairing and evidence scopes](ledger-8.1.3-local-qualification.md). For the current compiler architecture, primitive extension workflow, typed refusals and source diagnostics, read [Checked recording and source diagnostics](checked-recording.md). Use the [capability and retirement book](../recording-effect-algebra/capability-and-retirement-book.md) for separate execution, proof and application evidence.
 
 ## Pick a task
 

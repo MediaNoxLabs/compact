@@ -39,7 +39,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn defined(m: crate::types::Mutation) -> Result<(), runtime::CompactError> {
         if !(if m == crate::types::Mutation::Insert {
             true
@@ -81,7 +81,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -196,15 +196,16 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::defined(__compact_effect_0)?;
-            let (frame, __compact_effect_5): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                frame
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn local_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -214,15 +215,16 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::localGuard(__compact_effect_0)?;
-            let (frame, __compact_effect_5): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                frame
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn transitive_control<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -232,15 +234,16 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::transitiveGuard(__compact_effect_0)?;
-            let (frame, __compact_effect_5): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                frame
             };
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -66,7 +66,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub fn assertFreshEnough(
         policy: crate::types::VerifierPolicy,
         attestation: crate::types::Attestation,
@@ -162,7 +162,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -258,9 +258,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::accepted
                 .record_increment(frame, (__compact_effect_4).value() as u16)?;
-            let __compact_effect_5: () = ();
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

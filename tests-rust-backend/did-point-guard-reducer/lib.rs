@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -189,7 +189,11 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
-            let (frame, __compact_effect_14): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_1: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_2: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_1);
@@ -216,11 +220,13 @@ pub mod ledger_contract {
                         "same controller".to_owned(),
                     ));
                 }
-                let __compact_effect_12: () = ();
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                frame
             };
-            let (frame, __compact_effect_28): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_15: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_16: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_15);
@@ -247,12 +253,9 @@ pub mod ledger_contract {
                         "same recovery".to_owned(),
                     ));
                 }
-                let __compact_effect_26: () = ();
-                let __compact_effect_27: () = ();
-                (frame, __compact_effect_27)
+                frame
             };
-            let __compact_effect_29: () = ();
-            Ok(frame.finish(__compact_effect_29))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

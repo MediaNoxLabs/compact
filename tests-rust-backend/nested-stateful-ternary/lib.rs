@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -33,7 +33,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -181,14 +181,11 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<4, 18446744073709551615>(__compact_effect_8)?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
             let __compact_effect_11: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::ops
                 .record_increment(frame, (__compact_effect_11).value() as u16)?;
-            let __compact_effect_12: () = ();
-            let __compact_effect_13: () = ();
-            Ok(frame.finish(__compact_effect_13))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

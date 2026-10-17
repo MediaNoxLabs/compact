@@ -157,14 +157,14 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
                 let __compact_fold_source = ((path.clone()).path).clone();
-                let mut __compact_fold_accumulator = runtime::degrade_to_transient(
+                let __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
@@ -172,13 +172,10 @@ pub mod pure_circuits {
                         data: (path.clone()).leaf,
                     }),
                 );
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::merkleTreePathEntryRoot(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                __compact_fold_source.into_array().into_iter().try_fold(
+                    __compact_fold_accumulator,
+                    crate::pure_circuits::merkleTreePathEntryRoot,
+                )?
             },
         })
     }
@@ -298,7 +295,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -1047,7 +1044,6 @@ pub mod ledger_contract {
                     "In illegal state for committing".to_owned(),
                 ));
             }
-            let __compact_effect_9: () = ();
             let (frame, __compact_effect_10): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_vote_record(
@@ -1081,7 +1077,6 @@ pub mod ledger_contract {
                     "Unexpected attempt to double use of nullifier".to_owned(),
                 ));
             }
-            let __compact_effect_17: () = ();
             let __compact_effect_18: runtime::FixedBytes<32> =
                 crate::pure_circuits::public_key(__compact_effect_11)?;
             let (frame, __compact_effect_19): (_, crate::types::MaybeCompact1) = frame
@@ -1122,16 +1117,13 @@ pub mod ledger_contract {
                     "Attempted to vote without authorization - need to add-voter".to_owned(),
                 ));
             }
-            let __compact_effect_31: () = ();
             let __compact_effect_32: runtime::FixedBytes<32> =
                 crate::pure_circuits::ballot_repr(__compact_effect_0)?;
             let __compact_effect_33: runtime::FixedBytes<32> =
                 crate::pure_circuits::commit_with_sk(__compact_effect_32, __compact_effect_11)?;
             let frame =
                 crate::ledger_slots::committed_votes.record_insert(frame, __compact_effect_33)?;
-            let __compact_effect_34: () = ();
             let frame = crate::ledger_slots::committed.record_insert(frame, __compact_effect_12)?;
-            let __compact_effect_35: () = ();
             let (frame, __compact_effect_36): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_state_advance(context.witness_context_with(
@@ -1141,8 +1133,7 @@ pub mod ledger_contract {
                         },
                     ))
                 })?;
-            let __compact_effect_37: () = ();
-            Ok(frame.finish(__compact_effect_37))
+            Ok(frame.finish(()))
         }
         pub fn vote_reveal<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1175,7 +1166,6 @@ pub mod ledger_contract {
                     "In illegal state for revealing".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let (frame, __compact_effect_9): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
@@ -1199,7 +1189,6 @@ pub mod ledger_contract {
                     "Attempted to double vote".to_owned(),
                 ));
             }
-            let __compact_effect_15: () = ();
             let (frame, __compact_effect_16): (_, crate::types::PermissibleVotes) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_vote(context.witness_context_with(super::LedgerView {
@@ -1249,29 +1238,27 @@ pub mod ledger_contract {
                     "Attempted to reveal incorrectly".to_owned(),
                 ));
             }
-            let __compact_effect_31: () = ();
             let __compact_effect_32: crate::types::PermissibleVotes =
                 crate::types::PermissibleVotes::yes;
             let __compact_effect_33: bool = __compact_effect_16 == __compact_effect_32;
-            let (frame, __compact_effect_40): (_, ()) = if __compact_effect_33 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_33 {
                 let __compact_effect_34: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::tally_yes
                     .record_increment(frame, (__compact_effect_34).value() as u16)?;
-                let __compact_effect_35: () = ();
-                let __compact_effect_36: () = ();
-                (frame, __compact_effect_36)
+                frame
             } else {
                 let __compact_effect_37: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::tally_no
                     .record_increment(frame, (__compact_effect_37).value() as u16)?;
-                let __compact_effect_38: () = ();
-                let __compact_effect_39: () = ();
-                (frame, __compact_effect_39)
+                frame
             };
             let frame = crate::ledger_slots::revealed.record_insert(frame, __compact_effect_10)?;
-            let __compact_effect_41: () = ();
             let (frame, __compact_effect_42): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_state_advance(context.witness_context_with(
@@ -1281,8 +1268,7 @@ pub mod ledger_contract {
                         },
                     ))
                 })?;
-            let __compact_effect_43: () = ();
-            Ok(frame.finish(__compact_effect_43))
+            Ok(frame.finish(()))
         }
         pub fn advance<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1307,7 +1293,6 @@ pub mod ledger_contract {
                     "Attempted to advance state without authorization".to_owned(),
                 ));
             }
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, crate::types::Maybe) =
                 crate::ledger_slots::topic.record_read(frame)?;
             let __compact_effect_6: bool = __compact_effect_5.is_some;
@@ -1316,15 +1301,12 @@ pub mod ledger_contract {
                     "Attempted to start election without a topic".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let (frame, __compact_effect_8): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_9: crate::types::PublicState =
                 crate::pure_circuits::successor(__compact_effect_8)?;
             let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_9)?;
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         pub fn set_topic<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1351,7 +1333,6 @@ pub mod ledger_contract {
                     "Attempted to set topic without authorization".to_owned(),
                 ));
             }
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_6): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_7: crate::types::PublicState = crate::types::PublicState::setup;
@@ -1361,7 +1342,6 @@ pub mod ledger_contract {
                     "Attempted to set topic after setup phase".to_owned(),
                 ));
             }
-            let __compact_effect_9: () = ();
             let __compact_effect_10: bool = true;
             let __compact_effect_11: crate::types::Maybe = crate::types::Maybe {
                 is_some: __compact_effect_10,
@@ -1369,9 +1349,7 @@ pub mod ledger_contract {
             };
             let frame =
                 crate::ledger_slots::topic.record_write(frame, (__compact_effect_11).clone())?;
-            let __compact_effect_12: () = ();
-            let __compact_effect_13: () = ();
-            Ok(frame.finish(__compact_effect_13))
+            Ok(frame.finish(()))
         }
         pub fn add_voter<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -1404,7 +1382,6 @@ pub mod ledger_contract {
                     "Attempted to add a voter twice".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             let (frame, __compact_effect_7): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
@@ -1422,7 +1399,6 @@ pub mod ledger_contract {
                     "Attempted to add a voter without authorization".to_owned(),
                 ));
             }
-            let __compact_effect_11: () = ();
             let (frame, __compact_effect_12): (_, crate::types::PublicState) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_13: crate::types::PublicState = crate::types::PublicState::setup;
@@ -1432,12 +1408,9 @@ pub mod ledger_contract {
                     "Attempted to add a voter after setup phase".to_owned(),
                 ));
             }
-            let __compact_effect_15: () = ();
             let frame =
                 crate::ledger_slots::eligible_voters.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_16: () = ();
-            let __compact_effect_17: () = ();
-            Ok(frame.finish(__compact_effect_17))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

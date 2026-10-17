@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub fn widen(
         values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
     ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
@@ -225,27 +225,19 @@ pub mod pure_circuits {
     pub fn map_unsigned(
         values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
     ) -> Result<runtime::FixedVector<runtime::BoundedUint<65535>, 2>, runtime::CompactError> {
-        Ok({
-            let __compact_map_source = {
-                let __compact_cast_source_0 = values.clone();
-                let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
-                for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
-                    __compact_cast_values_0
-                        .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
-                }
-                runtime::FixedVector::new(
-                    <[_; 2]>::try_from(__compact_cast_values_0)
-                        .expect("Vector coercion preserves its length"),
-                )
-            };
-            let mut __compact_mapped = Vec::with_capacity(2);
-            for value in __compact_map_source.into_array() {
-                __compact_mapped.push(value);
+        ({
+            let __compact_cast_source_0 = values.clone();
+            let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+            for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                __compact_cast_values_0
+                    .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
             }
             runtime::FixedVector::new(
-                <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+                <[_; 2]>::try_from(__compact_cast_values_0)
+                    .expect("Vector coercion preserves its length"),
             )
         })
+        .try_map(|value| -> Result<_, runtime::CompactError> { Ok(value) })
     }
     pub(crate) fn last_unsigned(
         accumulator: runtime::BoundedUint<65535>,
@@ -269,97 +261,53 @@ pub mod pure_circuits {
                         .expect("Vector coercion preserves its length"),
                 )
             };
-            let mut __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
+            let __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-            for __compact_fold_item in __compact_fold_source.into_array() {
-                __compact_fold_accumulator = crate::pure_circuits::last_unsigned(
-                    __compact_fold_accumulator,
-                    __compact_fold_item,
-                )?;
-            }
-            __compact_fold_accumulator
+            __compact_fold_source.into_array().into_iter().try_fold(
+                __compact_fold_accumulator,
+                crate::pure_circuits::last_unsigned,
+            )?
         })
     }
     pub fn fold_mapped_unsigned(
         values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
     ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
         Ok({
-            let __compact_fold_source = {
-                let __compact_map_source = {
-                    let __compact_cast_source_0 = values.clone();
-                    let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
-                    for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
-                        __compact_cast_values_0
-                            .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
-                    }
-                    runtime::FixedVector::new(
-                        <[_; 2]>::try_from(__compact_cast_values_0)
-                            .expect("Vector coercion preserves its length"),
-                    )
-                };
-                let mut __compact_mapped = Vec::with_capacity(2);
-                for value in __compact_map_source.into_array() {
-                    __compact_mapped.push(value);
+            let __compact_fold_source = ({
+                let __compact_cast_source_0 = values.clone();
+                let mut __compact_cast_values_0 = ::std::vec::Vec::with_capacity(2);
+                for __compact_cast_item_0 in __compact_cast_source_0.into_array() {
+                    __compact_cast_values_0
+                        .push(runtime::cast_unsigned::<255, 65535>(__compact_cast_item_0)?);
                 }
                 runtime::FixedVector::new(
-                    <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
+                    <[_; 2]>::try_from(__compact_cast_values_0)
+                        .expect("Vector coercion preserves its length"),
                 )
-            };
-            let mut __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
+            })
+            .try_map(|value| -> Result<_, runtime::CompactError> { Ok(value) })?;
+            let __compact_fold_accumulator = runtime::BoundedUint::<65535>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-            for __compact_fold_item in __compact_fold_source.into_array() {
-                __compact_fold_accumulator = crate::pure_circuits::last_unsigned(
-                    __compact_fold_accumulator,
-                    __compact_fold_item,
-                )?;
-            }
-            __compact_fold_accumulator
+            __compact_fold_source.into_array().into_iter().try_fold(
+                __compact_fold_accumulator,
+                crate::pure_circuits::last_unsigned,
+            )?
         })
     }
     pub fn map_empty_fields(
         values: runtime::FixedVector<runtime::Field, 2>,
     ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
-        Ok({
-            let __compact_map_source = {
-                let __compact_map_source = values.clone();
-                let mut __compact_mapped = Vec::with_capacity(2);
-                for value in __compact_map_source.into_array() {
-                    __compact_mapped.push(runtime::FixedVector::<runtime::Field, 0>::new([]));
-                }
-                runtime::FixedVector::new(
-                    <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
-                )
-            };
-            let mut __compact_mapped = Vec::with_capacity(2);
-            for ignored in __compact_map_source.into_array() {
-                __compact_mapped.push(runtime::Field::from(1u128));
-            }
-            runtime::FixedVector::new(
-                <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
-            )
-        })
+        ((values.clone()).try_map(|value| -> Result<_, runtime::CompactError> {
+            Ok(runtime::FixedVector::<runtime::Field, 0>::new([]))
+        })?)
+        .try_map(|ignored| -> Result<_, runtime::CompactError> { Ok(runtime::Field::from(1u128)) })
     }
     pub fn map_empty_booleans(
         values: runtime::FixedVector<bool, 2>,
     ) -> Result<runtime::FixedVector<bool, 2>, runtime::CompactError> {
-        Ok({
-            let __compact_map_source = {
-                let __compact_map_source = values.clone();
-                let mut __compact_mapped = Vec::with_capacity(2);
-                for value in __compact_map_source.into_array() {
-                    __compact_mapped.push(runtime::FixedVector::<bool, 0>::new([]));
-                }
-                runtime::FixedVector::new(
-                    <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
-                )
-            };
-            let mut __compact_mapped = Vec::with_capacity(2);
-            for ignored in __compact_map_source.into_array() {
-                __compact_mapped.push(true);
-            }
-            runtime::FixedVector::new(
-                <[_; 2]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
-            )
-        })
+        ((values.clone()).try_map(|value| -> Result<_, runtime::CompactError> {
+            Ok(runtime::FixedVector::<bool, 0>::new([]))
+        })?)
+        .try_map(|ignored| -> Result<_, runtime::CompactError> { Ok(true) })
     }
 }

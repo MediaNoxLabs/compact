@@ -50,7 +50,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn makePair(
         left: runtime::Field,
         right: runtime::Field,
@@ -74,14 +74,11 @@ pub mod pure_circuits {
                 <crate::types::VectorBox as Default>::default();
             {
                 let __compact_fold_source = ((__compact_local_holder.clone()).values).clone();
-                let mut __compact_fold_accumulator = seed;
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::foldStep(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                let __compact_fold_accumulator = seed;
+                __compact_fold_source
+                    .into_array()
+                    .into_iter()
+                    .try_fold(__compact_fold_accumulator, crate::pure_circuits::foldStep)?
             }
         })
     }
@@ -133,7 +130,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -434,7 +431,6 @@ pub mod ledger_contract {
                     __compact_effect_11,
                 )?;
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_14)?;
-                let __compact_effect_15: () = ();
                 let (frame, __compact_effect_16): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 (frame, __compact_effect_16)
@@ -465,13 +461,11 @@ pub mod ledger_contract {
                     )?;
                     let frame =
                         crate::ledger_slots::stored.record_write(frame, __compact_effect_24)?;
-                    let __compact_effect_25: () = ();
                     let (frame, __compact_effect_26): (_, runtime::Field) =
                         crate::ledger_slots::stored.record_read(frame)?;
                     (frame, __compact_effect_26)
                 };
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_27)?;
-                let __compact_effect_28: () = ();
                 let (frame, __compact_effect_29): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 let __compact_effect_30: bool = false;
@@ -504,13 +498,11 @@ pub mod ledger_contract {
                     )?;
                     let frame =
                         crate::ledger_slots::stored.record_write(frame, __compact_effect_38)?;
-                    let __compact_effect_39: () = ();
                     let (frame, __compact_effect_40): (_, runtime::Field) =
                         crate::ledger_slots::stored.record_read(frame)?;
                     (frame, __compact_effect_40)
                 };
                 let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_41)?;
-                let __compact_effect_42: () = ();
                 let (frame, __compact_effect_43): (_, runtime::Field) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 let __compact_effect_44: bool = true;

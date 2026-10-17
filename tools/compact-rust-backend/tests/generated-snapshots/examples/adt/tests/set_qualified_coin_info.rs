@@ -95,7 +95,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn right(
         value: crate::types::ContractAddress,
     ) -> Result<crate::types::Either, runtime::CompactError> {
@@ -116,7 +116,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -695,7 +695,6 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_13: () = ();
             let (frame, __compact_effect_set_size_14) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_14: runtime::BoundedUint<18446744073709551615> =
@@ -710,10 +709,8 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_17: () = ();
             let frame =
                 crate::ledger_slots::c.record_insert(frame, (__compact_effect_4).clone())?;
-            let __compact_effect_18: () = ();
             let (frame, __compact_effect_set_size_19) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_19: runtime::BoundedUint<18446744073709551615> =
@@ -728,7 +725,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_22: () = ();
             let (frame, __compact_effect_23): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_4).clone())?;
             let __compact_effect_24: bool = true;
@@ -738,10 +734,8 @@ pub mod ledger_contract {
                     "Key qcoin should be member".to_owned(),
                 ));
             }
-            let __compact_effect_26: () = ();
             let frame =
                 crate::ledger_slots::c.record_insert(frame, (__compact_effect_9).clone())?;
-            let __compact_effect_27: () = ();
             let (frame, __compact_effect_set_size_28) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_28: runtime::BoundedUint<18446744073709551615> =
@@ -756,7 +750,6 @@ pub mod ledger_contract {
                     "Size should be 2".to_owned(),
                 ));
             }
-            let __compact_effect_31: () = ();
             let (frame, __compact_effect_32): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_9).clone())?;
             let __compact_effect_33: bool = true;
@@ -766,10 +759,8 @@ pub mod ledger_contract {
                     "Key qcoin2 should be member".to_owned(),
                 ));
             }
-            let __compact_effect_35: () = ();
             let frame =
                 crate::ledger_slots::c.record_remove(frame, (__compact_effect_4).clone())?;
-            let __compact_effect_36: () = ();
             let (frame, __compact_effect_set_size_37) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_37: runtime::BoundedUint<18446744073709551615> =
@@ -784,7 +775,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_40: () = ();
             let (frame, __compact_effect_41): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_9).clone())?;
             let __compact_effect_42: bool = true;
@@ -794,9 +784,7 @@ pub mod ledger_contract {
                     "Key 1 should be member".to_owned(),
                 ));
             }
-            let __compact_effect_44: () = ();
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let __compact_effect_45: () = ();
             let (frame, __compact_effect_set_size_46) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_46: runtime::BoundedUint<18446744073709551615> =
@@ -811,7 +799,6 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_49: () = ();
             let (frame, __compact_effect_50): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
             let __compact_effect_51: bool = true;
@@ -821,9 +808,7 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_53: () = ();
-            let __compact_effect_54: () = ();
-            Ok(frame.finish(__compact_effect_54))
+            Ok(frame.finish(()))
         }
         pub fn test_ShieldedCoinInfo<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -917,7 +902,6 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_21: () = ();
             let (frame, __compact_effect_set_size_22) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_22: runtime::BoundedUint<18446744073709551615> =
@@ -932,7 +916,6 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_25: () = ();
             let (frame, __compact_effect_address_26) = frame.kernel_self()?;
             let __compact_effect_26: crate::types::ContractAddress =
                 crate::types::ContractAddress {
@@ -953,7 +936,6 @@ pub mod ledger_contract {
                     __compact_effect_27.right.bytes,
                 ),
             )?;
-            let __compact_effect_28: () = ();
             let (frame, __compact_effect_set_size_29) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_29: runtime::BoundedUint<18446744073709551615> =
@@ -968,7 +950,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_32: () = ();
             let (frame, __compact_effect_33): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_12).clone())?;
             let __compact_effect_34: bool = true;
@@ -978,7 +959,6 @@ pub mod ledger_contract {
                     "Key coin should be member".to_owned(),
                 ));
             }
-            let __compact_effect_36: () = ();
             let (frame, __compact_effect_address_37) = frame.kernel_self()?;
             let __compact_effect_37: crate::types::ContractAddress =
                 crate::types::ContractAddress {
@@ -999,7 +979,6 @@ pub mod ledger_contract {
                     __compact_effect_38.right.bytes,
                 ),
             )?;
-            let __compact_effect_39: () = ();
             let (frame, __compact_effect_set_size_40) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_40: runtime::BoundedUint<18446744073709551615> =
@@ -1014,7 +993,6 @@ pub mod ledger_contract {
                     "Size should be 2".to_owned(),
                 ));
             }
-            let __compact_effect_43: () = ();
             let (frame, __compact_effect_44): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_17).clone())?;
             let __compact_effect_45: bool = true;
@@ -1024,10 +1002,8 @@ pub mod ledger_contract {
                     "Key coin2 should be member".to_owned(),
                 ));
             }
-            let __compact_effect_47: () = ();
             let frame =
                 crate::ledger_slots::c.record_remove(frame, (__compact_effect_12).clone())?;
-            let __compact_effect_48: () = ();
             let (frame, __compact_effect_set_size_49) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_49: runtime::BoundedUint<18446744073709551615> =
@@ -1042,7 +1018,6 @@ pub mod ledger_contract {
                     "Size should be 1".to_owned(),
                 ));
             }
-            let __compact_effect_52: () = ();
             let (frame, __compact_effect_53): (_, bool) =
                 crate::ledger_slots::c.record_member(frame, (__compact_effect_17).clone())?;
             let __compact_effect_54: bool = true;
@@ -1052,9 +1027,7 @@ pub mod ledger_contract {
                     "Key coin2 should be member".to_owned(),
                 ));
             }
-            let __compact_effect_56: () = ();
             let frame = crate::ledger_slots::c.record_reset(frame)?;
-            let __compact_effect_57: () = ();
             let (frame, __compact_effect_set_size_58) =
                 crate::ledger_slots::c.record_size(frame)?;
             let __compact_effect_58: runtime::BoundedUint<18446744073709551615> =
@@ -1069,7 +1042,6 @@ pub mod ledger_contract {
                     "Size should be 0".to_owned(),
                 ));
             }
-            let __compact_effect_61: () = ();
             let (frame, __compact_effect_62): (_, bool) =
                 crate::ledger_slots::c.record_is_empty(frame)?;
             let __compact_effect_63: bool = true;
@@ -1079,9 +1051,7 @@ pub mod ledger_contract {
                     "Structure should be empty".to_owned(),
                 ));
             }
-            let __compact_effect_65: () = ();
-            let __compact_effect_66: () = ();
-            Ok(frame.finish(__compact_effect_66))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

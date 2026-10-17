@@ -1,6 +1,6 @@
 # Select versions and an execution target
 
-The table below retains the milestone 0.3.0 version checkpoint and target receipts. On the current recording-effect branch, runtime ABI is **52**, private IR is **20**, finalized capability reports are **3** and private origin transport is **3**. Native ledger is **8.1.3** at official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`, with compatibility schema **2** and declared Rust **1.89** minimum. The current local execution used Rust 1.99; the older 1.88 receipts below do not qualify this new dependency graph. See [local qualification](ledger-8.1.3-local-qualification.md) for the exact source cohort and retained proof scope. No package publication or new platform qualification follows from these numbers. Installation snippets describe prerequisites; linked receipts identify actual execution.
+The table below retains the milestone 0.3.0 version checkpoint and target receipts. On the current recording-effect branch, runtime ABI is **53**, private IR is **20**, finalized capability reports are **3** and private origin transport is **3**. Native ledger is **8.1.3** at official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`, with compatibility schema **2** and declared Rust **1.89** minimum. The current local execution used Rust 1.99; the older 1.88 receipts below do not qualify this new dependency graph. See [local qualification](ledger-8.1.3-local-qualification.md) for the exact source cohort and retained proof scope. No package publication or new platform qualification follows from these numbers. Installation snippets describe prerequisites; linked receipts identify actual execution.
 
 The current review-fix source selects compiler **0.31.135** and TypeScript runtime
 **0.16.102**, including the exact onchain-runtime3.1.2 dependency. These source
@@ -24,11 +24,11 @@ Rust1.88 minimum; Rust backend owners declare Rust1.89 in their own manifests.
 | Native ledger | 8.0.3 | Pinned ledger graph |
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
-Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 52`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 53`. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
 
 ### Before publishing the Rust crate cohort
 
-The backend, runtime and macros remain source version0.2.0 here, with ABI52 and
+The backend, runtime and macros remain source version0.2.0 here, with ABI53 and
 the ledger8.1.3 graph. This is a changed API cohort, not a claim that the earlier
 ABI50 package contents are interchangeable. Before registry publication,
 coordinate a Rust0.3.0 crate release with the retained-consumer locks, registry
@@ -67,7 +67,7 @@ The tutorial commands target native Rust. They are not Node/browser build instru
 
 ## Migrate consumers
 
-1. Preserve old generated code with its original matching runtime, or regenerate source with the current matching ABI52 compiler/runtime/macros pair. Do not edit the ABI assertion.
+1. Preserve old generated code with its original matching runtime, or regenerate source with the current matching ABI53 compiler/runtime/macros pair. Do not edit the ABI assertion.
 2. Prefer the generated crate's `runtime` re-export for value types, avoiding duplicate crate identities.
 3. Backend0.2 exposes non-exhaustive `RenderError`. External matches need a fallback; resource diagnostics expose `{resource, limit, observed}`. Display text/resource labels are human diagnostics, not a stable machine protocol.
 4. Keep the qualified Cargo.lock. A successful build of one workspace lock does not qualify a different standalone or target-specific resolution.

@@ -49,7 +49,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -62,7 +62,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -450,12 +450,10 @@ pub mod ledger_contract {
                 (__compact_effect_0).clone(),
                 __compact_effect_1,
             )?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, runtime::Field) =
                 crate::ledger_slots::table.record_lookup(frame, (__compact_effect_0).clone())?;
             let __compact_effect_6: crate::types::Found = crate::types::Found {
@@ -474,12 +472,10 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let frame =
                 crate::ledger_slots::table.record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_1: () = ();
             let __compact_effect_2: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, bool) =
                 crate::ledger_slots::table.record_member(frame, (__compact_effect_0).clone())?;
             let __compact_effect_5: crate::types::Present = crate::types::Present {
@@ -505,7 +501,11 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::OpaqueString = __compact_param_2;
             let __compact_effect_3: runtime::Field = __compact_param_3;
             let __compact_effect_4: runtime::Field = __compact_param_4;
-            let (frame, __compact_effect_14): (_, ()) = if __compact_effect_0 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.pick_key(context.witness_context_with(super::LedgerView {
@@ -536,17 +536,13 @@ pub mod ledger_contract {
                     (__compact_effect_6).clone(),
                     __compact_effect_8,
                 )?;
-                let __compact_effect_9: () = ();
                 let __compact_effect_10: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_10).value() as u16)?;
-                let __compact_effect_11: () = ();
-                let __compact_effect_12: () = ();
-                (frame, __compact_effect_12)
+                frame
             } else {
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                frame
             };
             let (frame, __compact_effect_15): (_, bool) =
                 crate::ledger_slots::table.record_member(frame, (__compact_effect_1).clone())?;

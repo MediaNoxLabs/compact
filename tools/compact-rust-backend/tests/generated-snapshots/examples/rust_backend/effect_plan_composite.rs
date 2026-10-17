@@ -110,12 +110,12 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -317,9 +317,16 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let __compact_effect_4: () = ();
-            let (frame, __compact_effect_11): (_, ()) = if __compact_effect_3 {
-                let (frame, __compact_effect_8): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_3 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_5: crate::types::ShieldedCoinInfo =
                         (__compact_effect_1).clone();
                     let __compact_effect_6: crate::types::Either = (__compact_effect_2).clone();
@@ -335,14 +342,11 @@ pub mod ledger_contract {
                             __compact_effect_6.right.bytes,
                         ),
                     )?;
-                    let __compact_effect_7: () = ();
-                    (frame, __compact_effect_7)
+                    frame
                 };
-                let __compact_effect_9: () = ();
-                (frame, __compact_effect_9)
+                frame
             } else {
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                frame
             };
             let frame = frame.create_zswap_input(
                 runtime::ledger::coin_info_from_compact(
@@ -352,7 +356,6 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let __compact_effect_12: () = ();
             let (frame, __compact_effect_13): (_, crate::types::ShieldedCoinInfo) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.choose_coin(
@@ -385,10 +388,9 @@ pub mod ledger_contract {
                     __compact_effect_14.right.bytes,
                 ),
             )?;
-            let __compact_effect_15: () = ();
             let __compact_effect_16: crate::types::Receipt = crate::types::Receipt {
-                consumed: __compact_effect_12,
-                emitted: __compact_effect_15,
+                consumed: (),
+                emitted: (),
                 kept: (__compact_effect_1).clone(),
             };
             Ok(frame.finish((__compact_effect_16).clone()))

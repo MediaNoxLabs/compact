@@ -38,7 +38,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -49,7 +49,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -314,8 +314,11 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let __compact_effect_4: () = ();
-            let (frame, __compact_effect_24): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: runtime::Field = __compact_effect_0;
                 let __compact_effect_6: runtime::JubjubPoint = __compact_effect_1;
                 let __compact_effect_7: runtime::FixedBytes<32> = __compact_effect_2;
@@ -344,7 +347,6 @@ pub mod ledger_contract {
                 if !__compact_effect_14 {
                     return Err(runtime::CompactError::AssertionFailed("wrong x".to_owned()));
                 }
-                let __compact_effect_15: () = ();
                 let __compact_effect_16: runtime::Field =
                     runtime::jubjub_point_y(__compact_effect_11);
                 let __compact_effect_17: runtime::Field =
@@ -353,7 +355,6 @@ pub mod ledger_contract {
                 if !__compact_effect_18 {
                     return Err(runtime::CompactError::AssertionFailed("wrong y".to_owned()));
                 }
-                let __compact_effect_19: () = ();
                 let __compact_effect_20: runtime::FixedBytes<32> =
                     <runtime::FixedBytes<32> as ::core::default::Default>::default();
                 let __compact_effect_21: bool = __compact_effect_20 == __compact_effect_7;
@@ -362,9 +363,7 @@ pub mod ledger_contract {
                         "wrong default".to_owned(),
                     ));
                 }
-                let __compact_effect_22: () = ();
-                let __compact_effect_23: () = ();
-                (frame, __compact_effect_23)
+                frame
             };
             let (frame, __compact_effect_25): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
@@ -376,9 +375,7 @@ pub mod ledger_contract {
             if !__compact_effect_25 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_26: () = ();
-            let __compact_effect_27: () = ();
-            Ok(frame.finish(__compact_effect_27))
+            Ok(frame.finish(()))
         }
         pub fn evaluate<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -398,7 +395,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_9): (_, runtime::JubjubPoint) = if __compact_effect_2 {
                 let (frame, __compact_effect_5): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
@@ -431,7 +427,6 @@ pub mod ledger_contract {
             if !__compact_effect_10 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_11: () = ();
             let __compact_effect_12: runtime::Field = runtime::jubjub_point_x(__compact_effect_9);
             let __compact_effect_13: runtime::Field = runtime::jubjub_point_y(__compact_effect_9);
             let __compact_effect_14: runtime::FixedBytes<32> =

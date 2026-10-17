@@ -64,7 +64,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -75,7 +75,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -268,7 +268,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let __compact_effect_4: bool = __compact_effect_0 != __compact_effect_1;
             let __compact_effect_5: crate::types::Outcome = crate::types::Outcome {
                 different: __compact_effect_4,
@@ -289,7 +288,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_1).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_7): (_, bool) = if __compact_effect_0 {
                 let (frame, __compact_effect_3): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
@@ -331,7 +329,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let __compact_effect_4: bool =
                 (__compact_effect_0).clone() != (__compact_effect_1).clone();
             let __compact_effect_5: crate::types::OwnedResult = crate::types::OwnedResult {

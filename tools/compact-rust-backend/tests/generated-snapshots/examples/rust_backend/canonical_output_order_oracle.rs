@@ -95,7 +95,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -107,7 +107,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -319,13 +319,11 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let __compact_effect_8: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::Nullifier(
                 runtime::ledger::CoinNullifier(runtime::ledger::HashOutput(
                     (__compact_effect_5).into_array(),
                 )),
             ))?;
-            let __compact_effect_9: () = ();
             let frame = frame.create_zswap_output(
                 runtime::ledger::coin_info_from_compact(
                     __compact_effect_1.nonce,
@@ -338,13 +336,11 @@ pub mod ledger_contract {
                     __compact_effect_3.right.bytes,
                 ),
             )?;
-            let __compact_effect_10: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
                 runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                     (__compact_effect_6).into_array(),
                 )),
             ))?;
-            let __compact_effect_11: () = ();
             let frame = frame.create_zswap_output(
                 runtime::ledger::coin_info_from_compact(
                     __compact_effect_2.nonce,
@@ -357,19 +353,16 @@ pub mod ledger_contract {
                     __compact_effect_4.right.bytes,
                 ),
             )?;
-            let __compact_effect_12: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
                 runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                     (__compact_effect_7).into_array(),
                 )),
             ))?;
-            let __compact_effect_13: () = ();
             let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
                 runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                     (__compact_effect_7).into_array(),
                 )),
             ))?;
-            let __compact_effect_14: () = ();
             let frame = crate::ledger_slots::pot.record_write_coin(
                 frame,
                 runtime::ledger::coin_info_from_compact(
@@ -383,9 +376,7 @@ pub mod ledger_contract {
                     __compact_effect_4.right.bytes,
                 ),
             )?;
-            let __compact_effect_15: () = ();
-            let __compact_effect_16: () = ();
-            Ok(frame.finish(__compact_effect_16))
+            Ok(frame.finish(()))
         }
         pub fn read_coin<Private>(
             context: runtime::context::CircuitContext<Private>,

@@ -67,22 +67,18 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn merkleTreePathRootNoLeafHash(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
                 let __compact_fold_source = ((path.clone()).path).clone();
-                let mut __compact_fold_accumulator =
-                    runtime::degrade_to_transient((path.clone()).leaf);
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::merkleTreePathEntryRoot(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                let __compact_fold_accumulator = runtime::degrade_to_transient((path.clone()).leaf);
+                __compact_fold_source.into_array().into_iter().try_fold(
+                    __compact_fold_accumulator,
+                    crate::pure_circuits::merkleTreePathEntryRoot,
+                )?
             },
         })
     }

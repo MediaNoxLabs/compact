@@ -52,7 +52,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -63,7 +63,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -484,7 +484,6 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_15).value() as u16)?;
-                let __compact_effect_16: () = ();
                 let (frame, __compact_effect_17): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.trace(context.witness_context_with(super::LedgerView {
@@ -546,7 +545,6 @@ pub mod ledger_contract {
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::calls
                         .record_increment(frame, (__compact_effect_20).value() as u16)?;
-                    let __compact_effect_21: () = ();
                     let (frame, __compact_effect_22): (_, runtime::Field) = frame
                         .try_witness_metered(|context, meter| {
                             witnesses.trace(context.witness_context_with(super::LedgerView {
@@ -579,7 +577,6 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_26).value() as u16)?;
-                let __compact_effect_27: () = ();
                 let (frame, __compact_effect_28): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.trace(context.witness_context_with(super::LedgerView {

@@ -131,6 +131,17 @@ jobs:
             -p midnight-compact-runtime-macros -p midnight-compact-testkit \
             2>&1 | tee "$RUST_CHECK_RECEIPTS/tests.log"
 
+      - name: Enforce the finite generated readability policy
+        if: matrix.key == 'core'
+        id: readability
+        run: |
+          cargo test --locked --offline -p compact-rust-backend --example readability \
+            2>&1 | tee "$RUST_CHECK_RECEIPTS/readability-tests.log"
+          cargo run --quiet --locked --offline -p compact-rust-backend --example readability -- \
+            . tools/compact-rust-backend/tests/readability/corpus.json \
+            tools/compact-rust-backend/tests/readability/baseline.json \
+            > "$RUST_CHECK_RECEIPTS/readability.json"
+
       - name: Lint the four Rust owners
         if: matrix.key == 'core'
         id: clippy
@@ -174,7 +185,7 @@ jobs:
           checks = json.loads(os.environ['CHECK_OUTCOMES'])
           locks_unchanged = all(hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() == digest
                                 for p, digest in source['locks'].items())
-          required = (['fetch', 'format', 'tests', 'clippy'] if source['lane'] == 'core'
+          required = (['fetch', 'format', 'tests', 'readability', 'clippy'] if source['lane'] == 'core'
                       else ['fetch', 'msrv_workspace', 'msrv_standalone'])
           passed = locks_unchanged and all(checks.get(p, {}).get('outcome') == 'success' for p in required)
           result = {'status': 'passed' if passed else 'failed_or_incomplete',

@@ -426,7 +426,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn controllerOperationHash(
         name: runtime::FixedBytes<32>,
     ) -> Result<runtime::Field, runtime::CompactError> {
@@ -843,7 +843,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -3242,14 +3242,22 @@ pub mod ledger_contract {
                     __compact_effect_2,
                     __compact_effect_0,
                 )?;
-            let (frame, __compact_effect_64): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_2;
                 let __compact_effect_7: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_4).clone();
-                let (frame, __compact_effect_60): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_8: crate::types::SchnorrSignature =
                         (__compact_effect_5).clone();
                     let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
@@ -3268,16 +3276,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_58): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_15: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_16: crate::types::SchnorrSignature =
                             (__compact_effect_8).clone();
                         let __compact_effect_17: runtime::JubjubPoint = __compact_effect_14;
-                        let (frame, __compact_effect_56): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_18: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_15).clone();
                             let __compact_effect_19: crate::types::SchnorrSignature =
@@ -3344,7 +3359,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -3360,7 +3374,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -3392,15 +3405,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            frame
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        frame
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    frame
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -3409,11 +3418,13 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                frame
             };
-            let (frame, __compact_effect_78): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_65: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_66: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_65);
@@ -3440,11 +3451,13 @@ pub mod ledger_contract {
                         "New controller key matches current controller key".to_owned(),
                     ));
                 }
-                let __compact_effect_76: () = ();
-                let __compact_effect_77: () = ();
-                (frame, __compact_effect_77)
+                frame
             };
-            let (frame, __compact_effect_92): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_79: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_80: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_79);
@@ -3471,24 +3484,23 @@ pub mod ledger_contract {
                         "New controller key matches recovery authority key".to_owned(),
                     ));
                 }
-                let __compact_effect_90: () = ();
-                let __compact_effect_91: () = ();
-                (frame, __compact_effect_91)
+                frame
             };
             let frame =
                 crate::ledger_slots::controllerPublicKey.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_93: () = ();
-            let (frame, __compact_effect_101): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_94: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_94).value() as u16)?;
-                let __compact_effect_95: () = ();
                 let __compact_effect_96: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_96).value() as u16)?;
-                let __compact_effect_97: () = ();
                 let (frame, __compact_effect_98): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -3500,12 +3512,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_98)?;
-                let __compact_effect_99: () = ();
-                let __compact_effect_100: () = ();
-                (frame, __compact_effect_100)
+                frame
             };
-            let __compact_effect_102: () = ();
-            Ok(frame.finish(__compact_effect_102))
+            Ok(frame.finish(()))
         }
         pub fn recoverControllerKey<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -3527,7 +3536,11 @@ pub mod ledger_contract {
                     __compact_effect_2,
                     __compact_effect_0,
                 )?;
-            let (frame, __compact_effect_59): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
@@ -3546,16 +3559,23 @@ pub mod ledger_contract {
                         "Recovery authorization version is stale".to_owned(),
                     ));
                 }
-                let __compact_effect_10: () = ();
                 let (frame, __compact_effect_11): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::recoveryAuthorityPublicKey.record_read(frame)?;
-                let (frame, __compact_effect_55): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_12: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_7).clone();
                     let __compact_effect_13: crate::types::SchnorrSignature =
                         (__compact_effect_5).clone();
                     let __compact_effect_14: runtime::JubjubPoint = __compact_effect_11;
-                    let (frame, __compact_effect_53): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_15: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_12).clone();
                         let __compact_effect_16: crate::types::SchnorrSignature =
@@ -3620,7 +3640,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_32: () = ();
                         let __compact_effect_33: runtime::Field =
                             runtime::Field::from((__compact_effect_28).value());
                         let __compact_effect_34: runtime::Field =
@@ -3634,7 +3653,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_38: () = ();
                         let __compact_effect_39: runtime::Field = (__compact_effect_29).as_field();
                         let __compact_effect_40: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_19)?;
@@ -3664,12 +3682,9 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_51: () = ();
-                        let __compact_effect_52: () = ();
-                        (frame, __compact_effect_52)
+                        frame
                     };
-                    let __compact_effect_54: () = ();
-                    (frame, __compact_effect_54)
+                    frame
                 };
                 let (frame, __compact_effect_56): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -3678,11 +3693,13 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_57: () = ();
-                let __compact_effect_58: () = ();
-                (frame, __compact_effect_58)
+                frame
             };
-            let (frame, __compact_effect_73): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_60: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_61: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_60);
@@ -3709,11 +3726,13 @@ pub mod ledger_contract {
                         "New controller key matches current controller key".to_owned(),
                     ));
                 }
-                let __compact_effect_71: () = ();
-                let __compact_effect_72: () = ();
-                (frame, __compact_effect_72)
+                frame
             };
-            let (frame, __compact_effect_87): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_74: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_75: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_74);
@@ -3740,24 +3759,23 @@ pub mod ledger_contract {
                         "New controller key matches recovery authority key".to_owned(),
                     ));
                 }
-                let __compact_effect_85: () = ();
-                let __compact_effect_86: () = ();
-                (frame, __compact_effect_86)
+                frame
             };
             let frame =
                 crate::ledger_slots::controllerPublicKey.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_88: () = ();
-            let (frame, __compact_effect_96): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_89: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_89).value() as u16)?;
-                let __compact_effect_90: () = ();
                 let __compact_effect_91: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_91).value() as u16)?;
-                let __compact_effect_92: () = ();
                 let (frame, __compact_effect_93): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -3769,12 +3787,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_93)?;
-                let __compact_effect_94: () = ();
-                let __compact_effect_95: () = ();
-                (frame, __compact_effect_95)
+                frame
             };
-            let __compact_effect_97: () = ();
-            Ok(frame.finish(__compact_effect_97))
+            Ok(frame.finish(()))
         }
         pub fn setAlsoKnownAs<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -3799,14 +3814,22 @@ pub mod ledger_contract {
                     (__compact_effect_0).clone(),
                     __compact_effect_1,
                 )?;
-            let (frame, __compact_effect_65): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_2).clone();
                 let __compact_effect_7: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
                 let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_5).clone();
-                let (frame, __compact_effect_61): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_9: crate::types::SchnorrSignature =
                         (__compact_effect_6).clone();
                     let __compact_effect_10: runtime::BoundedUint<18446744073709551615> =
@@ -3825,16 +3848,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_59): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_16: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_11).clone();
                         let __compact_effect_17: crate::types::SchnorrSignature =
                             (__compact_effect_9).clone();
                         let __compact_effect_18: runtime::JubjubPoint = __compact_effect_15;
-                        let (frame, __compact_effect_57): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_19: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_16).clone();
                             let __compact_effect_20: crate::types::SchnorrSignature =
@@ -3901,7 +3931,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -3917,7 +3946,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -3949,15 +3977,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            frame
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        frame
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    frame
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -3966,15 +3990,17 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                frame
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertSetMutationDefined(__compact_effect_1)?;
             let __compact_effect_67: crate::types::SetMutation = crate::types::SetMutation::Insert;
             let __compact_effect_68: bool = __compact_effect_1 == __compact_effect_67;
-            let (frame, __compact_effect_85): (_, ()) = if __compact_effect_68 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_68 {
                 let (frame, __compact_effect_69): (_, bool) = crate::ledger_slots::alsoKnownAs
                     .record_member(frame, (__compact_effect_0).clone())?;
                 let (frame, __compact_effect_72): (_, bool) = if __compact_effect_69 {
@@ -3989,17 +4015,18 @@ pub mod ledger_contract {
                         "alsoKnownAs value already exists".to_owned(),
                     ));
                 }
-                let __compact_effect_73: () = ();
                 let frame = crate::ledger_slots::alsoKnownAs
                     .record_insert(frame, (__compact_effect_0).clone())?;
-                let __compact_effect_74: () = ();
-                let __compact_effect_75: () = ();
-                (frame, __compact_effect_75)
+                frame
             } else {
                 let __compact_effect_76: crate::types::SetMutation =
                     crate::types::SetMutation::Remove;
                 let __compact_effect_77: bool = __compact_effect_1 == __compact_effect_76;
-                let (frame, __compact_effect_83): (_, ()) = if __compact_effect_77 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_effect_77 {
                     let (frame, __compact_effect_78): (_, bool) = crate::ledger_slots::alsoKnownAs
                         .record_member(frame, (__compact_effect_0).clone())?;
                     if !__compact_effect_78 {
@@ -4007,30 +4034,27 @@ pub mod ledger_contract {
                             "alsoKnownAs value does not exist".to_owned(),
                         ));
                     }
-                    let __compact_effect_79: () = ();
                     let frame = crate::ledger_slots::alsoKnownAs
                         .record_remove(frame, (__compact_effect_0).clone())?;
-                    let __compact_effect_80: () = ();
-                    let __compact_effect_81: () = ();
-                    (frame, __compact_effect_81)
+                    frame
                 } else {
-                    let __compact_effect_82: () = ();
-                    (frame, __compact_effect_82)
+                    frame
                 };
-                let __compact_effect_84: () = ();
-                (frame, __compact_effect_84)
+                frame
             };
-            let (frame, __compact_effect_93): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_86: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_86).value() as u16)?;
-                let __compact_effect_87: () = ();
                 let __compact_effect_88: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_88).value() as u16)?;
-                let __compact_effect_89: () = ();
                 let (frame, __compact_effect_90): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -4042,12 +4066,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_90)?;
-                let __compact_effect_91: () = ();
-                let __compact_effect_92: () = ();
-                (frame, __compact_effect_92)
+                frame
             };
-            let __compact_effect_94: () = ();
-            Ok(frame.finish(__compact_effect_94))
+            Ok(frame.finish(()))
         }
         pub fn setVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -4072,14 +4093,22 @@ pub mod ledger_contract {
                     (__compact_effect_0).clone(),
                     __compact_effect_1,
                 )?;
-            let (frame, __compact_effect_65): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_2).clone();
                 let __compact_effect_7: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
                 let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_5).clone();
-                let (frame, __compact_effect_61): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_9: crate::types::SchnorrSignature =
                         (__compact_effect_6).clone();
                     let __compact_effect_10: runtime::BoundedUint<18446744073709551615> =
@@ -4098,16 +4127,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_59): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_16: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_11).clone();
                         let __compact_effect_17: crate::types::SchnorrSignature =
                             (__compact_effect_9).clone();
                         let __compact_effect_18: runtime::JubjubPoint = __compact_effect_15;
-                        let (frame, __compact_effect_57): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_19: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_16).clone();
                             let __compact_effect_20: crate::types::SchnorrSignature =
@@ -4174,7 +4210,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -4190,7 +4225,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -4222,15 +4256,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            frame
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        frame
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    frame
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -4239,9 +4269,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                frame
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertMapMutationDefined(__compact_effect_1)?;
@@ -4250,7 +4278,11 @@ pub mod ledger_contract {
             )?;
             let __compact_effect_68: crate::types::MapMutation = crate::types::MapMutation::Update;
             let __compact_effect_69: bool = __compact_effect_1 == __compact_effect_68;
-            let (frame, __compact_effect_123): (_, ()) = if __compact_effect_69 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_69 {
                 let __compact_effect_70: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_71): (_, bool) =
                     crate::ledger_slots::verificationMethods
@@ -4260,18 +4292,25 @@ pub mod ledger_contract {
                         "Verification method does not exist".to_owned(),
                     ));
                 }
-                let __compact_effect_72: () = ();
                 let __compact_effect_73: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let __compact_effect_74: crate::types::PublicKeyJwk =
                     (__compact_effect_0.publicKeyJwk).clone();
                 let __compact_effect_75: crate::types::CurveType = __compact_effect_74.crv;
-                let (frame, __compact_effect_102): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_76: runtime::OpaqueString = (__compact_effect_73).clone();
                     let __compact_effect_77: crate::types::CurveType = __compact_effect_75;
                     let (frame, __compact_effect_78): (_, bool) =
                         crate::ledger_slots::keyAgreementRelation
                             .record_member(frame, (__compact_effect_76).clone())?;
-                    let (frame, __compact_effect_84): (_, ()) = if __compact_effect_78 {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_effect_78 {
                         let __compact_effect_79: crate::types::CurveType =
                             crate::types::CurveType::X25519;
                         let __compact_effect_80: bool = __compact_effect_77 == __compact_effect_79;
@@ -4283,12 +4322,9 @@ pub mod ledger_contract {
                                 ),
                             );
                         }
-                        let __compact_effect_81: () = ();
-                        let __compact_effect_82: () = ();
-                        (frame, __compact_effect_82)
+                        frame
                     } else {
-                        let __compact_effect_83: () = ();
-                        (frame, __compact_effect_83)
+                        frame
                     };
                     let (frame, __compact_effect_85): (_, bool) =
                         crate::ledger_slots::authenticationRelation
@@ -4320,7 +4356,11 @@ pub mod ledger_contract {
                                 .record_member(frame, (__compact_effect_76).clone())?;
                         (frame, __compact_effect_93)
                     };
-                    let (frame, __compact_effect_100): (_, ()) = if __compact_effect_94 {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_effect_94 {
                         let __compact_effect_95: crate::types::CurveType =
                             crate::types::CurveType::X25519;
                         let __compact_effect_96: bool = __compact_effect_77 != __compact_effect_95;
@@ -4332,27 +4372,25 @@ pub mod ledger_contract {
                                 ),
                             );
                         }
-                        let __compact_effect_97: () = ();
-                        let __compact_effect_98: () = ();
-                        (frame, __compact_effect_98)
+                        frame
                     } else {
-                        let __compact_effect_99: () = ();
-                        (frame, __compact_effect_99)
+                        frame
                     };
-                    let __compact_effect_101: () = ();
-                    (frame, __compact_effect_101)
+                    frame
                 };
                 let __compact_effect_103: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::verificationMethods
                     .record_remove(frame, (__compact_effect_103).clone())?;
-                let __compact_effect_104: () = ();
-                let __compact_effect_105: () = ();
-                (frame, __compact_effect_105)
+                frame
             } else {
                 let __compact_effect_106: crate::types::MapMutation =
                     crate::types::MapMutation::Insert;
                 let __compact_effect_107: bool = __compact_effect_1 == __compact_effect_106;
-                let (frame, __compact_effect_121): (_, ()) = if __compact_effect_107 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_effect_107 {
                     let __compact_effect_108: runtime::OpaqueString =
                         (__compact_effect_0.id).clone();
                     let (frame, __compact_effect_114): (_, bool) = {
@@ -4384,15 +4422,11 @@ pub mod ledger_contract {
                             "Verification method already exists".to_owned(),
                         ));
                     }
-                    let __compact_effect_118: () = ();
-                    let __compact_effect_119: () = ();
-                    (frame, __compact_effect_119)
+                    frame
                 } else {
-                    let __compact_effect_120: () = ();
-                    (frame, __compact_effect_120)
+                    frame
                 };
-                let __compact_effect_122: () = ();
-                (frame, __compact_effect_122)
+                frame
             };
             let __compact_effect_124: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::verificationMethods.record_insert(
@@ -4400,18 +4434,19 @@ pub mod ledger_contract {
                 (__compact_effect_124).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_125: () = ();
-            let (frame, __compact_effect_133): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_126: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_126).value() as u16)?;
-                let __compact_effect_127: () = ();
                 let __compact_effect_128: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_128).value() as u16)?;
-                let __compact_effect_129: () = ();
                 let (frame, __compact_effect_130): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -4423,12 +4458,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_130)?;
-                let __compact_effect_131: () = ();
-                let __compact_effect_132: () = ();
-                (frame, __compact_effect_132)
+                frame
             };
-            let __compact_effect_134: () = ();
-            Ok(frame.finish(__compact_effect_134))
+            Ok(frame.finish(()))
         }
         pub fn removeVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -4450,14 +4482,22 @@ pub mod ledger_contract {
                     __compact_effect_2,
                     (__compact_effect_0).clone(),
                 )?;
-            let (frame, __compact_effect_64): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_2;
                 let __compact_effect_7: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_4).clone();
-                let (frame, __compact_effect_60): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_8: crate::types::SchnorrSignature =
                         (__compact_effect_5).clone();
                     let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
@@ -4476,16 +4516,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_58): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_15: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_16: crate::types::SchnorrSignature =
                             (__compact_effect_8).clone();
                         let __compact_effect_17: runtime::JubjubPoint = __compact_effect_14;
-                        let (frame, __compact_effect_56): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_18: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_15).clone();
                             let __compact_effect_19: crate::types::SchnorrSignature =
@@ -4552,7 +4599,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -4568,7 +4614,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -4600,15 +4645,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            frame
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        frame
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    frame
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -4617,9 +4658,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                frame
             };
             let (frame, __compact_effect_65): (_, bool) = crate::ledger_slots::verificationMethods
                 .record_member(frame, (__compact_effect_0).clone())?;
@@ -4628,8 +4667,11 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_66: () = ();
-            let (frame, __compact_effect_94): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_67: runtime::OpaqueString = (__compact_effect_0).clone();
                 let (frame, __compact_effect_68): (_, bool) =
                     crate::ledger_slots::authenticationRelation
@@ -4646,7 +4688,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in authenticationRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_72: () = ();
                 let (frame, __compact_effect_73): (_, bool) =
                     crate::ledger_slots::assertionMethodRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4663,7 +4704,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_77: () = ();
                 let (frame, __compact_effect_78): (_, bool) =
                     crate::ledger_slots::keyAgreementRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4679,7 +4719,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in keyAgreementRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_82: () = ();
                 let (frame, __compact_effect_83): (_, bool) =
                     crate::ledger_slots::capabilityInvocationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4696,7 +4735,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_87: () = ();
                 let (frame, __compact_effect_88): (_, bool) =
                     crate::ledger_slots::capabilityDelegationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -4713,24 +4751,23 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_92: () = ();
-                let __compact_effect_93: () = ();
-                (frame, __compact_effect_93)
+                frame
             };
             let frame = crate::ledger_slots::verificationMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_95: () = ();
-            let (frame, __compact_effect_103): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_96: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_96).value() as u16)?;
-                let __compact_effect_97: () = ();
                 let __compact_effect_98: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_98).value() as u16)?;
-                let __compact_effect_99: () = ();
                 let (frame, __compact_effect_100): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -4742,12 +4779,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_100)?;
-                let __compact_effect_101: () = ();
-                let __compact_effect_102: () = ();
-                (frame, __compact_effect_102)
+                frame
             };
-            let __compact_effect_104: () = ();
-            Ok(frame.finish(__compact_effect_104))
+            Ok(frame.finish(()))
         }
         pub fn setSchnorrJubjubVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -4773,14 +4807,22 @@ pub mod ledger_contract {
                     (__compact_effect_0).clone(),
                     __compact_effect_1,
                 )?;
-            let (frame, __compact_effect_65): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_2).clone();
                 let __compact_effect_7: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
                 let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_5).clone();
-                let (frame, __compact_effect_61): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_9: crate::types::SchnorrSignature =
                         (__compact_effect_6).clone();
                     let __compact_effect_10: runtime::BoundedUint<18446744073709551615> =
@@ -4799,16 +4841,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_59): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_16: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_11).clone();
                         let __compact_effect_17: crate::types::SchnorrSignature =
                             (__compact_effect_9).clone();
                         let __compact_effect_18: runtime::JubjubPoint = __compact_effect_15;
-                        let (frame, __compact_effect_57): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_19: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_16).clone();
                             let __compact_effect_20: crate::types::SchnorrSignature =
@@ -4875,7 +4924,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -4891,7 +4939,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -4923,15 +4970,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            frame
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        frame
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    frame
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -4940,15 +4983,17 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                frame
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertMapMutationDefined(__compact_effect_1)?;
             let __compact_effect_67: crate::types::MapMutation = crate::types::MapMutation::Update;
             let __compact_effect_68: bool = __compact_effect_1 == __compact_effect_67;
-            let (frame, __compact_effect_92): (_, ()) = if __compact_effect_68 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_68 {
                 let __compact_effect_69: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_70): (_, bool) =
                     crate::ledger_slots::schnorrJubjubVerificationMethods
@@ -4958,18 +5003,19 @@ pub mod ledger_contract {
                         "Verification method does not exist".to_owned(),
                     ));
                 }
-                let __compact_effect_71: () = ();
                 let __compact_effect_72: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_remove(frame, (__compact_effect_72).clone())?;
-                let __compact_effect_73: () = ();
-                let __compact_effect_74: () = ();
-                (frame, __compact_effect_74)
+                frame
             } else {
                 let __compact_effect_75: crate::types::MapMutation =
                     crate::types::MapMutation::Insert;
                 let __compact_effect_76: bool = __compact_effect_1 == __compact_effect_75;
-                let (frame, __compact_effect_90): (_, ()) = if __compact_effect_76 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_effect_76 {
                     let __compact_effect_77: runtime::OpaqueString =
                         (__compact_effect_0.id).clone();
                     let (frame, __compact_effect_83): (_, bool) = {
@@ -5001,15 +5047,11 @@ pub mod ledger_contract {
                             "Verification method already exists".to_owned(),
                         ));
                     }
-                    let __compact_effect_87: () = ();
-                    let __compact_effect_88: () = ();
-                    (frame, __compact_effect_88)
+                    frame
                 } else {
-                    let __compact_effect_89: () = ();
-                    (frame, __compact_effect_89)
+                    frame
                 };
-                let __compact_effect_91: () = ();
-                (frame, __compact_effect_91)
+                frame
             };
             let __compact_effect_93: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::schnorrJubjubVerificationMethods.record_insert(
@@ -5017,18 +5059,19 @@ pub mod ledger_contract {
                 (__compact_effect_93).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_94: () = ();
-            let (frame, __compact_effect_102): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_95: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_95).value() as u16)?;
-                let __compact_effect_96: () = ();
                 let __compact_effect_97: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_97).value() as u16)?;
-                let __compact_effect_98: () = ();
                 let (frame, __compact_effect_99): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -5040,12 +5083,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_99)?;
-                let __compact_effect_100: () = ();
-                let __compact_effect_101: () = ();
-                (frame, __compact_effect_101)
+                frame
             };
-            let __compact_effect_103: () = ();
-            Ok(frame.finish(__compact_effect_103))
+            Ok(frame.finish(()))
         }
         pub fn removeSchnorrJubjubVerificationMethod<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -5067,14 +5107,22 @@ pub mod ledger_contract {
                     __compact_effect_2,
                     (__compact_effect_0).clone(),
                 )?;
-            let (frame, __compact_effect_64): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_2;
                 let __compact_effect_7: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_4).clone();
-                let (frame, __compact_effect_60): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_8: crate::types::SchnorrSignature =
                         (__compact_effect_5).clone();
                     let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
@@ -5093,16 +5141,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_58): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_15: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_16: crate::types::SchnorrSignature =
                             (__compact_effect_8).clone();
                         let __compact_effect_17: runtime::JubjubPoint = __compact_effect_14;
-                        let (frame, __compact_effect_56): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_18: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_15).clone();
                             let __compact_effect_19: crate::types::SchnorrSignature =
@@ -5169,7 +5224,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -5185,7 +5239,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -5217,15 +5270,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            frame
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        frame
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    frame
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -5234,9 +5283,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                frame
             };
             let (frame, __compact_effect_65): (_, bool) =
                 crate::ledger_slots::schnorrJubjubVerificationMethods
@@ -5246,8 +5293,11 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_66: () = ();
-            let (frame, __compact_effect_94): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_67: runtime::OpaqueString = (__compact_effect_0).clone();
                 let (frame, __compact_effect_68): (_, bool) =
                     crate::ledger_slots::authenticationRelation
@@ -5264,7 +5314,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in authenticationRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_72: () = ();
                 let (frame, __compact_effect_73): (_, bool) =
                     crate::ledger_slots::assertionMethodRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5281,7 +5330,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_77: () = ();
                 let (frame, __compact_effect_78): (_, bool) =
                     crate::ledger_slots::keyAgreementRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5297,7 +5345,6 @@ pub mod ledger_contract {
                         "Verification method still referenced in keyAgreementRelation".to_owned(),
                     ));
                 }
-                let __compact_effect_82: () = ();
                 let (frame, __compact_effect_83): (_, bool) =
                     crate::ledger_slots::capabilityInvocationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5314,7 +5361,6 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_87: () = ();
                 let (frame, __compact_effect_88): (_, bool) =
                     crate::ledger_slots::capabilityDelegationRelation
                         .record_member(frame, (__compact_effect_67).clone())?;
@@ -5331,24 +5377,23 @@ pub mod ledger_contract {
                             .to_owned(),
                     ));
                 }
-                let __compact_effect_92: () = ();
-                let __compact_effect_93: () = ();
-                (frame, __compact_effect_93)
+                frame
             };
             let frame = crate::ledger_slots::schnorrJubjubVerificationMethods
                 .record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_95: () = ();
-            let (frame, __compact_effect_103): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_96: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_96).value() as u16)?;
-                let __compact_effect_97: () = ();
                 let __compact_effect_98: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_98).value() as u16)?;
-                let __compact_effect_99: () = ();
                 let (frame, __compact_effect_100): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -5360,12 +5405,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_100)?;
-                let __compact_effect_101: () = ();
-                let __compact_effect_102: () = ();
-                (frame, __compact_effect_102)
+                frame
             };
-            let __compact_effect_104: () = ();
-            Ok(frame.finish(__compact_effect_104))
+            Ok(frame.finish(()))
         }
         pub fn verifySchnorrJubjubDigestSignature<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -5386,7 +5428,6 @@ pub mod ledger_contract {
                     "Contract is not active".to_owned(),
                 ));
             }
-            let __compact_effect_4: () = ();
             let (frame, __compact_effect_5): (_, bool) =
                 crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_member(frame, (__compact_effect_0).clone())?;
@@ -5395,18 +5436,25 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             let (frame, __compact_effect_7): (_, crate::types::SchnorrJubjubVerificationMethod) =
                 crate::ledger_slots::schnorrJubjubVerificationMethods
                     .record_lookup(frame, (__compact_effect_0).clone())?;
             let __compact_effect_8: runtime::JubjubPoint = __compact_effect_7.publicKey;
-            let (frame, __compact_effect_52): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_9: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_1).clone();
                 let __compact_effect_10: crate::types::SchnorrSignature =
                     (__compact_effect_2).clone();
                 let __compact_effect_11: runtime::JubjubPoint = __compact_effect_8;
-                let (frame, __compact_effect_50): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_12: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_9).clone();
                     let __compact_effect_13: crate::types::SchnorrSignature =
@@ -5471,7 +5519,6 @@ pub mod ledger_contract {
                             "Schnorr quotient out of range".to_owned(),
                         ));
                     }
-                    let __compact_effect_29: () = ();
                     let __compact_effect_30: runtime::Field =
                         runtime::Field::from((__compact_effect_25).value());
                     let __compact_effect_31: runtime::Field =
@@ -5485,7 +5532,6 @@ pub mod ledger_contract {
                             "Invalid challenge reduction".to_owned(),
                         ));
                     }
-                    let __compact_effect_35: () = ();
                     let __compact_effect_36: runtime::Field = (__compact_effect_26).as_field();
                     let __compact_effect_37: runtime::JubjubPoint =
                         runtime::ec_mul_generator(__compact_effect_16)?;
@@ -5514,15 +5560,11 @@ pub mod ledger_contract {
                             "Invalid Jubjub Schnorr signature".to_owned(),
                         ));
                     }
-                    let __compact_effect_48: () = ();
-                    let __compact_effect_49: () = ();
-                    (frame, __compact_effect_49)
+                    frame
                 };
-                let __compact_effect_51: () = ();
-                (frame, __compact_effect_51)
+                frame
             };
-            let __compact_effect_53: () = ();
-            Ok(frame.finish(__compact_effect_53))
+            Ok(frame.finish(()))
         }
         pub fn setVerificationMethodRelation<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -5550,14 +5592,22 @@ pub mod ledger_contract {
                     (__compact_effect_1).clone(),
                     __compact_effect_2,
                 )?;
-            let (frame, __compact_effect_66): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_7: crate::types::SchnorrSignature =
                     (__compact_effect_3).clone();
                 let __compact_effect_8: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_4;
                 let __compact_effect_9: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_6).clone();
-                let (frame, __compact_effect_62): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_10: crate::types::SchnorrSignature =
                         (__compact_effect_7).clone();
                     let __compact_effect_11: runtime::BoundedUint<18446744073709551615> =
@@ -5576,16 +5626,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_15: () = ();
                     let (frame, __compact_effect_16): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_60): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_17: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_12).clone();
                         let __compact_effect_18: crate::types::SchnorrSignature =
                             (__compact_effect_10).clone();
                         let __compact_effect_19: runtime::JubjubPoint = __compact_effect_16;
-                        let (frame, __compact_effect_58): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_20: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_17).clone();
                             let __compact_effect_21: crate::types::SchnorrSignature =
@@ -5652,7 +5709,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_37: () = ();
                             let __compact_effect_38: runtime::Field =
                                 runtime::Field::from((__compact_effect_33).value());
                             let __compact_effect_39: runtime::Field =
@@ -5668,7 +5724,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_43: () = ();
                             let __compact_effect_44: runtime::Field =
                                 (__compact_effect_34).as_field();
                             let __compact_effect_45: runtime::JubjubPoint =
@@ -5700,15 +5755,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_56: () = ();
-                            let __compact_effect_57: () = ();
-                            (frame, __compact_effect_57)
+                            frame
                         };
-                        let __compact_effect_59: () = ();
-                        (frame, __compact_effect_59)
+                        frame
                     };
-                    let __compact_effect_61: () = ();
-                    (frame, __compact_effect_61)
+                    frame
                 };
                 let (frame, __compact_effect_63): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -5717,9 +5768,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_64: () = ();
-                let __compact_effect_65: () = ();
-                (frame, __compact_effect_65)
+                frame
             };
             let __compact_effect_67: () =
                 crate::pure_circuits::assertSetMutationDefined(__compact_effect_2)?;
@@ -5744,7 +5793,6 @@ pub mod ledger_contract {
                     "Verification method does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_74: () = ();
             let __compact_effect_75: crate::types::VerificationMethodRelation =
                 crate::types::VerificationMethodRelation::Undefined;
             let __compact_effect_76: bool = __compact_effect_0 != __compact_effect_75;
@@ -5753,7 +5801,6 @@ pub mod ledger_contract {
                     "Verification relation must be defined".to_owned(),
                 ));
             }
-            let __compact_effect_77: () = ();
             let (frame, __compact_effect_101): (_, bool) = {
                 let __compact_effect_78: crate::types::VerificationMethodRelation =
                     __compact_effect_0;
@@ -5821,7 +5868,11 @@ pub mod ledger_contract {
             };
             let __compact_effect_102: crate::types::SetMutation = crate::types::SetMutation::Insert;
             let __compact_effect_103: bool = __compact_effect_2 == __compact_effect_102;
-            let (frame, __compact_effect_217): (_, ()) = if __compact_effect_103 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_103 {
                 let (frame, __compact_effect_106): (_, bool) = if __compact_effect_101 {
                     let __compact_effect_104: bool = false;
                     (frame, __compact_effect_104)
@@ -5834,15 +5885,22 @@ pub mod ledger_contract {
                         "Verification method relation already exists".to_owned(),
                     ));
                 }
-                let __compact_effect_107: () = ();
-                let (frame, __compact_effect_140): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_108: crate::types::VerificationMethodRelation =
                         __compact_effect_0;
                     let __compact_effect_109: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_110: crate::types::VerificationMethodRelation =
                         crate::types::VerificationMethodRelation::KeyAgreement;
                     let __compact_effect_111: bool = __compact_effect_108 == __compact_effect_110;
-                    let (frame, __compact_effect_138): (_, ()) = if __compact_effect_111 {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_effect_111 {
                         let (frame, __compact_effect_112): (_, bool) =
                             crate::ledger_slots::verificationMethods
                                 .record_member(frame, (__compact_effect_109).clone())?;
@@ -5851,7 +5909,6 @@ pub mod ledger_contract {
                                 "KeyAgreement requires an agreement verification method".to_owned(),
                             ));
                         }
-                        let __compact_effect_113: () = ();
                         let (frame, __compact_effect_114): (_, crate::types::VerificationMethod) =
                             crate::ledger_slots::verificationMethods
                                 .record_lookup(frame, (__compact_effect_109).clone())?;
@@ -5868,15 +5925,17 @@ pub mod ledger_contract {
                                 "KeyAgreement requires an X25519 verification method".to_owned(),
                             ));
                         }
-                        let __compact_effect_119: () = ();
-                        let __compact_effect_120: () = ();
-                        (frame, __compact_effect_120)
+                        frame
                     } else {
                         let __compact_effect_121: bool =
                             crate::pure_circuits::isSigningVerificationMethodRelation(
                                 __compact_effect_108,
                             )?;
-                        let (frame, __compact_effect_136): (_, ()) = if __compact_effect_121 {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = if __compact_effect_121 {
                             let (frame, __compact_effect_122): (_, bool) =
                                 crate::ledger_slots::verificationMethods
                                     .record_member(frame, (__compact_effect_109).clone())?;
@@ -5914,115 +5973,122 @@ pub mod ledger_contract {
                                     ),
                                 );
                             }
-                            let __compact_effect_133: () = ();
-                            let __compact_effect_134: () = ();
-                            (frame, __compact_effect_134)
+                            frame
                         } else {
-                            let __compact_effect_135: () = ();
-                            (frame, __compact_effect_135)
+                            frame
                         };
-                        let __compact_effect_137: () = ();
-                        (frame, __compact_effect_137)
+                        frame
                     };
-                    let __compact_effect_139: () = ();
-                    (frame, __compact_effect_139)
+                    frame
                 };
-                let (frame, __compact_effect_174): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_141: crate::types::VerificationMethodRelation =
                         __compact_effect_0;
                     let __compact_effect_142: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_143: crate::types::VerificationMethodRelation =
                         crate::types::VerificationMethodRelation::Authentication;
                     let __compact_effect_144: bool = __compact_effect_141 == __compact_effect_143;
-                    let (frame, __compact_effect_172): (_, ()) = if __compact_effect_144 {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = if __compact_effect_144 {
                         let frame = crate::ledger_slots::authenticationRelation
                             .record_insert(frame, (__compact_effect_142).clone())?;
-                        let __compact_effect_145: () = ();
-                        let __compact_effect_146: () = ();
-                        (frame, __compact_effect_146)
+                        frame
                     } else {
                         let __compact_effect_147: crate::types::VerificationMethodRelation =
                             crate::types::VerificationMethodRelation::AssertionMethod;
                         let __compact_effect_148: bool =
                             __compact_effect_141 == __compact_effect_147;
-                        let (frame, __compact_effect_170): (_, ()) = if __compact_effect_148 {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = if __compact_effect_148 {
                             let frame = crate::ledger_slots::assertionMethodRelation
                                 .record_insert(frame, (__compact_effect_142).clone())?;
-                            let __compact_effect_149: () = ();
-                            let __compact_effect_150: () = ();
-                            (frame, __compact_effect_150)
+                            frame
                         } else {
                             let __compact_effect_151: crate::types::VerificationMethodRelation =
                                 crate::types::VerificationMethodRelation::KeyAgreement;
                             let __compact_effect_152: bool =
                                 __compact_effect_141 == __compact_effect_151;
-                            let (frame, __compact_effect_168): (_, ()) = if __compact_effect_152 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_152 {
                                 let frame = crate::ledger_slots::keyAgreementRelation
                                     .record_insert(frame, (__compact_effect_142).clone())?;
-                                let __compact_effect_153: () = ();
-                                let __compact_effect_154: () = ();
-                                (frame, __compact_effect_154)
+                                frame
                             } else {
                                 let __compact_effect_155: crate::types::VerificationMethodRelation =
                                     crate::types::VerificationMethodRelation::CapabilityInvocation;
                                 let __compact_effect_156: bool =
                                     __compact_effect_141 == __compact_effect_155;
-                                let (frame, __compact_effect_166): (_, ()) = if __compact_effect_156
-                                {
+                                #[allow(
+                                    clippy::let_and_return,
+                                    reason = "uniform Unit frames preserve ordered recording steps"
+                                )]
+                                let frame = if __compact_effect_156 {
                                     let frame =
                                         crate::ledger_slots::capabilityInvocationRelation
                                             .record_insert(frame, (__compact_effect_142).clone())?;
-                                    let __compact_effect_157: () = ();
-                                    let __compact_effect_158: () = ();
-                                    (frame, __compact_effect_158)
+                                    frame
                                 } else {
                                     let __compact_effect_159: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityDelegation;
                                     let __compact_effect_160: bool =
                                         __compact_effect_141 == __compact_effect_159;
-                                    let (frame, __compact_effect_164): (_, ()) =
-                                        if __compact_effect_160 {
-                                            let frame =
-                                                crate::ledger_slots::capabilityDelegationRelation
-                                                    .record_insert(
+                                    #[allow(
+                                        clippy::let_and_return,
+                                        reason = "uniform Unit frames preserve ordered recording steps"
+                                    )]
+                                    let frame = if __compact_effect_160 {
+                                        let frame =
+                                            crate::ledger_slots::capabilityDelegationRelation
+                                                .record_insert(
                                                     frame,
                                                     (__compact_effect_142).clone(),
                                                 )?;
-                                            let __compact_effect_161: () = ();
-                                            let __compact_effect_162: () = ();
-                                            (frame, __compact_effect_162)
-                                        } else {
-                                            let __compact_effect_163: () = ();
-                                            (frame, __compact_effect_163)
-                                        };
-                                    let __compact_effect_165: () = ();
-                                    (frame, __compact_effect_165)
+                                        frame
+                                    } else {
+                                        frame
+                                    };
+                                    frame
                                 };
-                                let __compact_effect_167: () = ();
-                                (frame, __compact_effect_167)
+                                frame
                             };
-                            let __compact_effect_169: () = ();
-                            (frame, __compact_effect_169)
+                            frame
                         };
-                        let __compact_effect_171: () = ();
-                        (frame, __compact_effect_171)
+                        frame
                     };
-                    let __compact_effect_173: () = ();
-                    (frame, __compact_effect_173)
+                    frame
                 };
-                let __compact_effect_175: () = ();
-                (frame, __compact_effect_175)
+                frame
             } else {
                 let __compact_effect_176: crate::types::SetMutation =
                     crate::types::SetMutation::Remove;
                 let __compact_effect_177: bool = __compact_effect_2 == __compact_effect_176;
-                let (frame, __compact_effect_215): (_, ()) = if __compact_effect_177 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_effect_177 {
                     if !__compact_effect_101 {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Verification method relation does not exist".to_owned(),
                         ));
                     }
-                    let __compact_effect_178: () = ();
-                    let (frame, __compact_effect_212): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_179: crate::types::VerificationMethodRelation =
                             __compact_effect_0;
                         let __compact_effect_180: runtime::OpaqueString =
@@ -6031,100 +6097,104 @@ pub mod ledger_contract {
                             crate::types::VerificationMethodRelation::Authentication;
                         let __compact_effect_182: bool =
                             __compact_effect_179 == __compact_effect_181;
-                        let (frame, __compact_effect_210): (_, ()) = if __compact_effect_182 {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = if __compact_effect_182 {
                             let frame = crate::ledger_slots::authenticationRelation
                                 .record_remove(frame, (__compact_effect_180).clone())?;
-                            let __compact_effect_183: () = ();
-                            let __compact_effect_184: () = ();
-                            (frame, __compact_effect_184)
+                            frame
                         } else {
                             let __compact_effect_185: crate::types::VerificationMethodRelation =
                                 crate::types::VerificationMethodRelation::AssertionMethod;
                             let __compact_effect_186: bool =
                                 __compact_effect_179 == __compact_effect_185;
-                            let (frame, __compact_effect_208): (_, ()) = if __compact_effect_186 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_186 {
                                 let frame = crate::ledger_slots::assertionMethodRelation
                                     .record_remove(frame, (__compact_effect_180).clone())?;
-                                let __compact_effect_187: () = ();
-                                let __compact_effect_188: () = ();
-                                (frame, __compact_effect_188)
+                                frame
                             } else {
                                 let __compact_effect_189: crate::types::VerificationMethodRelation =
                                     crate::types::VerificationMethodRelation::KeyAgreement;
                                 let __compact_effect_190: bool =
                                     __compact_effect_179 == __compact_effect_189;
-                                let (frame, __compact_effect_206): (_, ()) = if __compact_effect_190
-                                {
+                                #[allow(
+                                    clippy::let_and_return,
+                                    reason = "uniform Unit frames preserve ordered recording steps"
+                                )]
+                                let frame = if __compact_effect_190 {
                                     let frame = crate::ledger_slots::keyAgreementRelation
                                         .record_remove(frame, (__compact_effect_180).clone())?;
-                                    let __compact_effect_191: () = ();
-                                    let __compact_effect_192: () = ();
-                                    (frame, __compact_effect_192)
+                                    frame
                                 } else {
                                     let __compact_effect_193: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityInvocation;
                                     let __compact_effect_194: bool =
                                         __compact_effect_179 == __compact_effect_193;
-                                    let (frame, __compact_effect_204): (_, ()) =
-                                        if __compact_effect_194 {
+                                    #[allow(
+                                        clippy::let_and_return,
+                                        reason = "uniform Unit frames preserve ordered recording steps"
+                                    )]
+                                    let frame = if __compact_effect_194 {
+                                        let frame =
+                                            crate::ledger_slots::capabilityInvocationRelation
+                                                .record_remove(
+                                                    frame,
+                                                    (__compact_effect_180).clone(),
+                                                )?;
+                                        frame
+                                    } else {
+                                        let __compact_effect_197: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityDelegation;
+                                        let __compact_effect_198: bool =
+                                            __compact_effect_179 == __compact_effect_197;
+                                        #[allow(
+                                            clippy::let_and_return,
+                                            reason = "uniform Unit frames preserve ordered recording steps"
+                                        )]
+                                        let frame = if __compact_effect_198 {
                                             let frame =
-                                                crate::ledger_slots::capabilityInvocationRelation
+                                                crate::ledger_slots::capabilityDelegationRelation
                                                     .record_remove(
                                                     frame,
                                                     (__compact_effect_180).clone(),
                                                 )?;
-                                            let __compact_effect_195: () = ();
-                                            let __compact_effect_196: () = ();
-                                            (frame, __compact_effect_196)
+                                            frame
                                         } else {
-                                            let __compact_effect_197: crate::types::VerificationMethodRelation = crate::types::VerificationMethodRelation::CapabilityDelegation;
-                                            let __compact_effect_198: bool =
-                                                __compact_effect_179 == __compact_effect_197;
-                                            let (frame, __compact_effect_202): (_, ()) =
-                                                if __compact_effect_198 {
-                                                    let frame = crate::ledger_slots::capabilityDelegationRelation
-                                                .record_remove(frame, (__compact_effect_180).clone())?;
-                                                    let __compact_effect_199: () = ();
-                                                    let __compact_effect_200: () = ();
-                                                    (frame, __compact_effect_200)
-                                                } else {
-                                                    let __compact_effect_201: () = ();
-                                                    (frame, __compact_effect_201)
-                                                };
-                                            let __compact_effect_203: () = ();
-                                            (frame, __compact_effect_203)
+                                            frame
                                         };
-                                    let __compact_effect_205: () = ();
-                                    (frame, __compact_effect_205)
+                                        frame
+                                    };
+                                    frame
                                 };
-                                let __compact_effect_207: () = ();
-                                (frame, __compact_effect_207)
+                                frame
                             };
-                            let __compact_effect_209: () = ();
-                            (frame, __compact_effect_209)
+                            frame
                         };
-                        let __compact_effect_211: () = ();
-                        (frame, __compact_effect_211)
+                        frame
                     };
-                    let __compact_effect_213: () = ();
-                    (frame, __compact_effect_213)
+                    frame
                 } else {
-                    let __compact_effect_214: () = ();
-                    (frame, __compact_effect_214)
+                    frame
                 };
-                let __compact_effect_216: () = ();
-                (frame, __compact_effect_216)
+                frame
             };
-            let (frame, __compact_effect_225): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_218: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_218).value() as u16)?;
-                let __compact_effect_219: () = ();
                 let __compact_effect_220: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_220).value() as u16)?;
-                let __compact_effect_221: () = ();
                 let (frame, __compact_effect_222): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6136,12 +6206,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_222)?;
-                let __compact_effect_223: () = ();
-                let __compact_effect_224: () = ();
-                (frame, __compact_effect_224)
+                frame
             };
-            let __compact_effect_226: () = ();
-            Ok(frame.finish(__compact_effect_226))
+            Ok(frame.finish(()))
         }
         pub fn setService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -6166,14 +6233,22 @@ pub mod ledger_contract {
                     (__compact_effect_0).clone(),
                     __compact_effect_1,
                 )?;
-            let (frame, __compact_effect_65): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_6: crate::types::SchnorrSignature =
                     (__compact_effect_2).clone();
                 let __compact_effect_7: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
                 let __compact_effect_8: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_5).clone();
-                let (frame, __compact_effect_61): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_9: crate::types::SchnorrSignature =
                         (__compact_effect_6).clone();
                     let __compact_effect_10: runtime::BoundedUint<18446744073709551615> =
@@ -6192,16 +6267,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_59): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_16: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_11).clone();
                         let __compact_effect_17: crate::types::SchnorrSignature =
                             (__compact_effect_9).clone();
                         let __compact_effect_18: runtime::JubjubPoint = __compact_effect_15;
-                        let (frame, __compact_effect_57): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_19: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_16).clone();
                             let __compact_effect_20: crate::types::SchnorrSignature =
@@ -6268,7 +6350,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_36: () = ();
                             let __compact_effect_37: runtime::Field =
                                 runtime::Field::from((__compact_effect_32).value());
                             let __compact_effect_38: runtime::Field =
@@ -6284,7 +6365,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_42: () = ();
                             let __compact_effect_43: runtime::Field =
                                 (__compact_effect_33).as_field();
                             let __compact_effect_44: runtime::JubjubPoint =
@@ -6316,15 +6396,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_55: () = ();
-                            let __compact_effect_56: () = ();
-                            (frame, __compact_effect_56)
+                            frame
                         };
-                        let __compact_effect_58: () = ();
-                        (frame, __compact_effect_58)
+                        frame
                     };
-                    let __compact_effect_60: () = ();
-                    (frame, __compact_effect_60)
+                    frame
                 };
                 let (frame, __compact_effect_62): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -6333,15 +6409,17 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_63: () = ();
-                let __compact_effect_64: () = ();
-                (frame, __compact_effect_64)
+                frame
             };
             let __compact_effect_66: () =
                 crate::pure_circuits::assertMapMutationDefined(__compact_effect_1)?;
             let __compact_effect_67: crate::types::MapMutation = crate::types::MapMutation::Update;
             let __compact_effect_68: bool = __compact_effect_1 == __compact_effect_67;
-            let (frame, __compact_effect_87): (_, ()) = if __compact_effect_68 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_68 {
                 let __compact_effect_69: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_70): (_, bool) = crate::ledger_slots::services
                     .record_member(frame, (__compact_effect_69).clone())?;
@@ -6350,18 +6428,19 @@ pub mod ledger_contract {
                         "Service with a given id does not exist".to_owned(),
                     ));
                 }
-                let __compact_effect_71: () = ();
                 let __compact_effect_72: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
                     .record_remove(frame, (__compact_effect_72).clone())?;
-                let __compact_effect_73: () = ();
-                let __compact_effect_74: () = ();
-                (frame, __compact_effect_74)
+                frame
             } else {
                 let __compact_effect_75: crate::types::MapMutation =
                     crate::types::MapMutation::Insert;
                 let __compact_effect_76: bool = __compact_effect_1 == __compact_effect_75;
-                let (frame, __compact_effect_85): (_, ()) = if __compact_effect_76 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_effect_76 {
                     let __compact_effect_77: runtime::OpaqueString =
                         (__compact_effect_0.id).clone();
                     let (frame, __compact_effect_78): (_, bool) = crate::ledger_slots::services
@@ -6378,15 +6457,11 @@ pub mod ledger_contract {
                             "Service with a given id already exists".to_owned(),
                         ));
                     }
-                    let __compact_effect_82: () = ();
-                    let __compact_effect_83: () = ();
-                    (frame, __compact_effect_83)
+                    frame
                 } else {
-                    let __compact_effect_84: () = ();
-                    (frame, __compact_effect_84)
+                    frame
                 };
-                let __compact_effect_86: () = ();
-                (frame, __compact_effect_86)
+                frame
             };
             let __compact_effect_88: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::services.record_insert(
@@ -6394,18 +6469,19 @@ pub mod ledger_contract {
                 (__compact_effect_88).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_89: () = ();
-            let (frame, __compact_effect_97): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_90: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_90).value() as u16)?;
-                let __compact_effect_91: () = ();
                 let __compact_effect_92: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_92).value() as u16)?;
-                let __compact_effect_93: () = ();
                 let (frame, __compact_effect_94): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6417,12 +6493,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_94)?;
-                let __compact_effect_95: () = ();
-                let __compact_effect_96: () = ();
-                (frame, __compact_effect_96)
+                frame
             };
-            let __compact_effect_98: () = ();
-            Ok(frame.finish(__compact_effect_98))
+            Ok(frame.finish(()))
         }
         pub fn removeService<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -6444,14 +6517,22 @@ pub mod ledger_contract {
                     __compact_effect_2,
                     (__compact_effect_0).clone(),
                 )?;
-            let (frame, __compact_effect_64): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: crate::types::SchnorrSignature =
                     (__compact_effect_1).clone();
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_2;
                 let __compact_effect_7: runtime::FixedVector<runtime::Field, 4> =
                     (__compact_effect_4).clone();
-                let (frame, __compact_effect_60): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_8: crate::types::SchnorrSignature =
                         (__compact_effect_5).clone();
                     let __compact_effect_9: runtime::BoundedUint<18446744073709551615> =
@@ -6470,16 +6551,23 @@ pub mod ledger_contract {
                             "Controller authorization version is stale".to_owned(),
                         ));
                     }
-                    let __compact_effect_13: () = ();
                     let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                         crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                    let (frame, __compact_effect_58): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_15: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_16: crate::types::SchnorrSignature =
                             (__compact_effect_8).clone();
                         let __compact_effect_17: runtime::JubjubPoint = __compact_effect_14;
-                        let (frame, __compact_effect_56): (_, ()) = {
+                        #[allow(
+                            clippy::let_and_return,
+                            reason = "uniform Unit frames preserve ordered recording steps"
+                        )]
+                        let frame = {
                             let __compact_effect_18: runtime::FixedVector<runtime::Field, 4> =
                                 (__compact_effect_15).clone();
                             let __compact_effect_19: crate::types::SchnorrSignature =
@@ -6546,7 +6634,6 @@ pub mod ledger_contract {
                                     "Schnorr quotient out of range".to_owned(),
                                 ));
                             }
-                            let __compact_effect_35: () = ();
                             let __compact_effect_36: runtime::Field =
                                 runtime::Field::from((__compact_effect_31).value());
                             let __compact_effect_37: runtime::Field =
@@ -6562,7 +6649,6 @@ pub mod ledger_contract {
                                     "Invalid challenge reduction".to_owned(),
                                 ));
                             }
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: runtime::Field =
                                 (__compact_effect_32).as_field();
                             let __compact_effect_43: runtime::JubjubPoint =
@@ -6594,15 +6680,11 @@ pub mod ledger_contract {
                                     "Invalid Jubjub Schnorr signature".to_owned(),
                                 ));
                             }
-                            let __compact_effect_54: () = ();
-                            let __compact_effect_55: () = ();
-                            (frame, __compact_effect_55)
+                            frame
                         };
-                        let __compact_effect_57: () = ();
-                        (frame, __compact_effect_57)
+                        frame
                     };
-                    let __compact_effect_59: () = ();
-                    (frame, __compact_effect_59)
+                    frame
                 };
                 let (frame, __compact_effect_61): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -6611,9 +6693,7 @@ pub mod ledger_contract {
                         "Contract is not active".to_owned(),
                     ));
                 }
-                let __compact_effect_62: () = ();
-                let __compact_effect_63: () = ();
-                (frame, __compact_effect_63)
+                frame
             };
             let (frame, __compact_effect_65): (_, bool) =
                 crate::ledger_slots::services.record_member(frame, (__compact_effect_0).clone())?;
@@ -6622,21 +6702,21 @@ pub mod ledger_contract {
                     "Service with a given id does not exist".to_owned(),
                 ));
             }
-            let __compact_effect_66: () = ();
             let frame =
                 crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_67: () = ();
-            let (frame, __compact_effect_75): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_68: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_68).value() as u16)?;
-                let __compact_effect_69: () = ();
                 let __compact_effect_70: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_70).value() as u16)?;
-                let __compact_effect_71: () = ();
                 let (frame, __compact_effect_72): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6648,12 +6728,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_72)?;
-                let __compact_effect_73: () = ();
-                let __compact_effect_74: () = ();
-                (frame, __compact_effect_74)
+                frame
             };
-            let __compact_effect_76: () = ();
-            Ok(frame.finish(__compact_effect_76))
+            Ok(frame.finish(()))
         }
         pub fn deactivate<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -6672,7 +6749,11 @@ pub mod ledger_contract {
                     (__compact_effect_2).clone(),
                     __compact_effect_1,
                 )?;
-            let (frame, __compact_effect_56): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_4: crate::types::SchnorrSignature =
                     (__compact_effect_0).clone();
                 let __compact_effect_5: runtime::BoundedUint<18446744073709551615> =
@@ -6691,16 +6772,23 @@ pub mod ledger_contract {
                         "Controller authorization version is stale".to_owned(),
                     ));
                 }
-                let __compact_effect_9: () = ();
                 let (frame, __compact_effect_10): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controllerPublicKey.record_read(frame)?;
-                let (frame, __compact_effect_54): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_11: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_6).clone();
                     let __compact_effect_12: crate::types::SchnorrSignature =
                         (__compact_effect_4).clone();
                     let __compact_effect_13: runtime::JubjubPoint = __compact_effect_10;
-                    let (frame, __compact_effect_52): (_, ()) = {
+                    #[allow(
+                        clippy::let_and_return,
+                        reason = "uniform Unit frames preserve ordered recording steps"
+                    )]
+                    let frame = {
                         let __compact_effect_14: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_11).clone();
                         let __compact_effect_15: crate::types::SchnorrSignature =
@@ -6765,7 +6853,6 @@ pub mod ledger_contract {
                                 "Schnorr quotient out of range".to_owned(),
                             ));
                         }
-                        let __compact_effect_31: () = ();
                         let __compact_effect_32: runtime::Field =
                             runtime::Field::from((__compact_effect_27).value());
                         let __compact_effect_33: runtime::Field =
@@ -6779,7 +6866,6 @@ pub mod ledger_contract {
                                 "Invalid challenge reduction".to_owned(),
                             ));
                         }
-                        let __compact_effect_37: () = ();
                         let __compact_effect_38: runtime::Field = (__compact_effect_28).as_field();
                         let __compact_effect_39: runtime::JubjubPoint =
                             runtime::ec_mul_generator(__compact_effect_18)?;
@@ -6809,15 +6895,11 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        let __compact_effect_50: () = ();
-                        let __compact_effect_51: () = ();
-                        (frame, __compact_effect_51)
+                        frame
                     };
-                    let __compact_effect_53: () = ();
-                    (frame, __compact_effect_53)
+                    frame
                 };
-                let __compact_effect_55: () = ();
-                (frame, __compact_effect_55)
+                frame
             };
             let (frame, __compact_effect_57): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -6826,25 +6908,24 @@ pub mod ledger_contract {
                     "DID is already inactive".to_owned(),
                 ));
             }
-            let __compact_effect_58: () = ();
             let __compact_effect_59: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_59)?;
-            let __compact_effect_60: () = ();
             let __compact_effect_61: bool = true;
             let frame =
                 crate::ledger_slots::deactivated.record_write(frame, __compact_effect_61)?;
-            let __compact_effect_62: () = ();
-            let (frame, __compact_effect_70): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_63: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::operationCount
                     .record_increment(frame, (__compact_effect_63).value() as u16)?;
-                let __compact_effect_64: () = ();
                 let __compact_effect_65: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
                     .record_increment(frame, (__compact_effect_65).value() as u16)?;
-                let __compact_effect_66: () = ();
                 let (frame, __compact_effect_67): (_, runtime::BoundedUint<18446744073709551615>) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.currentTimestamp(context.witness_context_with(
@@ -6856,12 +6937,9 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_67)?;
-                let __compact_effect_68: () = ();
-                let __compact_effect_69: () = ();
-                (frame, __compact_effect_69)
+                frame
             };
-            let __compact_effect_71: () = ();
-            Ok(frame.finish(__compact_effect_71))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

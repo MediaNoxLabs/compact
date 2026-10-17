@@ -1,3 +1,18 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Consume existing reviewed Rust replacements without changing TS evidence.
 
 Only two Rust provenance digest slots may differ. The complete fresh capture
@@ -15,15 +30,15 @@ SUPPORT = 'tests-rust-backend/support/reviewed_capture.rs'
 SUPPORT_SHA256 = '482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b'
 # Pins to existing reviewed contracts, not new behavior baselines.
 REVIEWED_BINDINGS = {
-    'tests-rust-backend/did-point-digest-reducer': '42e3242b9b7d3bec1c42df794e5bf0bc2e0db81c6357fca93b3cd8ee4cca2cad',
-    'tests-rust-backend/did-point-guard-reducer': 'd5bd4072b3173a5e6fc397d5b18b1403f746a4058287c93f21bbeaa7305f348b',
-    'tests-rust-backend/did-alias-set-reducer': '9d7d6fa232d32ee23abae81ca6f1727c7c273b0b93a43d74bcaefab3c40f6b4b',
-    'tests-rust-backend/did-alias-digest-reducer': 'eb22bdf44fb0a6990f04a0de711f9b9fc9a8eb613e9b3429cb167951f45d2c5c',
-    'tests-rust-backend/did-alias-guard-reducer': '35b9e2125072b4925fd9182bc1ef04430243ef83e3f3c99daaa4a73f24b25829',
-    'tests-rust-backend/did-service-map-reducer': '1b7d6902bbbb488ee7a16d3b0a4eb6a874b9990b48fcddae9237f03018ee8c04',
-    'tests-rust-backend/did-point-map-reducer': 'da38606d1d0eb87d90e068f9824bcb5175fc126905011adeb52cd4c50269eec9',
-    'tests-rust-backend/did-nested-map-reducer': 'e866df9b7a3c2a9a39b517564d901abd62461299494b778eed9dabd05410c365',
-    'tests-rust-backend/did-enum-map-reducer': 'ffe1969f11db3c614197c8d8856cf60e0cc2edfee091c92a520ecf2ab6da3a1e',
+    'tests-rust-backend/did-point-digest-reducer': 'f8906ffef49d2af680092d2e45f4d298a8a07e5d1992f5c5a1e530dd3890c4cc',
+    'tests-rust-backend/did-point-guard-reducer': '5c3ad5665c0690996039f46437e940cddf81b06a8e7902d22755da2fbbfc382c',
+    'tests-rust-backend/did-alias-set-reducer': 'f4550568001c8b8f0c51fefd18ad98808835cc0136799f5e19f98c2d70b38fa7',
+    'tests-rust-backend/did-alias-digest-reducer': '1cd3b80b4f5615c6862c45250e44025dd1f465f41d2486992898688c21e4668f',
+    'tests-rust-backend/did-alias-guard-reducer': 'b773e8092feb3beb5bc4ad9b9eafc8c82672edac5247576549911dc108638f1b',
+    'tests-rust-backend/did-service-map-reducer': '34233e4398155012a7a82e60a5f4a4dae87b3dc9b229ac8a5a2f4fb2e55e8a0c',
+    'tests-rust-backend/did-point-map-reducer': '9e5fd65a2e1d831bac104b30c91634f9818220c04ecdcaf0cea59877cf27519d',
+    'tests-rust-backend/did-nested-map-reducer': '9d509d6a0b99b2709de131ce4ac4c46fe444ed089d2a04222d6c4d186a344de6',
+    'tests-rust-backend/did-enum-map-reducer': '2a41e2e0b65affde505a072b8d7d064ac9e322b55aa00e9dec3474c97de30008',
 }
 
 

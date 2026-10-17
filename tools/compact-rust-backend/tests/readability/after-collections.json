@@ -1,0 +1,179 @@
+{
+  "baseline_revision": "ffe3010ddd08e13b20b48116f3aabc0c2ae6865f",
+  "corpus_sha256": "bc244464022b6eca4ef32e0f8179d5566a24ab063c7f156c47206603352b7a0b",
+  "files": [
+    {
+      "declared_function_signatures_sha256": "b7b0fca67398ad1dcf6a55c6f67288ab660da31777eb7f8609e7e365ea890ebf",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 0,
+        "internal_identifier_occurrences": 0,
+        "lines": 30,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 0,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 1
+      },
+      "name": "field-add",
+      "path": "tests-rust-backend/field-add/lib.rs",
+      "source_sha256": "c95007e4848a2d80d2f17adfce9c6cd537c0c9c024b4389c5295dc94a213753c"
+    },
+    {
+      "declared_function_signatures_sha256": "a46234088c4132015a281e4877ed374db75b94982020f3833bf5b6c120b4081a",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 3,
+        "internal_identifier_occurrences": 8,
+        "lines": 206,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 18,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 10
+      },
+      "name": "bounded-uint-oracle",
+      "path": "tests-rust-backend/bounded-uint-oracle/lib.rs",
+      "source_sha256": "59cc4f2814723353abefd92026515e1ae4e4895f5afc828be64fcb782d9f2740"
+    },
+    {
+      "declared_function_signatures_sha256": "b51595738d59bc65f2c79507730f55077500d36892b7c625b57c55bf3674ad16",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 6,
+        "internal_identifier_occurrences": 16,
+        "lines": 184,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 24,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 7
+      },
+      "name": "let-return-oracle",
+      "path": "tests-rust-backend/let-return-oracle/lib.rs",
+      "source_sha256": "790972389f616dedbfb741cc0a5823f6cb17b5e9cac0ce34a221f5b159479224"
+    },
+    {
+      "declared_function_signatures_sha256": "fa4f33e8654ee0c2866782a8baa19c8fd83fd247928107b429a06c3b15441b08",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 15,
+        "internal_identifier_occurrences": 81,
+        "lines": 616,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 25,
+        "maximum_block_depth": 3,
+        "single_expression_blocks": 28
+      },
+      "name": "witness-cell-write",
+      "path": "tests-rust-backend/witness-cell-write/lib.rs",
+      "source_sha256": "1261ee44e56e8da28db672bd9da3e261e8dae22a4ba7736004ee638457231e2c"
+    },
+    {
+      "declared_function_signatures_sha256": "00dba0cea6198c3e7f53b2c1ed2f9b8d9ff99c2acdc1696f499a9a37c108f250",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 8,
+        "internal_identifier_occurrences": 68,
+        "lines": 711,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 20,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 23
+      },
+      "name": "map-boolean-field",
+      "path": "tests-rust-backend/map-boolean-field/lib.rs",
+      "source_sha256": "828c7a6d0b4e1982fd45a146e83f2584d139d4978212a18f850c27205e28bc5b"
+    },
+    {
+      "declared_function_signatures_sha256": "2d17742fd285e26d7a6843bc33b428a5d5bc38d306ffdd30167a221a6397266a",
+      "metrics": {
+        "clone_calls": 0,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 2,
+        "internal_identifier_occurrences": 4,
+        "lines": 162,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 18,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 7
+      },
+      "name": "nested-map-oracle",
+      "path": "tests-rust-backend/nested-map-oracle/lib.rs",
+      "source_sha256": "27d564f3361517c08aef874e0e6aa5da31a06f3833b79fd79dc69a9990779529"
+    },
+    {
+      "declared_function_signatures_sha256": "324a9303a2e06b9dd078f7753635ec44f4b74ea045544254b890ff2948a412cb",
+      "metrics": {
+        "clone_calls": 13,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 17,
+        "internal_identifier_occurrences": 52,
+        "lines": 515,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 28,
+        "maximum_block_depth": 4,
+        "single_expression_blocks": 21
+      },
+      "name": "merkle-path-verify",
+      "path": "tests-rust-backend/merkle-path-verify/lib.rs",
+      "source_sha256": "833107fed8089cdc0a6e6382280f33675f003707a87a0f184fc83bf4f8c7ae71"
+    },
+    {
+      "declared_function_signatures_sha256": "d153fac1890f8963288f2a2071f93427da36f3ad2bebebba1cdd29cb63497d71",
+      "metrics": {
+        "clone_calls": 24,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 19,
+        "internal_identifier_occurrences": 80,
+        "lines": 429,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 27,
+        "maximum_block_depth": 2,
+        "single_expression_blocks": 11
+      },
+      "name": "shielded-receive-oracle",
+      "path": "tools/compact-rust-backend/tests/generated-snapshots/examples/rust_backend/shielded_receive_oracle.rs",
+      "source_sha256": "683c66b78e1b7264eb8279aaaa23bf2129b19883ab31168a0b01c4752ba04234"
+    },
+    {
+      "declared_function_signatures_sha256": "c9fc0d6f308e3312d550de398dfdfcd05393a3c6a078812b7dc2f8dcc0f0b44a",
+      "metrics": {
+        "clone_calls": 37,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 33,
+        "internal_identifier_occurrences": 107,
+        "lines": 482,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 28,
+        "maximum_block_depth": 4,
+        "single_expression_blocks": 14
+      },
+      "name": "did-point-map-reducer",
+      "path": "tests-rust-backend/did-point-map-reducer/lib.rs",
+      "source_sha256": "2c1a8b5676a72373594a8d637d1485a1597b6fbc047c0b39199b2687091b601a"
+    },
+    {
+      "declared_function_signatures_sha256": "a9c9568116696a7e3d91379d5cfb0a61f888a686def21df37b8a009f0c77a085",
+      "metrics": {
+        "clone_calls": 4,
+        "collect_calls": 0,
+        "distinct_internal_identifiers": 3,
+        "internal_identifier_occurrences": 18,
+        "lines": 389,
+        "literal_unit_bindings": 0,
+        "longest_internal_identifier": 18,
+        "maximum_block_depth": 1,
+        "single_expression_blocks": 14
+      },
+      "name": "jubjub-cell",
+      "path": "tests-rust-backend/jubjub-cell/lib.rs",
+      "source_sha256": "92b8d1f819ea30fde5ccad79bcf569e99408c8e0a53c71e5f463d1cb5dcd0a05"
+    }
+  ],
+  "schema": 1,
+  "scope": "Ten retained generated Rust outputs; finite readability sample, not language coverage",
+  "syntax_scope": "syn AST without macro expansion; clone/collect/block counts are not redundancy proofs"
+}

@@ -36,7 +36,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn require_enabled(enabled: bool) -> Result<(), runtime::CompactError> {
         if !(enabled) {
             return Err(runtime::CompactError::AssertionFailed(
@@ -58,7 +58,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -275,7 +275,11 @@ pub mod ledger_contract {
             let __compact_effect_1: bool = __compact_param_1;
             let __compact_effect_2: bool = __compact_param_2;
             let __compact_effect_3: () = crate::pure_circuits::require_enabled(__compact_effect_1)?;
-            let (frame, __compact_effect_22): (_, ()) = if __compact_effect_2 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_4): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.first(context.witness_context_with(super::LedgerView {
@@ -288,15 +292,16 @@ pub mod ledger_contract {
                         "first denied".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
-                let (frame, __compact_effect_9): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_6: runtime::BoundedUint<65535> =
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::calls
                         .record_increment(frame, (__compact_effect_6).value() as u16)?;
-                    let __compact_effect_7: () = ();
-                    let __compact_effect_8: () = ();
-                    (frame, __compact_effect_8)
+                    frame
                 };
                 let __compact_effect_10: crate::types::Entry = crate::types::Entry {
                     label: (__compact_effect_0).clone(),
@@ -306,7 +311,6 @@ pub mod ledger_contract {
                     (__compact_effect_0).clone(),
                     (__compact_effect_10).clone(),
                 )?;
-                let __compact_effect_11: () = ();
                 let (frame, __compact_effect_12): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.second(context.witness_context_with(super::LedgerView {
@@ -319,27 +323,24 @@ pub mod ledger_contract {
                         "second denied".to_owned(),
                     ));
                 }
-                let __compact_effect_13: () = ();
-                let (frame, __compact_effect_17): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_14: runtime::BoundedUint<65535> =
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::calls
                         .record_increment(frame, (__compact_effect_14).value() as u16)?;
-                    let __compact_effect_15: () = ();
-                    let __compact_effect_16: () = ();
-                    (frame, __compact_effect_16)
+                    frame
                 };
                 let __compact_effect_18: bool = true;
                 let frame = crate::ledger_slots::done.record_write(frame, __compact_effect_18)?;
-                let __compact_effect_19: () = ();
-                let __compact_effect_20: () = ();
-                (frame, __compact_effect_20)
+                frame
             } else {
-                let __compact_effect_21: () = ();
-                (frame, __compact_effect_21)
+                frame
             };
-            let __compact_effect_23: () = ();
-            Ok(frame.finish(__compact_effect_23))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

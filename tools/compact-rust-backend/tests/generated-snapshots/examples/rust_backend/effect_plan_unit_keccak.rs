@@ -36,7 +36,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -47,7 +47,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -279,7 +279,11 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
-            let (frame, __compact_effect_9): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_1: runtime::FixedBytes<32> = __compact_effect_0;
                 let __compact_effect_2: runtime::FixedBytes<32> =
                     runtime::keccak256(__compact_effect_1);
@@ -296,7 +300,6 @@ pub mod ledger_contract {
                         "hash mismatch".to_owned(),
                     ));
                 }
-                let __compact_effect_5: () = ();
                 let (frame, __compact_effect_6): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.authorized(context.witness_context_with(super::LedgerView {
@@ -309,15 +312,11 @@ pub mod ledger_contract {
                         "not authorized".to_owned(),
                     ));
                 }
-                let __compact_effect_7: () = ();
-                let __compact_effect_8: () = ();
-                (frame, __compact_effect_8)
+                frame
             };
             let __compact_effect_10: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_10)?;
-            let __compact_effect_11: () = ();
-            let __compact_effect_12: () = ();
-            Ok(frame.finish(__compact_effect_12))
+            Ok(frame.finish(()))
         }
         pub fn lazy_close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -329,8 +328,16 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
             let __compact_effect_1: bool = __compact_param_1;
-            let (frame, __compact_effect_15): (_, ()) = if __compact_effect_1 {
-                let (frame, __compact_effect_10): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_1 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_2: runtime::FixedBytes<32> = __compact_effect_0;
                     let __compact_effect_3: runtime::FixedBytes<32> =
                         runtime::keccak256(__compact_effect_2);
@@ -349,7 +356,6 @@ pub mod ledger_contract {
                             "hash mismatch".to_owned(),
                         ));
                     }
-                    let __compact_effect_6: () = ();
                     let (frame, __compact_effect_7): (_, bool) =
                         frame.try_witness_metered(|context, meter| {
                             witnesses.authorized(context.witness_context_with(super::LedgerView {
@@ -362,21 +368,15 @@ pub mod ledger_contract {
                             "not authorized".to_owned(),
                         ));
                     }
-                    let __compact_effect_8: () = ();
-                    let __compact_effect_9: () = ();
-                    (frame, __compact_effect_9)
+                    frame
                 };
                 let __compact_effect_11: bool = false;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_11)?;
-                let __compact_effect_12: () = ();
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                frame
             } else {
-                let __compact_effect_14: () = ();
-                (frame, __compact_effect_14)
+                frame
             };
-            let __compact_effect_16: () = ();
-            Ok(frame.finish(__compact_effect_16))
+            Ok(frame.finish(()))
         }
         pub fn digest<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -425,10 +425,8 @@ pub mod ledger_contract {
                     "not authorized".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let __compact_effect_8: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;
-            let __compact_effect_9: () = ();
             let __compact_effect_10: crate::types::Digest = crate::types::Digest {
                 value: __compact_effect_5,
             };

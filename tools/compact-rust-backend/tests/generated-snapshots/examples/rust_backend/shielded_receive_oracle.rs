@@ -95,7 +95,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn right(
         value: crate::types::ContractAddress,
     ) -> Result<crate::types::Either, runtime::CompactError> {
@@ -127,7 +127,7 @@ pub mod pure_circuits {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -248,7 +248,11 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::ShieldedCoinInfo = __compact_param_0;
-            let (frame, __compact_effect_8): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_1: crate::types::ShieldedCoinInfo =
                     (__compact_effect_0).clone();
                 let (frame, __compact_effect_address_2) = frame.kernel_self()?;
@@ -270,7 +274,6 @@ pub mod ledger_contract {
                         __compact_effect_3.right.bytes,
                     ),
                 )?;
-                let __compact_effect_4: () = ();
                 let __compact_effect_5: runtime::FixedBytes<32> =
                     crate::pure_circuits::coinCommitment(
                         (__compact_effect_1).clone(),
@@ -281,12 +284,9 @@ pub mod ledger_contract {
                         (__compact_effect_5).into_array(),
                     )),
                 ))?;
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                frame
             };
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         pub fn accept_renamed<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -295,7 +295,11 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::ShieldedCoinInfo = __compact_param_0;
-            let (frame, __compact_effect_8): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_1: crate::types::ShieldedCoinInfo =
                     (__compact_effect_0).clone();
                 let (frame, __compact_effect_address_2) = frame.kernel_self()?;
@@ -317,7 +321,6 @@ pub mod ledger_contract {
                         __compact_effect_3.right.bytes,
                     ),
                 )?;
-                let __compact_effect_4: () = ();
                 let __compact_effect_5: runtime::FixedBytes<32> =
                     crate::pure_circuits::coinCommitment(
                         (__compact_effect_1).clone(),
@@ -328,12 +331,9 @@ pub mod ledger_contract {
                         (__compact_effect_5).into_array(),
                     )),
                 ))?;
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                frame
             };
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

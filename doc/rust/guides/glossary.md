@@ -26,10 +26,10 @@ In this implementation, **runtime ABI** is our project-specific compatibility ma
 On the current recording-effect branch, generated code contains:
 
 ```rust
-const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 ```
 
-The current generator expects ABI 52 and the selected runtime must advertise ABI 52. A mismatch fails compilation. For example, when generated code requires a new incompatible representation or runtime interface, changing this marker prevents accidental use with an older runtime. Matching numbers are a compatibility guard; they do not authenticate sources or independently prove correctness.
+The current generator expects ABI 53 and the selected runtime must advertise ABI 53. A mismatch fails compilation. For example, when generated code requires a new incompatible representation or runtime interface, changing this marker prevents accidental use with an older runtime. Matching numbers are a compatibility guard; they do not authenticate sources or independently prove correctness.
 
 ### Versions with different jobs
 
@@ -37,7 +37,7 @@ The current generator expects ABI 52 and the selected runtime must advertise ABI
 |---|---|---|
 | Milestone | Engineering delivery and acceptance scope | 0.4.0 in progress; earlier receipts retain 0.3.0 |
 | Backend/runtime/macros package version | Cargo package release identity | 0.2.0 |
-| Runtime ABI | Generated-source/runtime compatibility agreement | 52 |
+| Runtime ABI | Generated-source/runtime compatibility agreement | 53 |
 | Private IR schema | Format between the compiler frontend and Rust backend | 20 |
 | Capability schema | Format describing generated API/proof availability | 3 |
 | Ledger version | Underlying native ledger implementation | 8.1.3 |

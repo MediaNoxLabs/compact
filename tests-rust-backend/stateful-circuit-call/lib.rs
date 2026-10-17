@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -31,7 +31,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -158,9 +158,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::count
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok((frame, __compact_effect_2))
+            Ok((frame, ()))
         }
         fn __compact_recorded_body_add<Private>(
             frame: runtime::recording::RecordingFrame<Private>,
@@ -170,9 +168,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
             let frame = crate::ledger_slots::count
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok((frame, __compact_effect_2))
+            Ok((frame, ()))
         }
         pub fn bump<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -187,26 +183,29 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_effect_3): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_0: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_0).value() as u16)?;
-                let __compact_effect_1: () = ();
-                let __compact_effect_2: () = ();
-                (frame, __compact_effect_2)
+                frame
             };
-            let (frame, __compact_effect_7): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                frame
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         pub fn add<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -224,24 +223,27 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
-            let (frame, __compact_effect_4): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_1: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_1).value() as u16)?;
-                let __compact_effect_2: () = ();
-                let __compact_effect_3: () = ();
-                (frame, __compact_effect_3)
+                frame
             };
-            let (frame, __compact_effect_8): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_5: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_5).value() as u16)?;
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                frame
             };
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -199,7 +199,6 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::BoundedUint<65535> = __compact_param_1;
             let frame = crate::ledger_slots::round
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_2: () = ();
             let (frame, __compact_effect_raw_3) = crate::ledger_slots::peer.record_read(frame)?;
             let __compact_effect_3: runtime::BoundedUint<18446744073709551615> =
                 <runtime::BoundedUint<18446744073709551615>>::new(__compact_effect_raw_3 as u128)?;
@@ -208,7 +207,6 @@ pub mod ledger_contract {
             let (frame, __compact_effect_13): (_, runtime::Field) = if __compact_effect_4 {
                 let frame = crate::ledger_slots::round
                     .record_decrement(frame, (__compact_effect_1).value() as u16)?;
-                let __compact_effect_5: () = ();
                 let (frame, __compact_effect_raw_6) =
                     crate::ledger_slots::round.record_read(frame)?;
                 let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
@@ -218,11 +216,9 @@ pub mod ledger_contract {
                 let __compact_effect_7: runtime::Field =
                     runtime::Field::from((__compact_effect_6).value());
                 let frame = crate::ledger_slots::outcome.record_write(frame, __compact_effect_7)?;
-                let __compact_effect_8: () = ();
                 (frame, __compact_effect_7)
             } else {
                 let frame = crate::ledger_slots::round.record_reset(frame)?;
-                let __compact_effect_9: () = ();
                 let (frame, __compact_effect_raw_10) =
                     crate::ledger_slots::round.record_read(frame)?;
                 let __compact_effect_10: runtime::BoundedUint<18446744073709551615> =
@@ -233,7 +229,6 @@ pub mod ledger_contract {
                     runtime::Field::from((__compact_effect_10).value());
                 let frame =
                     crate::ledger_slots::outcome.record_write(frame, __compact_effect_11)?;
-                let __compact_effect_12: () = ();
                 (frame, __compact_effect_11)
             };
             Ok(frame.finish(__compact_effect_13))

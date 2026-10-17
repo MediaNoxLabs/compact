@@ -95,7 +95,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn right(
         value: crate::types::ContractAddress,
     ) -> Result<crate::types::Either, runtime::CompactError> {
@@ -133,7 +133,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -303,7 +303,6 @@ pub mod ledger_contract {
             let __compact_effect_0: crate::types::ShieldedCoinInfo = __compact_param_0;
             let __compact_effect_1: bool = false;
             let frame = crate::ledger_slots::accepted.record_write(frame, __compact_effect_1)?;
-            let __compact_effect_2: () = ();
             let __compact_effect_3: runtime::BoundedUint<340282366920938463463374607431768211455> =
                 __compact_effect_0.value;
             let (frame, __compact_effect_4): (_, bool) =
@@ -316,8 +315,16 @@ pub mod ledger_contract {
                         __compact_effect_3,
                     )
                 })?;
-            let (frame, __compact_effect_17): (_, ()) = if __compact_effect_4 {
-                let (frame, __compact_effect_12): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_4 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_5: crate::types::ShieldedCoinInfo =
                         (__compact_effect_0).clone();
                     let (frame, __compact_effect_address_6) = frame.kernel_self()?;
@@ -341,7 +348,6 @@ pub mod ledger_contract {
                             __compact_effect_7.right.bytes,
                         ),
                     )?;
-                    let __compact_effect_8: () = ();
                     let __compact_effect_9: runtime::FixedBytes<32> =
                         crate::pure_circuits::coinCommitment(
                             (__compact_effect_5).clone(),
@@ -352,22 +358,16 @@ pub mod ledger_contract {
                             (__compact_effect_9).into_array(),
                         )),
                     ))?;
-                    let __compact_effect_10: () = ();
-                    let __compact_effect_11: () = ();
-                    (frame, __compact_effect_11)
+                    frame
                 };
                 let __compact_effect_13: bool = true;
                 let frame =
                     crate::ledger_slots::accepted.record_write(frame, __compact_effect_13)?;
-                let __compact_effect_14: () = ();
-                let __compact_effect_15: () = ();
-                (frame, __compact_effect_15)
+                frame
             } else {
-                let __compact_effect_16: () = ();
-                (frame, __compact_effect_16)
+                frame
             };
-            let __compact_effect_18: () = ();
-            Ok(frame.finish(__compact_effect_18))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

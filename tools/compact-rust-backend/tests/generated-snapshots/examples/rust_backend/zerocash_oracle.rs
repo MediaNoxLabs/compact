@@ -187,14 +187,14 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
                 let __compact_fold_source = ((path.clone()).path).clone();
-                let mut __compact_fold_accumulator = runtime::degrade_to_transient(
+                let __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
@@ -202,13 +202,10 @@ pub mod pure_circuits {
                         data: ((path.clone()).leaf).clone(),
                     }),
                 );
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::merkleTreePathEntryRoot(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                __compact_fold_source.into_array().into_iter().try_fold(
+                    __compact_fold_accumulator,
+                    crate::pure_circuits::merkleTreePathEntryRoot,
+                )?
             },
         })
     }
@@ -288,7 +285,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -670,10 +667,8 @@ pub mod ledger_contract {
                     "spend: Coin already spent".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
             let frame = crate::ledger_slots::nullifiers
                 .record_insert(frame, (__compact_effect_3).clone())?;
-            let __compact_effect_9: () = ();
             let __compact_effect_10: crate::types::zk_public_key =
                 crate::pure_circuits::derive_zk_public_key((__compact_effect_2).clone())?;
             let __compact_effect_11: crate::types::commitment =
@@ -710,7 +705,6 @@ pub mod ledger_contract {
                     "spend: Illegal state: merkle path not recognized by public state".to_owned(),
                 ));
             }
-            let __compact_effect_19: () = ();
             let (frame, __compact_effect_20): (_, crate::types::coin_info) = frame
                 .try_witness_metered(|context, meter| {
                     witnesses.context_new_coin_info(context.witness_context_with(
@@ -728,7 +722,6 @@ pub mod ledger_contract {
                 )?;
             let frame = crate::ledger_slots::commitments
                 .record_insert(frame, (__compact_effect_22).clone())?;
-            let __compact_effect_23: () = ();
             let __compact_effect_24: runtime::OpaqueBytes = (__compact_effect_0.encryption).clone();
             let (frame, __compact_effect_25): (_, runtime::OpaqueBytes) = frame
                 .try_witness_metered_exact(|context, meter| {
@@ -743,7 +736,6 @@ pub mod ledger_contract {
                 })?;
             let frame = crate::ledger_slots::ciphertexts
                 .record_write(frame, (__compact_effect_25).clone())?;
-            let __compact_effect_26: () = ();
             let (frame, __compact_effect_27): (_, ()) =
                 frame.try_witness_metered(|context, meter| {
                     witnesses.private_remove_coin(
@@ -754,8 +746,7 @@ pub mod ledger_contract {
                         (__compact_effect_1).clone(),
                     )
                 })?;
-            let __compact_effect_28: () = ();
-            Ok(frame.finish(__compact_effect_28))
+            Ok(frame.finish(()))
         }
         pub fn zerocash_mint<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -798,9 +789,7 @@ pub mod ledger_contract {
                 )?;
             let frame = crate::ledger_slots::commitments
                 .record_insert(frame, (__compact_effect_3).clone())?;
-            let __compact_effect_4: () = ();
-            let __compact_effect_5: () = ();
-            Ok(frame.finish(__compact_effect_5))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

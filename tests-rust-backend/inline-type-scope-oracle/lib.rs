@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -34,7 +34,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -273,9 +273,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
             let frame = crate::ledger_slots::hashCell.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn checkScalarScope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -300,12 +298,9 @@ pub mod ledger_contract {
                     "scalar helper formal took the caller's vector type".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let frame =
                 crate::ledger_slots::fieldVec.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_8: () = ();
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         pub fn checkAggScope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -331,12 +326,9 @@ pub mod ledger_contract {
                     "aggregate helper formal took the caller's shorter vector type".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let frame =
                 crate::ledger_slots::fieldVec.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_8: () = ();
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         pub fn checkNoCollisionScope<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -360,12 +352,9 @@ pub mod ledger_contract {
                     "aggregate helper formal was not recovered".to_owned(),
                 ));
             }
-            let __compact_effect_6: () = ();
             let frame =
                 crate::ledger_slots::fieldVec.record_write(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_7: () = ();
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

@@ -125,7 +125,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub fn pure_snapshot(
         first: runtime::BoundedUint<18446744073709551615>,
         second: runtime::BoundedUint<18446744073709551615>,
@@ -153,7 +153,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -742,7 +742,6 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_address_6) = frame.kernel_self()?;
             let __compact_effect_6: crate::types::ContractAddress = crate::types::ContractAddress {
                 bytes: runtime::ledger::contract_address_bytes(&__compact_effect_address_6),
@@ -766,7 +765,7 @@ pub mod ledger_contract {
                 >(__compact_effect_8)?;
             let __compact_effect_10: crate::types::Planned = crate::types::Planned {
                 first: __compact_effect_4,
-                emitted: __compact_effect_5,
+                emitted: (),
                 address: (__compact_effect_6).clone(),
                 after: __compact_effect_9,
             };

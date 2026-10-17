@@ -84,7 +84,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -95,7 +95,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -554,7 +554,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_5): (_, runtime::OpaqueString) = if __compact_effect_1 {
                 let (frame, __compact_effect_4): (_, runtime::OpaqueString) = frame
                     .try_witness_metered_exact(|context, meter| {
@@ -581,7 +580,6 @@ pub mod ledger_contract {
             if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_9: () = ();
             let __compact_effect_10: runtime::Field = runtime::jubjub_point_x(__compact_effect_6);
             let __compact_effect_11: runtime::Field = runtime::jubjub_point_y(__compact_effect_6);
             let __compact_effect_12: crate::types::Hashes = crate::types::Hashes {
@@ -607,7 +605,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_5): (_, crate::types::Entry) = if __compact_effect_1 {
                 let (frame, __compact_effect_4): (_, crate::types::Entry) = frame
                     .try_witness_metered_exact(|context, meter| {
@@ -634,7 +631,6 @@ pub mod ledger_contract {
             if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_9: () = ();
             let __compact_effect_10: runtime::Field = runtime::jubjub_point_x(__compact_effect_6);
             let __compact_effect_11: runtime::Field = runtime::jubjub_point_y(__compact_effect_6);
             let __compact_effect_12: crate::types::Hashes = crate::types::Hashes {
@@ -660,7 +656,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_5): (_, crate::types::Nested) = if __compact_effect_1 {
                 let (frame, __compact_effect_4): (_, crate::types::Nested) = frame
                     .try_witness_metered_exact(|context, meter| {
@@ -687,7 +682,6 @@ pub mod ledger_contract {
             if !__compact_effect_8 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_9: () = ();
             let __compact_effect_10: runtime::Field = runtime::jubjub_point_x(__compact_effect_6);
             let __compact_effect_11: runtime::Field = runtime::jubjub_point_y(__compact_effect_6);
             let __compact_effect_12: crate::types::Hashes = crate::types::Hashes {
@@ -737,7 +731,6 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_2).value() as u16)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_5): (
                 _,
                 (
@@ -791,7 +784,6 @@ pub mod ledger_contract {
             if !__compact_effect_7 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_8: () = ();
             let __compact_effect_9: crate::types::Digest = crate::types::Digest {
                 value: __compact_effect_6,
             };
@@ -807,8 +799,11 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let __compact_effect_1: () = ();
-            let (frame, __compact_effect_8): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let (frame, __compact_effect_2): (_, runtime::OpaqueString) = frame
                     .try_witness_metered_exact(|context, meter| {
                         witnesses.text_value(context.witness_context_with(super::LedgerView {
@@ -830,9 +825,7 @@ pub mod ledger_contract {
                         "zero text hash".to_owned(),
                     ));
                 }
-                let __compact_effect_6: () = ();
-                let __compact_effect_7: () = ();
-                (frame, __compact_effect_7)
+                frame
             };
             let (frame, __compact_effect_9): (_, bool) =
                 frame.try_witness_metered(|context, meter| {
@@ -844,9 +837,7 @@ pub mod ledger_contract {
             if !__compact_effect_9 {
                 return Err(runtime::CompactError::AssertionFailed("denied".to_owned()));
             }
-            let __compact_effect_10: () = ();
-            let __compact_effect_11: () = ();
-            Ok(frame.finish(__compact_effect_11))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

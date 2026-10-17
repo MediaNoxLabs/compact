@@ -54,7 +54,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn defined(m: crate::types::Mutation) -> Result<(), runtime::CompactError> {
         if !(if m == crate::types::Mutation::Insert {
             true
@@ -79,7 +79,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -277,7 +277,11 @@ pub mod ledger_contract {
             let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
             let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Update;
             let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
-            let (frame, __compact_effect_23): (_, ()) = if __compact_effect_4 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_4 {
                 let __compact_effect_5: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_6): (_, bool) = crate::ledger_slots::services
                     .record_member(frame, (__compact_effect_5).clone())?;
@@ -286,17 +290,18 @@ pub mod ledger_contract {
                         "missing service".to_owned(),
                     ));
                 }
-                let __compact_effect_7: () = ();
                 let __compact_effect_8: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
                     .record_remove(frame, (__compact_effect_8).clone())?;
-                let __compact_effect_9: () = ();
-                let __compact_effect_10: () = ();
-                (frame, __compact_effect_10)
+                frame
             } else {
                 let __compact_effect_11: crate::types::Mutation = crate::types::Mutation::Insert;
                 let __compact_effect_12: bool = __compact_effect_1 == __compact_effect_11;
-                let (frame, __compact_effect_21): (_, ()) = if __compact_effect_12 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = if __compact_effect_12 {
                     let __compact_effect_13: runtime::OpaqueString =
                         (__compact_effect_0.id).clone();
                     let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::services
@@ -313,15 +318,11 @@ pub mod ledger_contract {
                             "duplicate service".to_owned(),
                         ));
                     }
-                    let __compact_effect_18: () = ();
-                    let __compact_effect_19: () = ();
-                    (frame, __compact_effect_19)
+                    frame
                 } else {
-                    let __compact_effect_20: () = ();
-                    (frame, __compact_effect_20)
+                    frame
                 };
-                let __compact_effect_22: () = ();
-                (frame, __compact_effect_22)
+                frame
             };
             let __compact_effect_24: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::services.record_insert(
@@ -329,18 +330,18 @@ pub mod ledger_contract {
                 (__compact_effect_24).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let __compact_effect_25: () = ();
-            let (frame, __compact_effect_29): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_26: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_26).value() as u16)?;
-                let __compact_effect_27: () = ();
-                let __compact_effect_28: () = ();
-                (frame, __compact_effect_28)
+                frame
             };
-            let __compact_effect_30: () = ();
-            Ok(frame.finish(__compact_effect_30))
+            Ok(frame.finish(()))
         }
         pub fn remove_service<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -356,21 +357,20 @@ pub mod ledger_contract {
                     "missing service".to_owned(),
                 ));
             }
-            let __compact_effect_2: () = ();
             let frame =
                 crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
-            let __compact_effect_3: () = ();
-            let (frame, __compact_effect_7): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                let __compact_effect_5: () = ();
-                let __compact_effect_6: () = ();
-                (frame, __compact_effect_6)
+                frame
             };
-            let __compact_effect_8: () = ();
-            Ok(frame.finish(__compact_effect_8))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

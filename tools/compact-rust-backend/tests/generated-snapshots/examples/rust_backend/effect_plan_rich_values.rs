@@ -66,7 +66,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn identity(
         value: crate::types::Envelope,
     ) -> Result<crate::types::Envelope, runtime::CompactError> {
@@ -87,7 +87,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -321,7 +321,6 @@ pub mod ledger_contract {
                     "tuple mismatch".to_owned(),
                 ));
             }
-            let __compact_effect_5: () = ();
             let __compact_effect_6: runtime::FixedBytes<3> =
                 runtime::FixedBytes::new([116u8, 97u8, 103u8]);
             let __compact_effect_7: crate::types::Inner = crate::types::Inner {
@@ -342,7 +341,6 @@ pub mod ledger_contract {
             };
             let frame =
                 crate::ledger_slots::stored.record_write(frame, (__compact_effect_11).clone())?;
-            let __compact_effect_12: () = ();
             let __compact_effect_13: crate::types::Inner = (__compact_effect_9.inner).clone();
             let __compact_effect_14: runtime::FixedBytes<3> = __compact_effect_13.tag;
             let __compact_effect_15: crate::types::Phase = __compact_effect_9.phase;
@@ -364,7 +362,6 @@ pub mod ledger_contract {
                 let __compact_effect_18: crate::types::Envelope = (__compact_effect_17).clone();
                 let frame = crate::ledger_slots::stored
                     .record_write(frame, (__compact_effect_18).clone())?;
-                let __compact_effect_19: () = ();
                 let (frame, __compact_effect_20): (_, crate::types::Envelope) =
                     crate::ledger_slots::stored.record_read(frame)?;
                 (frame, (__compact_effect_20).clone())
@@ -372,10 +369,8 @@ pub mod ledger_contract {
             let __compact_effect_22: crate::types::Inner = (__compact_effect_16.inner).clone();
             let __compact_effect_23: runtime::FixedBytes<3> = __compact_effect_22.tag;
             let frame = crate::ledger_slots::tag.record_write(frame, __compact_effect_23)?;
-            let __compact_effect_24: () = ();
             let __compact_effect_25: crate::types::Phase = __compact_effect_16.phase;
             let frame = crate::ledger_slots::phase.record_write(frame, __compact_effect_25)?;
-            let __compact_effect_26: () = ();
             let (frame, __compact_effect_27): (_, crate::types::Envelope) =
                 crate::ledger_slots::stored.record_read(frame)?;
             let __compact_effect_28: crate::types::Inner = (__compact_effect_27.inner).clone();

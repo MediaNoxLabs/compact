@@ -398,18 +398,6 @@ def check_output_serialization(compactc: str, directory: Path) -> list[str]:
 
 def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
     failures = []
-    source = directory / "pure-call.compact"
-    # The recorder admits only a typed two-Field pair hash. A three-Field
-    # vector remains a valid native call and a strict recording rejection.
-    source.write_text(
-        "import CompactStandardLibrary;\n"
-        "export ledger value: Field;\n"
-        "pure circuit sumVec(v: Vector<3, Field>): Field { "
-        "return transientHash<Vector<3, Field>>(v); }\n"
-        "export circuit write(input: Vector<3, Field>): [] { value = disclose(sumVec(input)); }\n"
-    )
-    output = directory / "pure-call-output"
-
     def compile_source(path: Path, destination: Path, strict: bool) -> subprocess.CompletedProcess[str]:
         command = [compactc, "--target", "rust", "--skip-zk"]
         if strict:
@@ -419,9 +407,58 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
             capture_output=True, text=True, check=False,
         )
 
+    # This former negative is now supported by the checked compiler. Retain the
+    # exact source as a positive control rather than deleting its coverage.
+    hash_source = directory / "pure-call.compact"
+    hash_source.write_text(
+        "import CompactStandardLibrary;\n"
+        "export ledger value: Field;\n"
+        "pure circuit sumVec(v: Vector<3, Field>): Field { "
+        "return transientHash<Vector<3, Field>>(v); }\n"
+        "export circuit write(input: Vector<3, Field>): [] { value = disclose(sumVec(input)); }\n"
+    )
+    hash_bytes = hash_source.read_bytes()
+    for strict in (False, True):
+        destination = directory / ("pure-call-strict-output" if strict else "pure-call-output")
+        accepted = compile_source(hash_source, destination, strict)
+        if accepted.returncode:
+            failures.append(f"supported Vector3 hash failed ({strict=}):\n{accepted.stderr}")
+            continue
+        try:
+            report_bytes = (destination / "contract/rust-capabilities.json").read_bytes()
+            report = json.loads(report_bytes)
+            manifest = json.loads((destination / "compiler/contract-manifest.json").read_bytes())
+            assert report["schema_version"] == 3
+            assert len(report["circuits"]) == 1
+            capability = report["circuits"][0]
+            assert {key: capability[key] for key in ("name", "source", "recorded", "observed_call")} == {
+                "name": "write",
+                "source": {"file": "pure-call.compact", "line": 4, "column": 1},
+                "recorded": True,
+                "observed_call": True,
+            }
+            assert capability["recording_status"] == "available"
+            assert "recording_unavailable" not in capability
+            assert "observed_call_unavailable" not in capability
+            assert manifest["contract"]["rust-capabilities.json"]["hash"] == hashlib.sha256(report_bytes).hexdigest()
+            assert hash_source.read_bytes() == hash_bytes
+        except (AssertionError, FileNotFoundError, KeyError, ValueError) as error:
+            failures.append(f"supported Vector3 hash report or manifest is wrong ({strict=}): {error}")
+
+    # Direct stateful Fold remains native-valid but is honestly refused by the
+    # checked recorder. A pure helper containing Fold has separate admission.
+    source = directory / "fold.compact"
+    source.write_text(
+        "import CompactStandardLibrary;\n"
+        "export ledger value: Field;\n"
+        "pure circuit add(acc: Field, x: Field): Field { return acc+x; }\n"
+        "export circuit write(input: Vector<3, Field>): [] { value = disclose(fold(add, 0, input)); }\n"
+    )
+    output = directory / "fold-output"
+
     default = compile_source(source, output, False)
     if default.returncode:
-        return [f"native-only pure call did not compile normally:\n{default.stderr}"]
+        return [*failures, f"native-only direct Fold did not compile normally:\n{default.stderr}"]
     report_path = output / "contract/rust-capabilities.json"
     manifest_path = output / "compiler/contract-manifest.json"
     try:
@@ -433,25 +470,26 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         capability = report["circuits"][0]
         assert {key: capability[key] for key in ("name", "source", "recorded", "observed_call")} == {
             "name": "write",
-            "source": {"file": "pure-call.compact", "line": 4, "column": 1},
+            "source": {"file": "fold.compact", "line": 4, "column": 1},
             "recorded": False,
             "observed_call": False,
         }
         assert capability["recording_unavailable"]["code"] == "unsupported_expression"
+        assert capability["recording_unavailable"]["ir_node"] == "Expr::VectorFoldCall"
         assert capability["recording_unavailable"]["path"] == "actions[0].bindings[0].value"
         assert capability["observed_call_unavailable"]["code"] == "recording_unavailable"
         assert manifest["contract"]["rust-capabilities.json"]["hash"] == hashlib.sha256(report_bytes).hexdigest()
     except (AssertionError, FileNotFoundError, KeyError, ValueError) as error:
-        failures.append(f"native-only pure-call report or manifest is wrong: {error}")
+        failures.append(f"native-only Fold report or manifest is wrong: {error}")
     before = snapshot(output)
     rejected = compile_source(source, output, True)
     if (rejected.returncode == 0
-            or "pure-call.compact line 4 char 1" not in rejected.stderr
+            or "fold.compact line 4 char 1" not in rejected.stderr
             or "unsupported_expression at actions[0].bindings[0].value" not in rejected.stderr):
         failures.append(f"strict rebuild did not reject at source:\n{rejected.stderr}")
     if snapshot(output) != before:
         failures.append("strict rebuild changed the prior native-only output")
-    fresh = directory / "pure-call-strict-output"
+    fresh = directory / "fold-strict-output"
     rejected = compile_source(source, fresh, True)
     if rejected.returncode == 0 or fresh.exists() or any(directory.glob(f".{fresh.name}.compactc-stage-*")):
         failures.append("strict fresh rejection published output or left staging debris")

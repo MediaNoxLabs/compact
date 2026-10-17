@@ -81,14 +81,14 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
                 let __compact_fold_source = ((path.clone()).path).clone();
-                let mut __compact_fold_accumulator = runtime::degrade_to_transient(
+                let __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
@@ -96,13 +96,10 @@ pub mod pure_circuits {
                         data: (path.clone()).leaf,
                     }),
                 );
-                for __compact_fold_item in __compact_fold_source.into_array() {
-                    __compact_fold_accumulator = crate::pure_circuits::merkleTreePathEntryRoot(
-                        __compact_fold_accumulator,
-                        __compact_fold_item,
-                    )?;
-                }
-                __compact_fold_accumulator
+                __compact_fold_source.into_array().into_iter().try_fold(
+                    __compact_fold_accumulator,
+                    crate::pure_circuits::merkleTreePathEntryRoot,
+                )?
             },
         })
     }
@@ -137,7 +134,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -285,9 +282,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<255> = __compact_param_0;
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_1: () = ();
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn replace<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -303,9 +298,7 @@ pub mod ledger_contract {
                 __compact_effect_0,
                 __compact_effect_1,
             )?;
-            let __compact_effect_2: () = ();
-            let __compact_effect_3: () = ();
-            Ok(frame.finish(__compact_effect_3))
+            Ok(frame.finish(()))
         }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,

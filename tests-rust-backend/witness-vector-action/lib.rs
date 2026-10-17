@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -245,9 +245,7 @@ pub mod ledger_contract {
                     )
                 })?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
-            let __compact_effect_5: () = ();
-            let __compact_effect_6: () = ();
-            Ok(frame.finish(__compact_effect_6))
+            Ok(frame.finish(()))
         }
         pub fn discardResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -288,9 +286,7 @@ pub mod ledger_contract {
             ])
             .expect("validated Compact Field literal");
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_5)?;
-            let __compact_effect_6: () = ();
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn reuseResult<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -326,7 +322,6 @@ pub mod ledger_contract {
                     )
                 })?;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_4)?;
-            let __compact_effect_5: () = ();
             let __compact_effect_6: runtime::Field = runtime::Field::from_le_bytes(&[
                 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -334,9 +329,7 @@ pub mod ledger_contract {
             .expect("validated Compact Field literal");
             let __compact_effect_7: runtime::Field = __compact_effect_4 + __compact_effect_6;
             let frame = crate::ledger_slots::stored.record_write(frame, __compact_effect_7)?;
-            let __compact_effect_8: () = ();
-            let __compact_effect_9: () = ();
-            Ok(frame.finish(__compact_effect_9))
+            Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;

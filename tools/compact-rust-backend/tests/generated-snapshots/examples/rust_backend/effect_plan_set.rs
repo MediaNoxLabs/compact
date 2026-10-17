@@ -57,7 +57,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn defaultKey() -> Result<crate::types::OwnedKey, runtime::CompactError> {
         Ok(<crate::types::OwnedKey as Default>::default())
     }
@@ -107,7 +107,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -555,7 +555,6 @@ pub mod ledger_contract {
             let (frame, __compact_effect_2): (_, bool) =
                 crate::ledger_slots::scalars.record_member(frame, __compact_effect_0)?;
             let frame = crate::ledger_slots::scalars.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_3: () = ();
             let (frame, __compact_effect_4): (_, bool) =
                 crate::ledger_slots::scalars.record_member(frame, __compact_effect_0)?;
             let (frame, __compact_effect_7): (_, crate::types::OwnedKey) = if __compact_effect_1 {
@@ -572,32 +571,30 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::OpaqueString = (__compact_effect_7.text).clone();
             let (frame, __compact_effect_10): (_, bool) =
                 crate::ledger_slots::names.record_member(frame, (__compact_effect_9).clone())?;
-            let (frame, __compact_effect_16): (_, ()) = if __compact_effect_1 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_1 {
                 let __compact_effect_11: crate::types::OwnedKey =
                     crate::pure_circuits::copyKey((__compact_effect_7).clone())?;
                 let frame = crate::ledger_slots::keys
                     .record_insert(frame, (__compact_effect_11).clone())?;
-                let __compact_effect_12: () = ();
                 let frame =
                     crate::ledger_slots::keys.record_insert(frame, (__compact_effect_7).clone())?;
-                let __compact_effect_13: () = ();
-                let __compact_effect_14: () = ();
-                (frame, __compact_effect_14)
+                frame
             } else {
-                let __compact_effect_15: () = ();
-                (frame, __compact_effect_15)
+                frame
             };
             let __compact_effect_17: runtime::OpaqueString = (__compact_effect_7.text).clone();
             let frame =
                 crate::ledger_slots::names.record_insert(frame, (__compact_effect_17).clone())?;
-            let __compact_effect_18: () = ();
             let (frame, __compact_effect_19): (_, bool) =
                 crate::ledger_slots::keys.record_member(frame, (__compact_effect_7).clone())?;
             let __compact_effect_20: runtime::OpaqueString = (__compact_effect_7.text).clone();
             let (frame, __compact_effect_21): (_, bool) =
                 crate::ledger_slots::names.record_member(frame, (__compact_effect_20).clone())?;
             let frame = crate::ledger_slots::outcome.record_write(frame, __compact_effect_0)?;
-            let __compact_effect_22: () = ();
             let (frame, __compact_effect_23): (_, runtime::Field) =
                 crate::ledger_slots::outcome.record_read(frame)?;
             let __compact_effect_24: crate::types::Receipt = crate::types::Receipt {
@@ -619,7 +616,6 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
             let frame = crate::ledger_slots::scalars.record_reset(frame)?;
-            let __compact_effect_1: () = ();
             let (frame, __compact_effect_2): (_, bool) =
                 crate::ledger_slots::scalars.record_is_empty(frame)?;
             if !__compact_effect_2 {
@@ -627,11 +623,8 @@ pub mod ledger_contract {
                     "reset must be empty".to_owned(),
                 ));
             }
-            let __compact_effect_3: () = ();
             let frame = crate::ledger_slots::scalars.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_4: () = ();
             let frame = crate::ledger_slots::scalars.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_5: () = ();
             let (frame, __compact_effect_set_size_6) =
                 crate::ledger_slots::scalars.record_size(frame)?;
             let __compact_effect_6: runtime::BoundedUint<18446744073709551615> =
@@ -646,11 +639,8 @@ pub mod ledger_contract {
                     "duplicate changes size".to_owned(),
                 ));
             }
-            let __compact_effect_9: () = ();
             let frame = crate::ledger_slots::scalars.record_remove(frame, __compact_effect_0)?;
-            let __compact_effect_10: () = ();
             let frame = crate::ledger_slots::scalars.record_remove(frame, __compact_effect_0)?;
-            let __compact_effect_11: () = ();
             let (frame, __compact_effect_12): (_, bool) =
                 crate::ledger_slots::scalars.record_is_empty(frame)?;
             if !__compact_effect_12 {
@@ -658,11 +648,8 @@ pub mod ledger_contract {
                     "removal must be empty".to_owned(),
                 ));
             }
-            let __compact_effect_13: () = ();
             let frame = crate::ledger_slots::scalars.record_insert(frame, __compact_effect_0)?;
-            let __compact_effect_14: () = ();
             let frame = crate::ledger_slots::scalars.record_reset(frame)?;
-            let __compact_effect_15: () = ();
             let (frame, __compact_effect_set_size_16) =
                 crate::ledger_slots::scalars.record_size(frame)?;
             let __compact_effect_16: runtime::BoundedUint<18446744073709551615> =
@@ -677,9 +664,7 @@ pub mod ledger_contract {
                     "final reset changes size".to_owned(),
                 ));
             }
-            let __compact_effect_19: () = ();
-            let __compact_effect_20: () = ();
-            Ok(frame.finish(__compact_effect_20))
+            Ok(frame.finish(()))
         }
         pub fn scalarSize<Private>(
             context: runtime::context::CircuitContext<Private>,

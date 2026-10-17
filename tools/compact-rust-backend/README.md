@@ -19,7 +19,7 @@ witness-only VM queries; the Rust result sums the observed query costs.
 
 The default recorder lowers supported typed operations and composition into a checked plan. Ordinary roots use the checked route; Effectful roots retain their earlier checked boundary. Unsupported operations return checked refusals; invalid plans are fatal. The former StartFunding and generic/profile fallback paths are test history. They do not accept rejected production plans. Profile names describe retained examples and tests, not formal algebraic theorems or production admission authority.
 
-Pure expressions use one shared semantic fold. `NativeSink` produces Rust syntax; `BodyCheckSink` checks the same body rules without constructing native syntax. Current runtime ABI is **52**, private IR **20**, finalized capability schema **3** and private origin transport **3**. Native ledger is **8.1.3**, pinned to official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`; generated consumers require Rust 1.89. See [current versions and retained receipts](../../doc/rust/guides/versions-and-targets.md).
+Pure expressions use one shared semantic fold. `NativeSink` produces Rust syntax; `BodyCheckSink` checks the same body rules without constructing native syntax. Current runtime ABI is **53**, private IR **20**, finalized capability schema **3** and private origin transport **3**. Native ledger is **8.1.3**, pinned to official revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`; generated consumers require Rust 1.89. See [current versions and retained receipts](../../doc/rust/guides/versions-and-targets.md).
 
 Read the [current extension and diagnostics guide](../../doc/rust/guides/checked-recording.md) and [capability and retirement book](../../doc/rust/recording-effect-algebra/capability-and-retirement-book.md). The following development checkpoints preserve their original support and ABI claims; their earlier fallback/profile descriptions are historical. Detailed historical acceptance follows the [evidence availability policy](../../doc/rust/recording-effect-algebra/evidence-availability.md).
 
@@ -604,7 +604,7 @@ key generation and proof execution:
 ```sh
 export MIDNIGHT_PP="${XDG_CACHE_HOME:-$HOME/.cache}/midnight/zk-params"
 cargo fetch --locked
-cargo run --locked --offline -p compact-rust-proof-smoke -- --prepare-proof-material
+cargo run --profile proof-checks --locked --offline -p compact-rust-proof-smoke -- --prepare-proof-material
 ```
 
 Preparation uses Midnight's data provider and the pinned upstream expected
@@ -626,6 +626,16 @@ binaries. Debug assertions, overflow checks and the full validation commands
 remain enabled. Local developer profiles and Apple CI retain their existing
 settings. Storage telemetry around the native gate records runner capacity and
 the target directory size.
+
+The main consumer/proof gate uses the `proof-checks` Cargo profile for its proof
+runner. It inherits dev settings, explicitly retains debug assertions and overflow
+checks, and optimizes external dependencies at level 3. Workspace code, ordinary
+workspace tests/Clippy and separate Forge qualification retain their existing
+profiles. This changes compilation, not the selected proofs or their assertions.
+Set `COMPACT_RUST_PROOF_PROFILE=dev` when running `check_compactc_target.py` for
+the original dev-profile qualification. Direct `cargo run` remains dev by default.
+Unknown profile overrides fail; no proof or test result is cached. Key-generation
+mode remains independent (`COMPACT_ZKIR_MODE=uncached` retains fresh keygen).
 
 ```sh
 cargo fmt --all -- --check

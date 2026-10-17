@@ -95,7 +95,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -107,7 +107,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -440,8 +440,7 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let __compact_effect_2: () = ();
-            Ok(frame.finish(__compact_effect_2))
+            Ok(frame.finish(()))
         }
         pub fn consume<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -458,8 +457,7 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let __compact_effect_1: () = ();
-            Ok(frame.finish(__compact_effect_1))
+            Ok(frame.finish(()))
         }
         pub fn flow<Private>(
             context: runtime::context::CircuitContext<Private>,
@@ -482,9 +480,16 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let __compact_effect_4: () = ();
-            let (frame, __compact_effect_14): (_, ()) = if __compact_effect_3 {
-                let (frame, __compact_effect_10): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_3 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_5: crate::types::ShieldedCoinInfo =
                         (__compact_effect_1).clone();
                     let __compact_effect_6: crate::types::Either = (__compact_effect_2).clone();
@@ -500,7 +505,6 @@ pub mod ledger_contract {
                             __compact_effect_6.right.bytes,
                         ),
                     )?;
-                    let __compact_effect_7: () = ();
                     let frame = frame.create_zswap_output(
                         runtime::ledger::coin_info_from_compact(
                             __compact_effect_5.nonce,
@@ -513,9 +517,7 @@ pub mod ledger_contract {
                             __compact_effect_6.right.bytes,
                         ),
                     )?;
-                    let __compact_effect_8: () = ();
-                    let __compact_effect_9: () = ();
-                    (frame, __compact_effect_9)
+                    frame
                 };
                 let frame = crate::ledger_slots::pot.record_write_coin(
                     frame,
@@ -530,15 +532,11 @@ pub mod ledger_contract {
                         __compact_effect_2.right.bytes,
                     ),
                 )?;
-                let __compact_effect_11: () = ();
-                let __compact_effect_12: () = ();
-                (frame, __compact_effect_12)
+                frame
             } else {
-                let __compact_effect_13: () = ();
-                (frame, __compact_effect_13)
+                frame
             };
-            let __compact_effect_15: () = ();
-            Ok(frame.finish(__compact_effect_15))
+            Ok(frame.finish(()))
         }
         pub fn witness_order<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -548,7 +546,11 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
-            let (frame, __compact_effect_6): (_, ()) = if __compact_effect_0 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_0 {
                 let (frame, __compact_effect_1): (_, crate::types::ShieldedCoinInfo) = frame
                     .try_witness_metered(|context, meter| {
                         witnesses.next_coin(context.witness_context_with(super::LedgerView {
@@ -575,15 +577,11 @@ pub mod ledger_contract {
                         __compact_effect_2.right.bytes,
                     ),
                 )?;
-                let __compact_effect_3: () = ();
-                let __compact_effect_4: () = ();
-                (frame, __compact_effect_4)
+                frame
             } else {
-                let __compact_effect_5: () = ();
-                (frame, __compact_effect_5)
+                frame
             };
-            let __compact_effect_7: () = ();
-            Ok(frame.finish(__compact_effect_7))
+            Ok(frame.finish(()))
         }
         pub fn read_coin<Private>(
             context: runtime::context::CircuitContext<Private>,

@@ -242,7 +242,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub(crate) fn __compact_function_some_474(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -524,7 +524,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -2359,12 +2359,15 @@ pub mod ledger_contract {
                     "The game already has two players".to_owned(),
                 ));
             }
-            let __compact_effect_11: () = ();
             let (frame, __compact_effect_12): (_, crate::types::State) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_effect_13: crate::types::State = crate::types::State::red_started;
             let __compact_effect_14: bool = __compact_effect_12 == __compact_effect_13;
-            let (frame, __compact_effect_28): (_, ()) = if __compact_effect_14 {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_14 {
                 let __compact_effect_15: runtime::BoundedUint<
                     340282366920938463463374607431768211455,
                 > = __compact_effect_1.value;
@@ -2390,12 +2393,9 @@ pub mod ledger_contract {
                         "Blue must match Reds wager".to_owned(),
                     ));
                 }
-                let __compact_effect_25: () = ();
-                let __compact_effect_26: () = ();
-                (frame, __compact_effect_26)
+                frame
             } else {
-                let __compact_effect_27: () = ();
-                (frame, __compact_effect_27)
+                frame
             };
             let __compact_effect_29: runtime::BoundedUint<340282366920938463463374607431768211455> =
                 __compact_effect_2.value;
@@ -2417,7 +2417,6 @@ pub mod ledger_contract {
                     "Invalid deposit".to_owned(),
                 ));
             }
-            let __compact_effect_37: () = ();
             let __compact_effect_38: crate::types::Board = crate::types::Board {
                 position: __compact_effect_0,
             };
@@ -2428,8 +2427,11 @@ pub mod ledger_contract {
                     "Initial board is not valid".to_owned(),
                 ));
             }
-            let __compact_effect_40: () = ();
-            let (frame, __compact_effect_48): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_41: crate::types::ShieldedCoinInfo =
                     (__compact_effect_1).clone();
                 let (frame, __compact_effect_address_42) = frame.kernel_self()?;
@@ -2453,7 +2455,6 @@ pub mod ledger_contract {
                         __compact_effect_43.right.bytes,
                     ),
                 )?;
-                let __compact_effect_44: () = ();
                 let __compact_effect_45: runtime::FixedBytes<32> =
                     crate::pure_circuits::coinCommitment(
                         (__compact_effect_41).clone(),
@@ -2464,11 +2465,13 @@ pub mod ledger_contract {
                         (__compact_effect_45).into_array(),
                     )),
                 ))?;
-                let __compact_effect_46: () = ();
-                let __compact_effect_47: () = ();
-                (frame, __compact_effect_47)
+                frame
             };
-            let (frame, __compact_effect_56): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = {
                 let __compact_effect_49: crate::types::ShieldedCoinInfo =
                     (__compact_effect_2).clone();
                 let (frame, __compact_effect_address_50) = frame.kernel_self()?;
@@ -2492,7 +2495,6 @@ pub mod ledger_contract {
                         __compact_effect_51.right.bytes,
                     ),
                 )?;
-                let __compact_effect_52: () = ();
                 let __compact_effect_53: runtime::FixedBytes<32> =
                     crate::pure_circuits::coinCommitment(
                         (__compact_effect_49).clone(),
@@ -2503,9 +2505,7 @@ pub mod ledger_contract {
                         (__compact_effect_53).into_array(),
                     )),
                 ))?;
-                let __compact_effect_54: () = ();
-                let __compact_effect_55: () = ();
-                (frame, __compact_effect_55)
+                frame
             };
             let (frame, __compact_effect_57): (_, runtime::FixedBytes<32>) = frame
                 .try_witness_metered(|context, meter| {
@@ -2552,7 +2552,6 @@ pub mod ledger_contract {
                         __compact_effect_64.right.bytes,
                     ),
                 )?;
-                let __compact_effect_65: () = ();
                 let (frame, __compact_effect_address_66) = frame.kernel_self()?;
                 let __compact_effect_66: crate::types::ContractAddress =
                     crate::types::ContractAddress {
@@ -2575,19 +2574,15 @@ pub mod ledger_contract {
                         __compact_effect_67.right.bytes,
                     ),
                 )?;
-                let __compact_effect_68: () = ();
                 let __compact_effect_69: runtime::FixedBytes<32> =
                     crate::pure_circuits::red_pk(__compact_effect_57)?;
                 let frame = crate::ledger_slots::red.record_write(frame, __compact_effect_69)?;
-                let __compact_effect_70: () = ();
                 let __compact_effect_71: crate::types::Commitment =
                     crate::pure_circuits::commit((__compact_effect_59).clone())?;
                 let frame = crate::ledger_slots::red_board
                     .record_write(frame, (__compact_effect_71).clone())?;
-                let __compact_effect_72: () = ();
                 let __compact_effect_73: crate::types::State = crate::types::State::red_started;
                 let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_73)?;
-                let __compact_effect_74: () = ();
                 let (frame, __compact_effect_75): (_, ()) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.local_set_board(
@@ -2630,7 +2625,6 @@ pub mod ledger_contract {
                             )
                             .qualify(__compact_effect_81.mt_index.value() as u64),
                         );
-                        let __compact_effect_84: () = ();
                         let __compact_effect_85: crate::types::ShieldedCoinInfo =
                             crate::pure_circuits::downcastQualifiedCoin(
                                 (__compact_effect_81).clone(),
@@ -2645,7 +2639,6 @@ pub mod ledger_contract {
                                 (__compact_effect_86).into_array(),
                             )),
                         ))?;
-                        let __compact_effect_87: () = ();
                         let frame = frame.create_zswap_input(
                             runtime::ledger::coin_info_from_compact(
                                 __compact_effect_82.nonce,
@@ -2654,7 +2647,6 @@ pub mod ledger_contract {
                             )
                             .qualify(__compact_effect_82.mt_index.value() as u64),
                         );
-                        let __compact_effect_88: () = ();
                         let __compact_effect_89: crate::types::ShieldedCoinInfo =
                             crate::pure_circuits::downcastQualifiedCoin(
                                 (__compact_effect_82).clone(),
@@ -2669,7 +2661,6 @@ pub mod ledger_contract {
                                 (__compact_effect_90).into_array(),
                             )),
                         ))?;
-                        let __compact_effect_91: () = ();
                         let __compact_effect_92: runtime::FixedBytes<32> =
                             __compact_effect_81.color;
                         let __compact_effect_93: runtime::FixedBytes<32> =
@@ -2680,7 +2671,6 @@ pub mod ledger_contract {
                                 "Can only merge coins of the same color".to_owned(),
                             ));
                         }
-                        let __compact_effect_95: () = ();
                         let __compact_effect_96: runtime::Field = runtime::Field::from_le_bytes(&[
                             109u8, 105u8, 100u8, 110u8, 105u8, 103u8, 104u8, 116u8, 58u8, 107u8,
                             101u8, 114u8, 110u8, 101u8, 108u8, 58u8, 110u8, 111u8, 110u8, 99u8,
@@ -2760,7 +2750,6 @@ pub mod ledger_contract {
                                 __compact_effect_110.right.bytes,
                             ),
                         )?;
-                        let __compact_effect_111: () = ();
                         let __compact_effect_112: crate::types::Either =
                             crate::pure_circuits::right((__compact_effect_83).clone())?;
                         let __compact_effect_113: runtime::FixedBytes<32> =
@@ -2773,14 +2762,12 @@ pub mod ledger_contract {
                                 (__compact_effect_113).into_array(),
                             )),
                         ))?;
-                        let __compact_effect_114: () = ();
                         let frame =
                             frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
                                 runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                                     (__compact_effect_113).into_array(),
                                 )),
                             ))?;
-                        let __compact_effect_115: () = ();
                         (frame, (__compact_effect_109).clone())
                     };
                     (frame, (__compact_effect_116).clone())
@@ -2807,7 +2794,6 @@ pub mod ledger_contract {
                         __compact_effect_119.right.bytes,
                     ),
                 )?;
-                let __compact_effect_120: () = ();
                 let (frame, __compact_effect_address_121) = frame.kernel_self()?;
                 let __compact_effect_121: crate::types::ContractAddress =
                     crate::types::ContractAddress {
@@ -2830,19 +2816,15 @@ pub mod ledger_contract {
                         __compact_effect_122.right.bytes,
                     ),
                 )?;
-                let __compact_effect_123: () = ();
                 let __compact_effect_124: runtime::FixedBytes<32> =
                     crate::pure_circuits::blue_pk(__compact_effect_57)?;
                 let frame = crate::ledger_slots::blue.record_write(frame, __compact_effect_124)?;
-                let __compact_effect_125: () = ();
                 let __compact_effect_126: crate::types::Commitment =
                     crate::pure_circuits::commit((__compact_effect_59).clone())?;
                 let frame = crate::ledger_slots::blue_board
                     .record_write(frame, (__compact_effect_126).clone())?;
-                let __compact_effect_127: () = ();
                 let __compact_effect_128: crate::types::State = crate::types::State::blue_started;
                 let frame = crate::ledger_slots::state.record_write(frame, __compact_effect_128)?;
-                let __compact_effect_129: () = ();
                 let (frame, __compact_effect_130): (_, ()) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.local_set_board(
@@ -2892,9 +2874,16 @@ pub mod ledger_contract {
                     "Not a player".to_owned(),
                 ));
             }
-            let __compact_effect_8: () = ();
-            let (frame, __compact_effect_57): (_, ()) = if __compact_effect_3 {
-                let (frame, __compact_effect_32): (_, ()) = {
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform Unit frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_effect_3 {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_9: runtime::Field = __compact_effect_0;
                     let (frame, __compact_effect_10): (_, runtime::FixedBytes<32>) = frame
                         .try_witness_metered(|context, meter| {
@@ -2921,7 +2910,6 @@ pub mod ledger_contract {
                             "Not player Red".to_owned(),
                         ));
                     }
-                    let __compact_effect_14: () = ();
                     let (frame, __compact_effect_15): (_, crate::types::Commitment) =
                         crate::ledger_slots::red_board.record_read(frame)?;
                     let __compact_effect_16: bool = crate::pure_circuits::is_player_honest(
@@ -2933,7 +2921,6 @@ pub mod ledger_contract {
                             "Red player is not honest".to_owned(),
                         ));
                     }
-                    let __compact_effect_17: () = ();
                     let (frame, __compact_effect_18): (_, crate::types::State) =
                         crate::ledger_slots::state.record_read(frame)?;
                     let __compact_effect_19: bool =
@@ -2943,7 +2930,6 @@ pub mod ledger_contract {
                             "Not Red's turn".to_owned(),
                         ));
                     }
-                    let __compact_effect_20: () = ();
                     let (frame, __compact_effect_21): (_, crate::types::Maybe) =
                         crate::ledger_slots::last_guess.record_read(frame)?;
                     let __compact_effect_22: runtime::Field = __compact_effect_21.value;
@@ -2956,7 +2942,6 @@ pub mod ledger_contract {
                             "Red player is not alive".to_owned(),
                         ));
                     }
-                    let __compact_effect_24: () = ();
                     let __compact_effect_25: bool =
                         crate::pure_circuits::is_valid_pos(__compact_effect_9)?;
                     if !__compact_effect_25 {
@@ -2964,22 +2949,22 @@ pub mod ledger_contract {
                             "Red guess is not a valid position".to_owned(),
                         ));
                     }
-                    let __compact_effect_26: () = ();
                     let __compact_effect_27: crate::types::Maybe =
                         crate::pure_circuits::__compact_function_some_474(__compact_effect_9)?;
                     let frame = crate::ledger_slots::last_guess
                         .record_write(frame, (__compact_effect_27).clone())?;
-                    let __compact_effect_28: () = ();
                     let __compact_effect_29: crate::types::State = crate::types::State::blue_turn;
                     let frame =
                         crate::ledger_slots::state.record_write(frame, __compact_effect_29)?;
-                    let __compact_effect_30: () = ();
-                    let __compact_effect_31: () = ();
-                    (frame, __compact_effect_31)
+                    frame
                 };
-                (frame, __compact_effect_32)
+                frame
             } else {
-                let (frame, __compact_effect_56): (_, ()) = {
+                #[allow(
+                    clippy::let_and_return,
+                    reason = "uniform Unit frames preserve ordered recording steps"
+                )]
+                let frame = {
                     let __compact_effect_33: runtime::Field = __compact_effect_0;
                     let (frame, __compact_effect_34): (_, runtime::FixedBytes<32>) = frame
                         .try_witness_metered(|context, meter| {
@@ -3006,7 +2991,6 @@ pub mod ledger_contract {
                             "Not player Blue".to_owned(),
                         ));
                     }
-                    let __compact_effect_38: () = ();
                     let (frame, __compact_effect_39): (_, crate::types::Commitment) =
                         crate::ledger_slots::blue_board.record_read(frame)?;
                     let __compact_effect_40: bool = crate::pure_circuits::is_player_honest(
@@ -3018,7 +3002,6 @@ pub mod ledger_contract {
                             "Blue player is not honest".to_owned(),
                         ));
                     }
-                    let __compact_effect_41: () = ();
                     let (frame, __compact_effect_42): (_, crate::types::State) =
                         crate::ledger_slots::state.record_read(frame)?;
                     let __compact_effect_43: bool =
@@ -3028,7 +3011,6 @@ pub mod ledger_contract {
                             "Not Blue's turn".to_owned(),
                         ));
                     }
-                    let __compact_effect_44: () = ();
                     let (frame, __compact_effect_45): (_, crate::types::Maybe) =
                         crate::ledger_slots::last_guess.record_read(frame)?;
                     let __compact_effect_46: runtime::Field = __compact_effect_45.value;
@@ -3041,7 +3023,6 @@ pub mod ledger_contract {
                             "Blue player is not alive".to_owned(),
                         ));
                     }
-                    let __compact_effect_48: () = ();
                     let __compact_effect_49: bool =
                         crate::pure_circuits::is_valid_pos(__compact_effect_33)?;
                     if !__compact_effect_49 {
@@ -3049,22 +3030,18 @@ pub mod ledger_contract {
                             "Blue guess is not a valid position".to_owned(),
                         ));
                     }
-                    let __compact_effect_50: () = ();
                     let __compact_effect_51: crate::types::Maybe =
                         crate::pure_circuits::__compact_function_some_474(__compact_effect_33)?;
                     let frame = crate::ledger_slots::last_guess
                         .record_write(frame, (__compact_effect_51).clone())?;
-                    let __compact_effect_52: () = ();
                     let __compact_effect_53: crate::types::State = crate::types::State::red_turn;
                     let frame =
                         crate::ledger_slots::state.record_write(frame, __compact_effect_53)?;
-                    let __compact_effect_54: () = ();
-                    let __compact_effect_55: () = ();
-                    (frame, __compact_effect_55)
+                    frame
                 };
-                (frame, __compact_effect_56)
+                frame
             };
-            Ok(frame.finish(__compact_effect_57))
+            Ok(frame.finish(()))
         }
         pub fn concede<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
@@ -3100,7 +3077,6 @@ pub mod ledger_contract {
                     "Not a player".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let (frame, __compact_effect_176): (_, crate::types::ShieldedCoinInfo) =
                 if __compact_effect_2 {
                     let (frame, __compact_effect_91): (_, crate::types::ShieldedCoinInfo) = {
@@ -3131,7 +3107,6 @@ pub mod ledger_contract {
                                 "Not player Red".to_owned(),
                             ));
                         }
-                        let __compact_effect_12: () = ();
                         let (frame, __compact_effect_13): (_, crate::types::Commitment) =
                             crate::ledger_slots::red_board.record_read(frame)?;
                         let __compact_effect_14: bool = crate::pure_circuits::is_player_honest(
@@ -3143,7 +3118,6 @@ pub mod ledger_contract {
                                 "Red player is not honest".to_owned(),
                             ));
                         }
-                        let __compact_effect_15: () = ();
                         let (frame, __compact_effect_16): (_, crate::types::State) =
                             crate::ledger_slots::state.record_read(frame)?;
                         let __compact_effect_17: bool =
@@ -3153,7 +3127,6 @@ pub mod ledger_contract {
                                 "Not Red's turn".to_owned(),
                             ));
                         }
-                        let __compact_effect_18: () = ();
                         let (frame, __compact_effect_19): (_, crate::types::Maybe) =
                             crate::ledger_slots::last_guess.record_read(frame)?;
                         let __compact_effect_20: runtime::Field = __compact_effect_19.value;
@@ -3173,12 +3146,10 @@ pub mod ledger_contract {
                                 "Red player is still alive".to_owned(),
                             ));
                         }
-                        let __compact_effect_25: () = ();
                         let __compact_effect_26: crate::types::State =
                             crate::types::State::blue_wins;
                         let frame =
                             crate::ledger_slots::state.record_write(frame, __compact_effect_26)?;
-                        let __compact_effect_27: () = ();
                         let (frame, __compact_effect_28): (
                             _,
                             crate::types::QualifiedShieldedCoinInfo,
@@ -3220,7 +3191,6 @@ pub mod ledger_contract {
                                 )
                                 .qualify(__compact_effect_33.mt_index.value() as u64),
                             );
-                            let __compact_effect_37: () = ();
                             let __compact_effect_38: crate::types::ShieldedCoinInfo =
                                 crate::pure_circuits::downcastQualifiedCoin(
                                     (__compact_effect_33).clone(),
@@ -3236,7 +3206,6 @@ pub mod ledger_contract {
                                         (__compact_effect_39).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_40: () = ();
                             let __compact_effect_41: runtime::BoundedUint<
                                 340282366920938463463374607431768211455,
                             > = __compact_effect_33.value;
@@ -3287,7 +3256,6 @@ pub mod ledger_contract {
                                     __compact_effect_34.right.bytes,
                                 ),
                             )?;
-                            let __compact_effect_51: () = ();
                             let __compact_effect_52: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(
                                     (__compact_effect_50).clone(),
@@ -3299,7 +3267,6 @@ pub mod ledger_contract {
                                         (__compact_effect_52).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_53: () = ();
                             let __compact_effect_54: bool = __compact_effect_34.is_left;
                             let (frame, __compact_effect_57): (_, bool) = if __compact_effect_54 {
                                 let __compact_effect_55: bool = false;
@@ -3322,7 +3289,11 @@ pub mod ledger_contract {
                                 let __compact_effect_62: bool = false;
                                 (frame, __compact_effect_62)
                             };
-                            let (frame, __compact_effect_67): (_, ()) = if __compact_effect_63 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_63 {
                                 let __compact_effect_64: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
                                         (__compact_effect_50).clone(),
@@ -3337,11 +3308,9 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_65: () = ();
-                                (frame, __compact_effect_65)
+                                frame
                             } else {
-                                let __compact_effect_66: () = ();
-                                (frame, __compact_effect_66)
+                                frame
                             };
                             let __compact_effect_68: runtime::BoundedUint<
                             340282366920938463463374607431768211455,
@@ -3403,7 +3372,6 @@ pub mod ledger_contract {
                                         __compact_effect_80.right.bytes,
                                     ),
                                 )?;
-                                let __compact_effect_81: () = ();
                                 let __compact_effect_82: crate::types::Either =
                                     crate::pure_circuits::right((__compact_effect_36).clone())?;
                                 let __compact_effect_83: runtime::FixedBytes<32> =
@@ -3419,7 +3387,6 @@ pub mod ledger_contract {
                                             ),
                                         ),
                                     ))?;
-                                let __compact_effect_84: () = ();
                                 let frame = frame.kernel_claim(
                                     runtime::ledger::KernelClaim::CoinReceive(
                                         runtime::ledger::CoinCommitment(
@@ -3429,7 +3396,6 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_85: () = ();
                                 let __compact_effect_86: crate::types::MaybeCompact1 =
                                     crate::pure_circuits::__compact_function_some_475(
                                         (__compact_effect_79).clone(),
@@ -3479,7 +3445,6 @@ pub mod ledger_contract {
                                 "Not player Blue".to_owned(),
                             ));
                         }
-                        let __compact_effect_96: () = ();
                         let (frame, __compact_effect_97): (_, crate::types::Commitment) =
                             crate::ledger_slots::blue_board.record_read(frame)?;
                         let __compact_effect_98: bool = crate::pure_circuits::is_player_honest(
@@ -3491,7 +3456,6 @@ pub mod ledger_contract {
                                 "Blue player is not honest".to_owned(),
                             ));
                         }
-                        let __compact_effect_99: () = ();
                         let (frame, __compact_effect_100): (_, crate::types::State) =
                             crate::ledger_slots::state.record_read(frame)?;
                         let __compact_effect_101: bool =
@@ -3501,7 +3465,6 @@ pub mod ledger_contract {
                                 "Not Blue's turn".to_owned(),
                             ));
                         }
-                        let __compact_effect_102: () = ();
                         let (frame, __compact_effect_103): (_, crate::types::Maybe) =
                             crate::ledger_slots::last_guess.record_read(frame)?;
                         let __compact_effect_104: runtime::Field = __compact_effect_103.value;
@@ -3521,12 +3484,10 @@ pub mod ledger_contract {
                                 "Blue player is still alive".to_owned(),
                             ));
                         }
-                        let __compact_effect_109: () = ();
                         let __compact_effect_110: crate::types::State =
                             crate::types::State::red_wins;
                         let frame =
                             crate::ledger_slots::state.record_write(frame, __compact_effect_110)?;
-                        let __compact_effect_111: () = ();
                         let (frame, __compact_effect_112): (
                             _,
                             crate::types::QualifiedShieldedCoinInfo,
@@ -3568,7 +3529,6 @@ pub mod ledger_contract {
                                 )
                                 .qualify(__compact_effect_117.mt_index.value() as u64),
                             );
-                            let __compact_effect_121: () = ();
                             let __compact_effect_122: crate::types::ShieldedCoinInfo =
                                 crate::pure_circuits::downcastQualifiedCoin(
                                     (__compact_effect_117).clone(),
@@ -3584,7 +3544,6 @@ pub mod ledger_contract {
                                         (__compact_effect_123).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_124: () = ();
                             let __compact_effect_125: runtime::BoundedUint<
                                 340282366920938463463374607431768211455,
                             > = __compact_effect_117.value;
@@ -3635,7 +3594,6 @@ pub mod ledger_contract {
                                     __compact_effect_118.right.bytes,
                                 ),
                             )?;
-                            let __compact_effect_135: () = ();
                             let __compact_effect_136: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(
                                     (__compact_effect_134).clone(),
@@ -3647,7 +3605,6 @@ pub mod ledger_contract {
                                         (__compact_effect_136).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_137: () = ();
                             let __compact_effect_138: bool = __compact_effect_118.is_left;
                             let (frame, __compact_effect_141): (_, bool) = if __compact_effect_138 {
                                 let __compact_effect_139: bool = false;
@@ -3670,7 +3627,11 @@ pub mod ledger_contract {
                                 let __compact_effect_146: bool = false;
                                 (frame, __compact_effect_146)
                             };
-                            let (frame, __compact_effect_151): (_, ()) = if __compact_effect_147 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_147 {
                                 let __compact_effect_148: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
                                         (__compact_effect_134).clone(),
@@ -3685,11 +3646,9 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_149: () = ();
-                                (frame, __compact_effect_149)
+                                frame
                             } else {
-                                let __compact_effect_150: () = ();
-                                (frame, __compact_effect_150)
+                                frame
                             };
                             let __compact_effect_152: runtime::BoundedUint<
                             340282366920938463463374607431768211455,
@@ -3751,7 +3710,6 @@ pub mod ledger_contract {
                                         __compact_effect_164.right.bytes,
                                     ),
                                 )?;
-                                let __compact_effect_165: () = ();
                                 let __compact_effect_166: crate::types::Either =
                                     crate::pure_circuits::right((__compact_effect_120).clone())?;
                                 let __compact_effect_167: runtime::FixedBytes<32> =
@@ -3767,7 +3725,6 @@ pub mod ledger_contract {
                                             ),
                                         ),
                                     ))?;
-                                let __compact_effect_168: () = ();
                                 let frame = frame.kernel_claim(
                                     runtime::ledger::KernelClaim::CoinReceive(
                                         runtime::ledger::CoinCommitment(
@@ -3777,7 +3734,6 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_169: () = ();
                                 let __compact_effect_170: crate::types::MaybeCompact1 =
                                     crate::pure_circuits::__compact_function_some_475(
                                         (__compact_effect_163).clone(),
@@ -3833,7 +3789,6 @@ pub mod ledger_contract {
                     "Not a player".to_owned(),
                 ));
             }
-            let __compact_effect_7: () = ();
             let (frame, __compact_effect_280): (_, crate::types::WithdrawnCoins) =
                 if __compact_effect_2 {
                     let (frame, __compact_effect_143): (_, crate::types::WithdrawnCoins) = {
@@ -3855,7 +3810,6 @@ pub mod ledger_contract {
                                 "Not player Red".to_owned(),
                             ));
                         }
-                        let __compact_effect_11: () = ();
                         let (frame, __compact_effect_12): (_, crate::types::State) =
                             crate::ledger_slots::state.record_read(frame)?;
                         let __compact_effect_13: crate::types::State =
@@ -3866,7 +3820,6 @@ pub mod ledger_contract {
                                 "Red hasn't won".to_owned(),
                             ));
                         }
-                        let __compact_effect_15: () = ();
                         let (frame, __compact_effect_16): (
                             _,
                             crate::types::QualifiedShieldedCoinInfo,
@@ -3908,7 +3861,6 @@ pub mod ledger_contract {
                                 )
                                 .qualify(__compact_effect_21.mt_index.value() as u64),
                             );
-                            let __compact_effect_25: () = ();
                             let __compact_effect_26: crate::types::ShieldedCoinInfo =
                                 crate::pure_circuits::downcastQualifiedCoin(
                                     (__compact_effect_21).clone(),
@@ -3924,7 +3876,6 @@ pub mod ledger_contract {
                                         (__compact_effect_27).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_28: () = ();
                             let __compact_effect_29: runtime::BoundedUint<
                                 340282366920938463463374607431768211455,
                             > = __compact_effect_21.value;
@@ -3975,7 +3926,6 @@ pub mod ledger_contract {
                                     __compact_effect_22.right.bytes,
                                 ),
                             )?;
-                            let __compact_effect_39: () = ();
                             let __compact_effect_40: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(
                                     (__compact_effect_38).clone(),
@@ -3987,7 +3937,6 @@ pub mod ledger_contract {
                                         (__compact_effect_40).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_41: () = ();
                             let __compact_effect_42: bool = __compact_effect_22.is_left;
                             let (frame, __compact_effect_45): (_, bool) = if __compact_effect_42 {
                                 let __compact_effect_43: bool = false;
@@ -4010,7 +3959,11 @@ pub mod ledger_contract {
                                 let __compact_effect_50: bool = false;
                                 (frame, __compact_effect_50)
                             };
-                            let (frame, __compact_effect_55): (_, ()) = if __compact_effect_51 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_51 {
                                 let __compact_effect_52: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
                                         (__compact_effect_38).clone(),
@@ -4025,11 +3978,9 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_53: () = ();
-                                (frame, __compact_effect_53)
+                                frame
                             } else {
-                                let __compact_effect_54: () = ();
-                                (frame, __compact_effect_54)
+                                frame
                             };
                             let __compact_effect_56: runtime::BoundedUint<
                             340282366920938463463374607431768211455,
@@ -4091,7 +4042,6 @@ pub mod ledger_contract {
                                         __compact_effect_68.right.bytes,
                                     ),
                                 )?;
-                                let __compact_effect_69: () = ();
                                 let __compact_effect_70: crate::types::Either =
                                     crate::pure_circuits::right((__compact_effect_24).clone())?;
                                 let __compact_effect_71: runtime::FixedBytes<32> =
@@ -4107,7 +4057,6 @@ pub mod ledger_contract {
                                             ),
                                         ),
                                     ))?;
-                                let __compact_effect_72: () = ();
                                 let frame = frame.kernel_claim(
                                     runtime::ledger::KernelClaim::CoinReceive(
                                         runtime::ledger::CoinCommitment(
@@ -4117,7 +4066,6 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_73: () = ();
                                 let __compact_effect_74: crate::types::MaybeCompact1 =
                                     crate::pure_circuits::__compact_function_some_475(
                                         (__compact_effect_67).clone(),
@@ -4174,7 +4122,6 @@ pub mod ledger_contract {
                                 )
                                 .qualify(__compact_effect_84.mt_index.value() as u64),
                             );
-                            let __compact_effect_88: () = ();
                             let __compact_effect_89: crate::types::ShieldedCoinInfo =
                                 crate::pure_circuits::downcastQualifiedCoin(
                                     (__compact_effect_84).clone(),
@@ -4190,7 +4137,6 @@ pub mod ledger_contract {
                                         (__compact_effect_90).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_91: () = ();
                             let __compact_effect_92: runtime::BoundedUint<
                                 340282366920938463463374607431768211455,
                             > = __compact_effect_84.value;
@@ -4241,7 +4187,6 @@ pub mod ledger_contract {
                                     __compact_effect_85.right.bytes,
                                 ),
                             )?;
-                            let __compact_effect_102: () = ();
                             let __compact_effect_103: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(
                                     (__compact_effect_101).clone(),
@@ -4253,7 +4198,6 @@ pub mod ledger_contract {
                                         (__compact_effect_103).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_104: () = ();
                             let __compact_effect_105: bool = __compact_effect_85.is_left;
                             let (frame, __compact_effect_108): (_, bool) = if __compact_effect_105 {
                                 let __compact_effect_106: bool = false;
@@ -4276,7 +4220,11 @@ pub mod ledger_contract {
                                 let __compact_effect_113: bool = false;
                                 (frame, __compact_effect_113)
                             };
-                            let (frame, __compact_effect_118): (_, ()) = if __compact_effect_114 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_114 {
                                 let __compact_effect_115: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
                                         (__compact_effect_101).clone(),
@@ -4291,11 +4239,9 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_116: () = ();
-                                (frame, __compact_effect_116)
+                                frame
                             } else {
-                                let __compact_effect_117: () = ();
-                                (frame, __compact_effect_117)
+                                frame
                             };
                             let __compact_effect_119: runtime::BoundedUint<
                             340282366920938463463374607431768211455,
@@ -4357,7 +4303,6 @@ pub mod ledger_contract {
                                         __compact_effect_131.right.bytes,
                                     ),
                                 )?;
-                                let __compact_effect_132: () = ();
                                 let __compact_effect_133: crate::types::Either =
                                     crate::pure_circuits::right((__compact_effect_87).clone())?;
                                 let __compact_effect_134: runtime::FixedBytes<32> =
@@ -4373,7 +4318,6 @@ pub mod ledger_contract {
                                             ),
                                         ),
                                     ))?;
-                                let __compact_effect_135: () = ();
                                 let frame = frame.kernel_claim(
                                     runtime::ledger::KernelClaim::CoinReceive(
                                         runtime::ledger::CoinCommitment(
@@ -4383,7 +4327,6 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_136: () = ();
                                 let __compact_effect_137: crate::types::MaybeCompact1 =
                                     crate::pure_circuits::__compact_function_some_475(
                                         (__compact_effect_130).clone(),
@@ -4429,7 +4372,6 @@ pub mod ledger_contract {
                                 "Not player Blue".to_owned(),
                             ));
                         }
-                        let __compact_effect_147: () = ();
                         let (frame, __compact_effect_148): (_, crate::types::State) =
                             crate::ledger_slots::state.record_read(frame)?;
                         let __compact_effect_149: crate::types::State =
@@ -4441,7 +4383,6 @@ pub mod ledger_contract {
                                 "Blue hasn't won".to_owned(),
                             ));
                         }
-                        let __compact_effect_151: () = ();
                         let (frame, __compact_effect_152): (
                             _,
                             crate::types::QualifiedShieldedCoinInfo,
@@ -4483,7 +4424,6 @@ pub mod ledger_contract {
                                 )
                                 .qualify(__compact_effect_157.mt_index.value() as u64),
                             );
-                            let __compact_effect_161: () = ();
                             let __compact_effect_162: crate::types::ShieldedCoinInfo =
                                 crate::pure_circuits::downcastQualifiedCoin(
                                     (__compact_effect_157).clone(),
@@ -4499,7 +4439,6 @@ pub mod ledger_contract {
                                         (__compact_effect_163).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_164: () = ();
                             let __compact_effect_165: runtime::BoundedUint<
                                 340282366920938463463374607431768211455,
                             > = __compact_effect_157.value;
@@ -4550,7 +4489,6 @@ pub mod ledger_contract {
                                     __compact_effect_158.right.bytes,
                                 ),
                             )?;
-                            let __compact_effect_175: () = ();
                             let __compact_effect_176: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(
                                     (__compact_effect_174).clone(),
@@ -4562,7 +4500,6 @@ pub mod ledger_contract {
                                         (__compact_effect_176).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_177: () = ();
                             let __compact_effect_178: bool = __compact_effect_158.is_left;
                             let (frame, __compact_effect_181): (_, bool) = if __compact_effect_178 {
                                 let __compact_effect_179: bool = false;
@@ -4585,7 +4522,11 @@ pub mod ledger_contract {
                                 let __compact_effect_186: bool = false;
                                 (frame, __compact_effect_186)
                             };
-                            let (frame, __compact_effect_191): (_, ()) = if __compact_effect_187 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_187 {
                                 let __compact_effect_188: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
                                         (__compact_effect_174).clone(),
@@ -4600,11 +4541,9 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_189: () = ();
-                                (frame, __compact_effect_189)
+                                frame
                             } else {
-                                let __compact_effect_190: () = ();
-                                (frame, __compact_effect_190)
+                                frame
                             };
                             let __compact_effect_192: runtime::BoundedUint<
                             340282366920938463463374607431768211455,
@@ -4666,7 +4605,6 @@ pub mod ledger_contract {
                                         __compact_effect_204.right.bytes,
                                     ),
                                 )?;
-                                let __compact_effect_205: () = ();
                                 let __compact_effect_206: crate::types::Either =
                                     crate::pure_circuits::right((__compact_effect_160).clone())?;
                                 let __compact_effect_207: runtime::FixedBytes<32> =
@@ -4682,7 +4620,6 @@ pub mod ledger_contract {
                                             ),
                                         ),
                                     ))?;
-                                let __compact_effect_208: () = ();
                                 let frame = frame.kernel_claim(
                                     runtime::ledger::KernelClaim::CoinReceive(
                                         runtime::ledger::CoinCommitment(
@@ -4692,7 +4629,6 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_209: () = ();
                                 let __compact_effect_210: crate::types::MaybeCompact1 =
                                     crate::pure_circuits::__compact_function_some_475(
                                         (__compact_effect_203).clone(),
@@ -4749,7 +4685,6 @@ pub mod ledger_contract {
                                 )
                                 .qualify(__compact_effect_220.mt_index.value() as u64),
                             );
-                            let __compact_effect_224: () = ();
                             let __compact_effect_225: crate::types::ShieldedCoinInfo =
                                 crate::pure_circuits::downcastQualifiedCoin(
                                     (__compact_effect_220).clone(),
@@ -4765,7 +4700,6 @@ pub mod ledger_contract {
                                         (__compact_effect_226).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_227: () = ();
                             let __compact_effect_228: runtime::BoundedUint<
                                 340282366920938463463374607431768211455,
                             > = __compact_effect_220.value;
@@ -4816,7 +4750,6 @@ pub mod ledger_contract {
                                     __compact_effect_221.right.bytes,
                                 ),
                             )?;
-                            let __compact_effect_238: () = ();
                             let __compact_effect_239: runtime::FixedBytes<32> =
                                 crate::pure_circuits::coinCommitment(
                                     (__compact_effect_237).clone(),
@@ -4828,7 +4761,6 @@ pub mod ledger_contract {
                                         (__compact_effect_239).into_array(),
                                     )),
                                 ))?;
-                            let __compact_effect_240: () = ();
                             let __compact_effect_241: bool = __compact_effect_221.is_left;
                             let (frame, __compact_effect_244): (_, bool) = if __compact_effect_241 {
                                 let __compact_effect_242: bool = false;
@@ -4851,7 +4783,11 @@ pub mod ledger_contract {
                                 let __compact_effect_249: bool = false;
                                 (frame, __compact_effect_249)
                             };
-                            let (frame, __compact_effect_254): (_, ()) = if __compact_effect_250 {
+                            #[allow(
+                                clippy::let_and_return,
+                                reason = "uniform Unit frames preserve ordered recording steps"
+                            )]
+                            let frame = if __compact_effect_250 {
                                 let __compact_effect_251: runtime::FixedBytes<32> =
                                     crate::pure_circuits::coinCommitment(
                                         (__compact_effect_237).clone(),
@@ -4866,11 +4802,9 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_252: () = ();
-                                (frame, __compact_effect_252)
+                                frame
                             } else {
-                                let __compact_effect_253: () = ();
-                                (frame, __compact_effect_253)
+                                frame
                             };
                             let __compact_effect_255: runtime::BoundedUint<
                             340282366920938463463374607431768211455,
@@ -4932,7 +4866,6 @@ pub mod ledger_contract {
                                         __compact_effect_267.right.bytes,
                                     ),
                                 )?;
-                                let __compact_effect_268: () = ();
                                 let __compact_effect_269: crate::types::Either =
                                     crate::pure_circuits::right((__compact_effect_223).clone())?;
                                 let __compact_effect_270: runtime::FixedBytes<32> =
@@ -4948,7 +4881,6 @@ pub mod ledger_contract {
                                             ),
                                         ),
                                     ))?;
-                                let __compact_effect_271: () = ();
                                 let frame = frame.kernel_claim(
                                     runtime::ledger::KernelClaim::CoinReceive(
                                         runtime::ledger::CoinCommitment(
@@ -4958,7 +4890,6 @@ pub mod ledger_contract {
                                         ),
                                     ),
                                 )?;
-                                let __compact_effect_272: () = ();
                                 let __compact_effect_273: crate::types::MaybeCompact1 =
                                     crate::pure_circuits::__compact_function_some_475(
                                         (__compact_effect_266).clone(),

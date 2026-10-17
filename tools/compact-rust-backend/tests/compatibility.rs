@@ -48,7 +48,7 @@ impl Root {
         .unwrap();
         fs::write(
             root.0.join("runtime-rs/src/lib.rs"),
-            "pub const RUST_RUNTIME_ABI:u32=52; pub const LEDGER_VERSION:&str=\"ledger-8.1.3\";",
+            "pub const RUST_RUNTIME_ABI:u32=53; pub const LEDGER_VERSION:&str=\"ledger-8.1.3\";",
         )
         .unwrap();
         fs::write(
@@ -191,7 +191,7 @@ fn manifest_and_source_disagreement_cannot_hide_behind_valid_record() {
         ),
         (
             "runtime-rs/src/lib.rs",
-            "ABI:u32=52",
+            "ABI:u32=53",
             "ABI:u32=49",
             "RUST_RUNTIME_ABI",
         ),
@@ -228,8 +228,8 @@ fn public_cli_preflight_preserves_existing_output_without_frontend_or_fallback()
         let root = Root::new();
         root.replace(
             "runtime-rs/compatibility.json",
+            "\"runtime_abi\": 53",
             "\"runtime_abi\": 52",
-            "\"runtime_abi\": 49",
         );
         let out = root.0.join("existing");
         fs::create_dir(&out).unwrap();
@@ -463,8 +463,8 @@ fn matching_macro_version_still_requires_a_proc_macro_library() {
 #[test]
 fn literal_only_source_labels_refuse_expression_or_wrong_literal_forms() {
     for (before, after, field) in [
-        ("ABI:u32=52", "ABI:u32=52 + 0", "RUST_RUNTIME_ABI"),
-        ("ABI:u32=52", "ABI:u32=true", "RUST_RUNTIME_ABI"),
+        ("ABI:u32=53", "ABI:u32=53 + 0", "RUST_RUNTIME_ABI"),
+        ("ABI:u32=53", "ABI:u32=true", "RUST_RUNTIME_ABI"),
         (
             "\"ledger-8.1.3\"",
             "concat!(\"ledger-\", \"8.1.3\")",
@@ -698,7 +698,7 @@ fn release_versions_keep_independent_contract_boundaries() {
             metadata.capability_schema,
             metadata.schema_version
         ),
-        (52, 20, 3, 2)
+        (53, 20, 3, 2)
     );
     let testkit: toml_edit::DocumentMut = fs::read_to_string(repo.join("testkit-rs/Cargo.toml"))
         .unwrap()

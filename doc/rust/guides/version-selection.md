@@ -1,6 +1,6 @@
 # Select a compatible compiler, runtime and target
 
-Retained policy checkpoint, 2026-10-07. Version values below describe the accepted5efa91c2 checkpoint; use [current versions and targets](versions-and-targets.md) for ABI52, ledger8.1.3, compatibility schema2 and the declared Rust1.89 minimum. Retained migration and target receipts identify their own sources, features and locks; installation guidance alone is not an executed check.
+Retained policy checkpoint, 2026-10-07. Version values below describe the accepted5efa91c2 checkpoint; use [current versions and targets](versions-and-targets.md) for ABI53, ledger8.1.3, compatibility schema2 and the declared Rust1.89 minimum. Retained migration and target receipts identify their own sources, features and locks; installation guidance alone is not an executed check.
 
 ## Keep these version domains separate
 
@@ -18,7 +18,7 @@ Retained policy checkpoint, 2026-10-07. Version values below describe the accept
 | Native ledger | 8.0.3 | Pinned ledger graph |
 | Declared native MSRV | Rust1.88 | Qualified only with the documented lock/features/host |
 
-Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 52`; the table above retains its older checkpoint. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
+Current generated Rust asserts `runtime::RUST_RUNTIME_ABI == 53`; the table above retains its older checkpoint. Matching this number helps detect an accidental mismatch; it does not authenticate arbitrary source or establish semantic correctness by itself.
 
 ## Obtain a matching source distribution
 
@@ -51,7 +51,7 @@ The tutorial commands target native Rust. They are not Node/browser build instru
 
 ## Migrate consumers
 
-1. Preserve old generated code with its original matching runtime, or regenerate source with the current matching ABI52 compiler/runtime/macros pair. Do not edit the ABI assertion.
+1. Preserve old generated code with its original matching runtime, or regenerate source with the current matching ABI53 compiler/runtime/macros pair. Do not edit the ABI assertion.
 2. Prefer the generated crate's `runtime` re-export for value types, avoiding duplicate crate identities.
 3. Backend0.2 exposes non-exhaustive `RenderError`. External matches need a fallback; resource diagnostics expose `{resource, limit, observed}`. Display text/resource labels are human diagnostics, not a stable machine protocol.
 4. Keep the qualified Cargo.lock. A successful build of one workspace lock does not qualify a different standalone or target-specific resolution.
@@ -67,7 +67,7 @@ DID's original compiler profile (ledger8.0.2/compiler0.31.1/runtime0.16.0), its 
 
 ## Historical labels
 
-ADR0261 originally described the0.1.0 source-package line. ADR0293 introduced backend/runtime/macros0.2.0 with exact pairing. Earlier ABI49 and capability-schema1 documents describe their original releases; that checkpoint used ABI50 and finalized capability schema3; current generated source uses ABI52. Preserve those records rather than rewriting their measurements. `--runtime-version` continues to report the TypeScript runtime version.
+ADR0261 originally described the0.1.0 source-package line. ADR0293 introduced backend/runtime/macros0.2.0 with exact pairing. Earlier ABI49 and capability-schema1 documents describe their original releases; that checkpoint used ABI50 and finalized capability schema3; current generated source uses ABI53. Preserve those records rather than rewriting their measurements. `--runtime-version` continues to report the TypeScript runtime version.
 
 ## Source build instructions
 

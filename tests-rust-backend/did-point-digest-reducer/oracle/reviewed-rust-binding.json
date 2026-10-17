@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged.",
+  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged. ADR0535 ABI53 successor: fallible FixedVector Map emission and current runtime compatibility stamp; original captured identities, semantic rows, provenance tests and historical compiler identities remain unchanged. No fresh TypeScript execution claim.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-point-digest-reducer/lib.rs",
       "captured_sha256": "ec63a6e1bdc9c9a392c90e02e0962b1b3daf8a6309f497b254ca50a840ed633e",
-      "current_sha256": "55f95ef235bc4d0e9e2309639692caa0887dd2f030758d5fd3b16194732ea47b"
+      "current_sha256": "2364b133788dda44b041efccddc6240120dd71ae58619298d19f7e9eba8fe00b"
     },
     {
       "path": "tests-rust-backend/did-point-digest-reducer/tests/provenance.rs",

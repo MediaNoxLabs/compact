@@ -1,6 +1,17 @@
 // This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 use super::*;
 
 #[test]
@@ -42,7 +53,7 @@ fn nested_prior_families_and_aggregate_scopes_visit_each_source_once() {
             },
         ],
     };
-    assert!(compare(&source, &HashMap::new(), &HashMap::new()).is_ok());
+    assert!(compare_map_successor(&source, &HashMap::new(), &HashMap::new()).is_ok());
     let (result, visits) =
         visitation::observe(|| observe(&source, &HashMap::new(), &HashMap::new()));
     result.unwrap();
@@ -51,7 +62,8 @@ fn nested_prior_families_and_aggregate_scopes_visit_each_source_once() {
 }
 
 #[test]
-fn native_control_nested_in_map_preserves_complete_old_views_without_a_copied_check_sink() {
+fn native_control_nested_in_map_preserves_complete_template_successor_without_a_copied_check_sink()
+{
     let source = Expr::VectorMap {
         parameter: Parameter {
             name: "item".into(),
@@ -62,10 +74,9 @@ fn native_control_nested_in_map_preserves_complete_old_views_without_a_copied_ch
         result: Type::Field,
         length: 1,
     };
-    let current = observe(&source, &HashMap::new(), &HashMap::new());
     assert_eq!(
-        current,
-        old_oracle::observe(&source, &HashMap::new(), &HashMap::new())
+        compare_map_views(&source, &HashMap::new(), &HashMap::new()),
+        Ok(vector_type(Type::Field, 1))
     );
     let (result, visits) =
         visitation::observe(|| observe(&source, &HashMap::new(), &HashMap::new()));

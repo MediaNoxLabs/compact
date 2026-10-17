@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Checked opaque Boolean interface routing (#603). Original TypeScript capture bytes remain unchanged; only recorded member_control uses typed composition. Current Rust generation is independently reviewed; no fresh TS execution or DID proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged.",
+  "scope": "Checked opaque Boolean interface routing (#603). Original TypeScript capture bytes remain unchanged; only recorded member_control uses typed composition. Current Rust generation is independently reviewed; no fresh TS execution or DID proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged. ADR0535 ABI53 successor: fallible FixedVector Map emission and current runtime compatibility stamp; original captured identities, semantic rows, provenance tests and historical compiler identities remain unchanged. No fresh TypeScript execution claim.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-alias-set-reducer/lib.rs",
       "captured_sha256": "940fc875f9e46fbc96a7b032f3fed103aed5888e42820227de3c3bd30554fc1c",
-      "current_sha256": "e0b89301c98b02ac48503f6c3b8d231a799db51abb0fef5b4656034e8d4c6052"
+      "current_sha256": "8e3e93633a8bd2d5a600fd21d911e0c94a3e8f778e248da6babe703f7408ccc6"
     },
     {
       "path": "tests-rust-backend/did-alias-set-reducer/tests/provenance.rs",

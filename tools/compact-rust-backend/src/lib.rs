@@ -42,7 +42,7 @@ mod type_declarations;
 mod value_lowering;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 52;
+const RUNTIME_ABI_VERSION: u32 = 53;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation

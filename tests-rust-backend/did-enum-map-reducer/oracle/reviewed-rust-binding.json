@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0531 delegated Map/List/Merkle Unit-payload successor; original captured identities and semantic rows remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged.",
+  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0531 delegated Map/List/Merkle Unit-payload successor; original captured identities and semantic rows remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged. ADR0535 ABI53 successor: fallible FixedVector Map emission and current runtime compatibility stamp; original captured identities, semantic rows, provenance tests and historical compiler identities remain unchanged. No fresh TypeScript execution claim.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-enum-map-reducer/lib.rs",
       "captured_sha256": "df5651cc8d834118e208c6b45c427bd7b8deab308348733e5b53b788292813e6",
-      "current_sha256": "f2cbf1c82b0622401b4045416ae45c32a5e458c038d5677e076af406b7b55450"
+      "current_sha256": "0a2bbeee33566dc755cea47d94a05f0f8312826216c8bb3170fa6bbc0509d210"
     },
     {
       "path": "tests-rust-backend/did-enum-map-reducer/tests/provenance.rs",

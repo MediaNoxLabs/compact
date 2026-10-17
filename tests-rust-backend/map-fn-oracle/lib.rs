@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -33,7 +33,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 52);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 53);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -82,32 +82,24 @@ pub mod ledger_contract {
             let __compact_constructor_local_0: runtime::FixedVector<
                 runtime::BoundedUint<18446744073709551615>,
                 3,
-            > = {
-                let __compact_map_source = {
-                    let __compact_cast_source_0 = (
-                        runtime::BoundedUint::<18446744073709551615>::new(1u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                        runtime::BoundedUint::<2>::new(2u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                        runtime::BoundedUint::<3>::new(3u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    );
-                    let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
-                        __compact_cast_source_0;
-                    runtime::FixedVector::new([
-                        __compact_cast_item_0_0,
-                        runtime::cast_unsigned::<2, 18446744073709551615>(__compact_cast_item_0_1)?,
-                        runtime::cast_unsigned::<3, 18446744073709551615>(__compact_cast_item_0_2)?,
-                    ])
-                };
-                let mut __compact_mapped = Vec::with_capacity(3);
-                for x in __compact_map_source.into_array() {
-                    __compact_mapped.push(x);
-                }
-                runtime::FixedVector::new(
-                    <[_; 3]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
-                )
-            };
+            > = ({
+                let __compact_cast_source_0 = (
+                    runtime::BoundedUint::<18446744073709551615>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                    runtime::BoundedUint::<2>::new(2u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                    runtime::BoundedUint::<3>::new(3u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                );
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
+                    __compact_cast_source_0;
+                runtime::FixedVector::new([
+                    __compact_cast_item_0_0,
+                    runtime::cast_unsigned::<2, 18446744073709551615>(__compact_cast_item_0_1)?,
+                    runtime::cast_unsigned::<3, 18446744073709551615>(__compact_cast_item_0_2)?,
+                ])
+            })
+            .try_map(|x| -> Result<_, runtime::CompactError> { Ok(x) })?;
             let step = context.write_cell(0, (__compact_constructor_local_0.clone()).clone())?;
             context = step.context;
             let _ = total_cost;
@@ -122,32 +114,24 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::FixedVector<
             runtime::BoundedUint<18446744073709551615>,
             3,
-        > = {
-            let __compact_map_source = {
-                let __compact_cast_source_0 = (
-                    runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                    runtime::BoundedUint::<0>::new(0u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                    runtime::BoundedUint::<0>::new(0u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                );
-                let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
-                    __compact_cast_source_0;
-                runtime::FixedVector::new([
-                    __compact_cast_item_0_0,
-                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,
-                    runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,
-                ])
-            };
-            let mut __compact_mapped = Vec::with_capacity(3);
-            for x in __compact_map_source.into_array() {
-                __compact_mapped.push(x);
-            }
-            runtime::FixedVector::new(
-                <[_; 3]>::try_from(__compact_mapped).expect("Vector map preserves its length"),
-            )
-        };
+        > = ({
+            let __compact_cast_source_0 = (
+                runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<0>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<0>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum"),
+            );
+            let (__compact_cast_item_0_0, __compact_cast_item_0_1, __compact_cast_item_0_2) =
+                __compact_cast_source_0;
+            runtime::FixedVector::new([
+                __compact_cast_item_0_0,
+                runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_1)?,
+                runtime::cast_unsigned::<0, 18446744073709551615>(__compact_cast_item_0_2)?,
+            ])
+        })
+        .try_map(|x| -> Result<_, runtime::CompactError> { Ok(x) })?;
         let step = crate::ledger_slots::c.write(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;

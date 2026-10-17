@@ -89,7 +89,7 @@ FrontendArtifacts::promote_into checks the same invocation fingerprint, pending 
 
 ## Compatibility and evidence columns
 
-Current compiler/runtime ABI is 52, private IR schema 20, completed capability schema 3 and private raw-origin transport schema 3. The optional origin reader is bounded at 4 MiB; missing/budget/numeric-width status is separate from source semantic admission. The current source uses official ledger 8.1.3 primitives and codec/transcript/transaction semantics at revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`. Historical source-law and proof receipts retain their original ledger cohort; the [local qualification guide](ledger-8.1.3-local-qualification.md) separates the current source pairing from retained proof receipts. Explicit ZKIR-v3 Keccak native qualification does not establish ledger 8 proof or later-ledger/network support.
+Current compiler/runtime ABI is 53, private IR schema 20, completed capability schema 3 and private raw-origin transport schema 3. The optional origin reader is bounded at 4 MiB; missing/budget/numeric-width status is separate from source semantic admission. The current source uses official ledger 8.1.3 primitives and codec/transcript/transaction semantics at revision `b5d3e965a18e4cac17fac4f38446fc55c524439a`. Historical source-law and proof receipts retain their original ledger cohort; the [local qualification guide](ledger-8.1.3-local-qualification.md) separates the current source pairing from retained proof receipts. Explicit ZKIR-v3 Keccak native qualification does not establish ledger 8 proof or later-ledger/network support.
 
 | Column | Required case evidence | Do not infer |
 |---|---|---|

@@ -138,7 +138,7 @@ Historically, the checker passed the digest row and refused the relation row at 
 |---|---|
 | Typed IR schema **20** | This branch's private frontend-to-Rust interchange; checks compiler/backend agreement |
 | Capability schema **3** | Finalized exported-stateful API/proof metadata |
-| Runtime ABI **50** at the retained checkpoint; **52** currently | Generated Rust/runtime compatibility contract |
+| Runtime ABI **50** at the retained checkpoint; **53** currently | Generated Rust/runtime compatibility contract |
 | Milestone **0.3.0** | Delivery/release planning label |
 
 These are separate project version domains, not a single Compact language version or a public standard called “schema-20”. The backend library initially creates an unclassified schema-2 capability draft; the CLI joins frontend proof metadata and emits finalized schema3. Application checks should consume the finalized report.

@@ -8,7 +8,7 @@ The Rust target uses the ledger-8 Compact frontend, a typed private IR, a Rust A
 
 ## Checked recording checkpoint
 
-The current recording-effect branch is documented in [Checked recording and source diagnostics](guides/checked-recording.md) and the [capability and retirement book](recording-effect-algebra/capability-and-retirement-book.md). The compiler/runtime ABI is **52**, private Rust IR is **20**, finalized capability reports use **3**, and private source-origin transport uses **3**. Package versions remain separate.
+The current recording-effect branch is documented in [Checked recording and source diagnostics](guides/checked-recording.md) and the [capability and retirement book](recording-effect-algebra/capability-and-retirement-book.md). The compiler/runtime ABI is **53**, private Rust IR is **20**, finalized capability reports use **3**, and private source-origin transport uses **3**. Package versions remain separate.
 
 The previous milestone reports below retain their own revisions and evidence. Current closure requires the final local CLI and authenticated historical qualification, followed by independent review; their success is not asserted by this documentation draft.
 

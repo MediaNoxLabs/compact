@@ -30,15 +30,15 @@ SUPPORT = 'tests-rust-backend/support/reviewed_capture.rs'
 SUPPORT_SHA256 = '482cea8e2806f220a939e02f459ffad9c7ff25c685e7bf6aab051f2bc528217b'
 # Pins to existing reviewed contracts, not new behavior baselines.
 REVIEWED_BINDINGS = {
-    'tests-rust-backend/did-point-digest-reducer': '2b1a259bf8f699c4afd09a36dc51432f1151aed98c4255f53f3b28f50de1d591',
-    'tests-rust-backend/did-point-guard-reducer': '82f0502d9d3dd5bb299dc89a0e3ab929a5e3957f73fb4bf882898f663c654fb1',
-    'tests-rust-backend/did-alias-set-reducer': '9bd466aac77813aee42c674015cd48374f210a1c940fa63017eee5c6149d1648',
-    'tests-rust-backend/did-alias-digest-reducer': 'b91af3c0363db1899f6378969591c8101e011f1b39517107bbcd3be7c7f2d195',
-    'tests-rust-backend/did-alias-guard-reducer': '42e9f35a50bdf648dc100fb9b069b42f35ddbaeec793734f6e591abe82fed22f',
-    'tests-rust-backend/did-service-map-reducer': 'a2caa1ead77127afa04ec26f0492c5da3695bbb3b274ebf7816af61cbc94ddd5',
-    'tests-rust-backend/did-point-map-reducer': 'c860347e8cc3b9923733d3ad4bc5e9ca16a50e5c8bffd8f9759cbbf763f7c3f4',
-    'tests-rust-backend/did-nested-map-reducer': '9d0d4afac0fe362ed4b39409ee3e133a9310640cad213bd91d4bf1f07b71f9f6',
-    'tests-rust-backend/did-enum-map-reducer': '93a89f51adce49e28080f259a8108178bb3147edf05bb36ba6c61c9b4113076c',
+    'tests-rust-backend/did-point-digest-reducer': '571e6bdf76db41aa49386f383263f064601d5f67189f2e6572e28d1c34ac538c',
+    'tests-rust-backend/did-point-guard-reducer': '4c6d7c70549f88f62428e6b738abc6a756de602c67d7e83a99a1ad285df9099c',
+    'tests-rust-backend/did-alias-set-reducer': '48cb8f3fa0348b92a65460d36ec7aba293f40dc48832055a08697cf05a44eae8',
+    'tests-rust-backend/did-alias-digest-reducer': '79790bee8244b43b57134d5a03c56b5d7da4ad66f4975e053f7af534b55d0182',
+    'tests-rust-backend/did-alias-guard-reducer': 'd230b3248bf488bf7e08a1e41d7d273be45a7163cc3f750758f98c17d8dbe1d8',
+    'tests-rust-backend/did-service-map-reducer': '16523e2e406ccc9588cc9f7a287b159f709ad123b2a2c7e7c1f2696cd088bf78',
+    'tests-rust-backend/did-point-map-reducer': '902c8f22068493de04c690f8c9bb68ee3562f7d8e2082c992f659e4541b35b86',
+    'tests-rust-backend/did-nested-map-reducer': '042034360b36021b9817a70216cef6583bb3a8f080066dea4f7b0ff2e2f7baa5',
+    'tests-rust-backend/did-enum-map-reducer': 'd2be9eb1206a6b57503409361490d04c0fd18310c24c398db9f2f6850dc91277',
 }
 
 

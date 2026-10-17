@@ -72,6 +72,28 @@ class ProofCommands(unittest.TestCase):
         self.assertLess(first, workflow.index("--prepare-proof-material"))
         self.assertLess(workflow.index("--consumer --proof"), last)
 
+    def test_workspace_clippy_runs_before_proofs_and_remains_in_the_final_gate(self):
+        workflow = (ROOT / ".github/workflows/build-compiler.yml").read_text()
+        toolchain = workflow.index("      - name: Verify consumer toolchain inside Nix\n")
+        early = workflow.index("      - name: Check workspace Clippy before proof qualification\n")
+        prepare = workflow.index("      - name: Prepare verified built-in proof material\n")
+        final = workflow.index("      - name: Check and test native Rust backend\n")
+        self.assertLess(toolchain, early)
+        self.assertLess(early, prepare)
+        self.assertLess(prepare, final)
+        expected = "cargo clippy --workspace --exclude compact --all-targets --all-features --locked -- -D warnings"
+        commands = [line.strip() for line in workflow.splitlines()
+                    if line.lstrip().startswith("cargo clippy --workspace ")]
+        self.assertEqual(commands, [expected, expected])
+        early_step = workflow[early:prepare]
+        self.assertEqual(early_step.count(expected), 1)
+        self.assertNotIn("continue-on-error", early_step)
+        self.assertNotIn("MIDNIGHT_PP", early_step)
+        final_step = workflow[final:workflow.index("      - name: Rehearse Rust runtime packages\n", final)]
+        self.assertIn(expected, final_step)
+        self.assertIn("check_compactc_target.py --consumer --proof", final_step)
+        self.assertIn("cargo test --workspace --exclude compact --locked", final_step)
+
     def test_existing_run_options_and_all_executable_arguments_survive(self):
         for prefix in (["cargo", "run"], ["cargo", "+1.99.0", "run"]):
             for package in ("-p", "--package"):

@@ -377,6 +377,12 @@ jobs:
           assert all(version.split()[1] == "1.99.0" for version in versions)
           PY
 
+      - name: Check workspace Clippy before proof qualification
+        run: |
+          # Reject generated-source lint failures before expensive proof work.
+          # The final native gate repeats this exact command after its tests.
+          cargo clippy --workspace --exclude compact --all-targets --all-features --locked -- -D warnings
+
       - name: Prepare verified built-in proof material
         run: |
           export MIDNIGHT_PP="$RUNNER_TEMP/compact-proof-parameters"

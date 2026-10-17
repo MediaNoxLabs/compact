@@ -18,15 +18,48 @@
 """Proof-profile selection must preserve workload and failure propagation."""
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import unittest
+import tomllib
 from unittest.mock import patch
 
 import check_compactc_target as cli
 import proof_commands
 
+ROOT = Path(__file__).resolve().parents[2]
+
 
 class ProofCommands(unittest.TestCase):
+    def test_repository_proof_profile_preserves_checked_workspace_code(self):
+        manifest = tomllib.loads((ROOT / "Cargo.toml").read_text())
+        profile = manifest["profile"]["proof-checks"]
+        self.assertEqual(profile["inherits"], "dev")
+        self.assertIs(profile["debug-assertions"], True)
+        self.assertIs(profile["overflow-checks"], True)
+        # Dependency optimization must not become a workspace-wide release build
+        # or acquire package-specific overrides that disable the inherited checks.
+        self.assertNotIn("opt-level", profile)
+        self.assertEqual(profile["package"], {"*": {"opt-level": 3}})
+
+    def test_workflow_preparation_uses_the_same_checked_proof_profile(self):
+        workflow = (ROOT / ".github/workflows/build-compiler.yml").read_text()
+        preparation = [shlex.split(line.strip()) for line in workflow.splitlines()
+                       if line.lstrip().startswith("cargo run ")
+                       and "--prepare-proof-material" in line]
+        self.assertEqual(len(preparation), 1, "expected one direct proof-material preparation")
+        command = preparation[0]
+        boundary = command.index("--")
+        options = command[:boundary]
+        self.assertEqual(options[options.index("--profile") + 1], "proof-checks")
+        self.assertEqual(options[options.index("-p") + 1], "compact-rust-proof-smoke")
+        self.assertIn("--locked", options)
+        self.assertIn("--offline", options)
+        self.assertNotIn("--release", options)
+        self.assertNotIn("-r", options)
+        self.assertEqual(options.count("--profile"), 1)
+        self.assertEqual(command[boundary + 1], "--prepare-proof-material")
+
     def test_existing_run_options_and_all_executable_arguments_survive(self):
         for prefix in (["cargo", "run"], ["cargo", "+1.99.0", "run"]):
             for package in ("-p", "--package"):

@@ -61,6 +61,11 @@ pub(super) fn render(checked: &CheckedPlan) -> Result<TypedPlan, RecordingGap> {
     let plan = checked.plan();
     let mut steps = Vec::new();
     for (i, parameter) in plan.parameters.iter().enumerate() {
+        // Unit reads already render as (). Keep public source parameters, but
+        // do not introduce an internal alias for their absent payload.
+        if parameter.ty == crate::ir::Type::Unit {
+            continue;
+        }
         let target = name(parameter);
         let source = syn::Ident::new(&format!("__compact_param_{i}"), Span::call_site());
         let ty = rust_type(&parameter.ty).map_err(|e| invalid("parameters", e.to_string()))?;
@@ -97,6 +102,11 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
             } => {
                 let mut formals = Vec::<syn::Stmt>::new();
                 for (parameter, argument) in parameters.iter().zip(arguments) {
+                    // Argument producers belong to the enclosing ordered block.
+                    // Only their checked Unit payload alias is unnecessary here.
+                    if parameter.ty == crate::ir::Type::Unit {
+                        continue;
+                    }
                     let parameter_name = name(parameter);
                     let argument = value(argument);
                     let parameter_type =

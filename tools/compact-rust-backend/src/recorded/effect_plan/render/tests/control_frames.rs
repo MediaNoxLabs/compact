@@ -127,17 +127,6 @@ fn frame_initializer(statement: &syn::Stmt) -> &syn::Expr {
     assert_eq!(target.ident, "frame");
     initializer(statement)
 }
-fn unit_formal(statement: &syn::Stmt, id: usize) {
-    let syn::Stmt::Local(local) = statement else {
-        panic!("lexical formal lost")
-    };
-    let syn::Pat::Type(formal) = &local.pat else {
-        panic!("formal type lost")
-    };
-    assert!(matches!(formal.pat.as_ref(), syn::Pat::Ident(p) if p.ident == name(&unit(id))));
-    assert!(matches!(formal.ty.as_ref(), syn::Type::Tuple(t) if t.elems.is_empty()));
-    assert!(matches!(initializer(statement), syn::Expr::Tuple(t) if t.elems.is_empty()));
-}
 fn tail(block: &syn::Block) -> &syn::Expr {
     let Some(syn::Stmt::Expr(expression, None)) = block.stmts.last() else {
         panic!("block result lost")
@@ -160,7 +149,7 @@ fn check_reset(statement: &syn::Stmt) {
 }
 
 #[test]
-fn unit_calls_return_only_the_frame_and_retain_lexical_formals() {
+fn unit_calls_return_only_the_frame_without_payload_formals() {
     for effectful in [false, true] {
         let call_body = body(if effectful { vec![reset(2)] } else { vec![] }, unit(1));
         let result = checked(
@@ -178,10 +167,9 @@ fn unit_calls_return_only_the_frame_and_retain_lexical_formals() {
         let syn::Expr::Block(call) = frame_initializer(&result.steps[0]) else {
             panic!("lexical call frame lost")
         };
-        assert_eq!(call.block.stmts.len(), if effectful { 3 } else { 2 });
-        unit_formal(&call.block.stmts[0], 1);
+        assert_eq!(call.block.stmts.len(), if effectful { 2 } else { 1 });
         if effectful {
-            check_reset(&call.block.stmts[1]);
+            check_reset(&call.block.stmts[0]);
         }
         frame_tail(&call.block);
         assert!(matches!(result.result, syn::Expr::Tuple(t) if t.elems.is_empty()));
@@ -282,9 +270,8 @@ fn unit_call_preserves_nonliteral_and_fallible_argument_producers_in_order() {
     let syn::Expr::Block(call) = frame_initializer(&result.steps[2]) else {
         panic!("call lost")
     };
-    assert_eq!(call.block.stmts.len(), 3);
-    unit_formal(&call.block.stmts[0], 2);
-    let syn::Expr::Call(default) = initializer(&call.block.stmts[1]) else {
+    assert_eq!(call.block.stmts.len(), 2);
+    let syn::Expr::Call(default) = initializer(&call.block.stmts[0]) else {
         panic!("nonliteral default lost")
     };
     let syn::Expr::Path(default) = default.func.as_ref() else {
@@ -333,14 +320,13 @@ fn conditional_inside_call_keeps_following_frame_operations_in_scope_and_order()
     let syn::Expr::Block(call) = frame_initializer(&result.steps[0]) else {
         panic!("outer call lost")
     };
-    assert_eq!(call.block.stmts.len(), 5);
-    unit_formal(&call.block.stmts[0], 1);
-    let syn::Expr::If(choice) = frame_initializer(&call.block.stmts[2]) else {
+    assert_eq!(call.block.stmts.len(), 4);
+    let syn::Expr::If(choice) = frame_initializer(&call.block.stmts[1]) else {
         panic!("nested conditional lost")
     };
     check_reset(&choice.then_branch.stmts[0]);
     frame_tail(&choice.then_branch);
-    check_reset(&call.block.stmts[3]);
+    check_reset(&call.block.stmts[2]);
     frame_tail(&call.block);
     check_reset(&result.steps[1]);
 }
@@ -403,4 +389,71 @@ fn field_and_empty_tuple_calls_and_branches_keep_typed_payload_carriers() {
             && matches!(&t.elems[1], syn::Expr::Path(p) if p.path.is_ident("__compact_effect_0")))
         );
     }
+}
+
+#[test]
+fn unit_root_alias_is_omitted_without_renumbering_other_source_parameters() {
+    for ty in [Type::Field, Type::Tuple { elements: vec![] }] {
+        let input = typed(1, ty.clone());
+        let result = checked(
+            vec![unit(0), input.clone(), unit(2)],
+            body(vec![reset(3)], input),
+            ty,
+        );
+        assert_eq!(result.steps.len(), 2);
+        let syn::Expr::Path(source) = initializer(&result.steps[0]) else {
+            panic!("non-Unit source parameter alias lost")
+        };
+        assert!(source.path.is_ident("__compact_param_1"));
+        let syn::Stmt::Local(local) = &result.steps[0] else {
+            panic!("non-Unit alias lost")
+        };
+        let syn::Pat::Type(alias) = &local.pat else {
+            panic!("non-Unit alias type lost")
+        };
+        assert!(
+            matches!(alias.pat.as_ref(), syn::Pat::Ident(p) if p.ident == "__compact_effect_1")
+        );
+        check_reset(&result.steps[1]);
+    }
+    let result = checked(vec![unit(0)], body(vec![], unit(0)), Type::Unit);
+    assert!(result.steps.is_empty());
+    assert!(matches!(result.result, syn::Expr::Tuple(t) if t.elems.is_empty()));
+}
+
+#[test]
+fn unit_assertion_argument_keeps_its_refusal_before_the_call_body() {
+    let condition = typed(0, Type::Boolean);
+    let result = checked(
+        vec![condition.clone()],
+        body(
+            vec![
+                binding(
+                    unit(1),
+                    Operation::Assert {
+                        condition,
+                        message: "must hold before reset".into(),
+                    },
+                ),
+                call(4, unit(1), unit(2), body(vec![reset(3)], unit(3))),
+            ],
+            unit(4),
+        ),
+        Type::Unit,
+    );
+    assert_eq!(result.steps.len(), 3);
+    let syn::Stmt::Expr(syn::Expr::If(assertion), _) = &result.steps[1] else {
+        panic!("assertion refusal lost or reordered")
+    };
+    assert!(matches!(assertion.cond.as_ref(), syn::Expr::Unary(_)));
+    assert!(matches!(
+        &assertion.then_branch.stmts[0],
+        syn::Stmt::Expr(syn::Expr::Return(_), _)
+    ));
+    let syn::Expr::Block(call) = frame_initializer(&result.steps[2]) else {
+        panic!("call body lost")
+    };
+    assert_eq!(call.block.stmts.len(), 2);
+    check_reset(&call.block.stmts[0]);
+    frame_tail(&call.block);
 }

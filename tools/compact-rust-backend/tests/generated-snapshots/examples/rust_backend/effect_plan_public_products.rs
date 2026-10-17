@@ -558,7 +558,6 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_effect_0: () = __compact_param_0;
             let __compact_effect_1: runtime::FixedVector<runtime::OpaqueBytes, 0> =
                 __compact_param_1;
             let __compact_effect_2: runtime::BoundedUint<65535> =

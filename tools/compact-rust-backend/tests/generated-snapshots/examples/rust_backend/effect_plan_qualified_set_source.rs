@@ -581,7 +581,7 @@ pub mod ledger_contract {
                     __compact_effect_1.right.bytes,
                 ),
             )?;
-            let (frame, __compact_effect_14): (_, ()) = if __compact_effect_2 {
+            let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_4): (_, crate::types::ShieldedCoinInfo) = frame
                     .try_witness_metered(|context, meter| {
                         witnesses.nextCoin(context.witness_context_with(super::LedgerView {
@@ -596,7 +596,7 @@ pub mod ledger_contract {
                             meter,
                         }))
                     })?;
-                let (frame, __compact_effect_11): (_, ()) = {
+                let frame = {
                     let __compact_effect_6: crate::types::ShieldedCoinInfo =
                         (__compact_effect_4).clone();
                     let __compact_effect_7: crate::types::Either = (__compact_effect_5).clone();
@@ -626,11 +626,11 @@ pub mod ledger_contract {
                             __compact_effect_7.right.bytes,
                         ),
                     )?;
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::coins.record_insert_coin(
                 frame,

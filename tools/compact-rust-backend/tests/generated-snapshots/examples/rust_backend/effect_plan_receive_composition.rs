@@ -315,8 +315,8 @@ pub mod ledger_contract {
                         __compact_effect_3,
                     )
                 })?;
-            let (frame, __compact_effect_17): (_, ()) = if __compact_effect_4 {
-                let (frame, __compact_effect_12): (_, ()) = {
+            let frame = if __compact_effect_4 {
+                let frame = {
                     let __compact_effect_5: crate::types::ShieldedCoinInfo =
                         (__compact_effect_0).clone();
                     let (frame, __compact_effect_address_6) = frame.kernel_self()?;
@@ -350,14 +350,14 @@ pub mod ledger_contract {
                             (__compact_effect_9).into_array(),
                         )),
                     ))?;
-                    (frame, ())
+                    frame
                 };
                 let __compact_effect_13: bool = true;
                 let frame =
                     crate::ledger_slots::accepted.record_write(frame, __compact_effect_13)?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

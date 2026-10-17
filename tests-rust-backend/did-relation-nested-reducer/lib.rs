@@ -256,7 +256,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let __compact_effect_1: bool = __compact_param_1;
-            let (frame, __compact_effect_24): (_, ()) = if __compact_effect_1 {
+            let frame = if __compact_effect_1 {
                 let (frame, __compact_effect_2): (_, bool) = crate::ledger_slots::methods
                     .record_member(frame, (__compact_effect_0).clone())?;
                 if !__compact_effect_2 {
@@ -277,7 +277,7 @@ pub mod ledger_contract {
                         "wrong curve".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             } else {
                 let (frame, __compact_effect_11): (_, bool) = crate::ledger_slots::methods
                     .record_member(frame, (__compact_effect_0).clone())?;
@@ -307,7 +307,7 @@ pub mod ledger_contract {
                         "wrong signing curve".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

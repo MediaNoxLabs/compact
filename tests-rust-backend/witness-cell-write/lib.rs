@@ -295,7 +295,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
-            let (frame, __compact_effect_5): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::Field = __compact_effect_0;
                 let (frame, __compact_effect_2): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
@@ -308,9 +308,9 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::cell.record_write(frame, __compact_effect_2)?;
-                (frame, ())
+                frame
             };
-            let (frame, __compact_effect_10): (_, ()) = {
+            let frame = {
                 let __compact_effect_6: runtime::Field = __compact_effect_0;
                 let (frame, __compact_effect_7): (_, runtime::Field) =
                     frame.try_witness_metered(|context, meter| {
@@ -323,7 +323,7 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::cell.record_write(frame, __compact_effect_7)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

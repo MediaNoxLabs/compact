@@ -314,7 +314,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_3).value() as u16)?;
-            let (frame, __compact_effect_24): (_, ()) = {
+            let frame = {
                 let __compact_effect_5: runtime::Field = __compact_effect_0;
                 let __compact_effect_6: runtime::JubjubPoint = __compact_effect_1;
                 let __compact_effect_7: runtime::FixedBytes<32> = __compact_effect_2;
@@ -359,7 +359,7 @@ pub mod ledger_contract {
                         "wrong default".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_25): (_, bool) =
                 frame.try_witness_metered(|context, meter| {

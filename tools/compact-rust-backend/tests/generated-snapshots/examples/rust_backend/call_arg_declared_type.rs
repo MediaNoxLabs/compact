@@ -984,14 +984,14 @@ pub mod ledger_contract {
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             };
-            let (frame, __compact_effect_8): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::FixedVector<runtime::Field, 2> =
                     (__compact_effect_3).clone();
                 let __compact_effect_5: runtime::Field =
                     crate::pure_circuits::sumVec((__compact_effect_4).clone())?;
                 let frame =
                     crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_5)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -1002,7 +1002,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let (frame, __compact_effect_0): (_, bool) =
                 crate::ledger_slots::flag.record_read(frame)?;
-            let (frame, __compact_effect_12): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_0 {
                 let __compact_effect_1: runtime::Field = runtime::Field::from_le_bytes(&[
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1021,18 +1021,18 @@ pub mod ledger_contract {
                         __compact_cast_source_0;
                     runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
                 };
-                let (frame, __compact_effect_9): (_, ()) = {
+                let frame = {
                     let __compact_effect_5: runtime::FixedVector<runtime::Field, 2> =
                         (__compact_effect_4).clone();
                     let __compact_effect_6: runtime::Field =
                         crate::pure_circuits::sumVec((__compact_effect_5).clone())?;
                     let frame =
                         crate::ledger_slots::fieldCell.record_write(frame, __compact_effect_6)?;
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

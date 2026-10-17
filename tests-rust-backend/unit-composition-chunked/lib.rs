@@ -449,7 +449,7 @@ pub mod ledger_contract {
         ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
         {
             let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
-            let (frame, __compact_effect_6): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_0;
                 let (frame, __compact_effect_raw_2) =
@@ -462,7 +462,7 @@ pub mod ledger_contract {
                 if !__compact_effect_3 {
                     return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                 }
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_7): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -473,7 +473,7 @@ pub mod ledger_contract {
             }
             let __compact_effect_9: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_9)?;
-            let (frame, __compact_effect_16): (_, ()) = {
+            let frame = {
                 let __compact_effect_11: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
@@ -487,7 +487,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_13)?;
-                (frame, ())
+                frame
             };
             Ok((frame, ()))
         }
@@ -512,11 +512,11 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
-            let (frame, __compact_effect_23): (_, ()) = if __compact_effect_0 {
-                let (frame, __compact_effect_20): (_, ()) = {
+            let frame = if __compact_effect_0 {
+                let frame = {
                     let __compact_effect_2: runtime::BoundedUint<18446744073709551615> =
                         __compact_effect_1;
-                    let (frame, __compact_effect_8): (_, ()) = {
+                    let frame = {
                         let __compact_effect_3: runtime::BoundedUint<18446744073709551615> =
                             __compact_effect_2;
                         let (frame, __compact_effect_raw_4) =
@@ -529,7 +529,7 @@ pub mod ledger_contract {
                         if !__compact_effect_5 {
                             return Err(runtime::CompactError::AssertionFailed("stale".to_owned()));
                         }
-                        (frame, ())
+                        frame
                     };
                     let (frame, __compact_effect_9): (_, bool) =
                         crate::ledger_slots::active.record_read(frame)?;
@@ -541,7 +541,7 @@ pub mod ledger_contract {
                     let __compact_effect_11: bool = false;
                     let frame =
                         crate::ledger_slots::active.record_write(frame, __compact_effect_11)?;
-                    let (frame, __compact_effect_18): (_, ()) = {
+                    let frame = {
                         let __compact_effect_13: runtime::BoundedUint<65535> =
                             <runtime::BoundedUint<65535>>::new(1u128)?;
                         let frame = crate::ledger_slots::version
@@ -557,13 +557,13 @@ pub mod ledger_contract {
                         })?;
                         let frame = crate::ledger_slots::updated
                             .record_write(frame, __compact_effect_15)?;
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

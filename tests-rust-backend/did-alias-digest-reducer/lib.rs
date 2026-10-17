@@ -202,7 +202,7 @@ pub mod ledger_contract {
             let __compact_effect_1: crate::types::Mutation = __compact_param_1;
             let __compact_effect_2: runtime::Field =
                 crate::pure_circuits::digest((__compact_effect_0).clone(), __compact_effect_1)?;
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_3: runtime::Field = __compact_effect_2;
                 let (frame, __compact_effect_4): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
@@ -219,7 +219,7 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_8: bool = true;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;

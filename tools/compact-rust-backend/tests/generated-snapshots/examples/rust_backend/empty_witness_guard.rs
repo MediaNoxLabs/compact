@@ -294,7 +294,7 @@ pub mod ledger_contract {
                 (__compact_effect_1).clone(),
                 __compact_effect_2,
             )?;
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_4): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.permit(context.witness_context_with(super::LedgerView {
@@ -307,7 +307,7 @@ pub mod ledger_contract {
                         "witness continuation refused".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

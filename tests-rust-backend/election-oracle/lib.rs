@@ -1244,18 +1244,18 @@ pub mod ledger_contract {
             let __compact_effect_32: crate::types::PermissibleVotes =
                 crate::types::PermissibleVotes::yes;
             let __compact_effect_33: bool = __compact_effect_16 == __compact_effect_32;
-            let (frame, __compact_effect_40): (_, ()) = if __compact_effect_33 {
+            let frame = if __compact_effect_33 {
                 let __compact_effect_34: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::tally_yes
                     .record_increment(frame, (__compact_effect_34).value() as u16)?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_37: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::tally_no
                     .record_increment(frame, (__compact_effect_37).value() as u16)?;
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::revealed.record_insert(frame, __compact_effect_10)?;
             let (frame, __compact_effect_42): (_, ()) =

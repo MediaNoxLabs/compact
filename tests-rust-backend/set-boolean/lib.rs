@@ -365,22 +365,22 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let __compact_effect_1: bool = __compact_param_1;
-            let (frame, __compact_effect_12): (_, ()) = if __compact_effect_1 {
-                let (frame, __compact_effect_8): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_1 {
+                let frame = if __compact_effect_0 {
                     let __compact_effect_2: bool = true;
                     let frame =
                         crate::ledger_slots::seen.record_insert(frame, __compact_effect_2)?;
-                    (frame, ())
+                    frame
                 } else {
                     let __compact_effect_5: bool = false;
                     let frame =
                         crate::ledger_slots::seen.record_insert(frame, __compact_effect_5)?;
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
                 let frame = crate::ledger_slots::seen.record_remove(frame, __compact_effect_0)?;
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_13): (_, bool) =
                 crate::ledger_slots::seen.record_member(frame, __compact_effect_0)?;

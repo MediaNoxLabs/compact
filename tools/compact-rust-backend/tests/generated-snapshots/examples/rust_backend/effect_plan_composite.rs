@@ -317,8 +317,8 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let (frame, __compact_effect_11): (_, ()) = if __compact_effect_3 {
-                let (frame, __compact_effect_8): (_, ()) = {
+            let frame = if __compact_effect_3 {
+                let frame = {
                     let __compact_effect_5: crate::types::ShieldedCoinInfo =
                         (__compact_effect_1).clone();
                     let __compact_effect_6: crate::types::Either = (__compact_effect_2).clone();
@@ -334,11 +334,11 @@ pub mod ledger_contract {
                             __compact_effect_6.right.bytes,
                         ),
                     )?;
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             let frame = frame.create_zswap_input(
                 runtime::ledger::coin_info_from_compact(

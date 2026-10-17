@@ -143,11 +143,11 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<18446744073709551615> = __compact_param_0;
-            let (frame, __compact_effect_4): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::BoundedUint<18446744073709551615> =
                     <runtime::BoundedUint<18446744073709551615>>::new(0u128)?;
                 let frame = crate::ledger_slots::n.record_write(frame, __compact_effect_1)?;
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::n.record_write(frame, __compact_effect_0)?;
             Ok(frame.finish(()))

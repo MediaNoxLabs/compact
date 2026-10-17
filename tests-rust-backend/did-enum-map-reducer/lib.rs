@@ -235,12 +235,12 @@ pub mod ledger_contract {
                 (__compact_effect_6).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let (frame, __compact_effect_11): (_, ()) = {
+            let frame = {
                 let __compact_effect_8: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_8).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -258,12 +258,12 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::entries.record_remove(frame, (__compact_effect_0).clone())?;
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

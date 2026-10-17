@@ -275,7 +275,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
             let __compact_effect_1: runtime::Field =
                 crate::pure_circuits::digest(__compact_effect_0)?;
-            let (frame, __compact_effect_8): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: runtime::Field = __compact_effect_1;
                 let (frame, __compact_effect_3): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -299,7 +299,7 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::key.record_write(frame, __compact_effect_0)?;
             Ok(frame.finish(()))
@@ -315,7 +315,7 @@ pub mod ledger_contract {
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal");
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::Field = __compact_effect_0;
                 let (frame, __compact_effect_2): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -339,7 +339,7 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_8: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_8)?;
@@ -358,7 +358,7 @@ pub mod ledger_contract {
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal");
-            let (frame, __compact_effect_8): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: runtime::Field = __compact_effect_1;
                 let (frame, __compact_effect_3): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -382,7 +382,7 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::key.record_write(frame, __compact_effect_0)?;
             Ok(frame.finish(()))
@@ -397,7 +397,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
             let __compact_effect_1: runtime::Field =
                 crate::pure_circuits::digest(__compact_effect_0)?;
-            let (frame, __compact_effect_8): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: runtime::Field = __compact_effect_1;
                 let (frame, __compact_effect_3): (_, bool) =
                     crate::ledger_slots::active.record_read(frame)?;
@@ -421,7 +421,7 @@ pub mod ledger_contract {
                         "unauthorized".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_9: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_9)?;

@@ -440,15 +440,15 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
             let __compact_effect_1: runtime::FixedBytes<32> = __compact_param_1;
-            let (frame, __compact_effect_5): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_0 {
                 let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinSpend(
                     runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                         (__compact_effect_1).into_array(),
                     )),
                 ))?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

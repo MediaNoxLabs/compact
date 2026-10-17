@@ -675,7 +675,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::QualifiedShieldedCoinInfo = __compact_param_0;
             let __compact_effect_1: crate::types::ShieldedCoinInfo = __compact_param_1;
-            let (frame, __compact_effect_9): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: crate::types::ShieldedCoinInfo =
                     (__compact_effect_1).clone();
                 let (frame, __compact_effect_address_3) = frame.kernel_self()?;
@@ -707,7 +707,7 @@ pub mod ledger_contract {
                         (__compact_effect_6).into_array(),
                     )),
                 ))?;
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_49): (_, crate::types::ShieldedCoinInfo) = {
                 let __compact_effect_10: crate::types::QualifiedShieldedCoinInfo =

@@ -189,7 +189,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::JubjubPoint = __compact_param_0;
-            let (frame, __compact_effect_14): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_2: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_1);
@@ -216,9 +216,9 @@ pub mod ledger_contract {
                         "same controller".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
-            let (frame, __compact_effect_28): (_, ()) = {
+            let frame = {
                 let __compact_effect_15: runtime::JubjubPoint = __compact_effect_0;
                 let __compact_effect_16: runtime::Field =
                     runtime::jubjub_point_x(__compact_effect_15);
@@ -245,7 +245,7 @@ pub mod ledger_contract {
                         "same recovery".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

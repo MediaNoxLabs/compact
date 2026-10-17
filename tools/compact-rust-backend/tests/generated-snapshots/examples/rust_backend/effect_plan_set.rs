@@ -571,16 +571,16 @@ pub mod ledger_contract {
             let __compact_effect_9: runtime::OpaqueString = (__compact_effect_7.text).clone();
             let (frame, __compact_effect_10): (_, bool) =
                 crate::ledger_slots::names.record_member(frame, (__compact_effect_9).clone())?;
-            let (frame, __compact_effect_16): (_, ()) = if __compact_effect_1 {
+            let frame = if __compact_effect_1 {
                 let __compact_effect_11: crate::types::OwnedKey =
                     crate::pure_circuits::copyKey((__compact_effect_7).clone())?;
                 let frame = crate::ledger_slots::keys
                     .record_insert(frame, (__compact_effect_11).clone())?;
                 let frame =
                     crate::ledger_slots::keys.record_insert(frame, (__compact_effect_7).clone())?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             let __compact_effect_17: runtime::OpaqueString = (__compact_effect_7.text).clone();
             let frame =

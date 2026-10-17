@@ -592,7 +592,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::ShieldedCoinInfo = __compact_param_0;
             let __compact_effect_1: crate::types::Either = __compact_param_1;
-            let (frame, __compact_effect_9): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: crate::types::ShieldedCoinInfo =
                     (__compact_effect_0).clone();
                 let (frame, __compact_effect_address_3) = frame.kernel_self()?;
@@ -624,7 +624,7 @@ pub mod ledger_contract {
                         (__compact_effect_6).into_array(),
                     )),
                 ))?;
-                (frame, ())
+                frame
             };
             let __compact_effect_10: runtime::BoundedUint<340282366920938463463374607431768211455> =
                 __compact_effect_0.value;
@@ -746,7 +746,7 @@ pub mod ledger_contract {
                         let __compact_effect_44: bool = false;
                         (frame, __compact_effect_44)
                     };
-                    let (frame, __compact_effect_49): (_, ()) = if __compact_effect_45 {
+                    let frame = if __compact_effect_45 {
                         let __compact_effect_46: runtime::FixedBytes<32> =
                             crate::pure_circuits::coinCommitment(
                                 (__compact_effect_32).clone(),
@@ -758,9 +758,9 @@ pub mod ledger_contract {
                                     (__compact_effect_46).into_array(),
                                 )),
                             ))?;
-                        (frame, ())
+                        frame
                     } else {
-                        (frame, ())
+                        frame
                     };
                     let __compact_effect_50: runtime::BoundedUint<
                         340282366920938463463374607431768211455,

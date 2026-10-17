@@ -1373,7 +1373,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::ContractAddress = __compact_param_0;
-            let (frame, __compact_effect_9): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_1): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
                 if !__compact_effect_1 {
@@ -1395,11 +1395,11 @@ pub mod ledger_contract {
                         "registry is frozen".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let frame =
                 crate::ledger_slots::custodian.record_write(frame, (__compact_effect_0).clone())?;
-            let (frame, __compact_effect_18): (_, ()) = {
+            let frame = {
                 let __compact_effect_11: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -1419,7 +1419,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_15)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -1435,7 +1435,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let __compact_effect_1: crate::types::AssetRecord = __compact_param_1;
             let __compact_effect_2: crate::types::RecordMutation = __compact_param_2;
-            let (frame, __compact_effect_11): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_3): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
                 if !__compact_effect_3 {
@@ -1457,7 +1457,7 @@ pub mod ledger_contract {
                         "registry is frozen".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_12: crate::types::RecordMutation =
                 crate::types::RecordMutation::Insert;
@@ -1481,7 +1481,7 @@ pub mod ledger_contract {
             let __compact_effect_20: crate::types::RecordMutation =
                 crate::types::RecordMutation::Update;
             let __compact_effect_21: bool = __compact_effect_2 == __compact_effect_20;
-            let (frame, __compact_effect_44): (_, ()) = if __compact_effect_21 {
+            let frame = if __compact_effect_21 {
                 let (frame, __compact_effect_22): (_, bool) = crate::ledger_slots::records
                     .record_member(frame, (__compact_effect_0).clone())?;
                 if !__compact_effect_22 {
@@ -1491,12 +1491,12 @@ pub mod ledger_contract {
                 }
                 let frame = crate::ledger_slots::records
                     .record_remove(frame, (__compact_effect_0).clone())?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_26: crate::types::RecordMutation =
                     crate::types::RecordMutation::Insert;
                 let __compact_effect_27: bool = __compact_effect_2 == __compact_effect_26;
-                let (frame, __compact_effect_42): (_, ()) = if __compact_effect_27 {
+                let frame = if __compact_effect_27 {
                     let (frame, __compact_effect_33): (_, bool) = {
                         let __compact_effect_28: runtime::OpaqueString =
                             (__compact_effect_0).clone();
@@ -1529,18 +1529,18 @@ pub mod ledger_contract {
                         <runtime::BoundedUint<65535>>::new(1u128)?;
                     let frame = crate::ledger_slots::recordCount
                         .record_increment(frame, (__compact_effect_38).value() as u16)?;
-                    (frame, ())
+                    frame
                 } else {
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::records.record_insert(
                 frame,
                 (__compact_effect_0).clone(),
                 (__compact_effect_1).clone(),
             )?;
-            let (frame, __compact_effect_53): (_, ()) = {
+            let frame = {
                 let __compact_effect_46: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -1560,7 +1560,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_50)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -1572,7 +1572,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
-            let (frame, __compact_effect_9): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_1): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
                 if !__compact_effect_1 {
@@ -1594,7 +1594,7 @@ pub mod ledger_contract {
                         "registry is frozen".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_10): (_, bool) =
                 crate::ledger_slots::records.record_member(frame, (__compact_effect_0).clone())?;
@@ -1621,7 +1621,7 @@ pub mod ledger_contract {
                 crate::ledger_slots::records.record_remove(frame, (__compact_effect_0).clone())?;
             let frame = crate::ledger_slots::retiredKeys
                 .record_insert(frame, (__compact_effect_0).clone())?;
-            let (frame, __compact_effect_26): (_, ()) = {
+            let frame = {
                 let __compact_effect_19: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -1641,7 +1641,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_23)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -1657,7 +1657,7 @@ pub mod ledger_contract {
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let __compact_effect_1: crate::types::CustodyGrant = __compact_param_1;
             let __compact_effect_2: crate::types::RecordMutation = __compact_param_2;
-            let (frame, __compact_effect_11): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_3): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
                 if !__compact_effect_3 {
@@ -1679,7 +1679,7 @@ pub mod ledger_contract {
                         "registry is frozen".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_12: crate::types::RecordMutation =
                 crate::types::RecordMutation::Insert;
@@ -1701,7 +1701,7 @@ pub mod ledger_contract {
             let __compact_effect_19: crate::types::RecordMutation =
                 crate::types::RecordMutation::Update;
             let __compact_effect_20: bool = __compact_effect_2 == __compact_effect_19;
-            let (frame, __compact_effect_41): (_, ()) = if __compact_effect_20 {
+            let frame = if __compact_effect_20 {
                 let (frame, __compact_effect_21): (_, bool) = crate::ledger_slots::custodyGrants
                     .record_member(frame, (__compact_effect_0).clone())?;
                 if !__compact_effect_21 {
@@ -1711,12 +1711,12 @@ pub mod ledger_contract {
                 }
                 let frame = crate::ledger_slots::custodyGrants
                     .record_remove(frame, (__compact_effect_0).clone())?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_25: crate::types::RecordMutation =
                     crate::types::RecordMutation::Insert;
                 let __compact_effect_26: bool = __compact_effect_2 == __compact_effect_25;
-                let (frame, __compact_effect_39): (_, ()) = if __compact_effect_26 {
+                let frame = if __compact_effect_26 {
                     let (frame, __compact_effect_32): (_, bool) = {
                         let __compact_effect_27: runtime::OpaqueString =
                             (__compact_effect_0).clone();
@@ -1745,18 +1745,18 @@ pub mod ledger_contract {
                             "grant already exists".to_owned(),
                         ));
                     }
-                    (frame, ())
+                    frame
                 } else {
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::custodyGrants.record_insert(
                 frame,
                 (__compact_effect_0).clone(),
                 (__compact_effect_1).clone(),
             )?;
-            let (frame, __compact_effect_50): (_, ()) = {
+            let frame = {
                 let __compact_effect_43: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -1776,7 +1776,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_47)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -1790,7 +1790,7 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::OpaqueString = __compact_param_0;
             let __compact_effect_1: crate::types::ListMutation = __compact_param_1;
-            let (frame, __compact_effect_10): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_2): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
                 if !__compact_effect_2 {
@@ -1812,7 +1812,7 @@ pub mod ledger_contract {
                         "registry is frozen".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_11: crate::types::ListMutation = crate::types::ListMutation::Add;
             let __compact_effect_12: bool = __compact_effect_1 == __compact_effect_11;
@@ -1852,7 +1852,7 @@ pub mod ledger_contract {
             }
             let __compact_effect_25: crate::types::ListMutation = crate::types::ListMutation::Add;
             let __compact_effect_26: bool = __compact_effect_1 == __compact_effect_25;
-            let (frame, __compact_effect_43): (_, ()) = if __compact_effect_26 {
+            let frame = if __compact_effect_26 {
                 let (frame, __compact_effect_27): (_, bool) = crate::ledger_slots::watchList
                     .record_member(frame, (__compact_effect_0).clone())?;
                 let (frame, __compact_effect_30): (_, bool) = if __compact_effect_27 {
@@ -1869,12 +1869,12 @@ pub mod ledger_contract {
                 }
                 let frame = crate::ledger_slots::watchList
                     .record_insert(frame, (__compact_effect_0).clone())?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_34: crate::types::ListMutation =
                     crate::types::ListMutation::Drop;
                 let __compact_effect_35: bool = __compact_effect_1 == __compact_effect_34;
-                let (frame, __compact_effect_41): (_, ()) = if __compact_effect_35 {
+                let frame = if __compact_effect_35 {
                     let (frame, __compact_effect_36): (_, bool) = crate::ledger_slots::watchList
                         .record_member(frame, (__compact_effect_0).clone())?;
                     if !__compact_effect_36 {
@@ -1884,13 +1884,13 @@ pub mod ledger_contract {
                     }
                     let frame = crate::ledger_slots::watchList
                         .record_remove(frame, (__compact_effect_0).clone())?;
-                    (frame, ())
+                    frame
                 } else {
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
-            let (frame, __compact_effect_51): (_, ()) = {
+            let frame = {
                 let __compact_effect_44: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -1910,7 +1910,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_48)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -1922,7 +1922,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
-            let (frame, __compact_effect_9): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_1): (_, bool) =
                     crate::ledger_slots::open.record_read(frame)?;
                 if !__compact_effect_1 {
@@ -1944,10 +1944,10 @@ pub mod ledger_contract {
                         "registry is frozen".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let frame = crate::ledger_slots::tags.record_insert(frame, __compact_effect_0)?;
-            let (frame, __compact_effect_18): (_, ()) = {
+            let frame = {
                 let __compact_effect_11: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -1967,7 +1967,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_15)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -2040,7 +2040,7 @@ pub mod ledger_contract {
                 (__compact_effect_1).clone(),
                 __compact_effect_2,
             )?;
-            let (frame, __compact_effect_11): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -2060,7 +2060,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_8)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -2081,7 +2081,7 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::open.record_write(frame, __compact_effect_2)?;
             let __compact_effect_4: bool = true;
             let frame = crate::ledger_slots::frozen.record_write(frame, __compact_effect_4)?;
-            let (frame, __compact_effect_13): (_, ()) = {
+            let frame = {
                 let __compact_effect_6: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::writeCount
@@ -2101,7 +2101,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updatedAt.record_write(frame, __compact_effect_10)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

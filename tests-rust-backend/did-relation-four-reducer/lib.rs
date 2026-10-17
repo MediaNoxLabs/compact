@@ -475,7 +475,7 @@ pub mod ledger_contract {
                 };
                 (frame, __compact_effect_24)
             };
-            let (frame, __compact_effect_89): (_, ()) = if __compact_effect_2 {
+            let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_28): (_, bool) = if __compact_effect_25 {
                     let __compact_effect_26: bool = false;
                     (frame, __compact_effect_26)
@@ -488,108 +488,108 @@ pub mod ledger_contract {
                         "already present".to_owned(),
                     ));
                 }
-                let (frame, __compact_effect_57): (_, ()) = {
+                let frame = {
                     let __compact_effect_30: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_31: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_32: crate::types::Relation =
                         crate::types::Relation::Authentication;
                     let __compact_effect_33: bool = __compact_effect_30 == __compact_effect_32;
-                    let (frame, __compact_effect_55): (_, ()) = if __compact_effect_33 {
+                    let frame = if __compact_effect_33 {
                         let frame = crate::ledger_slots::authentication
                             .record_insert(frame, (__compact_effect_31).clone())?;
-                        (frame, ())
+                        frame
                     } else {
                         let __compact_effect_36: crate::types::Relation =
                             crate::types::Relation::Agreement;
                         let __compact_effect_37: bool = __compact_effect_30 == __compact_effect_36;
-                        let (frame, __compact_effect_53): (_, ()) = if __compact_effect_37 {
+                        let frame = if __compact_effect_37 {
                             let frame = crate::ledger_slots::agreement
                                 .record_insert(frame, (__compact_effect_31).clone())?;
-                            (frame, ())
+                            frame
                         } else {
                             let __compact_effect_40: crate::types::Relation =
                                 crate::types::Relation::Invocation;
                             let __compact_effect_41: bool =
                                 __compact_effect_30 == __compact_effect_40;
-                            let (frame, __compact_effect_51): (_, ()) = if __compact_effect_41 {
+                            let frame = if __compact_effect_41 {
                                 let frame = crate::ledger_slots::invocation
                                     .record_insert(frame, (__compact_effect_31).clone())?;
-                                (frame, ())
+                                frame
                             } else {
                                 let __compact_effect_44: crate::types::Relation =
                                     crate::types::Relation::Delegation;
                                 let __compact_effect_45: bool =
                                     __compact_effect_30 == __compact_effect_44;
-                                let (frame, __compact_effect_49): (_, ()) = if __compact_effect_45 {
+                                let frame = if __compact_effect_45 {
                                     let frame = crate::ledger_slots::delegation
                                         .record_insert(frame, (__compact_effect_31).clone())?;
-                                    (frame, ())
+                                    frame
                                 } else {
-                                    (frame, ())
+                                    frame
                                 };
-                                (frame, ())
+                                frame
                             };
-                            (frame, ())
+                            frame
                         };
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
                 if !__compact_effect_25 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "missing relation".to_owned(),
                     ));
                 }
-                let (frame, __compact_effect_87): (_, ()) = {
+                let frame = {
                     let __compact_effect_60: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_61: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_62: crate::types::Relation =
                         crate::types::Relation::Authentication;
                     let __compact_effect_63: bool = __compact_effect_60 == __compact_effect_62;
-                    let (frame, __compact_effect_85): (_, ()) = if __compact_effect_63 {
+                    let frame = if __compact_effect_63 {
                         let frame = crate::ledger_slots::authentication
                             .record_remove(frame, (__compact_effect_61).clone())?;
-                        (frame, ())
+                        frame
                     } else {
                         let __compact_effect_66: crate::types::Relation =
                             crate::types::Relation::Agreement;
                         let __compact_effect_67: bool = __compact_effect_60 == __compact_effect_66;
-                        let (frame, __compact_effect_83): (_, ()) = if __compact_effect_67 {
+                        let frame = if __compact_effect_67 {
                             let frame = crate::ledger_slots::agreement
                                 .record_remove(frame, (__compact_effect_61).clone())?;
-                            (frame, ())
+                            frame
                         } else {
                             let __compact_effect_70: crate::types::Relation =
                                 crate::types::Relation::Invocation;
                             let __compact_effect_71: bool =
                                 __compact_effect_60 == __compact_effect_70;
-                            let (frame, __compact_effect_81): (_, ()) = if __compact_effect_71 {
+                            let frame = if __compact_effect_71 {
                                 let frame = crate::ledger_slots::invocation
                                     .record_remove(frame, (__compact_effect_61).clone())?;
-                                (frame, ())
+                                frame
                             } else {
                                 let __compact_effect_74: crate::types::Relation =
                                     crate::types::Relation::Delegation;
                                 let __compact_effect_75: bool =
                                     __compact_effect_60 == __compact_effect_74;
-                                let (frame, __compact_effect_79): (_, ()) = if __compact_effect_75 {
+                                let frame = if __compact_effect_75 {
                                     let frame = crate::ledger_slots::delegation
                                         .record_remove(frame, (__compact_effect_61).clone())?;
-                                    (frame, ())
+                                    frame
                                 } else {
-                                    (frame, ())
+                                    frame
                                 };
-                                (frame, ())
+                                frame
                             };
-                            (frame, ())
+                            frame
                         };
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

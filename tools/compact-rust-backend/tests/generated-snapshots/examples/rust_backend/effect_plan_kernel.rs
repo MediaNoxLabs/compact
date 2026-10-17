@@ -186,7 +186,7 @@ pub mod ledger_contract {
                     (__compact_effect_1).into_array(),
                 )),
             ))?;
-            let (frame, __compact_effect_11): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, runtime::FixedBytes<32>) = frame
                     .try_witness_metered(|context, meter| {
                         witnesses.domain(context.witness_context_with(super::LedgerView {
@@ -205,14 +205,14 @@ pub mod ledger_contract {
                     runtime::ledger::HashOutput((__compact_effect_5).into_array()),
                     (__compact_effect_6).value() as u64,
                 )?;
-                (frame, ())
+                frame
             } else {
                 let frame = frame.kernel_claim(runtime::ledger::KernelClaim::CoinReceive(
                     runtime::ledger::CoinCommitment(runtime::ledger::HashOutput(
                         (__compact_effect_1).into_array(),
                     )),
                 ))?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

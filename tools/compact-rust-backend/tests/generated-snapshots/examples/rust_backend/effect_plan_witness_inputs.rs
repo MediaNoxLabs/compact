@@ -374,7 +374,7 @@ pub mod ledger_contract {
                     "first callback refused".to_owned(),
                 ));
             }
-            let (frame, __compact_effect_22): (_, ()) = if __compact_effect_2 {
+            let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_19): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.consume(
@@ -394,9 +394,9 @@ pub mod ledger_contract {
                         "second callback refused".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             let __compact_effect_23: bool = true;
             let __compact_effect_24: crate::types::Accepted = crate::types::Accepted {

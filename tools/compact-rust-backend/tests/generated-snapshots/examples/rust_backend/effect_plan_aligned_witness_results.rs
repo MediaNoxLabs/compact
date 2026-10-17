@@ -799,7 +799,7 @@ pub mod ledger_contract {
                 <runtime::BoundedUint<65535>>::new(1u128)?;
             let frame = crate::ledger_slots::calls
                 .record_increment(frame, (__compact_effect_0).value() as u16)?;
-            let (frame, __compact_effect_8): (_, ()) = {
+            let frame = {
                 let (frame, __compact_effect_2): (_, runtime::OpaqueString) = frame
                     .try_witness_metered_exact(|context, meter| {
                         witnesses.text_value(context.witness_context_with(super::LedgerView {
@@ -821,7 +821,7 @@ pub mod ledger_contract {
                         "zero text hash".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_9): (_, bool) =
                 frame.try_witness_metered(|context, meter| {

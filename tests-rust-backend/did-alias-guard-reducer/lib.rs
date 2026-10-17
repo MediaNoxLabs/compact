@@ -196,10 +196,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::defined(__compact_effect_0)?;
-            let (frame, __compact_effect_5): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -211,10 +211,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::localGuard(__compact_effect_0)?;
-            let (frame, __compact_effect_5): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -226,10 +226,10 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Mutation = __compact_param_0;
             let __compact_effect_1: () = crate::pure_circuits::transitiveGuard(__compact_effect_0)?;
-            let (frame, __compact_effect_5): (_, ()) = {
+            let frame = {
                 let __compact_effect_2: bool = true;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_2)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

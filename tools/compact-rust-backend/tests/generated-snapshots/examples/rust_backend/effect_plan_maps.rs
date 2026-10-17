@@ -501,7 +501,7 @@ pub mod ledger_contract {
             let __compact_effect_2: runtime::OpaqueString = __compact_param_2;
             let __compact_effect_3: runtime::Field = __compact_param_3;
             let __compact_effect_4: runtime::Field = __compact_param_4;
-            let (frame, __compact_effect_14): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_0 {
                 let (frame, __compact_effect_5): (_, bool) =
                     frame.try_witness_metered(|context, meter| {
                         witnesses.pick_key(context.witness_context_with(super::LedgerView {
@@ -536,9 +536,9 @@ pub mod ledger_contract {
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
                     .record_increment(frame, (__compact_effect_10).value() as u16)?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_15): (_, bool) =
                 crate::ledger_slots::table.record_member(frame, (__compact_effect_1).clone())?;

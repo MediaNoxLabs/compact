@@ -349,7 +349,7 @@ pub mod ledger_contract {
                 };
                 (frame, __compact_effect_16)
             };
-            let (frame, __compact_effect_57): (_, ()) = if __compact_effect_2 {
+            let frame = if __compact_effect_2 {
                 let (frame, __compact_effect_20): (_, bool) = if __compact_effect_17 {
                     let __compact_effect_18: bool = false;
                     (frame, __compact_effect_18)
@@ -362,64 +362,64 @@ pub mod ledger_contract {
                         "already present".to_owned(),
                     ));
                 }
-                let (frame, __compact_effect_37): (_, ()) = {
+                let frame = {
                     let __compact_effect_22: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_23: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_24: crate::types::Relation =
                         crate::types::Relation::Authentication;
                     let __compact_effect_25: bool = __compact_effect_22 == __compact_effect_24;
-                    let (frame, __compact_effect_35): (_, ()) = if __compact_effect_25 {
+                    let frame = if __compact_effect_25 {
                         let frame = crate::ledger_slots::auth
                             .record_insert(frame, (__compact_effect_23).clone())?;
-                        (frame, ())
+                        frame
                     } else {
                         let __compact_effect_28: crate::types::Relation =
                             crate::types::Relation::KeyAgreement;
                         let __compact_effect_29: bool = __compact_effect_22 == __compact_effect_28;
-                        let (frame, __compact_effect_33): (_, ()) = if __compact_effect_29 {
+                        let frame = if __compact_effect_29 {
                             let frame = crate::ledger_slots::agreement
                                 .record_insert(frame, (__compact_effect_23).clone())?;
-                            (frame, ())
+                            frame
                         } else {
-                            (frame, ())
+                            frame
                         };
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
                 if !__compact_effect_17 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "missing relation".to_owned(),
                     ));
                 }
-                let (frame, __compact_effect_55): (_, ()) = {
+                let frame = {
                     let __compact_effect_40: crate::types::Relation = __compact_effect_0;
                     let __compact_effect_41: runtime::OpaqueString = (__compact_effect_1).clone();
                     let __compact_effect_42: crate::types::Relation =
                         crate::types::Relation::Authentication;
                     let __compact_effect_43: bool = __compact_effect_40 == __compact_effect_42;
-                    let (frame, __compact_effect_53): (_, ()) = if __compact_effect_43 {
+                    let frame = if __compact_effect_43 {
                         let frame = crate::ledger_slots::auth
                             .record_remove(frame, (__compact_effect_41).clone())?;
-                        (frame, ())
+                        frame
                     } else {
                         let __compact_effect_46: crate::types::Relation =
                             crate::types::Relation::KeyAgreement;
                         let __compact_effect_47: bool = __compact_effect_40 == __compact_effect_46;
-                        let (frame, __compact_effect_51): (_, ()) = if __compact_effect_47 {
+                        let frame = if __compact_effect_47 {
                             let frame = crate::ledger_slots::agreement
                                 .record_remove(frame, (__compact_effect_41).clone())?;
-                            (frame, ())
+                            frame
                         } else {
-                            (frame, ())
+                            frame
                         };
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

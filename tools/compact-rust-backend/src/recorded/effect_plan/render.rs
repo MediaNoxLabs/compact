@@ -40,6 +40,17 @@ fn value(value: &Value) -> syn::Expr {
     let name = name(value);
     crate::retained_value(syn::parse_quote!(#name), &value.ty)
 }
+// Control blocks transfer frame ownership. Only checked Unit has no payload;
+// even an empty IR tuple keeps its ordinary typed result carrier.
+fn frame_result(result: &Value) -> syn::Expr {
+    if result.ty == crate::ir::Type::Unit {
+        syn::parse_quote!(frame)
+    } else {
+        let result = value(result);
+        syn::parse_quote!((frame, #result))
+    }
+}
+
 fn unsigned_max(ty: &crate::ir::Type) -> &str {
     let crate::ir::Type::Unsigned { max } = ty else {
         unreachable!("checked unsigned type")
@@ -69,6 +80,11 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
         let path = &binding.path;
         let output = name(&binding.value);
         let ty = rust_type(&binding.value.ty).map_err(|e| invalid(path, e.to_string()))?;
+        let target = if binding.value.ty == crate::ir::Type::Unit {
+            quote::quote!(frame)
+        } else {
+            quote::quote!((frame, #output): (_, #ty))
+        };
         match &binding.operation {
             Operation::VectorMap { .. } => {
                 steps.push(vector_map::render(binding, declarations)?);
@@ -89,12 +105,12 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                         .push(syn::parse_quote!(let #parameter_name: #parameter_type = #argument;));
                 }
                 let body_steps = block(body, declarations)?;
-                let result = value(&body.result);
+                let result = frame_result(&body.result);
                 steps.push(syn::parse_quote! {
-                    let (frame, #output): (_, #ty) = {
+                    let #target = {
                         #(#formals)*
                         #(#body_steps)*
-                        (frame, #result)
+                        #result
                     };
                 });
             }
@@ -106,15 +122,15 @@ fn block(body: &Block, declarations: &Declarations) -> Result<Vec<syn::Stmt>, Re
                 let condition = value(condition);
                 let then_steps = block(then, declarations)?;
                 let else_steps = block(otherwise, declarations)?;
-                let then_value = value(&then.result);
-                let else_value = value(&otherwise.result);
+                let then_value = frame_result(&then.result);
+                let else_value = frame_result(&otherwise.result);
                 steps.push(syn::parse_quote! {
-                    let (frame,#output): (_,#ty) = if #condition {
+                    let #target = if #condition {
                         #(#then_steps)*
-                        (frame,#then_value)
+                        #then_value
                     } else {
                         #(#else_steps)*
-                        (frame,#else_value)
+                        #else_value
                     };
                 });
             }

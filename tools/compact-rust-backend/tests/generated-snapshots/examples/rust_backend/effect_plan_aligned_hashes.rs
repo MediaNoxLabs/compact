@@ -370,7 +370,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
-            let (frame, __compact_effect_11): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::Field = __compact_effect_0;
                 let __compact_effect_2: runtime::JubjubPoint =
                     runtime::hash_to_curve(__compact_effect_1);
@@ -402,7 +402,7 @@ pub mod ledger_contract {
                         "digest mismatch".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_12: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;
@@ -484,7 +484,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::Field = __compact_param_0;
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::Field = __compact_effect_0;
                 let __compact_effect_2: runtime::FixedBytes<32> =
                     runtime::persistent_hash(__compact_effect_1);
@@ -501,7 +501,7 @@ pub mod ledger_contract {
                         "digest mismatch".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_8: runtime::BoundedUint<65535> =
                 <runtime::BoundedUint<65535>>::new(1u128)?;

@@ -183,19 +183,19 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_effect_3): (_, ()) = {
+            let frame = {
                 let __compact_effect_0: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_0).value() as u16)?;
-                (frame, ())
+                frame
             };
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -215,17 +215,17 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::BoundedUint<65535> = __compact_param_0;
-            let (frame, __compact_effect_4): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_1).value() as u16)?;
-                (frame, ())
+                frame
             };
-            let (frame, __compact_effect_8): (_, ()) = {
+            let frame = {
                 let __compact_effect_5: runtime::BoundedUint<65535> = __compact_effect_0;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_5).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

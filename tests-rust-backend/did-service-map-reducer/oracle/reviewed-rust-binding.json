@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0531 delegated Map/List/Merkle Unit-payload successor; original captured identities and semantic rows remain unchanged.",
+  "scope": "Unit effect-algebra production routing. Original TypeScript capture bytes remain unchanged; current Rust generation and provenance assertions are reviewed separately. No fresh TS execution or added proof claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0531 delegated Map/List/Merkle Unit-payload successor; original captured identities and semantic rows remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged.",
   "captures": [
     {
       "file": "cases.json",
@@ -11,7 +11,7 @@
     {
       "path": "tests-rust-backend/did-service-map-reducer/lib.rs",
       "captured_sha256": "f44b858f151fdea903507ebd044eeeb5d620ff0c587dfce44c9d7ac819fbf1bb",
-      "current_sha256": "6e216f8c674285dbe1a5367b26796642e255b24e66addb35e014373e28132b60"
+      "current_sha256": "3a88e797e9e88c6f03a4ce1d952e4b4c3d822408c94522d324d234eb9bbdce69"
     },
     {
       "path": "tests-rust-backend/did-service-map-reducer/tests/provenance.rs",

@@ -183,7 +183,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: crate::types::Outer = __compact_param_0;
-            let (frame, __compact_effect_6): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::calls
@@ -200,7 +200,7 @@ pub mod ledger_contract {
                         "permission refused".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

@@ -299,7 +299,7 @@ pub mod ledger_contract {
             let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
             let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Insert;
             let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
-            let (frame, __compact_effect_21): (_, ()) = if __compact_effect_4 {
+            let frame = if __compact_effect_4 {
                 let (frame, __compact_effect_5): (_, bool) = crate::ledger_slots::aliases
                     .record_member(frame, (__compact_effect_0).clone())?;
                 let (frame, __compact_effect_8): (_, bool) = if __compact_effect_5 {
@@ -316,11 +316,11 @@ pub mod ledger_contract {
                 }
                 let frame = crate::ledger_slots::aliases
                     .record_insert(frame, (__compact_effect_0).clone())?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_12: crate::types::Mutation = crate::types::Mutation::Remove;
                 let __compact_effect_13: bool = __compact_effect_1 == __compact_effect_12;
-                let (frame, __compact_effect_19): (_, ()) = if __compact_effect_13 {
+                let frame = if __compact_effect_13 {
                     let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::aliases
                         .record_member(frame, (__compact_effect_0).clone())?;
                     if !__compact_effect_14 {
@@ -328,18 +328,18 @@ pub mod ledger_contract {
                     }
                     let frame = crate::ledger_slots::aliases
                         .record_remove(frame, (__compact_effect_0).clone())?;
-                    (frame, ())
+                    frame
                 } else {
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
-            let (frame, __compact_effect_25): (_, ()) = {
+            let frame = {
                 let __compact_effect_22: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_22).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

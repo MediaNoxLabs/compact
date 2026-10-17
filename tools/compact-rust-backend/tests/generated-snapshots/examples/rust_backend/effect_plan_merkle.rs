@@ -484,16 +484,16 @@ pub mod ledger_contract {
             let __compact_effect_1: crate::types::MerkleTreeDigest = __compact_param_1;
             let __compact_effect_2: bool = __compact_param_2;
             let frame = crate::ledger_slots::plain.record_insert(frame, __compact_effect_0)?;
-            let (frame, __compact_effect_10): (_, ()) = if __compact_effect_2 {
-                let (frame, __compact_effect_7): (_, ()) = {
+            let frame = if __compact_effect_2 {
+                let frame = {
                     let __compact_effect_4: runtime::BoundedUint<255> = __compact_effect_0;
                     let frame =
                         crate::ledger_slots::historic.record_insert(frame, __compact_effect_4)?;
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_23): (_, crate::types::Snapshot) = {
                 let __compact_effect_11: crate::types::MerkleTreeDigest =

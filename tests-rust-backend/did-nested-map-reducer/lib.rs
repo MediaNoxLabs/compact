@@ -266,7 +266,7 @@ pub mod ledger_contract {
             let __compact_effect_1: bool = __compact_param_1;
             let __compact_effect_2: () =
                 crate::pure_circuits::allowed((__compact_effect_0).clone())?;
-            let (frame, __compact_effect_16): (_, ()) = if __compact_effect_1 {
+            let frame = if __compact_effect_1 {
                 let __compact_effect_3: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_4): (_, bool) = crate::ledger_slots::methods
                     .record_member(frame, (__compact_effect_3).clone())?;
@@ -276,7 +276,7 @@ pub mod ledger_contract {
                 let __compact_effect_6: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::methods
                     .record_remove(frame, (__compact_effect_6).clone())?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_9: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_10): (_, bool) = crate::ledger_slots::methods
@@ -293,7 +293,7 @@ pub mod ledger_contract {
                         "duplicate".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_17: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::methods.record_insert(
@@ -301,12 +301,12 @@ pub mod ledger_contract {
                 (__compact_effect_17).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let (frame, __compact_effect_22): (_, ()) = {
+            let frame = {
                 let __compact_effect_19: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_19).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -324,12 +324,12 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::methods.record_remove(frame, (__compact_effect_0).clone())?;
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

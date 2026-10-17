@@ -1,6 +1,6 @@
 {
   "format": "compact-reviewed-rust-binding/v1",
-  "scope": "Early read-only shape route retired to independently checked composition (#615/ADR0466). Original TS captures and original test files unchanged. Current exact generated Rust and new standalone observed/manual/private/witness qualification reviewed separately; no fresh TS execution claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0531 delegated Map/List/Merkle Unit-payload successor; original captured identities and semantic rows remain unchanged.",
+  "scope": "Early read-only shape route retired to independently checked composition (#615/ADR0466). Original TS captures and original test files unchanged. Current exact generated Rust and new standalone observed/manual/private/witness qualification reviewed separately; no fresh TS execution claim. #491 current-emission successor: checked Unit payload rendering only; original captured identities and TS answers remain unchanged. ADR0531 delegated Map/List/Merkle Unit-payload successor; original captured identities and semantic rows remain unchanged. ADR0534 checked Unit Call/If frame-carrier successor; original captured identities, semantic rows and provenance tests remain unchanged.",
   "captures": [
     {
       "file": "lifecycle.json",
@@ -35,7 +35,7 @@
     {
       "path": "tests-rust-backend/did-adoption/lib.rs",
       "captured_sha256": "c3ae6d09f37cf421a2fd2bbe7209894b395edd4a03052e5cd912573f115a5d8e",
-      "current_sha256": "b8b6d4ede8cbbd573e817248fcf8ef3a7ba5d94efc2cc0b854a020da5470a2d8"
+      "current_sha256": "0c360048e17426133d8da821918f5d725bc8218cf3bcbf7305f2e3a16c0823dc"
     }
   ],
   "reviewed_artifacts": [

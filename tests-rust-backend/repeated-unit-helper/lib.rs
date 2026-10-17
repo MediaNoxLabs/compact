@@ -270,7 +270,7 @@ pub mod ledger_contract {
                         __compact_effect_2,
                     )
                 })?;
-            let (frame, __compact_effect_11): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_3;
                 let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_4)?;
@@ -289,7 +289,7 @@ pub mod ledger_contract {
                         )
                     })?;
                 let frame = crate::ledger_slots::receipt.record_write(frame, __compact_effect_8)?;
-                (frame, ())
+                frame
             };
             let __compact_effect_12: runtime::BoundedUint<18446744073709551615> =
                 crate::pure_circuits::echo(__compact_effect_1)?;
@@ -303,7 +303,7 @@ pub mod ledger_contract {
                         __compact_effect_12,
                     )
                 })?;
-            let (frame, __compact_effect_21): (_, ()) = {
+            let frame = {
                 let __compact_effect_14: runtime::BoundedUint<18446744073709551615> =
                     __compact_effect_13;
                 let frame = crate::ledger_slots::last.record_write(frame, __compact_effect_14)?;
@@ -323,7 +323,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::receipt.record_write(frame, __compact_effect_18)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

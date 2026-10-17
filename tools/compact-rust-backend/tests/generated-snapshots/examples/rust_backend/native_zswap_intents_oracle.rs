@@ -480,8 +480,8 @@ pub mod ledger_contract {
                 )
                 .qualify(__compact_effect_0.mt_index.value() as u64),
             );
-            let (frame, __compact_effect_14): (_, ()) = if __compact_effect_3 {
-                let (frame, __compact_effect_10): (_, ()) = {
+            let frame = if __compact_effect_3 {
+                let frame = {
                     let __compact_effect_5: crate::types::ShieldedCoinInfo =
                         (__compact_effect_1).clone();
                     let __compact_effect_6: crate::types::Either = (__compact_effect_2).clone();
@@ -509,7 +509,7 @@ pub mod ledger_contract {
                             __compact_effect_6.right.bytes,
                         ),
                     )?;
-                    (frame, ())
+                    frame
                 };
                 let frame = crate::ledger_slots::pot.record_write_coin(
                     frame,
@@ -524,9 +524,9 @@ pub mod ledger_contract {
                         __compact_effect_2.right.bytes,
                     ),
                 )?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -538,7 +538,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: bool = __compact_param_0;
-            let (frame, __compact_effect_6): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_0 {
                 let (frame, __compact_effect_1): (_, crate::types::ShieldedCoinInfo) = frame
                     .try_witness_metered(|context, meter| {
                         witnesses.next_coin(context.witness_context_with(super::LedgerView {
@@ -565,9 +565,9 @@ pub mod ledger_contract {
                         __compact_effect_2.right.bytes,
                     ),
                 )?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

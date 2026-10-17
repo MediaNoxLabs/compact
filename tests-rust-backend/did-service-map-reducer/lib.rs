@@ -277,7 +277,7 @@ pub mod ledger_contract {
             let __compact_effect_2: () = crate::pure_circuits::defined(__compact_effect_1)?;
             let __compact_effect_3: crate::types::Mutation = crate::types::Mutation::Update;
             let __compact_effect_4: bool = __compact_effect_1 == __compact_effect_3;
-            let (frame, __compact_effect_23): (_, ()) = if __compact_effect_4 {
+            let frame = if __compact_effect_4 {
                 let __compact_effect_5: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let (frame, __compact_effect_6): (_, bool) = crate::ledger_slots::services
                     .record_member(frame, (__compact_effect_5).clone())?;
@@ -289,11 +289,11 @@ pub mod ledger_contract {
                 let __compact_effect_8: runtime::OpaqueString = (__compact_effect_0.id).clone();
                 let frame = crate::ledger_slots::services
                     .record_remove(frame, (__compact_effect_8).clone())?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_11: crate::types::Mutation = crate::types::Mutation::Insert;
                 let __compact_effect_12: bool = __compact_effect_1 == __compact_effect_11;
-                let (frame, __compact_effect_21): (_, ()) = if __compact_effect_12 {
+                let frame = if __compact_effect_12 {
                     let __compact_effect_13: runtime::OpaqueString =
                         (__compact_effect_0.id).clone();
                     let (frame, __compact_effect_14): (_, bool) = crate::ledger_slots::services
@@ -310,11 +310,11 @@ pub mod ledger_contract {
                             "duplicate service".to_owned(),
                         ));
                     }
-                    (frame, ())
+                    frame
                 } else {
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             let __compact_effect_24: runtime::OpaqueString = (__compact_effect_0.id).clone();
             let frame = crate::ledger_slots::services.record_insert(
@@ -322,12 +322,12 @@ pub mod ledger_contract {
                 (__compact_effect_24).clone(),
                 (__compact_effect_0).clone(),
             )?;
-            let (frame, __compact_effect_29): (_, ()) = {
+            let frame = {
                 let __compact_effect_26: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_26).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -347,12 +347,12 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::services.record_remove(frame, (__compact_effect_0).clone())?;
-            let (frame, __compact_effect_7): (_, ()) = {
+            let frame = {
                 let __compact_effect_4: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::count
                     .record_increment(frame, (__compact_effect_4).value() as u16)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

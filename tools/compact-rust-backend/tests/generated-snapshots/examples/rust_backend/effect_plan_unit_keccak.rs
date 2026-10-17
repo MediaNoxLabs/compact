@@ -279,7 +279,7 @@ pub mod ledger_contract {
         {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
-            let (frame, __compact_effect_9): (_, ()) = {
+            let frame = {
                 let __compact_effect_1: runtime::FixedBytes<32> = __compact_effect_0;
                 let __compact_effect_2: runtime::FixedBytes<32> =
                     runtime::keccak256(__compact_effect_1);
@@ -308,7 +308,7 @@ pub mod ledger_contract {
                         "not authorized".to_owned(),
                     ));
                 }
-                (frame, ())
+                frame
             };
             let __compact_effect_10: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_10)?;
@@ -324,8 +324,8 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let __compact_effect_0: runtime::FixedBytes<32> = __compact_param_0;
             let __compact_effect_1: bool = __compact_param_1;
-            let (frame, __compact_effect_15): (_, ()) = if __compact_effect_1 {
-                let (frame, __compact_effect_10): (_, ()) = {
+            let frame = if __compact_effect_1 {
+                let frame = {
                     let __compact_effect_2: runtime::FixedBytes<32> = __compact_effect_0;
                     let __compact_effect_3: runtime::FixedBytes<32> =
                         runtime::keccak256(__compact_effect_2);
@@ -356,13 +356,13 @@ pub mod ledger_contract {
                             "not authorized".to_owned(),
                         ));
                     }
-                    (frame, ())
+                    frame
                 };
                 let __compact_effect_11: bool = false;
                 let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_11)?;
-                (frame, ())
+                frame
             } else {
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

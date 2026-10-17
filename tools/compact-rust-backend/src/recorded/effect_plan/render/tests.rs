@@ -15,6 +15,7 @@
 
 //! Structural controls for payload-free values; operations must still execute.
 mod collections;
+mod control_frames;
 
 use super::*;
 use crate::ir::{Parameter, Type, WitnessDeclaration};

@@ -520,7 +520,7 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
             let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
                 crate::pure_circuits::digest(__compact_effect_1)?;
-            let (frame, __compact_effect_55): (_, ()) = {
+            let frame = {
                 let __compact_effect_3: crate::types::SchnorrSignature =
                     (__compact_effect_0).clone();
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
@@ -539,13 +539,13 @@ pub mod ledger_contract {
                 }
                 let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
-                let (frame, __compact_effect_53): (_, ()) = {
+                let frame = {
                     let __compact_effect_10: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
                     let __compact_effect_11: crate::types::SchnorrSignature =
                         (__compact_effect_3).clone();
                     let __compact_effect_12: runtime::JubjubPoint = __compact_effect_9;
-                    let (frame, __compact_effect_51): (_, ()) = {
+                    let frame = {
                         let __compact_effect_13: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_14: crate::types::SchnorrSignature =
@@ -652,11 +652,11 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_56): (_, bool) =
                 crate::ledger_slots::active.record_read(frame)?;
@@ -667,7 +667,7 @@ pub mod ledger_contract {
             }
             let __compact_effect_58: bool = false;
             let frame = crate::ledger_slots::active.record_write(frame, __compact_effect_58)?;
-            let (frame, __compact_effect_65): (_, ()) = {
+            let frame = {
                 let __compact_effect_60: runtime::BoundedUint<65535> =
                     <runtime::BoundedUint<65535>>::new(1u128)?;
                 let frame = crate::ledger_slots::version
@@ -681,7 +681,7 @@ pub mod ledger_contract {
                     })?;
                 let frame =
                     crate::ledger_slots::updated.record_write(frame, __compact_effect_62)?;
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }
@@ -697,7 +697,7 @@ pub mod ledger_contract {
             let __compact_effect_1: runtime::BoundedUint<18446744073709551615> = __compact_param_1;
             let __compact_effect_2: runtime::FixedVector<runtime::Field, 4> =
                 crate::pure_circuits::digest(__compact_effect_1)?;
-            let (frame, __compact_effect_55): (_, ()) = {
+            let frame = {
                 let __compact_effect_3: crate::types::SchnorrSignature =
                     (__compact_effect_0).clone();
                 let __compact_effect_4: runtime::BoundedUint<18446744073709551615> =
@@ -716,13 +716,13 @@ pub mod ledger_contract {
                 }
                 let (frame, __compact_effect_9): (_, runtime::JubjubPoint) =
                     crate::ledger_slots::controller.record_read(frame)?;
-                let (frame, __compact_effect_53): (_, ()) = {
+                let frame = {
                     let __compact_effect_10: runtime::FixedVector<runtime::Field, 4> =
                         (__compact_effect_5).clone();
                     let __compact_effect_11: crate::types::SchnorrSignature =
                         (__compact_effect_3).clone();
                     let __compact_effect_12: runtime::JubjubPoint = __compact_effect_9;
-                    let (frame, __compact_effect_51): (_, ()) = {
+                    let frame = {
                         let __compact_effect_13: runtime::FixedVector<runtime::Field, 4> =
                             (__compact_effect_10).clone();
                         let __compact_effect_14: crate::types::SchnorrSignature =
@@ -829,11 +829,11 @@ pub mod ledger_contract {
                                 "Invalid Jubjub Schnorr signature".to_owned(),
                             ));
                         }
-                        (frame, ())
+                        frame
                     };
-                    (frame, ())
+                    frame
                 };
-                (frame, ())
+                frame
             };
             Ok(frame.finish(()))
         }

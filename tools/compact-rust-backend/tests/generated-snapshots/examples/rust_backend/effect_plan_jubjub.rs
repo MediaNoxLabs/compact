@@ -259,18 +259,18 @@ pub mod ledger_contract {
                 runtime::jubjub_scalar_from_native(__compact_effect_2);
             let (frame, __compact_effect_5): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::first.record_read(frame)?;
-            let (frame, __compact_effect_13): (_, ()) = if __compact_effect_0 {
+            let frame = if __compact_effect_0 {
                 let __compact_effect_6: runtime::JubjubPoint =
                     runtime::ec_mul_generator(__compact_effect_4)?;
                 let __compact_effect_7: runtime::JubjubPoint =
                     runtime::ec_add(__compact_effect_5, __compact_effect_6);
                 let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_7)?;
-                (frame, ())
+                frame
             } else {
                 let __compact_effect_10: runtime::JubjubPoint =
                     runtime::ec_mul(__compact_effect_5, __compact_effect_4)?;
                 let frame = crate::ledger_slots::second.record_write(frame, __compact_effect_10)?;
-                (frame, ())
+                frame
             };
             let (frame, __compact_effect_14): (_, runtime::JubjubPoint) =
                 crate::ledger_slots::second.record_read(frame)?;
